@@ -1,0 +1,44 @@
+Sounds and music in this folder are built by tools/build_sounds.py from these recordings. Every one is CC0 1.0
+(public domain dedication: no permission or credit needed). We credit them anyway, with thanks.
+
+fs-bodyfall: "BODY FALL - V HVY - DIRT" by leonelmail - https://freesound.org/s/504626/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-choir-men: "Myst Men Choir Dark Atmo Drone Thriller Mood Cinematic.wav" by szegvari - https://freesound.org/s/619558/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-crow: "Hooded Crow: Cawing" by Mish7913 - https://freesound.org/s/741366/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-crow2: "Crow Caw" by qubodup - https://freesound.org/s/813115/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-distant-boom: "Muffled Distant Explosion" by NenadSimic - https://freesound.org/s/149966/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-drone-low: "Textured Low Drone 02 - Loop" by kkenny101 - https://freesound.org/s/871510/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-drone-rumble: "Deep rumbling drone" by xkeril - https://freesound.org/s/632682/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-dungeon: "Dark Dungeon Ambience" by Kinoton - https://freesound.org/s/516566/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-gong: "deep gong.wav" by Rodrigo The Mad - https://freesound.org/s/133804/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-sword-draw: "Sword draw unsheathe" by SamsterBirdies - https://freesound.org/s/581594/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-toll: "TOLLING BELL" by SamuelGremaud - https://freesound.org/s/454855/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-toll-distant: "St Peters Church, Kinver - Distant Tolling Bell" by TicAshfield - https://freesound.org/s/824588/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-torch: "torch ambience loop" by LordStirling - https://freesound.org/s/483692/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-wind-door: "Wind howling in the door of a building" by felix.blume - https://freesound.org/s/234000/ - CC0 1.0 - Freesound's high-quality preview of the original
+fs-wind-howl: "Howling Wind.aif" by AbolGuga - https://freesound.org/s/620539/ - CC0 1.0 - Freesound's high-quality preview of the original
+kenney-casino: by Kenney (kenney.nl) - https://kenney.nl/assets/casino-audio - CC0 1.0
+kenney-impact: by Kenney (kenney.nl) - https://kenney.nl/assets/impact-sounds - CC0 1.0
+kenney-rpg: by Kenney (kenney.nl) - https://kenney.nl/assets/rpg-audio - CC0 1.0
+mus-cathedral-forest: by congusbongus - https://opengameart.org/content/cathedral-in-the-forest-ambient-loop - CC0 1.0
+mus-eternal: by The Oracle - https://opengameart.org/content/eternal-sleep - CC0 1.0
+mus-forest: by cynicmusic - https://opengameart.org/content/dark-forest-theme - CC0 1.0
+mus-gameoverdark: by Robin Lamb - https://opengameart.org/content/game-over-dark-short-music-clips - CC0 1.0
+mus-lament: by RandomMind - https://opengameart.org/content/fantasy-lament-for-a-warriors-soul - CC0 1.0
+mus-tragic: by HaelDB - https://opengameart.org/content/tragic-ambient-main-menu - CC0 1.0 - also offered as OGA-BY 3.0; used under CC0
+mus-victory: by RandomMind - https://opengameart.org/content/medieval-victory-theme - CC0 1.0
+mus-wastelands: by SubspaceAudio - https://opengameart.org/content/horror-atmosphere - CC0 1.0
+oga-boulder: by themightyglider - https://opengameart.org/content/moving-boulder - CC0 1.0
+oga-breaking: by rubberduck - https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx - CC0 1.0
+oga-darkmagic: by qubodup - https://opengameart.org/content/3-dark-magic-spells - CC0 1.0
+oga-dings: by StarNinjas - https://opengameart.org/content/4-metal-dingsrings - CC0 1.0
+oga-drain: by qubodup - https://opengameart.org/content/energy-drain - CC0 1.0
+oga-drips: by qubodup - https://opengameart.org/content/dripping-water-loop - CC0 1.0
+oga-ghostbreath: by qubodup - https://opengameart.org/content/ghost-breath - CC0 1.0
+oga-healing: by HaelDB - https://opengameart.org/content/spell-sounds - CC0 1.0 - also offered as OGA-BY 3.0; used under CC0
+oga-heartbeat-dry: by bart - https://opengameart.org/content/heartbeat-sounds - CC0 1.0
+oga-rain: by Ylmir - https://opengameart.org/content/rain-loopable - CC0 1.0
+oga-shield: by StarNinjas - https://opengameart.org/content/10-impactshield-blocks - CC0 1.0
+oga-swishes: by artisticdude - https://opengameart.org/content/swishes-sound-pack - CC0 1.0
+oga-swordclash: by StarNinjas - https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes - CC0 1.0
+oga-thunder: by WuxiaScrub - https://opengameart.org/content/rain-long-thunder - CC0 1.0
+oga-treecreak: by AntumDeluge - https://opengameart.org/content/tree-creaking - CC0 1.0

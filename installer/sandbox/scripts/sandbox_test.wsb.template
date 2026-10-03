@@ -1,0 +1,30 @@
+<!-- Windows Sandbox configuration TEMPLATE (Round 29, SONNET_SPEC_R29 section 7).
+     tools\build_installer.py fills in the @@ markers and writes sandbox_8gb.wsb, sandbox_4gb.wsb and sandbox_test.wsb (8 GB) one
+     folder up. Windows Sandbox needs ABSOLUTE host paths, which is why these files are generated for this checkout instead of
+     being committed. Double-click a generated .wsb to start a clean Windows with nothing installed. Networking is on (Scryfall),
+     the virtual GPU is off. The test script runs by itself and writes results\<timestamp>\verdict.txt on the host. -->
+<Configuration>
+  <VGpu>Disable</VGpu>
+  <Networking>Enable</Networking>
+  <MemoryInMB>@@MEMORY@@</MemoryInMB>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>@@INSTALLER_OUT@@</HostFolder>
+      <SandboxFolder>C:\installer_in</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>@@SCRIPTS@@</HostFolder>
+      <SandboxFolder>C:\sandbox_scripts</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>@@RESULTS@@</HostFolder>
+      <SandboxFolder>C:\sandbox_results</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>cmd.exe /c C:\sandbox_scripts\run_tests.cmd</Command>
+  </LogonCommand>
+</Configuration>

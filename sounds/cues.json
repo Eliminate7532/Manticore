@@ -1,0 +1,715 @@
+{
+ "version": 2,
+ "_comment": "Round AU1: every cue plays real recordings (CC0, built by tools/build_sounds.py from tools/sound_sources.json); 'synth' is only the fallback if a file is missing. 'stream' cues (ambience, music) are played by the director's ambience/music players, not as one-shots.",
+ "cues": {
+  "ui.hover": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.hover.1.ogg",
+    "sfx/ui.hover.2.ogg",
+    "sfx/ui.hover.3.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 1,
+   "synth": {
+    "type": "tick",
+    "freq": 3400,
+    "gain": 0.35
+   }
+  },
+  "ui.click": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.click.1.ogg",
+    "sfx/ui.click.2.ogg",
+    "sfx/ui.click.3.ogg"
+   ],
+   "cooldown_ms": 30,
+   "max_voices": 2,
+   "synth": {
+    "type": "tick",
+    "freq": 2200,
+    "gain": 0.7
+   }
+  },
+  "ui.error": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.error.1.ogg"
+   ],
+   "cooldown_ms": 150,
+   "max_voices": 1,
+   "synth": {
+    "type": "thud",
+    "f0": 110,
+    "f1": 70,
+    "len": 0.16
+   }
+  },
+  "ui.dialog_open": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.dialog_open.1.ogg"
+   ],
+   "cooldown_ms": 100,
+   "max_voices": 1,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.14,
+    "gain": 0.4
+   }
+  },
+  "ui.dialog_close": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.dialog_close.1.ogg"
+   ],
+   "cooldown_ms": 100,
+   "max_voices": 1,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.1,
+    "gain": 0.35
+   }
+  },
+  "card.pickup": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.pickup.1.ogg",
+    "sfx/card.pickup.2.ogg",
+    "sfx/card.pickup.3.ogg",
+    "sfx/card.pickup.4.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 2,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.08,
+    "gain": 0.5
+   }
+  },
+  "card.play": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.play.1.ogg",
+    "sfx/card.play.2.ogg",
+    "sfx/card.play.3.ogg",
+    "sfx/card.play.4.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 3,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.2
+   }
+  },
+  "card.land": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.land.1.ogg",
+    "sfx/card.land.2.ogg",
+    "sfx/card.land.3.ogg",
+    "sfx/card.land.4.ogg"
+   ],
+   "cooldown_ms": 50,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud"
+   },
+   "haptic": "light"
+  },
+  "land.play": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/land.play.1.ogg",
+    "sfx/land.play.2.ogg",
+    "sfx/land.play.3.ogg",
+    "sfx/land.play.4.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 2,
+   "synth": {
+    "type": "thud",
+    "f0": 90,
+    "f1": 45,
+    "len": 0.25
+   }
+  },
+  "card.draw": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.draw.1.ogg",
+    "sfx/card.draw.2.ogg",
+    "sfx/card.draw.3.ogg",
+    "sfx/card.draw.4.ogg"
+   ],
+   "cooldown_ms": 50,
+   "max_voices": 3,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.09,
+    "gain": 0.45
+   }
+  },
+  "card.discard": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.discard.1.ogg",
+    "sfx/card.discard.2.ogg",
+    "sfx/card.discard.3.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 2,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.12,
+    "gain": 0.4
+   }
+  },
+  "deck.shuffle": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/deck.shuffle.1.ogg"
+   ],
+   "cooldown_ms": 300,
+   "max_voices": 1,
+   "synth": {
+    "type": "riffle"
+   }
+  },
+  "tap": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/tap.1.ogg",
+    "sfx/tap.2.ogg"
+   ],
+   "cooldown_ms": 30,
+   "max_voices": 3,
+   "synth": {
+    "type": "tick",
+    "freq": 1800,
+    "gain": 0.5
+   }
+  },
+  "untap": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/untap.1.ogg",
+    "sfx/untap.2.ogg"
+   ],
+   "cooldown_ms": 30,
+   "max_voices": 2,
+   "synth": {
+    "type": "tick",
+    "freq": 2600,
+    "gain": 0.4
+   }
+  },
+  "flurry": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/flurry.1.ogg",
+    "sfx/flurry.2.ogg"
+   ],
+   "cooldown_ms": 500,
+   "max_voices": 1,
+   "synth": {
+    "type": "riffle",
+    "gain": 0.3
+   }
+  },
+  "spell.cast": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/spell.cast.1.ogg",
+    "sfx/spell.cast.2.ogg",
+    "sfx/spell.cast.3.ogg"
+   ],
+   "cooldown_ms": 80,
+   "max_voices": 2,
+   "synth": {
+    "type": "chime",
+    "freq": 660
+   }
+  },
+  "ability.trigger": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/ability.trigger.1.ogg",
+    "sfx/ability.trigger.2.ogg",
+    "sfx/ability.trigger.3.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 3,
+   "synth": {
+    "type": "chime",
+    "freq": 990,
+    "len": 0.2
+   }
+  },
+  "spell.resolve": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/spell.resolve.1.ogg",
+    "sfx/spell.resolve.2.ogg",
+    "sfx/spell.resolve.3.ogg"
+   ],
+   "cooldown_ms": 80,
+   "max_voices": 2,
+   "synth": {
+    "type": "chime",
+    "freq": 440,
+    "len": 0.3
+   }
+  },
+  "spell.fizzle": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/spell.fizzle.1.ogg"
+   ],
+   "cooldown_ms": 100,
+   "max_voices": 1,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.25,
+    "gain": 0.35
+   }
+  },
+  "damage.creature": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/damage.creature.1.ogg",
+    "sfx/damage.creature.2.ogg",
+    "sfx/damage.creature.3.ogg",
+    "sfx/damage.creature.4.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud",
+    "f0": 200,
+    "f1": 90,
+    "len": 0.15
+   }
+  },
+  "damage.player": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/damage.player.1.ogg",
+    "sfx/damage.player.2.ogg",
+    "sfx/damage.player.3.ogg"
+   ],
+   "cooldown_ms": 80,
+   "max_voices": 2,
+   "duck": {
+    "music": -6,
+    "ambience": -6
+   },
+   "synth": {
+    "type": "thud",
+    "f0": 120,
+    "f1": 40,
+    "len": 0.35
+   },
+   "haptic": "medium"
+  },
+  "life.gain": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/life.gain.1.ogg"
+   ],
+   "cooldown_ms": 120,
+   "max_voices": 1,
+   "synth": {
+    "type": "chime",
+    "freq": 784
+   }
+  },
+  "life.loss": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/life.loss.1.ogg"
+   ],
+   "cooldown_ms": 120,
+   "max_voices": 1,
+   "synth": {
+    "type": "thud",
+    "f0": 80,
+    "f1": 50,
+    "len": 0.3
+   }
+  },
+  "counter.add": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/counter.add.1.ogg",
+    "sfx/counter.add.2.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 2,
+   "synth": {
+    "type": "tick",
+    "freq": 1400,
+    "gain": 0.6
+   }
+  },
+  "counter.remove": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/counter.remove.1.ogg",
+    "sfx/counter.remove.2.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 2,
+   "synth": {
+    "type": "tick",
+    "freq": 900,
+    "gain": 0.6
+   }
+  },
+  "destroy": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/destroy.1.ogg",
+    "sfx/destroy.2.ogg",
+    "sfx/destroy.3.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud",
+    "f0": 160,
+    "f1": 60,
+    "len": 0.25
+   }
+  },
+  "exile": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/exile.1.ogg",
+    "sfx/exile.2.ogg",
+    "sfx/exile.3.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 2,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.3,
+    "gain": 0.5
+   }
+  },
+  "token.create": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/spawn.1.ogg",
+    "sfx/spawn.2.ogg"
+   ],
+   "cooldown_ms": 40,
+   "max_voices": 2,
+   "synth": {
+    "type": "tick",
+    "freq": 1000,
+    "gain": 0.7
+   }
+  },
+  "combat.attack": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/combat.attack.1.ogg",
+    "sfx/combat.attack.2.ogg"
+   ],
+   "cooldown_ms": 200,
+   "max_voices": 1,
+   "synth": {
+    "type": "thud",
+    "f0": 100,
+    "f1": 60,
+    "len": 0.2
+   }
+  },
+  "combat.block": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/combat.block.1.ogg",
+    "sfx/combat.block.2.ogg",
+    "sfx/combat.block.3.ogg"
+   ],
+   "cooldown_ms": 150,
+   "max_voices": 1,
+   "synth": {
+    "type": "tick",
+    "freq": 600,
+    "gain": 0.9
+   }
+  },
+  "phase.turn_mine": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/phase.turn_mine.1.ogg"
+   ],
+   "cooldown_ms": 1000,
+   "max_voices": 1,
+   "duck": {
+    "sfx": -4,
+    "music": -4
+   },
+   "synth": {
+    "type": "gong",
+    "freq": 220
+   }
+  },
+  "phase.turn_theirs": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/phase.turn_theirs.1.ogg"
+   ],
+   "cooldown_ms": 1000,
+   "max_voices": 1,
+   "synth": {
+    "type": "gong",
+    "freq": 165,
+    "len": 0.9
+   }
+  },
+  "game.win": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/game.win.1.ogg"
+   ],
+   "cooldown_ms": 0,
+   "max_voices": 1,
+   "duck": {
+    "sfx": -12,
+    "ambience": -10
+   },
+   "synth": {
+    "type": "chime",
+    "freq": 523,
+    "len": 1.2
+   }
+  },
+  "game.lose": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/game.lose.1.ogg"
+   ],
+   "cooldown_ms": 0,
+   "max_voices": 1,
+   "duck": {
+    "sfx": -12,
+    "ambience": -10
+   },
+   "synth": {
+    "type": "gong",
+    "freq": 110,
+    "len": 1.6
+   }
+  },
+  "rewind": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/rewind.1.ogg"
+   ],
+   "cooldown_ms": 0,
+   "max_voices": 1,
+   "synth": {
+    "type": "whoosh",
+    "len": 0.5,
+    "gain": 0.5
+   }
+  },
+  "ui.menu_hover": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.menu_hover.1.ogg",
+    "sfx/ui.menu_hover.2.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 1
+  },
+  "ui.menu_select": {
+   "bus": "ui",
+   "gain_db": 0,
+   "files": [
+    "sfx/ui.menu_select.1.ogg"
+   ],
+   "cooldown_ms": 200,
+   "max_voices": 1
+  },
+  "vs.reveal": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/vs.reveal.1.ogg"
+   ],
+   "cooldown_ms": 500,
+   "max_voices": 1,
+   "duck": {
+    "music": -8
+   }
+  },
+  "boot.splash": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/boot.splash.1.ogg"
+   ],
+   "cooldown_ms": 1000,
+   "max_voices": 1
+  },
+  "amb.graveyard": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/graveyard.ogg"
+   ]
+  },
+  "amb.cathedral": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/cathedral.ogg"
+   ]
+  },
+  "amb.citadel": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/citadel.ogg"
+   ]
+  },
+  "amb.ruins": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/ruins.ogg"
+   ]
+  },
+  "amb.plain": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/plain.ogg"
+   ]
+  },
+  "amb.title": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "loop": true,
+   "stream": true,
+   "files": [
+    "ambience/title.ogg"
+   ]
+  },
+  "music.title": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/title.ogg"
+   ]
+  },
+  "music.game1": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game1.ogg"
+   ]
+  },
+  "music.game2": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game2.ogg"
+   ]
+  },
+  "music.game3": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game3.ogg"
+   ]
+  },
+  "music.game4": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game4.ogg"
+   ]
+  },
+  "music.game5": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game5.ogg"
+   ]
+  },
+  "music.victory": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/victory.ogg"
+   ]
+  },
+  "music.defeat": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/defeat.ogg"
+   ]
+  }
+ }
+}

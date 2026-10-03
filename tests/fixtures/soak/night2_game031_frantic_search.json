@@ -1,0 +1,474 @@
+{
+"t": "state",
+"turn": 14,
+"phase": "MAIN1",
+"phaseLabel": "Main phase, precombat",
+"activePlayer": 0,
+"me": 0,
+"gameOver": false,
+"players": [
+{
+"id": 0,
+"name": "Soak",
+"life": 40,
+"lost": false,
+"zones": {
+"battlefield": [
+{
+"id": 30,
+"name": "Rogue's Passage",
+"selectable": false,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": true,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 5,
+"name": "Turbulent Springs",
+"selectable": false,
+"isLand": true,
+"type": "Land - Island Mountain",
+"isCreature": false,
+"tapped": true,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 13,
+"name": "Otawara, Soaring City",
+"selectable": false,
+"isLand": true,
+"type": "Legendary Land",
+"isCreature": false,
+"tapped": true,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 12,
+"name": "Electrostatic Field",
+"selectable": false,
+"isLand": false,
+"type": "Creature - Wall",
+"isCreature": true,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 39,
+"name": "Island",
+"selectable": false,
+"isLand": true,
+"type": "Basic Land - Island",
+"isCreature": false,
+"tapped": true,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 24,
+"name": "Stormcarved Coast",
+"selectable": false,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": true,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 45,
+"name": "Harmonic Prodigy",
+"selectable": false,
+"isLand": false,
+"type": "Creature - Human Wizard",
+"isCreature": true,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+}
+],
+"graveyard": [
+{
+"id": 41,
+"name": "Untimely Malfunction",
+"selectable": false,
+"isLand": false,
+"type": "Instant",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 14,
+"name": "Slip Through Space",
+"selectable": false,
+"isLand": false,
+"type": "Sorcery",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+}
+],
+"hand": [
+{
+"id": 33,
+"name": "Reinterpret",
+"selectable": true,
+"isLand": false,
+"type": "Instant",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 75,
+"name": "Treasure Cruise",
+"selectable": true,
+"isLand": false,
+"type": "Sorcery",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 70,
+"name": "Rite of the Dragoncaller",
+"selectable": true,
+"isLand": false,
+"type": "Enchantment",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 60,
+"name": "Reliquary Tower",
+"selectable": true,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+},
+{
+"id": 7,
+"name": "Narset's Reversal",
+"selectable": true,
+"isLand": false,
+"type": "Instant",
+"isCreature": false,
+"tapped": false,
+"controller": 0,
+"owner": 0,
+"commander": false
+}
+]
+}
+},
+{
+"id": 1,
+"name": "AI 1 (opp1)",
+"life": 35,
+"lost": false,
+"zones": {
+"battlefield": [
+{
+"id": 168,
+"name": "Island",
+"selectable": false,
+"isLand": true,
+"type": "Basic Land - Island",
+"isCreature": false,
+"tapped": true,
+"controller": 1,
+"owner": 1,
+"commander": false
+},
+{
+"id": 154,
+"name": "Rejuvenating Springs",
+"selectable": false,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": true,
+"controller": 1,
+"owner": 1,
+"commander": false
+},
+{
+"id": 198,
+"name": "Boseiju, Who Endures",
+"selectable": false,
+"isLand": true,
+"type": "Legendary Land",
+"isCreature": false,
+"tapped": true,
+"controller": 1,
+"owner": 1,
+"commander": false
+},
+{
+"id": 185,
+"name": "Enduring Vitality",
+"selectable": false,
+"isLand": false,
+"type": "Enchantment",
+"isCreature": false,
+"tapped": false,
+"controller": 1,
+"owner": 1,
+"commander": false
+}
+],
+"graveyard": []
+}
+},
+{
+"id": 2,
+"name": "AI 2 (opp2)",
+"life": 38,
+"lost": false,
+"zones": {
+"battlefield": [
+{
+"id": 219,
+"name": "Command Tower",
+"selectable": false,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": true,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 250,
+"name": "Swamp",
+"selectable": false,
+"isLand": true,
+"type": "Basic Land - Swamp",
+"isCreature": false,
+"tapped": true,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 294,
+"name": "Plains",
+"selectable": false,
+"isLand": true,
+"type": "Basic Land - Plains",
+"isCreature": false,
+"tapped": true,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 235,
+"name": "Reassembling Skeleton",
+"selectable": false,
+"isLand": false,
+"type": "Creature - Skeleton Warrior",
+"isCreature": true,
+"tapped": true,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 221,
+"name": "Scoured Barrens",
+"selectable": false,
+"isLand": true,
+"type": "Land",
+"isCreature": false,
+"tapped": false,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 249,
+"name": "Swamp",
+"selectable": false,
+"isLand": true,
+"type": "Basic Land - Swamp",
+"isCreature": false,
+"tapped": true,
+"controller": 2,
+"owner": 2,
+"commander": false
+}
+],
+"graveyard": [
+{
+"id": 270,
+"name": "Get Lost",
+"selectable": false,
+"isLand": false,
+"type": "Instant",
+"isCreature": false,
+"tapped": false,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 241,
+"name": "Bone Shards",
+"selectable": false,
+"isLand": false,
+"type": "Sorcery",
+"isCreature": false,
+"tapped": false,
+"controller": 2,
+"owner": 2,
+"commander": false
+},
+{
+"id": 239,
+"name": "Utter End",
+"selectable": false,
+"isLand": false,
+"type": "Instant",
+"isCreature": false,
+"tapped": false,
+"controller": 2,
+"owner": 2,
+"commander": false
+}
+]
+}
+}
+],
+"stack": [
+{
+"key": "Frantic Search (32): Draw two cards, then discard two cards. Untap up to three lands.  ",
+"text": "Frantic Search (32) - Soak draws two cards. Soak discards two cards. Untap up to 3 Lands.",
+"trigger": false,
+"ability": false,
+"card": {
+"id": 32,
+"hidden": false,
+"owner": 0,
+"controller": 0,
+"zone": "Stack",
+"name": "Frantic Search",
+"oracleName": "Frantic Search",
+"type": "Instant",
+"cost": "{2}{U}",
+"colors": [
+"U"
+],
+"text": "Draw two cards, then discard two cards. Untap up to three lands.",
+"isCreature": false,
+"isLand": false,
+"isPlaneswalker": false,
+"set": "TLE",
+"tapped": false,
+"sick": false,
+"attacking": false,
+"blocking": false,
+"faceDown": false,
+"token": false,
+"commander": false,
+"damage": 0
+},
+"activator": 0,
+"targets": []
+}
+],
+"combat": [],
+"prompt": {
+"message": "Frantic Search (32)\n -  \nDiscard 2 card(s)",
+"ok": {
+"label": "OK",
+"enabled": false,
+"focus": true
+},
+"cancel": {
+"label": "Cancel",
+"enabled": false
+},
+"selecting": true,
+"selMin": 2,
+"selMax": 2,
+"source": {
+"id": 32,
+"hidden": false,
+"owner": 0,
+"controller": 0,
+"zone": "Stack",
+"name": "Frantic Search",
+"oracleName": "Frantic Search",
+"type": "Instant",
+"cost": "{2}{U}",
+"colors": [
+"U"
+],
+"text": "Draw two cards, then discard two cards. Untap up to three lands.",
+"isCreature": false,
+"isLand": false,
+"isPlaneswalker": false,
+"set": "TLE",
+"tapped": false,
+"sick": false,
+"attacking": false,
+"blocking": false,
+"faceDown": false,
+"token": false,
+"commander": false,
+"damage": 0
+}
+},
+"stops": {
+"mine": [
+"MAIN2",
+"COMBAT_DECLARE_ATTACKERS",
+"MAIN1",
+"END_OF_TURN"
+],
+"theirs": [
+"COMBAT_DECLARE_ATTACKERS",
+"END_OF_TURN",
+"UPKEEP"
+]
+},
+"yield": {
+"autoPass": false,
+"autoYields": [],
+"autoTriggers": {}
+},
+"eventSeq": 418,
+"input": "InputSelectCardsFromList",
+"asking": true,
+"inputSeq": 165
+}

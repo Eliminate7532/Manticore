@@ -1,0 +1,121 @@
+; installer/commander_sim.iss - the Inno Setup 6 script for the Manticore alpha installer (Round 29, SONNET_SPEC_R29 section 5.1).
+;
+; Built by tools\build_installer.py:  iscc /DMyAppVersion=0.28.9 /DSourceDir=...\dist\Manticore /DOutputDir=...\installer_out
+;                                     [/DIconFile=...\manticore.ico] [/DTestBuild=1]  installer\commander_sim.iss
+; Sonnet could not compile this file (no Inno Setup in its workspace): the first real compile is Karl's. If iscc reports an error,
+; send Claude the line it names.
+;
+; What it does:
+;   * installs for the current user only: no administrator rights, into %LOCALAPPDATA%\Programs\Manticore;
+;   * one Start-menu shortcut to Manticore.exe; a desktop shortcut is an unticked task;
+;   * shows LICENSE on the licence page and installs THIRD_PARTY_NOTICES.txt and licenses\;
+;   * installing over an older build first empties the program folder, so no file dropped in the new build lingers. The program
+;     folder holds only program files (decks, settings, saves and logs live in the per-user folders), so this is safe;
+;   * uninstalling always removes the program folder. The per-user folders (%APPDATA%\Manticore and %LOCALAPPDATA%\Manticore) are
+;     removed only if the tester says yes, or with /PURGE on a silent uninstall. Forge's own folder is NEVER touched: a friend may
+;     have real Forge installed.
+
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0"
+#endif
+#ifndef SourceDir
+  #define SourceDir "..\dist\Manticore"
+#endif
+#ifndef OutputDir
+  #define OutputDir "..\installer_out"
+#endif
+
+[Setup]
+; The AppId is generated once and NEVER changed: installing over an older build (and the uninstaller's record) depends on it.
+AppId={{1FE78D6B-8FAA-4EFE-8CE1-FD920DC97828}
+AppName=Manticore
+AppVersion={#MyAppVersion}
+AppVerName=Manticore {#MyAppVersion}
+DefaultDirName={userpf}\Manticore
+DisableProgramGroupPage=yes
+DisableDirPage=auto
+PrivilegesRequired=lowest
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+LicenseFile={#SourceDir}\LICENSE
+OutputDir={#OutputDir}
+OutputBaseFilename=Manticore-{#MyAppVersion}-setup
+UninstallDisplayIcon={app}\Manticore.exe
+UninstallDisplayName=Manticore
+Compression=lzma2
+SolidCompression=yes
+WizardStyle=modern
+#ifdef IconFile
+SetupIconFile={#IconFile}
+#endif
+#ifdef TestBuild
+AppComments=Alpha TEST build
+#endif
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
+
+[InstallDelete]
+; Install-over: empty the program folder first. UNVERIFIED (SONNET_SPEC_R29 section 5.1): that this leaves Inno's uninstaller working,
+; since unins000.exe / unins000.dat are written again during the install. The Sandbox install-over check (section 7.1) tests it;
+; if it breaks, list the folders to delete here one by one instead.
+Type: filesandordirs; Name: "{app}\*"
+
+[Files]
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{autoprograms}\Manticore"; Filename: "{app}\Manticore.exe"
+Name: "{autodesktop}\Manticore"; Filename: "{app}\Manticore.exe"; Tasks: desktopicon
+
+[Run]
+; The "Run Manticore" box on the last page, ticked.
+Filename: "{app}\Manticore.exe"; Description: "Run Manticore"; Flags: nowait postinstall skipifsilent
+; The testers' first page (START_HERE.txt beside the program), in their text editor; ticked.
+Filename: "{app}\START_HERE.txt"; Description: "Read START_HERE (first game, bug reports, known issues)"; Flags: shellexec postinstall skipifsilent nowait
+
+[UninstallDelete]
+; The program folder always goes (anything left in it, such as a stray log, is not the tester's data).
+Type: filesandordirs; Name: "{app}"
+
+[Code]
+var
+  PurgeUserData: Boolean;
+
+function HasSwitch(const Name: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), Name) = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  Result := True;
+  { A silent uninstall keeps the tester's data unless /PURGE is given. An interactive one asks, with "No" as the default
+    answer; /SUPPRESSMSGBOXES (what the Sandbox uses) also answers No. }
+  PurgeUserData := HasSwitch('/PURGE');
+  if not PurgeUserData then
+    PurgeUserData := SuppressibleMsgBox(
+      'Also delete my decks, settings and saved games?' + #13#10 + #13#10 +
+      'Choose No to keep them (for example, to reinstall later). They are in the Manticore folders under your Windows user profile.',
+      mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if (CurUninstallStep = usPostUninstall) and PurgeUserData then
+  begin
+    DelTree(ExpandConstant('{userappdata}\Manticore'), True, True, True);
+    DelTree(ExpandConstant('{localappdata}\Manticore'), True, True, True);
+  end;
+end;

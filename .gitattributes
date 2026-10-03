@@ -1,0 +1,15 @@
+# Keep line endings the same on every computer, so Windows does not rewrite every file.
+* text=auto eol=lf
+*.bat text eol=crlf
+
+# Never touch these: Forge's packed engine is checked against exact checksums by setup_forge.py.
+forge_bundle/** binary
+*.jar binary
+*.xz binary
+*.part* binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.cmd text eol=crlf
+START_HERE.txt text eol=crlf
+*.wsb text eol=crlf

@@ -1,0 +1,76 @@
+# format: brawl
+# MTG Arena Brawl sample (Round FMT1). Nissa's Forests make extra mana and wake up as creatures; ramp into big creatures.
+
+Commander
+1 Nissa, Who Shakes the World
+
+Deck
+1 Ancient Greenwarden
+1 Arcane Signet
+1 Archdruid's Charm
+1 Ashaya, Soul of the Wild
+1 Beast Whisperer
+1 Birds of Paradise
+1 Bloom Tender
+1 Boseiju, Who Endures
+1 Burnished Hart
+1 Bushwhack
+1 Castle Garenbrig
+1 Craterhoof Behemoth
+1 Cultivate
+1 Delighted Halfling
+1 Doubling Season
+1 Dryad of the Ilysian Grove
+1 Elvish Mystic
+1 Entish Restoration
+1 Eternal Witness
+1 Evolution Sage
+1 Evolving Wilds
+1 Explore
+1 Fabled Passage
+31 Forest
+1 Garruk's Uprising
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Guardian Project
+1 Harrow
+1 Heroic Intervention
+1 Icetill Explorer
+1 Inscription of Abundance
+1 Kodama of the West Tree
+1 Kogla, the Titan Ape
+1 Lair of the Hydra
+1 Legolas's Quick Reflexes
+1 Lightning Greaves
+1 Llanowar Elves
+1 Lotus Cobra
+1 Lumra, Bellow of the Woods
+1 Meteor Golem
+1 Mind Stone
+1 Mox Amber
+1 Myr Battlesphere
+1 Nyxbloom Ancient
+1 Old Gnawbone
+1 Ornithopter of Paradise
+1 Patchwork Banner
+1 Ram Through
+1 Rampaging Baloths
+1 Rampant Growth
+1 Return of the Wildspeaker
+1 Rishkar's Expertise
+1 Roaming Throne
+1 Rogue's Passage
+1 Scute Swarm
+1 Solemn Simulacrum
+1 Springbloom Druid
+1 Springheart Nantuko
+1 Swiftfoot Boots
+1 The Great Henge
+1 The One Ring
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Ugin, Eye of the Storms
+1 Ugin, the Ineffable
+1 Wayfarer's Bauble
+1 Worldly Tutor
+1 Wurmcoil Engine

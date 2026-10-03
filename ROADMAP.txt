@@ -1,0 +1,628 @@
+Manticore (formerly Commander Sim) - Development Roadmap
+=====================================
+
+This tracks planned features in rough priority order. Update as things
+get built or priorities shift.
+
+PHASE 0 - Version control (top priority, asked for 2026-09-20)
+--------------------------------------------------------------
+[x] backup.py + backup.bat + .gitignore + .gitattributes: one command saves a local zip AND uploads every change to a private GitHub
+    repository (tested here against a stand-in remote; 41 tests)
+[x] Local backup (Karl's request): dated zips next to the project or in a folder of his choice, thinned after 3 days, engine copied once
+[x] Karl ran  python backup.py --local-only  and  --setup URL  on his PC: both worked ("Backed up"), GitHub 2FA is on, a run after
+    turning 2FA on still worked (2026-09-20)
+[ ] Karl: choose a folder on ANOTHER drive / OneDrive with  python backup.py --local-dir FOLDER
+[ ] Karl: one restore drill (README: GETTING AN OLD VERSION BACK) - PARKED at his request (2026-09-20), do it some day
+[x] The scheduled automatic backup (CommanderSimBackup, every 30 minutes): backup.log on Karl's PC (read 2026-09-21) shows it running by itself and pushing to GitHub
+    (last entry seen 11:12, "Backed up", version 9f9b570). His own schtasks check was never run, so its Last Result is unseen.
+[x] Rounds no longer end with a backup command: the scheduled task does it (Karl's preference, 2026-09-21)
+[x] Crash log + version stamp (2026-09-20): crash_log.txt gets an entry for a frame error, a crash, a dead helper thread, a 30-second
+    freeze and a hard crash; --version and the window title name the exact copy; 40 tests. Not verified on Windows.
+[x] requirements.txt pinned to exact versions (pygame-ce 2.5.8, requests 2.34.2 + its four dependencies); Windows Python 3.14 wheels
+    for all six confirmed to exist on PyPI
+[x] Crash log verified on Karl's PC (2026-09-20): its 40 tests pass and --version printed the expected code 476bb2da
+    (still not seen there: the crash message box and the hard-crash file)
+[ ] Known flaky test: tests.test_forge_live ...fetchland_search... failed once in four runs (stays at stage 'start' for 150 s; it
+    looks like it depends on who plays first / whether a fetchland is in the opening hand). Uses none of the new files. Make it robust.
+[ ] Later: automatic tests on GitHub (Windows + Python 3.14) - needs the repository, which now exists
+
+PHASE 1 - Core Engine Validation (current)
+--------------------------------------------
+[ ] Live-test Moxfield deck import against real deck URLs (text export import is
+    verified on Karl's PC; the API URL returned 403 from the cloud, untested on the PC)
+[x] Live-test Archidekt deck import against real deck URLs (works; maybeboard bug fixed)
+[x] Live-test Scryfall card data + image fetching against real card names (fixed User-Agent bug; confirmed on Karl's PC)
+[x] Wire deck_importer.py into table_gui.py so real decks load into the
+    visual table instead of placeholder test decks (text file or Archidekt
+    URL on the command line; command zone and library size shown; card art
+    loads in a background thread)
+
+PHASE 1B - Interactive Table, old engine (built 2026-09-19; tested headless; Karl has played it some)
+-------------------------------------------------------------------------------------------
+[x] Mouse/keyboard table: play lands, cast spells, cast the commander, tap for
+    mana, zone viewers (library search, graveyard, exile), right-click menus,
+    life counter, hover preview, game log, undo
+[x] Mulligan flow (London mulligan, first mulligan free per CR 103.5e)
+[x] Card data prefetch in batches of 75 (one request instead of one per card)
+[x] Mana ability parser + auto-tap payment planner, commander tax, fetchlands,
+    enters-tapped / shock lands, Kinnan-style bonus mana
+[x] Resizable window, F11 fullscreen, and text size 100-200% (+ / - keys or A- / A+ buttons);
+    layout is computed from the window size and remembered in settings.json
+[x] Offline tests (rules helpers, Forge parser and rules, headless GUI with simulated clicks); 500 now, counting the Forge table
+[ ] Play a real game on Karl's PC and report what feels wrong (first thing to do); also try
+    F11, dragging the window edge, and the text sizes on the real monitor (both tables)
+[x] Mana abilities that the card-text parser couldn't do (Chrome Mox, Fellwar Stone,
+    Springleaf Drum, Mox Amber, Gene Pollinator, Elvish Spirit Guide) now work through
+    the Forge scripts; only The Cabbage Merchant is still manual (keys 1-6)
+[x] Fetchland: asks "crack it now?" when played, FETCH label, life shown in the message
+[x] Shock lands, Chrome Mox and Mox Diamond ask their questions instead of guessing
+[ ] Enforce "spend this mana only on ..." restrictions (Delighted Halfling)
+[ ] Mana Vault / Basalt Monolith: pay to untap (Forge script has the ability; not menu-driven yet)
+[x] Gemstone Caverns: begin the game on the battlefield when it is in the opening hand
+    (old table: opening-hand step + T to flip who goes first; Forge table: Forge runs the step itself)
+[x] Back-face art for double-faced cards (card_data.get_image_path picks the matching face's image)
+[x] Counters, +1/+1 markers, tokens, attachments (auras/equipment) on the table (Forge table; the old table never had them)
+[~] X spells: the Forge table has a number prompt for X, but no live game has exercised it yet (old table still treats X as 0)
+[x] Player name: forge_table.py --name; opponents: --opp deck (repeat for a pod). Old table still hardcodes "Karl"
+
+PHASE 2 - Real Gameplay Depth
+-------------------------------
+[x] Stack and priority system - done by the Forge engine (forge_table.py); the old table still resolves instantly
+[x] Combat blocking decisions - done by the Forge engine (attackers, blockers, damage); the old table has none
+[~] Better AI agents - Forge's own AI now plays the opponents (forge_table.py); how well it handles cEDH combo lines is unknown
+[x] Activated/triggered ability support - done by the Forge engine (forge_table.py); the old table only has mana abilities
+
+PHASE 2A - Forge card scripts as the rules data (built 2026-09-19)
+-----------------------------------------------------------------------
+Karl's direction: use as much from Forge as possible for how card rules are handled.
+Step one is done: read Forge's card scripts (cardsfolder/*.txt) instead of guessing from
+Oracle text. forge_scripts.py parses them and caches them in cache/forge/; forge_rules.py
+turns them into answers; game_actions.py asks Forge first and falls back to Scryfall text.
+[x] Script downloader/cache/parser (verbatim copies of 38 scripts are test fixtures)
+[x] Enters tapped / shock / conditional lands, fetchlands, mana abilities (costs, damage,
+    reflected mana, tap-another-permanent, from-hand), Kinnan-style triggers, no-untap
+[x] rules_report.py compares the Forge reading with the card-text reading for a whole deck
+[ ] Run rules_report.py on Karl's PC for both decks and fix every DIFFERENT / manual line
+[ ] Activated abilities other than mana (A: lines: Kinnan's dig, Waterlogged Grove's draw,
+    Sakura-Tribe Elder...) as a right-click "Activate ability" menu with costs paid from the script
+[ ] Triggered abilities (T: lines) and spell effects (SP$ lines) - this is where a real
+    interpreter (or the Forge engine itself) starts to matter
+[x] Decided: the Forge engine is the backend (see PHASE 2B). The Python script layer above now only serves the old table
+
+PHASE 2B - Rules Depth via Forge Integration (revised direction)
+-----------------------------------------------------------------------
+DECISION: Rather than reimplementing a full MTG rules engine from scratch
+in Python, use Forge (github.com/Card-Forge/forge), an existing open-source
+GPL-3.0 Java rules engine with years of community development, as the
+actual rules/gameplay backend. Our Python layer stays as the interface:
+deck import, visual table, bug reporting, and orchestration.
+
+Why: Forge already implements state-based actions, stack/priority,
+replacement effects, and a working AI - the exact things Phase 2B would
+have required building from zero. Forge supports a documented headless
+simulation mode (the `sim` command-line flag) designed for exactly this
+kind of external scripting/orchestration, and prior art exists for
+Python-to-Forge bridges (e.g. projects wrapping Forge's headless AI-vs-AI
+mode, including one with a full pipeline from Moxfield deck -> .dck file
+-> real headless Forge game, and 4-deck pod batch runs).
+
+[x] Sketched forge_bridge.py (Python wrapper around Forge's headless `sim`) - SUPERSEDED, not used. Forge's `sim`
+    mode only runs whole AI-vs-AI games and cannot take a human's clicks.
+[x] Built the real thing instead (2026-09-19): Forge is run as a Java process whose GUI interface (IGuiGame) is
+    implemented by our own small bridge (java_bridge/src, ~1000 lines). It sends the whole game state as JSON
+    lines and asks Forge's questions as "requests"; forge_client.py (Python) speaks that protocol and
+    forge_table.py draws it. Forge decides everything about the rules.
+[x] Forge built from source (commit 3a74143, 2.0.15-SNAPSHOT) and packed in forge_bundle/ with checksums;
+    setup_forge.py unpacks it and runs a smoke game (python setup_forge.py --check)
+[x] Verified in the cloud sandbox with real Forge + Java 21: whole games driven through the table code, including
+    Gemstone Caverns before turn 1, mana payment, choices, discard, combat prompts, stack, stops. 366 tests pass (8 live)
+[x] FIXED (2026-09-19): fetchland and other library/graveyard/exile searches were unusable - Forge asked to 'select a card
+    from your library' on the board, where our table has no library to click. The bridge now switches Forge's
+    UI_SELECT_FROM_CARD_DISPLAYS preference off so it sends a list instead (also fixes scry/surveil, tutors, recursion)
+[x] FIXED (2026-09-19): three two-faced cards (Barkchannel Pathway, Sink into Stupor, Invasion of Ikoria) were missing from
+    the games (found in Karl's forge_engine.log): Forge wants the FRONT name for every two-faced card except split cards
+[~] VERIFY ON KARL'S PC (he has run it and reported the above; re-check after this update): python setup_forge.py --check (Java 17+ needed: winget install EclipseAdoptium.Temurin.21.JRE),
+    then python forge_table.py. Report what is wrong, ideally with forge_engine.log
+[ ] Confirm licensing implications of bundling/depending on GPL-3.0 code. forge_bundle/ now SHIPS Forge itself
+    (jar + card scripts). Fine for Karl's own use; before sharing with anyone or publishing to an app store the
+    whole combined program falls under the GPL (offer source under the same license; app-store terms often conflict).
+    Forge itself has Android and iOS ports, which is worth studying for the mobile phase
+[ ] Evaluate Forge AI quality specifically for cEDH-style play - Forge's own docs note its AI is strongest with
+    aggro/midrange, weaker with control, and poor against many combo decks (Karl's decks are combo-centric)
+[ ] Prompts still answered with Forge's default instead of asking: reordering/choosing among card lists in a few rare cases (manipulateCardList).
+    (Combat damage among several blockers and "divide N" / generic amounts are DONE in round 14.)
+[ ] Counter names other than +1/+1 and -1/-1 are shown as Forge names them (mapping is assumed, unchecked)
+[ ] Pods (3-4 players) draw the opponents small; a side-by-side pod layout is still to do. LOW PRIORITY: Karl (2026-09-20) is happy
+    with ONE AI opponent for now
+[ ] Forge AI thinking time and start-up time on Karl's PC (start takes 10-20 s in the sandbox)
+[ ] Retire table_gui.py and the Python rules layer (game_actions, mana_system, forge_rules, forge_scripts) once the
+    Forge table has been played enough to trust it
+
+PHASE 3 - Playtesting & Bug Reporting
+----------------------------------------
+[x] In-app bug reporting (bug_report.py) - testers can file a report with
+    a description; game log and board state are captured automatically
+[x] Bug report form in the Forge table (2026-09-20): F8 or cog > Report a bug; one zip with a screenshot of the table, the board, log,
+    clicks + seed, decks, version fingerprint, environment, engine/crash logs; Windows user name removed; under 5 MB
+[x] Friends send it to Karl through a Discord webhook (reporting.py): posted in the background, one send per minute, only discord.com
+    addresses accepted, @mentions switched off, and any failure leaves the zip in bug_reports/ with instructions. Karl's steps are in the
+    README (BUG REPORTS); python forge_table.py --report-test checks the channel. Tested against a local stand-in server, NOT against the
+    real Discord yet
+[ ] Confirm on Karl's PC: create the webhook, --report-test, then F8 > Send (also try the offline case: turn Wi-Fi off and press Send)
+[ ] Discord's real file-size limit for webhooks is unconfirmed (the zip stays under about 5 MB); if a refusal ever shows up, lower MAX_ZIP_BYTES
+[x] Reports can be replayed (round 13): python replay.py report.zip plays the same seed and clicks in the sandbox (README: REPLAYING A REPORT).
+[ ] Still open: turn a reproduced report into a regression test automatically; a --replay mode inside the game window itself (the sandbox script is not a window)
+[ ] The webhook file has to be copied into each friend's folder by hand until there is an installer
+[ ] Playtest with friends once Phase 1 and 2 are stable
+
+PHASE 4 - Polish & Packaging
+-------------------------------
+[x] Graphics pass on the Forge table (2026-09-19): new colours and table look, drawn card faces for tokens,
+    mana symbols in text, grouped land/token piles, tapped cards rotated, attachments peeking out, combat lines,
+    phase pills with stop dots, action bar, hand fan, stack and log column, dialogs. Tested headless only.
+[x] Karl's first feedback (2026-09-19): library not visible and unclear how to pick from it, turn phases hard to read,
+    command zone unclear. Done: library/graveyard/exile pile tiles on every panel, a labelled command-zone frame (tax,
+    where the commander is), a bigger turn bar (whose turn, lit and dimmed pills, labelled stop dots, tooltips), and a
+    'search your library' window (stacked duplicates, Take card / Find nothing, double-click)
+[x] Karl's second feedback (2026-09-19): free mulligan; Gemstone Caverns not usable before turn 1; game actions hard to read.
+    Done: first mulligan free (patched Forge MulliganService in forge_bridge.jar), play/draw window with a Caverns warning,
+    mulligan advisory strip, opening-hand window with the card preselected, prompt bar headline + hint ("Pass priority"),
+    readable game log (turn bars, step labels, You/opponent colours, hover a card name), stack panel with who/what/targets,
+    opponent action feed + glow on the card involved
+[x] Karl's third feedback: coin-toss window fit, stack hover preview, wrapped choice text, floating mana pill (all windows now scale with text size)
+[x] Karl's fourth request (2026-09-20): deck selection/import in the GUI. Done: a deck screen at start (python forge_table.py with
+    no deck) and behind a New game button / Ctrl+N; a deck library (my_decks/, plus the bundled sample); import by pasting
+    the deck's text list (Ctrl+V) or dragging a .txt onto the window; choose your deck, the AI's deck (one deck for all
+    AIs) and 1-3 opponents; the choice is remembered; warnings for decks that are not 100 cards or have cards Forge does
+    not know; Remove moves files to my_decks/_removed/. Run live against real Forge in the sandbox.
+[x] Karl's fifth feedback (2026-09-20): six items. (1) Hovering a card in a search window shows it in the preview panel at the top
+    right. (2) Everything clickable is bold yellow. (3) Floating mana is clickable to pay: the pill turns yellow while paying, each
+    symbol spends one (new bridge command "mana"); ROOT CAUSE FOUND on the way: Forge keys colourless mana as ManaAtom 32, the
+    bridge read it as 0, so floating colourless mana (Basalt Monolith, Kinnan's bonus) was never shown. Bridge rebuilt
+    (java_bridge/forge_bridge.jar). Live test: Kinnan + Monolith, C:4 shown, three clicks pay for "{3}: Untap", Monolith untaps.
+    (4) The command zone frame disappears while the commander is on the battlefield and its room goes to the hand.
+    (5) Targeting: prompt says "Choose the target for X", the source card gets an orange SOURCE frame, clicking the source asks
+    first (Karl had copied Mirage Mirror onto itself twice), and the log no longer prints a dangling "targeting".
+    (6) The "Alpha Strike" button is called "Full Send" (display only; Forge's own word still drives the A key and Esc rule).
+    Not yet looked at on Karl's real screen.
+[x] Karl's sixth request (2026-09-20): too many buttons crowd the screen, so the top-right buttons (New game, A-, A+, Full, ?) were
+    replaced by ONE settings cog whose pop-up holds them plus Report a bug (F8). The keys F11, +, -, Ctrl+N, H still work. Not yet seen on
+    Karl's real screen.
+[x] Karl's seventh request (2026-09-20): "what is missing from the GUI that MTG Arena has?" Answered with a ranked gap list (checked against
+    the code and two fan guides to Arena's interface, not against Arena itself). Built the first three: (1) status badges on the player
+    panels for monarch / initiative / the Ring / emblems (Forge keeps them as effect cards in the command zone, which the table never drew);
+    (2) Restart (same decks, new shuffle) and Concede in the cog, plus a "You are out" window when you lose in a pod; (3) life totals flash
+    red / green with a rising -3 / +2. Live-tested with the real engine; not seen on Karl's real screen.
+    Also: the "Starting the Forge rules engine" screen was re-laid-out after Karl's screenshot showed its title overlapping the small text.
+[x] Karl's eighth feedback (2026-09-20, from playing round 8): loading screen, life flash and Submit all fine. (3) The text of effects on the
+    stack is now shown IN FULL (each item as tall as its text needs, spell rules text up to 10 lines, the stack panel takes at most 44% of the
+    right column and scrolls with the wheel). (4) "The One Ring should draw when I tap it": it does (live engine: hand 6 -> 7 after the ability
+    resolved); the draw was invisible (Forge logs no draws, and its stack text says "draws zero cards"), so a card arriving in your hand now
+    adds an "Into your hand: <card>" log line and a toast. (6) "Undo should go back a step": Forge's undo is only for an unspent mana tap in the
+    same phase (tested live: land drop, spell on the stack and resolved spell are NOT undoable). The help line was wrong and is fixed, and Undo
+    now says "Nothing to undo..." when Forge does nothing. A real "go back a step" would need our own game history (Forge has no rewind).
+    Not yet seen on Karl's real screen.
+[x] Karl's ninth request (2026-09-21): "make it more obvious what cards are ETBing and triggering; are animations possible?" Built (forge_fx.py):
+    a ring + flash + expanding ring on every permanent that just entered, and a purple / green pulsing ring with a number on the source of every
+    trigger / ability on the stack, the number matching the stack panel row; cog "Animations" on/off; the opponent-cast glow no longer lights
+    older copies with the same name. Karl approved the look from a preview GIF (rendered from the real table code). Not yet seen in a real game.
+[x] Karl's tenth request (2026-09-21): "clean up the cog menu". He said the problem was "too many buttons that do similar things" and chose
+    grouped sections. The cog is now DISPLAY (text size; Full screen and Animations as on/off switches that keep the panel open), GAME
+    (New game... asks same decks / choose decks; Concede... asks stay / close the program) and HELP (controls, report a bug): 7 rows
+    instead of 9, and the two things that used to be four buttons are two windows (forge_dialogs.OptionsDialog). Not yet seen on his screen.
+[x] Karl's eleventh request (2026-09-21, "help me work with the grain of my schedule": he can only run commands and playtest late in the day, so
+    work is batched into one delivery with an evening checklist). He asked for four things; undo was dropped by him ("disregard this undo issue for now"):
+    (1) the ability text on the stack shows the card's own wording when Forge's text differs (The One Ring "draws zero cards"): forge_log.printed_wording;
+    (2) auto-yield / pass-until: new Skip window (S) over Forge's own yield features (let the stack resolve, skip to my next turn, auto-pass with no
+        plays, always pass an ability, always/never use a "you may" trigger); bridge jar changed (new commands yield/autoyield/trigger/autopass/yieldreset,
+        new snapshot field "yield" and per-stack-item autoYield/optional/decision);
+    (3) effects second pass: target arrows from stack items, permanents glide in from hand / stack / panel.
+    Live-verified in the sandbox (real engine): skip to next turn (stopped by an AI's spell), always pass, auto-pass. Not seen on Karl's screen.
+[x] Karl's twelfth request (2026-09-21, bug report zip from 2026-09-20 16:03): "My opponent played Kinnan with just Ottawara Floating City tapped. I didn't
+    think you could play Kinnan with just one mana." NOT an engine bug: Kinnan costs {G}{U}; the AI tapped Otawara for {U} and exiled Elvish Spirit Guide from
+    its hand for {G} (Forge's game log has both [MANA] lines; state.json shows the guide in the AI's exile). The on-screen log hid every MANA line, so only the
+    Otawara tap was visible. Fix: forge_log lets mana from a card leaving the hand/graveyard through ("Elvish Spirit Guide exiled from hand for {G}", purple bar).
+    Ordinary land/rock mana stays hidden. (The report came from code f698a17d, i.e. before round 10.)
+[x] Karl's thirteenth request (2026-09-21, second bug report zip, 2026-09-20 16:14): "I tapped Chrome Mox and Otawara to play Kinnan and it didn't let me play
+    it. I expected to make 1G and 1U/1B." NOT an engine bug: the Mox had Samut, Tyrant of Naktamun ({1}{U}, blue) imprinted, so it can only make {U}; Otawara
+    makes {U}; nothing could make the {G} of Kinnan's {G}{U} (the prompt correctly said "Pay {G}"). Fix: the bridge now sends the imprinted cards
+    (Snapshot: card.imprinted = [{name, colors}] from CardView.getImprintedCards()), and the table shows the colours a Chrome Mox can make as a badge on
+    the card ("no mana" when nothing is imprinted) and an "Imprinted: X (blue)" strip under the big preview. forge_bridge.jar changed again.
+    Open question, not answered by the report: the log shows Otawara tapped twice and the mana pool empty at the end, so it is not clear where a
+    second {U} went (one Otawara tap was probably undone). Ask him for another report if mana ever seems to vanish.
+[x] Karl's fourteenth request (2026-09-21, "What else can you work on before I step in?"; he picked all four): (1) closed the round 10 test gaps: the
+    attack interrupt of a skip is now proven live, and auto-pass was measured (it rarely fires with free spells / instants in hand; the Skip window says so);
+    (2) "Why can't I pay?": mana_hint.py + a second line in the prompt bar (README); (3) every game has a seed, reports keep every click, replay.py replays them;
+    (4) gained keywords shown as violet chips and in the hover strip. forge_bridge.jar changed (a "keywords" list per permanent). Code 6d6a8db8.
+    NOT seen on Karl's screen: all four. Open: the replay live test failed once in about six runs (only 2 clicks got sent in 91 s; cause not found; 5 clean runs after a
+    more careful click loop); Isochron Scepter-style imprints (strip only); what blink / flicker arrivals do.
+[x] Karl's fifteenth request (2026-09-21, "What more can you do before you need me?"; he picked all four): (1) card_check.py plays every card of his Kinnan deck through the
+    real engine and reports what stalls or gets answered for him (README: CHECKING A DECK CARD BY CARD; result: 175 of 175 checks OK over the 100 cards); (2) combat damage assignment and "divide N" prompts now ask him in
+    a window (README: THE DAMAGE AND DIVIDE WINDOW), and a bug is fixed (trample excess went to the last blocker instead of the player); (3) ci/tests.yml runs the offline tests on Windows /
+    Python 3.14 on GitHub, switched on only by python backup.py --enable-tests-on-github so a refused workflow upload can never stall the backups; (4) the flaky live tests were
+    hardened (fetch-land test now uses the developer setup; the replay test's clock starts with the first board) and python replay.py report.zip --save-as NAME keeps a replayed game as a
+    regression test (tests/reports/). Found on the way: Forge's developer setup EMPTIES a library it does not list (card_check and the tests now list one). Code a4c0bcc3.
+    NOT seen on Karl's screen: the damage / divide window. NOT run: the workflow on GitHub itself (Windows), and whether his GitHub sign-in has the "workflow" permission.
+    Open: the replay live test's rare failure was not reproduced (8/8 clean) so the fix is a guess; in "stack" checks the AI sometimes keeps its Lightning Bolt (the check retries twice; the last full run was 175/175 OK).
+[x] Karl's sixteenth request (2026-09-22, bug report bugreport_20260922_214652_Karl.zip on a freshly restored PC): "Opponent played Kinnan with just one mana tapped" -
+    the SAME bug as the round-11 report, reproduced again (Tropical Island + Elvish Spirit Guide this time, not Otawara). Not an engine bug: state.json confirmed the
+    payment was correct, and the round-11 fix's log line ("Elvish Spirit Guide exiled from hand for {G}") was already there in the log column, but a log line alone
+    was not enough - it needed to pop into the on-screen feed box the way a cast, a death or a life change already does. Fix: that row's feed flag is now True.
+    See CLAUDE.md Round 16 for the full diagnosis. Code d53bc2b2 (was 12289240 after round 15).
+    NOT seen on Karl's screen yet. NOT verified: how the feed box reads with only a mana line in it, or two feed entries arriving at once.
+[x] Karl's seventeenth request (2026-09-22, same session, two screenshots): (1) "This needs a 'select all' or similar button" on the
+    "Select order for simultaneous abilities" window - ChooseDialog now has a "Select all" button next to Reset whenever it is an ordering
+    dialog, filling the rest of the list in Forge's own order after keeping any manual pick already made. (2) "I want the focus card to
+    reach the top of the window here" (arrows on a post-game screenshot, top bar mostly empty above the card/log column) - once a match
+    ends the turn counter and phase pills are gone (they were the reason that space was reserved) and the board/focus-card/log column now
+    start right at the top of the window; the settings cog stays put and is redrawn on top so it is never hidden behind the taller card.
+    See CLAUDE.md Round 17 for the full detail. Code f56a727b (was d53bc2b2 after round 16).
+    NOT seen on Karl's screen yet. NOT verified: whether he'd also want the focus card to reach up further DURING an active game in a wide
+    window (a related gap noticed but not asked for, left alone this round).
+[ ] Karl asked (2026-09-22) to be reminded: set bug_report_config.json back up on this new PC so reports post straight to his Discord
+    channel again, instead of him saving/uploading the zip by hand each time. It is NOT backed up on purpose (README.txt "Setting up
+    Discord" / bug_report_config.example.json - it holds his private webhook address, so git/backup.py skip it deliberately), which is
+    exactly why a fresh git clone onto a new machine loses it. Fix is entirely on his side, no code change: copy
+    bug_report_config.example.json to bug_report_config.json in the project folder and paste his Discord webhook address into it (same
+    steps README.txt already has under "Setting up Discord"); ask if he still has the old webhook address saved somewhere or needs to
+    make a new one in Discord.
+[x] Karl's eighteenth request (2026-09-22, same session, bug report + two screenshots): (1) bugreport_20260922_221212_Karl.zip,
+    "opponent still took control of my The One Ring" after Deflecting Swat on Mirrormade - NOT a bug, nothing was taken: state.json shows
+    Karl's Ring untouched and the opponent's is a brand-new SEPARATE copy Mirrormade made of it (Mirrormade's copy choice is not a target,
+    so Swat's redirect had nothing to grab onto even though targeting Mirrormade itself was legal). (2) "I should be able to undo and
+    back-out from attacking from here" (the damage-assignment window) - tested LIVE against the real engine: Undo does nothing once
+    blocks are declared (same as real Magic/real Forge; the only working "back out" moment is Escape/Cancel while still declaring
+    attackers, before confirming). No code change on either of these two. (3) "I should be able to read the cards in the card focus area"
+    - real gap, fixed: the Assign combat damage/divide window can now show a big readable copy of any row's card in the top-right focus
+    panel on hover, the same way the library/graveyard search window already could.
+    See CLAUDE.md Round 18 for the full detail. Code 94bc2047 (was f56a727b after round 17).
+    NOT seen on Karl's screen yet. NOT verified: Deflecting Swat's oracle text against Gatherer/Scryfall directly (both blocked this
+    sandbox's fetches; used two secondary sources instead).
+[x] Karl's nineteenth request (2026-09-23, new session): forwarded a screenshot of six repeated GitHub "Tests workflow run failed"
+    notifications. Diagnosis (pulled the real failure log via the built-in browser against Karl's own signed-in GitHub session, since this
+    bridge has no device_bash): ALL 9 CI runs since round 14 turned the workflow on had failed on the exact same single test
+    (test_hovering_a_card_name_in_the_log_shows_that_card, StopIteration) - a font-metric difference between Windows (Segoe UI, on both
+    Karl's PC and GitHub's windows-latest runner) and this sandbox's fallback font, exactly the risk round 14's own writeup had flagged
+    ("the Windows CI run itself... only emulated on Linux"). Reproduced locally by forcing a taller font, fixed by making the test scroll
+    the log to find the line instead of assuming a default scroll position - no production code changed, the hover-to-preview feature
+    itself was never broken. Also confirmed while in there: his backup.log shows the 30-minute scheduled task firing and pushing on
+    schedule with no gaps since the restore. See CLAUDE.md Round 19. Code unchanged (94bc2047 - only a test file and docs changed).
+    NOT yet confirmed on an actual GitHub Actions run (only reproduced against a stand-in taller font in this sandbox) - watch the NEXT
+    scheduled backup's push on the Actions tab for green.
+[x] Rounds 20-22 of docs/SONNET_SPEC_2026-09-23.md (2026-09-23, built in the cloud while Karl travelled, delivered as patches in
+    docs/incoming/rounds_20_22/): Round 20 speed (dialog freeze, picture-cache budget, frame pacing, F3, perf_log.txt); Round 21
+    game journal + "Resume last game"; Round 22 bridge protocol 2 (game events, prompt kinds, question numbers so a resume repeats the
+    game exactly, "Forge has not answered" banner). Block-event order verified live. See CLAUDE.md "Rounds 20-22". Code b5a558e0.
+    NOT seen on Karl's screen yet; not run on Windows.
+[x] Rounds 23-26 of docs/SONNET_SPEC_2026-09-23.md (2026-09-24, built on Karl's linked PC via the Cowork device bridge): Round 23
+    motion core (springs for hover lift/press dip/card flights, motion.py); Round 24 audio (audio.py, synthesised placeholder
+    cues, the SOUND cog group, M key); Round 25 event-driven effects (departure ghosts, arrival/life/counter particles, panel and
+    screen shakes, pod combat arrows); Round 26 legibility (large 672x936 preview images, art-crop "Compact board cards" board
+    frames, default OFF). See CLAUDE.md "Rounds 23-26" for the full detail and what was deliberately cut for time. Code 279a65fb.
+    NOT seen on Karl's screen yet; not run on Windows; full `discover -s tests` not run in this sandbox (pre-existing deck-screen
+    hang, unrelated to these rounds - see CLAUDE.md). Round 24's audio-thread-safety question is UNVERIFIED and the top thing to
+    check first.
+[x] Round 27 of docs/SONNET_SPEC_2026-09-23.md (2026-09-25, built on Karl's linked PC via the Cowork device bridge): GPL
+    licensing. licenses/NOTICES.json (single source of truth) + licenses/texts, licenses/notices; root LICENSE (byte-identical
+    to forge_bundle/FORGE_LICENSE.txt); licenses_view.py's "Licenses and credits" window (Cog > Licenses and credits, Shift+F1);
+    THIRD_PARTY_NOTICES.txt + tools/build_notices.py (--check, --release); tools/export_public.py; the three Scryfall image-rule
+    fixes (copyright-band clear zone, caption strip moved below the preview picture, tapped cards no longer colour-shifted).
+    See CLAUDE.md "Round 27" for full detail and what's still NOT done (SPDX file headers; native_libraries DLL list - Karl has
+    to run a command on his own PC; the public repository has not been created). Code (after this round) printed by --version.
+    NOT seen on Karl's screen yet; not run on Windows.
+[ ] Forge AI plays Kinnan as midrange, never loops (docs/incoming/AI_EVAL_2026-09-23.md): scripted combo lines brief waiting on Karl (A12).
+[x] Sounds and a glide-out ghost for a card leaving the battlefield: DONE in rounds 24-25 (placeholder synthesised cues; a fading
+    ghost tweens from the card's last spot to the graveyard/exile/hand/library tile it went to). Combat arrows in a pod: DONE in
+    round 25 (attacker -> defending player's panel).
+[ ] Effects, still not built: a "NEW" marker for cards that came in this turn, a ring for cards changing controller / being exiled
+    without dying, arrows for combat DAMAGE assignment specifically (round 25 only added the attacker-to-defender line itself).
+[ ] Possible: a true "take back" (Karl put undo aside for now; needs a save of the whole engine state before each action, which Forge does not offer).
+[ ] GUI gaps still open (ranked): (a) DONE in round 13 (violet keyword chips + hover list; the bridge sends CardStateView keywords; abilities gained are not shown, only keywords); (b) DONE in round 10 (Skip window; see the eleventh request); (c) DONE in round 14 (the combat damage assignment window and the same window for
+    "divide this amount" prompts); (d) DONE in round 10 (target arrows); (e) small: a
+    float-all-mana key, a stops preset/reset, an opponent-speed setting, colour-blind check of the yellow/red/blue/orange frames; (f) day/night,
+    energy, experience and rad counters are not sent by the bridge at all; (g) animations and sounds only if it still feels flat.
+[ ] Confirm on Karl's PC: Ctrl+V / Paste reads the Windows clipboard (falls back to tkinter; drag a .txt otherwise) and the
+    deck screen looks right on his screen
+[ ] Deck screen extras: a different deck per AI opponent, import by Moxfield/Archidekt link, a file-open dialog, a deck-list
+    preview, editing a saved deck
+[ ] Confirm on Karl's PC: free mulligan puts nothing back on the first mulligan; Gemstone Caverns is offered when he goes second
+    (if not, get forge_engine.log and the coin-toss result)
+[ ] Look at the new table on Karl's real screen again and list what still looks ugly (colours, cards, text, spacing)
+[ ] Play/draw choice in pods of 3+ (still Forge's generic "Who would you like to start?" prompt)
+[ ] Pods draw the log/feed cramped (long stack text now scrolls, round 9)
+[ ] Proper installer/executable so friends don't need to set up Python (and Java)
+    manually (e.g. PyInstaller). Mind the GPL note in PHASE 2B before giving it to anyone
+[ ] Settings for personalization: player name, preferred deck colors, etc.
+[ ] Save/load game state mid-session
+[ ] Visual polish pass - aiming for a presentation quality closer to MTG
+    Arena (though not as heavily animated): customizable table backgrounds,
+    custom/selectable card backs, improved card and zone layout beyond the
+    current placeholder rectangles
+
+PHASE 5 - Mobile (long-term / if the project proves out)
+------------------------------------------------------------
+[ ] Evaluate cross-platform frameworks capable of targeting iOS and
+    Android from a shared codebase, since Pygame is desktop-only and
+    won't carry over directly
+[ ] Redesign UI for touch input and smaller screens
+[ ] Investigate Apple App Store and Google Play publishing requirements
+    (developer accounts, review guidelines, MTG intellectual property
+    considerations since this uses Wizards of the Coast card data/art)
+[ ] This is explicitly a "if we're successful" goal, not a near-term
+    commitment - revisit once the desktop version is solid and enjoyed
+    by Karl and his friends
+
+[x] Round 27b (2026-09-26, built by Claude in the Cowork cloud sandbox as a patch - docs/incoming/round27b/): a deck for each
+    AI seat (or Random) on the deck screen, deck search, remembered per-seat choices, a warning for the pod known to freeze
+    Forge before turn 1, and the fetch-land fix (Space/Enter/Take card with nothing picked no longer answers "find nothing" in
+    a library search - reproduced live with Arid Mesa before the fix). Also: the alpha deck tokens_adeline.txt renamed
+    go_wide_adeline.txt (backup.py's "*token*" secret pattern was leaving it out of every local zip), and two stale tests
+    brought up to date (the cog's "Sort hand by type" row; the library search's greyed Take card). See CLAUDE.md.
+
+[x] Round 27c (2026-09-26, hotfix from Karl's three bug reports that morning, built by Claude in the cloud sandbox as a
+    patch - docs/incoming/round27c/). All three were in the Java bridge: (1) a commander sent to exile or a graveyard was
+    never offered the command zone (the match started with no applied variant); (2) surveil showed no card (the jar was
+    older than its sources); (3) Spiteful Visions did nothing on Karl's own draw step (the bridge answered Forge's
+    "reorder the same triggers again" question with an empty order, so none went on the stack). The jar now carries a
+    stamp of its sources and a test fails when they differ. See CLAUDE.md.
+
+[x] Round 27d (2026-09-26, built by Claude (Opus) in the cloud sandbox as a patch - docs/incoming/round27d/): the bridge checks
+    its own answers (java_bridge/.../Checks.java: an order must hold every item, a choice must have the allowed number of
+    items from the list, the game must start with the Commander variant, ...) and reports a broken rule to the engine log,
+    crash_log.txt and the Python side; it also reports the KIND of each question Forge asks (for a coverage report).
+    Deliberate faults (--fault, dev only) let tests prove each check goes red. Six recorded games in tests/fixtures/bridge/
+    for Round 28b. Research: docs/incoming/round27d/FORGE_REPEAT_BEHAVIOURS.md (what Forge asks differently the second time).
+[x] Round 27e (2026-09-26, Karl playing over Remote Desktop: "way too big"): the table's window never opens bigger than the
+    screen (a remembered 4096x2019 opened on a 1920x1080 Remote Desktop screen), window and text size are remembered per screen
+    size in settings.json ("screens"), and a running table follows a changed desktop (a reconnect) within 2 seconds.
+    Also: a surveil / scry-1 card shows in the focus panel, and the command-zone question is short ("Return your commander
+    to the command zone?").
+[x] Round 28 (2026-09-27, built by Claude (Sonnet) through the Cowork device bridge, per
+    docs/SONNET_SPEC_R28_2026-09-26.md): a per-user data folder for an installed copy. Karl's own working folder (a
+    git checkout) or any copy with portable.txt keeps everything in the program folder, unchanged; any other copy
+    moves settings.json, my_decks/, saves/ and the card cache/logs to the OS's per-user folder, copying (never
+    moving) anything found in the program folder on first start. paths.py is the one place that knows where; see
+    CLAUDE.md.
+
+[x] Round 28b (2026-09-26, built by Claude (Sonnet) on Karl's PC through the Cowork device bridge, per
+    docs/incoming/SONNET_SPEC_R28B_2026-09-26.md): rule checks over a recorded game (bridge_rules.py - a commander
+    stranded with no question, a request never answered, a prompt with no card, an engine error, a fatal exit, too
+    many dropped clicks), "do it twice" scenario tests (5 of 9 built; 4 skip with a probe request - no card confirmed
+    live for them yet), an overnight soak bot (soak_bot.py + tools\soak.py) and a coverage report
+    (tools\coverage_report.py) of question kinds never exercised. Python only, proven offline against Round 27d's
+    recorded games. See CLAUDE.md.
+
+[x] Round 28ba (2026-09-27, Claude (Opus), cloud sandbox with real Forge, a patch on round-28b): the soak you can trust
+    (SOAK_PLAN Phase A). The bot plays cards (it looked for the wrong highlight flag and never played one on night 1);
+    one click per question (half its clicks were being dropped as stale); bot health in every summary and runs marked
+    INVALID when the bot did too little; a canary game with a deliberate fault each run; problems grouped by signature
+    with NEW marked; each run in its own folder; turn cap 60. Found and fixed on the way: OK on a greyed button crashed
+    Forge in 3-4 player games (who starts); split cards written "A/B" without spaces were dropped from decks (Teysa's
+    Funeral Room/Awakening Hall - the deck is back as Karl built it); all 5 live scenario tests failed against real
+    Forge and are fixed; a stale-prompt false alarm in commander_stranded. The overnight Forge-class patch was removed
+    (not needed once the greyed-OK guard is in). Round 27f's crash-log fix folded in.
+[x] Round 28bb (2026-09-27, Claude (Opus), cloud sandbox with real Forge, a patch on round-28ba): what the first valid
+    soak night found (174 games, 16 stalls). Real bugs: WINNING A GAME FROZE IT (Forge's achievement update drew a
+    trophy picture from its desktop skin, which the bridge never loads, and crashed before game over was sent);
+    "select a creature to attach to" (Retether, Pariah) marked nothing clickable (Forge offered copies of the cards);
+    a snapshot could be lost to a race on the "can play" glow (night 1, game 99). Soak fixes: the loop asked the bot
+    while a click was on its way and it used up the other cards of a pick-two/discard question (10 stalls); the bot
+    targets players, reads Forge's "must block" message, mulligans 0-1 and 6-7 land hands; --hours alone has no game
+    limit; soak runs stay in soak_runs\ in a portable copy (Round 28 would have moved them to a folder the backup
+    pushes); an AI's commander is no longer reported as "stranded" (17 games of noise).
+[x] Round 28bd (2026-09-28, Claude (Opus), a patch on round-28bc): what soak night 3 found (230 games, VALID, 2 failing
+    games, one cause). A Cancel (or any click) sent while Forge was still tapping a mana source for the payment - on its
+    own thread - restarted the game loop beside it: ConcurrentModificationException, the game died. The bridge now drops
+    such a click ("busy"), as Forge's own macro system waits. The soak names a dead game thread game_thread_died instead
+    of calling it a slow AI.
+[x] Round 28bc (2026-09-28, Claude (Opus), a patch on main after the r28bb merge): what soak night 2 found (261 games,
+    VALID, 5 stalls). The bot picked a card in "discard 2" (Frantic Search) and then clicked it again, un-picking it
+    (4 stalls); an exception inside Forge's own code in a game that still finished is now a warning
+    (forge_internal_error), not a failure; an AI thinking for a long time is its own finding (ai_stall) with a 5-minute
+    limit instead of 2.
+[x] Soak Phase B (first valid night, 27 Sept): VALID, canary OK, 174 games in 7 h 23 m (about 2 min each); caps kept
+    (turn cap 60, 30 min a game, 120 s stall).
+[x] Round 28c (2026-09-29, Claude (Opus), a patch on round-28bd): soak Phase C. tools\nightly.py runs a whole night
+    (canary, card-check sweep of the 5 alpha decks in turn - resuming mid-deck - then soak games) with one summary;
+    half the soak games start from a mid-game board (soak_boards.py). The bridge now says "setup_done" when a set-up
+    has finished (clicking before that killed the game). A Task Scheduler line in README.txt.
+[x] Round 28d (2026-09-30, Claude (Opus), a patch on main after the r28c merge): alpha hardening (ALPHA_GAPS_PLAN) and
+    what soak nights 4-6 found. After a crash the next start offers a report (session.json marker; the crashed run's
+    Forge log is kept). A saved game from another Forge or bridge is refused with Discard instead of being replayed
+    wrongly (a replay key in the journal). --version, reports and the soak header name the Forge build (F1); unknown deck
+    cards are called "not in this version of Forge yet" on the deck screen and as the game starts (F2). The bridge marks
+    the players a "choose a player" question accepts (a Siege's protector - 3 stalls on Invasion of Ikoria); the table
+    glows them and the bot picks one. The AI gets 20 s to think instead of Forge's 5 (a timed-out AI thread keeps running
+    on Java 21 and raced the game thread - night 4); such a death is reported as ai_timeout_race. The bridge reports its
+    peak memory at game over and the soak summary shows the largest per player count; less Java memory and a warning on
+    a PC under 8 GB. A broken bug_report_config.json is named as broken. The card check sets up split cards (the Rooms)
+    by both names.
+[x] Round 28e (2026-10-01, Claude (Opus), a patch on round-ad1b): what soak night 9 found. The Kinnan AI untapped two Grim
+    Monoliths (one a Copy Artifact copy) with each other thousands of times, gaining nothing, until the 30-minute limit
+    (nights 7 and 9) - a frozen game for a person. The bridge now lets an AI use the same ability of the same card at most
+    10 times a turn (LoopGuard.java), then makes it pass; the soak fails a game with more than 30 (ai_loop) and warns
+    when the guard steps in (ai_loop_guard). An InterruptedException from a timed-out AI thread inside Swing is a warning
+    (ai_interrupted), not an engine error (night 9 game 144).
+[ ] Soak Phase D (item 8): steer games toward kinds of question not seen yet - only if the list stops shrinking.
+
+PHASE F - Keeping up with Forge (decided 2026-09-29) - new sets arrive in Forge regularly
+-----------------------------------------------------------------------------------------
+Karl, 2 Oct 2026: "We absolutely have to update Forge before alpha release." Round FB1 did it (3a74143 -> fb4d809); the
+"through the alpha" below is superseded. Policy otherwise: stay pinned to one Forge build (now fb4d809, in forge_bundle/). Upgrade on purpose, in a round
+of its own ("Forge bump"), never mixed with other work - when a new set is wanted, when a Forge fix is needed, or about
+once a quarter after the alpha (the longer between bumps, the bigger each one). The bridge leans on Forge internals
+(AbstractGuiGame, GuiDesktop, PlayerControllerHuman's input queue, InputPayMana, GameState, a modified MulliganService), so
+a new Forge can change behaviour silently; the self-checks, card-check sweep and soak are what catch that.
+Before the alpha (small):
+[x] F1. (Round 28d) Show the Forge build in --version and in every F8 bug report (which Forge a report came from).
+[x] F2. (Round 28d) A deck card this Forge doesn't know: say plainly "not in this version of Forge yet" on the deck screen and at game
+        start, never drop it silently (28ba fixed one such case: "A/B" split names).
+Each Forge bump round (FB1, 2 Oct 2026: 3a74143 -> fb4d809, before the alpha - see the FB1 lines under F3-F7):
+[ ] F3. Diff our forge.jar / runtime against official Forge at 3a74143 first (UNVERIFIED whether it carries patches beyond
+        java_bridge/ - the source seen in the sandbox had headless-mode handling), and list every patch.
+[ ] F4. Pick the new commit; rebuild the bridge (compile errors show API changes); re-check each Forge internal we hook
+        into and re-apply MulliganService and any other patched class.
+[ ] F5. Full suite + live tests + recorded fixtures (re-record only where a question's shape changed on purpose).
+[ ] F6. Card-check sweep of all alpha decks, then 2-3 soak nights (tools\nightly.py) - VALID, nothing unexplained.
+[ ] F7. Regenerate licence notices (tools\build_notices.py --release checks forge.jar's library list) and the bundle.
+Rough cost (a guess): a day of work plus 2-3 soak nights for a small Forge change; more if Forge rewrote something we hook.
+[x] FB1 (2-3 Oct 2026, 3a74143 -> fb4d809): F3 - the shipped forge.jar and res/ are exactly official Forge 3a74143 (rebuilt from
+    source: 19,012 jar entries identical but build timestamps; 36,968 res files = Forge's tree), so nothing beyond java_bridge/ was
+    patched. F4 - three removed IGuiGame zone methods dropped from BridgeGui (they were no-ops); MulliganService unchanged upstream.
+    F5 - full suite with live Forge: 1920 OK on patch 25 (first build); 2036 on 27 + FMT1 (patch 29), the 4 not OK explained in
+    docs/incoming/fb1/SUITE_29.txt (none from the Forge update). F6 - card-check sweep of all 8 decks (first build): 1038 OK,
+    1 SKIP (Eiganjo's Channel), no WARN or FAIL; AI soaks VALID (44 games on 25; Commander and Brawl again on 29); online soaks
+    (docs/incoming/fb1). Soak NIGHTS on Windows: still to do (Karl). Built twice: on patch 25, then on 27 + FMT1 as patch 29
+    (Karl, 3 Oct: FMT1 first); the second build recompiled MP2's and FMT1's bridge code against fb4d809 unchanged.
+    F7 - notices regenerated (--release names only Python and Temurin); forge_bundle rebuilt. New: setup_forge.py reinstalls an
+    outdated forge_runtime/ by itself, and the game refuses to start on one (forge_client.runtime_outdated).
+
+PHASE R - Reliability (round 27a, 2026-09-25) - backups that never fail silently
+----------------------------------------------------------------------------------
+[x] backup.py catches every exception per stage, not just BackupError, and logs a traceback instead of
+    failing silently; backup_status.json records last_ok/last_error/error for the table and Discord to read
+[x] Windows-reserved file names (nul, con, aux, ...) are skipped by the snapshot and refused when staged,
+    with the exact delete command; pre-1980 timestamps no longer crash the zip
+[x] A stale .git/index.lock (10+ minutes old, no git process running) is cleared automatically
+[x] The push now names HEAD (not a hardcoded "main"), so a round's own branch actually reaches GitHub
+[x] The deck screen shows an orange banner (+ "Open backup.log") when backups are failing or stale;
+    an optional, once-per-streak Discord alert
+[x] One branch per round, tag on merge, version.py follows the round; docs/WORKING_AGREEMENT.md written
+[x] tools/quick_tests.py (fast, hygienic, MANTICORE_SKIP_LIVE=1) and tools/restore_drill.py (checks the
+    GitHub clone and the newest local zip actually restore)
+[ ] Karl: re-run  python backup.py --enable-tests-on-github  (the device bridge couldn't write
+    .github/workflows/tests.yml directly - see EVENING_CHECKLIST.txt)
+[ ] Karl: time tools/quick_tests.py and run the full suite on his own PC (not yet measured there)
+
+PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNET_SPEC_AD1_2026-09-27.md)
+--------------------------------------------------------------------------------------------------------
+[x] AD1 (0.28.5): palette, bundled fonts (Alegreya body, display face for titles/buttons), assets/, table pictures that rotate
+    per game with a Settings control, all colour literals moved into gfx.py tokens (guard test), licence entries
+[x] AD2b (0.28.8): commander VS screen while the engine starts, full-screen mulligan (keep / put on the bottom), VICTORY /
+    DEFEAT before the end-of-game dialog (flow_screens.py)
+[x] AD2c (0.28.8): readability animations - AI-action spotlight in the focus panel, floating numbers, life that counts, turn
+    banner, attackers stepping forward, combat lines growing, tap/untap turning (anim.py)
+[x] AD2 (0.28.8): stone frames (square corners, bevel, gold studs; pills keep their shape), studio splash -> title with the main
+    menu (Play / Continue / Settings / Credits / Quit), window icon (boot_screens.py, assets/splash/)
+[ ] AD2 art still wanted from Karl: the red spiky wordmark on a transparent background; splash and title art at 1920x1080 or
+    larger (today's are 1168x784 and 1248x832, upscaled); optional 9-slice frame textures (the frames are drawn in code)
+[ ] AD2 not done: a new card back (no art for it yet)
+[x] AU1 (0.28.12): the sound overhaul - every cue is a real recording (CC0: Kenney, OpenGameArt, Freesound) processed into one
+    dark style (pitched down, darkened, stone-room reverb); ambience loop per table picture; title music and a shuffled in-game
+    playlist with silences; VICTORY / DEFEAT stings; title-screen and VS sounds; Cog > Music / Ambience (tools/build_sounds.py)
+[ ] AU1 follow-ups: Karl's Keep/Redo marks from the Manticore Sound Review page; his choice of music (alternatives are on the
+    page); a sound for knocked-out-of-a-pod; per-card-type cast sounds (creature / instant / sorcery) if wanted
+[ ] AD3: grain switch, remaining polish from Karl's screenshots
+[ ] Karl, before a public release: re-check AvQest's licence (GemFonts' own terms, its "restricted embedding" flag, whether it
+    copies Exocet) and Grok's terms for the pictures (NOTICES.json: font-display, art-backgrounds are unverified;
+    tools/build_notices.py --release refuses until they are verified). If AvQest can't be cleared, delete assets/fonts/AvQest.ttf:
+    the game falls back to Cinzel Decorative (SIL OFL) on its own.
+[ ] Round 29 installer must include assets/ (paths.assets_dir() is program_dir()/"assets")
+[x] Round 29a (2026-10-02, Claude (Opus), a patch on main): the bridge watches the program that started it (--parent-pid,
+    ParentWatch.java) from its first second and exits when it's gone. Before, a program killed during Forge's start-up
+    (10-20 s) left java.exe running until Forge reached its command loop. Alpha must-have 1, gap 4. Also soak night 10's two
+    findings: the loop guard's own log line no longer counts as an engine error, and the soak bot fixes a block Forge refuses
+    for menace ("cannot be blocked with 1 creatures you've assigned").
+[x] Round 29b (2026-10-02, Claude (Opus), a patch on main + 29a): scenario 7's flake (a stale "Priority" prompt between
+    questions) and the card-check set-ups (planeswalker loyalty, an Aura's creature, the deck's commander in the command zone).
+[x] Round UX1 (2026-10-02, Claude (Opus), a patch on 29b): the first-game tour of the table - 12 steps, starts at the first
+    priority question of the first game, Esc skips, Cog > Help > Tour of the table shows it again (tour.py).
+[x] Round BAN1 (2026-10-02, Claude (Opus), 0.28.13, after AU1): format legality on the deck screen - banned / not legal / 100
+    cards / singleton / colour identity / commander / pairs, a NOT LEGAL or UNCHECKED tag; every line a warning except the
+    commanders (Karl, 2 Oct: only legal commanders and legal pairs start). [ ] Release checklist: python tools\build_banlist.py --check
+[x] Round MANA1 (2026-10-02, Claude (Opus), 0.28.14, after BAN1): mana symbols from the Mana font (OFL) - hybrid, Phyrexian, tap,
+    energy; the old letter circle as fallback. [ ] Later: Keyrune set symbols when a screen needs them.
+[x] Round SPDX (2026-10-02, Claude (Opus), 0.28.15, after MANA1): SPDX licence headers on every program .py (tests/test_spdx.py).
+    [ ] The Java bridge's sources: at the next bridge rebuild (a header changes its source stamp).
+[x] Round ALT1 (2026-10-02, Claude (Opus), 0.28.16, after SPDX): alternate card art - a printing per card per deck, written into the
+    deck file as Moxfield does ("1 Sol Ring (C21) 263"); deck screen > Card art (every card, then every printing of it); shown
+    on the table, the board frames, the preview, the focus zoom, the VS screen and the AI spotlight; your own pictures in my_art/
+    ("Sol Ring.png", or "Sol Ring__C21_263.png" for one printing; backed up, never published) (art_picker.py)
+[ ] ALT1 later: mixed-art basics (a printing per copy - needs Forge to report a set per object; probe first); the owner's printing
+    for a stolen card (needs "owner" in the bridge's snapshot - one line in Snapshot.card, a jar rebuild); printings in online
+    multiplayer (the deck handshake); link import keeping printings (Moxfield/Archidekt field names unverified)
+[x] Round UI2 (2026-10-02, Claude (Opus), 0.28.20, patch 15, after Round 30): the 200% text gaps from docs\incoming\alpha_screens\FINDINGS.md -
+    pod panels keep their piles on the panel, the action bar keeps its hint line, the deck list shows ~5 decks instead of 1.5
+[x] Round CHK1 (2026-10-02, Claude (Opus), 0.28.21, patch 16, after UI2): the card checker's own gaps - modal/double-faced scripts and
+    Secret Lair flavor names found, a creature of mine and three lands of every colour on every board. Karl's decks: 0 WARN.
+[x] CHK1 left: Despark (no permanent of mana value 4+ to target), Victimize (no creature cards in the graveyard) - Round UI3
+[x] Round UI3 (2026-10-02, Claude (Opus), 0.28.22, patch 17, after CHK1): Undo stays on the action bar at 200% (stacked under the
+    left button), the opponent's board has a Gilded Lotus and my graveyard two creature cards for the card checker
+[x] Round SH1 (2026-10-02, Claude (Opus), patch 18, after UI3): START_HERE.txt ships beside the program and opens from the
+    installer's last page; check_dist --release refuses while it still has [blanks]
+[x] Round UI4 (2026-10-02, Claude (Opus), 0.28.23, patch 19, after SH1): the yes/no window fits its words; partners on the VS
+    screen fanned wide enough to read the first one
+[x] Round CHK2 (2026-10-02, Claude (Opus), 0.28.24, patch 20, after UI4): the card checker's last two warnings (an enchanted
+    creature on every board; combat-only targets reported as SKIP; Kitsa, Izzet Boilerworks)
+[x] Round OS1 (2026-10-02, Claude (Opus), 0.28.25, patch 21, after CHK2): online soak, 18 games on the chain, no real finding;
+    two harness false alarms fixed
+[ ] START_HERE.txt blanks (Karl): disk size from the first Windows build, the installer version, known issues from 20 games
+[ ] Round 29 (Sonnet): the installer, per claude/SONNET_SPEC_R29_2026-10-01.md (docs\incoming\round29\). Name "Manticore",
+    data folders included (Karl, 2026-10-01).
+[x] Round 29 (2026-10-02, Claude (Sonnet 5.5), branch round-29 on 29a): installer code, build script, check_dist, Inno script,
+    Sandbox scripts, rename to Manticore, bundled alpha webhook. NOT yet built or run on Windows: that is Karl's checklist
+    (EVENING_CHECKLIST.txt). Still to do after the first build: fill licenses/NOTICES.json native_libraries (the DLL list), set
+    project.source_url before any --release build, read the Sandbox verdicts, tick ALPHA_FINISH_LINE 1, 2, 13, 14.
+[x] Round MP1 (2026-10-02, Claude (Opus), 0.28.18): play a friend online, 1v1 - deck screen > Host online / Join online, an
+    invite code (address, port, certificate fingerprint, password), TLS 1.3, the router port by UPnP, CGNAT said in plain words
+    (Tailscale as the way round), each side sees only its own hidden cards. NOT yet tried between two real PCs and routers.
+[x] Round MP2a (2026-10-02, Claude (Opus), 0.28.30): a dropped connection reconnects by itself (the host keeps the seat 60 s,
+    asks every waiting question again; a rejoin token, never logged), heartbeats notice a dead link, leaving ends the game at
+    once, and up to four people can watch with every hidden card face down. NOT yet tried between two real PCs.
+[x] Round MP2c (2026-10-02, Claude (Opus), 0.28.31): online games of three or four - up to three friends join with the same
+    invite code, AI players fill the other seats, the game starts when the last friend arrives; one player leaving a game of
+    three or four is out and the others play on. NOT yet tried with real PCs.
+[x] Round MP2d (2026-10-02, Claude (Opus), with MP2c in 0.28.31): playing through a relay (relay/manticore_relay.py, standard
+    library only; relay_agent.py on the host) when the host can't take incoming connections; TLS runs end to end through it.
+    NOT deployed anywhere (Karl, 2 Oct: work stays on his PC) - relay/README.txt says how, if ever wanted.
+[x] Round MP2b (2026-10-02, Claude (Opus), with MP2c and MP2d in 0.28.31): a hosted online game can be continued another day - NetHost journals every
+    command it applies (every seat, replies included) into saves/online/<id>/cmds.jsonl; Host online > Continue it plays it
+    back (ResumeFeeder) with the same seed, decks and names, then the guests join again and get their seats back by name.
+    NOT yet tried on Windows or between real PCs. Before a public release: look again at jUPnP's CDDL licence now that our own code uses it (NOTICES.json note).
+[x] Round 30 (2026-10-02, Claude (Opus), 0.28.19): an installed copy updates itself - the title screen offers Update now / Later /
+    Skip this version, downloads the installer (checksum checked), closes, installs silently over itself and reopens. OFF until
+    update_config.json names the public GitHub repository for releases (Karl's decision). NOT yet tried on Windows.
+[ ] Karl: choose the public repository for releases (the source repo for the GPL offer could be the same one), put it in
+    update_config.json, build with --release, publish with tools\make_update_feed.py's gh line. The first build that has the
+    repo set must reach testers by hand; every later one arrives by itself.
+[ ] Later (production): signed updates (an offline key, tufup), so a hijacked GitHub account can't push an update; a code-
+    signing certificate for the installer (SmartScreen).
+[x] Round MP1a (2026-10-02, Claude (Opus), 0.28.26): the online soak (49 games) found two ways a concede hung a game for good
+    (a question asked after the game ended; a concede while the game thread was busy). Both fixed in the bridge; the third run
+    had 23 games, all finished. The table's own Concede against the AIs takes the same, now safe, path.
+[x] Round SB1 (2026-10-02, Claude (Opus), 0.28.27): a one-hour sandbox soak of patches 1-18 with MP1a found the soak
+    bot going round between an AI's Rhystic Study ("pay {1}?") and its own Transmogrant Altar's {B} for 30 minutes. The bot
+    now declines a payment question that keeps coming back, and a game that reaches the time cap is a warning naming its last
+    question (it was silent). Soak tools only; the program is unchanged.
+[x] Round PUB1 (2026-10-02, Claude (Opus), 0.28.28): tools/export_public.py could not export the project at all (the fake
+    webhooks in tests stopped it) and would have published docs/, CLAUDE.md and Karl's home folder's path. Fixed; README's
+    PUBLISHING THE SOURCE AND RELEASES gives the steps for the public repository that friends' copies update from.
+[x] Patch 25 (2026-10-02, 0.28.29): licences on the chain - patch 6 (DLLs, AvQest, Grok credit, Java libraries) applied after
+    PUB1, and Forge's own five modules in forge.jar count as the Forge component (--release had named them). --release now names
+    only Python and Temurin, until the first real Windows installer build is checked.
+[ ] Karl: create the public repository, export into it, set update_config.json's repo and NOTICES.json's source_url
+    (README: PUBLISHING THE SOURCE AND RELEASES). Licences: settled on 2 Oct (patch 6, licence_native_dlls.patch).
+[x] Round FMT1 (2026-10-02/03, Claude (Opus), 0.28.32, after MP2's patch 27; patch 28 - FB1 is 29): formats, with MTG Arena's 100-card
+    Brawl beside Commander (Karl, 2 Oct: "Arena 100 card brawl"). The deck screen's Format switch; a deck's format is a
+    "# format: brawl" line in its file; Brawl's rules on the deck screen (a planeswalker commander, Arena's card pool and banned
+    list, colourless commanders' basics) and in the engine (Forge's Brawl variant: 25 life, 30 in a pod, no commander damage);
+    four Brawl sample decks; tools\soak.py --format brawl. Online stays Commander only.
+[ ] Formats still waiting for Karl's answers (claude/FORMATS_SKETCH_2026-10-02.md, D2-D10): Standard (best-of-one first?),
+    Two-Headed Giant, Limited. Online Brawl: NetHost (MP2) would build its seats with Main.register() and start Main.variant() as Main does, and the host dialog would carry the format.
+[x] Round FB1b (2026-10-03, Claude (Opus), 0.28.34, patch 30 after FB1): what FB1's checks found, neither from the Forge update.
+    NetHost no longer says a friend dropped after saying they were back (a lock around both announcements). The soak seat
+    declares attackers at last (it never had: Forge marks attackers "weak", the bot looked for "selectable") and uses Alpha
+    Strike when Forge refuses an attack (a creature that must attack). Soak nights from here on include the bot's own attacks.
+[x] Round 31 (2026-10-03, 0.28.35): the title and studio pictures are shown whole at their own proportions (they were cropped to
+    cover wide screens: Karl's 4096x2160 lost the manticore's wings and head), with a blurred, darkened copy filling the sides.
+[x] Round 32 (2026-10-03, 0.28.36): UI polish from Karl's game. Creatures with menace get a "Menace" tag like the gained-keyword
+    tags (forge_table.PRINTED_TAGS); Cog > Concede... can return to the main menu; the 4-player loading screen keeps its card
+    frames inside the window and off the "VS"; buttons, the settings pop-up, the phase bar and the prompt's headline are AvQest
+    (gfx.DisplayFont: digits stay Alegreya, K3). Zone labels, player panels and the deck screen's headings are left for UI5.
+[x] Round UI5 (2026-10-03, Claude (Opus), 0.28.37, patch 33 after Round 32; built as 0.28.34 on 28): the opponents of a 3-4 player game (the last
+    gap in the alpha screenshots). A small board gets one row of cards about twice as big (4 players at 1080p: 46 -> 101 px;
+    at 200% text: 35 -> 82); a full board keeps its two rows. The command zone reads CMD (it read "C..." at 200%), its
+    frame stays inside its row and its commander card is bigger; the panels' piles and commander damage stay inside them.
+[x] Round FR1 (2026-10-03, Claude (Opus), 0.28.38, patch 34 after UI5's 33; built as 0.28.35 on 28 + UI5): "Suggest a feature" beside bug reports - a second
+    tab in the F8 window (F8 on the deck screen opens on it; the cog's button is "Bug or idea"). One text message to the
+    same Discord channel (or an optional ideas_webhook), a picture only if ticked, and an idea_*.txt copy every time.

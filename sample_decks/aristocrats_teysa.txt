@@ -1,0 +1,69 @@
+1 Agent Venom
+1 Arcane Signet
+1 Ashnod's Altar
+1 Assault Intercessor
+1 Ayli, Eternal Pilgrim
+1 Blood Artist
+1 Bone Shards
+1 Butcher of Malakir
+1 Carrion Feeder
+1 Command Tower
+1 Corrupted Conviction
+1 Costly Plunder
+1 Cruel Celebrant
+1 Denethor, Ruling Steward
+1 Despark
+1 Diabolic Tutor
+1 Dire Tactics
+1 Drivnod, Carnage Dominus
+1 Eaten Alive
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elspeth, Storm Slayer
+1 Falkenrath Noble
+1 Feast of the Victorious Dead
+1 Field of Souls
+1 Final Payment
+1 Final Vengeance
+1 Funeral Room/Awakening Hall
+1 Get Lost
+1 Hallowed Spiritkeeper
+1 Hidden Stockpile
+1 Imperious Oligarch
+1 Luminous Broodmoth
+1 Massacre Wurm
+1 Mirkwood Bats
+1 Mortify
+1 Norn's Wellspring
+1 Ogre Slumlord
+1 Open the Graves
+1 Orzhov Enforcer
+17 Plains
+1 Priest of the Crossing
+1 Read the Bones
+1 Reassembling Skeleton
+1 Scoured Barrens
+1 Shoot the Sheriff
+1 Sifter of Skulls
+1 Skullclamp
+1 Sol Ring
+1 Solemn Simulacrum
+17 Swamp
+1 Syr Konrad, the Grim
+1 Temple of Silence
+1 Thalisse, Reverent Medium
+1 The Masamune
+1 The Meathook Massacre
+1 Tithe Taker
+1 Transmogrant Altar
+1 Utter End
+1 Vault of the Archangel
+1 Victimize
+1 Village Rites
+1 Vindictive Vampire
+1 Whisper, Blood Liturgist
+1 Woe Strider
+1 Yahenni, Undying Partisan
+1 Zahur, Glory's Past
+1 Zulaport Cutthroat
+
+1 Teysa Karlov

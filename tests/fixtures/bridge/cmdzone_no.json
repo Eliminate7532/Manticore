@@ -1,0 +1,12 @@
+{
+ "name": "cmdzone_no",
+ "about": "Swords to Plowshares on my own Kinnan; No (Kinnan stays in exile)",
+ "deck": "kinnan_nbc_moxfield_export.txt",
+ "seed": 7,
+ "faults": [],
+ "bridge_checks_seen": [],
+ "expected_fail_rules": [],
+ "recorded": "2026-09-26",
+ "forge": "3a74143",
+ "bridge": "round 27d"
+}

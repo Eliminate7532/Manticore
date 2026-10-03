@@ -1,0 +1,35 @@
+# Runs the offline tests on GitHub every time a backup is uploaded: a Windows computer, Python 3.14, the exact package versions
+# from requirements.txt. It is the same check you can run yourself with:  python -m unittest discover -s tests -t .
+#
+# This copy lives in ci/ so that a refused upload can never hold up your backups. To switch it on, run once:
+#     python backup.py --enable-tests-on-github
+# That copies it to .github/workflows/tests.yml (the only place GitHub looks). Results: your repository > the "Actions" tab.
+#
+# The tests that need Forge's engine (about 20, they play real games) skip themselves here, because the unpacked engine is not on
+# GitHub. Everything else runs: the table, dialogs, the rules helpers, backups, reports, the card-check helpers.
+name: Tests
+
+on:
+  push:                       # round 27a: every branch, not just main - so a round branch is tested on Windows before merging
+  pull_request:
+  workflow_dispatch:          # the "Run workflow" button in the Actions tab
+
+jobs:
+  offline-tests:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      SDL_VIDEODRIVER: dummy  # pygame draws into memory: there is no screen on the GitHub computer
+      SDL_AUDIODRIVER: dummy
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install the pinned packages
+        run: python -m pip install -r requirements.txt
+      - name: Run the offline tests
+        run: python -m unittest discover -s tests -t . -v

@@ -1,0 +1,852 @@
+{
+ "version": 1,
+ "project": {
+  "name": "Manticore",
+  "license": "GPL-3.0-or-later",
+  "copyright": "Copyright (C) 2026 the Manticore contributors",
+  "source_url": null,
+  "notice": "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details."
+ },
+ "components": [
+  {
+   "id": "forge",
+   "name": "Forge",
+   "version": "2.0.16-SNAPSHOT (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+   "license": "GPL-3.0-or-later",
+   "copyright": "Copyright (C) Forge Team and contributors",
+   "url": "https://github.com/Card-Forge/forge",
+   "used_for": "Rules engine, AI opponents and card scripts",
+   "shipped": "always",
+   "group": "Rules engine",
+   "notice_file": null,
+   "status": "verified"
+  },
+  {
+   "id": "pygame-ce",
+   "name": "pygame-ce",
+   "version": "2.5.8",
+   "license": "LGPL-2.0-or-later",
+   "status": "verified",
+   "note": "Checked in pygame-ce's source at tag 2.5.8: the files that carry a header say 'GNU Library General Public License ... either version 2 of the License, or (at your option) any later version' (Pete Shinners, 2000-2001); pyproject.toml says 'LGPL v2.1' and docs/LGPL.txt is the LGPL 2.1 text, which 'or later' includes. Its bundled SDL_gfx primitives are LGPL too (A. Schiffler). The Windows DLLs it ships are listed under Native libraries.",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "requests",
+   "name": "Requests",
+   "version": "2.34.2",
+   "license": "Apache-2.0",
+   "status": "verified",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "certifi",
+   "name": "certifi",
+   "version": "2026.7.22",
+   "license": "MPL-2.0",
+   "status": "verified",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "charset-normalizer",
+   "name": "charset-normalizer",
+   "version": "3.5.1",
+   "license": "MIT",
+   "status": "verified",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "idna",
+   "name": "idna",
+   "version": "3.20",
+   "license": "BSD-3-Clause",
+   "status": "verified",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "urllib3",
+   "name": "urllib3",
+   "version": "2.8.0",
+   "license": "MIT",
+   "status": "verified",
+   "shipped": "always",
+   "group": "Python libraries"
+  },
+  {
+   "id": "font-display",
+   "name": "AvQest (display font)",
+   "version": "GemFonts AvQest 1.3 from 1001fonts.com avqest.zip, AvQest.ttf sha256 5929a5fd6c16df17069ed7cf57b6ff61bbe3c959d9ef59b30120a3845d98fee6 (unmodified)",
+   "license": "LicenseRef-1001fonts-FFC",
+   "copyright": "GemFonts 98 / Imitation Warehouse",
+   "url": "https://www.1001fonts.com/avqest-font.html",
+   "used_for": "Headings and buttons (assets/fonts/AvQest.ttf)",
+   "shipped": "builds Karl makes; not in the public source copy",
+   "group": "Fonts",
+   "status": "verified",
+   "note": "Karl's decision on 2026-10-02: the author (GemFonts) lists AvQest as Freeware for personal and commercial use on FontSpace (fontspace.com/gemfonts/avqest), which Karl takes as permission to ship it in the app. The 1001fonts FFC text that came in the zip is kept below for reference. The embedding flag (OS/2 fsType 1) is a deprecated legacy value, not a restriction. tools/export_public.py still leaves the font out of the public source copy (the game falls back to Cinzel Decorative there)."
+  },
+  {
+   "id": "font-display-fallback",
+   "name": "Cinzel Decorative (display font, public source)",
+   "version": "google/fonts ofl/cinzeldecorative/CinzelDecorative-Bold.ttf sha256 e854e68a388aa50d742a4415c1ae5c17a617ef7956c95a70021d0a4a44f20518 (unmodified)",
+   "license": "OFL-1.1",
+   "copyright": "Copyright (c) 2012 Natanael Gama (info@ndiscovered.com), with Reserved Font Name 'Cinzel'",
+   "url": "https://github.com/google/fonts/tree/main/ofl/cinzeldecorative",
+   "used_for": "Headings and buttons when AvQest is not there, e.g. in the public source copy (assets/fonts/CinzelDecorative-Bold.ttf)",
+   "shipped": "always",
+   "group": "Fonts",
+   "status": "verified",
+   "notice_file": "notices/font-cinzel-decorative.txt",
+   "note": "Replaced the unlicensed 'Diablo Heavy' display.ttf on 2026-10-01; since AvQest was chosen the same day it is the open-source fallback. Shipped unmodified, so the Reserved Font Name is not an issue."
+  },
+  {
+   "id": "font-alegreya",
+   "name": "Alegreya",
+   "version": "google/fonts Alegreya[wght].ttf sha256 ba556463…de3cf12; static wght 400/700 instances made with fontTools",
+   "license": "OFL-1.1",
+   "copyright": "Copyright 2011 The Alegreya Project Authors (https://github.com/huertatipografica/Alegreya)",
+   "url": "https://github.com/huertatipografica/Alegreya",
+   "used_for": "All body text and every number (assets/fonts/Alegreya-Regular.ttf and Alegreya-Bold.ttf)",
+   "shipped": "always",
+   "group": "Fonts",
+   "notice_file": "notices/font-alegreya.txt",
+   "status": "verified"
+  },
+  {
+   "id": "font-mana",
+   "name": "Mana (mana symbol font)",
+   "version": "mana-font 1.18.0 (npm, via jsDelivr) fonts/mana.ttf sha256 a23809f7c0af7f9866734216bdd73bce2cfedd67333f5cde86a9ee066fa69819 (unmodified)",
+   "license": "OFL-1.1",
+   "copyright": "Mana font by Andrew Gioia (https://mana.andrewgioia.com); the font's own name table says 'SIL OFL 1.1'",
+   "url": "https://github.com/andrewgioia/mana",
+   "used_for": "Mana, tap/untap, energy and other symbols in costs, rules text, the mana pool and the payment window (assets/fonts/mana.ttf)",
+   "shipped": "always",
+   "group": "Fonts",
+   "notice_file": "notices/font-mana.txt",
+   "status": "verified",
+   "note": "The symbols drawn by the font are Wizards of the Coast's, used under the Fan Content Policy like the card pictures. mplantin/beleren from the same package are commercial fonts and are NOT shipped."
+  },
+  {
+   "id": "mana-codepoints",
+   "name": "Mana CSS codepoint table",
+   "version": "mana-font 1.18.0 css/mana.css (the glyph codepoints copied into gfx.MANA_GLYPHS)",
+   "license": "MIT",
+   "copyright": "Andrew Gioia",
+   "url": "https://github.com/andrewgioia/mana",
+   "used_for": "Which character of the Mana font is which symbol (gfx.MANA_GLYPHS)",
+   "shipped": "always",
+   "group": "Fonts",
+   "status": "verified",
+   "note": "package.json and README say the CSS/LESS/Sass files are MIT. The npm package has no LICENSE file of its own, so the copyright line is the author as package.json names him."
+  },
+  {
+   "id": "art-backgrounds",
+   "name": "Table backgrounds, splash, title and window icon (Manticore concept art, AI-generated)",
+   "license": "NOASSERTION",
+   "copyright": "Created with Grok (xAI) for the Manticore project",
+   "used_for": "The pictures behind the table and deck screen (assets/backgrounds/), the studio splash, the title screen and the window icon (assets/splash/)",
+   "shipped": "always",
+   "group": "Artwork",
+   "status": "attribution",
+   "note": "All the concept art was made with Grok (Karl, 2026-10-01). Still to check before a release: Grok/xAI's terms for using and redistributing generated images (UNVERIFIED). AI-generated images may carry no copyright of their own in many places; the credits say how they were made and claim nothing more.",
+   "attribution": "xAI's Brand Guidelines (x.ai/legal/brand-guidelines, 14 Feb 2025) ask for the words \"Created with Grok\" wherever Grok-generated material is distributed; they are in the \"Game art\" credit in Cog > Licenses and credits and in THIRD_PARTY_NOTICES.txt."
+  },
+  {
+   "id": "sounds",
+   "name": "Sound effects, ambience and music (CC0 recordings, Round AU1)",
+   "version": "built by tools/build_sounds.py from the recordings listed in tools/sound_sources.json",
+   "license": "CC0-1.0",
+   "copyright": "Public domain dedication (CC0 1.0) by each recording's author; credited in sounds/CREDITS.txt",
+   "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "used_for": "Every sound the game plays (sounds/sfx, sounds/ambience, sounds/music). Sources: Kenney (kenney.nl), OpenGameArt.org and Freesound.org; each recording's page is in sounds/CREDITS.txt",
+   "shipped": "always",
+   "group": "Sounds and music",
+   "notice_file": "../sounds/CREDITS.txt",
+   "status": "verified"
+  },
+  {
+   "id": "python",
+   "name": "Python",
+   "version": "3.14",
+   "license": "PSF-2.0",
+   "shipped": "installer",
+   "group": "Runtimes (installer only)",
+   "status": "expected",
+   "note": "Also ship CPython's own LICENSE file (it lists further third-party texts)."
+  },
+  {
+   "id": "temurin",
+   "name": "Eclipse Temurin JRE",
+   "version": "21 (jlink-trimmed: java.base, java.compiler, java.desktop, java.management, java.naming, java.net.http, java.rmi, java.scripting, java.security.jgss, java.sql, jdk.httpserver, jdk.sctp, jdk.unsupported)",
+   "license": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "shipped": "installer",
+   "group": "Runtimes (installer only)",
+   "status": "expected",
+   "note": "Shipped as jre/ beside the program, made with jlink from the Temurin 21 JDK on the build PC (Round 29). The JDK's legal/ folder is copied unchanged into jre/legal/. Status stays 'expected' until the first real Windows build has been checked."
+  }
+ ],
+ "java_components": {
+  "at.yawk.lz4": {
+   "name": "lz4-java",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "lz4-java:1.10.2"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "com.google.code.findbugs": {
+   "name": "JSR-305 annotations",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "jsr305:3.0.2"
+   ],
+   "pom_says": [
+    "The Apache Software License, Version 2.0"
+   ],
+   "note": "The POM says Apache-2.0 (the spec's first table guessed BSD-3-Clause; the POM wins)."
+  },
+  "com.google.code.gson": {
+   "name": "Gson",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "gson:2.13.2"
+   ],
+   "pom_says": [
+    "Apache-2.0"
+   ]
+  },
+  "com.google.errorprone": {
+   "name": "Error Prone annotations",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "error_prone_annotations:2.28.0"
+   ],
+   "pom_says": [
+    "Apache 2.0"
+   ]
+  },
+  "com.google.guava": {
+   "name": "Guava",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "failureaccess:1.0.2",
+    "guava:33.3.1-android",
+    "listenablefuture:9999.0-empty-to-avoid-conflict-with-guava"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0",
+    "The Apache Software License, Version 2.0"
+   ]
+  },
+  "com.google.j2objc": {
+   "name": "J2ObjC annotations",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "j2objc-annotations:3.0.0"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "com.googlecode.soundlibs": {
+   "name": "JLayer / MP3SPI / Tritonus (soundlibs)",
+   "license": "LGPL-2.0-or-later AND BSD-2-Clause",
+   "notice_file": "notices/tritonus-bsd.txt",
+   "status": "verified",
+   "artifacts": [
+    "jlayer:1.0.1.4",
+    "mp3spi:1.9.5.4",
+    "tritonus-share:0.3.7.4"
+   ],
+   "pom_says": [
+    "LGPL 2.1 license"
+   ],
+   "note": "Checked in the sources jars: jlayer 1.0.1.4 (47 of 47 files), mp3spi 1.9.5.4 (17 of 17) and tritonus-share 0.3.7.4 (58 of 60) say 'GNU Library General Public License ... version 2 of the License, or (at your option) any later version'. Tritonus' FloatInputStream.java and FloatSampleInput.java are BSD-2-Clause (Florian Bomers, 2006); their notice is attached. The POM's 'LGPL 2.1' was not the whole story."
+  },
+  "com.jhlabs": {
+   "name": "JH Labs image filters",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "filters:2.0.235"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "com.miglayout": {
+   "name": "MiG Layout",
+   "license": "BSD-3-Clause",
+   "notice_file": "notices/miglayout.txt",
+   "status": "verified",
+   "artifacts": [
+    "miglayout-core:4.2",
+    "miglayout-swing:4.2"
+   ],
+   "pom_says": [
+    "BSD"
+   ],
+   "note": "Checked: every file in miglayout-core-4.2 and miglayout-swing-4.2 sources carries the 3-clause BSD header (Mikael Grev, MiG InfoCom AB, 2004), the same text as notices/miglayout.txt."
+  },
+  "com.mortennobel": {
+   "name": "java-image-scaling",
+   "license": "BSD-3-Clause",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "java-image-scaling:0.8.6"
+   ],
+   "pom_says": [
+    "The BSD 3-Clause License"
+   ]
+  },
+  "com.sipgate": {
+   "name": "mp3-wav",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "mp3-wav:1.0.4"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "com.thoughtworks.xstream": {
+   "name": "XStream",
+   "license": "BSD-3-Clause",
+   "notice_file": "notices/xstream.txt",
+   "status": "verified",
+   "artifacts": [
+    "xstream:1.4.21"
+   ],
+   "pom_says": [
+    "BSD-3-Clause"
+   ]
+  },
+  "com.twelvemonkeys.common": {
+   "name": "TwelveMonkeys ImageIO",
+   "license": "BSD-3-Clause",
+   "notice_file": "notices/twelvemonkeys.txt",
+   "status": "verified",
+   "artifacts": [
+    "common-image:3.12.0",
+    "common-io:3.12.0",
+    "common-lang:3.12.0"
+   ],
+   "pom_says": [
+    "The BSD License"
+   ]
+  },
+  "com.twelvemonkeys.imageio": {
+   "name": "TwelveMonkeys ImageIO",
+   "license": "BSD-3-Clause",
+   "notice_file": "notices/twelvemonkeys.txt",
+   "status": "verified",
+   "artifacts": [
+    "imageio-core:3.12.0",
+    "imageio-jpeg:3.12.0",
+    "imageio-metadata:3.12.0"
+   ],
+   "pom_says": [
+    "The BSD License"
+   ]
+  },
+  "io.github.x-stream": {
+   "name": "MXParser",
+   "license": "xpp",
+   "notice_file": "notices/mxparser.txt",
+   "status": "verified",
+   "artifacts": [
+    "mxparser:1.2.2"
+   ],
+   "pom_says": [
+    "Indiana University Extreme! Lab Software License"
+   ],
+   "note": "notices/mxparser.txt is byte-identical to META-INF/LICENSE in mxparser-1.2.2.jar. Compared word by word with SPDX 'xpp': the conditions and disclaimer are the same; only the title line, the year (2003 vs 2002) and a spelling of 'University' differ, which SPDX's matching rules treat as the same licence."
+  },
+  "io.netty": {
+   "name": "Netty",
+   "license": "Apache-2.0",
+   "notice_file": "notices/netty.txt",
+   "status": "verified",
+   "artifacts": [
+    "netty-all:4.1.115.Final",
+    "netty-buffer:4.1.115.Final",
+    "netty-codec-dns:4.1.115.Final",
+    "netty-codec-haproxy:4.1.115.Final",
+    "netty-codec-http:4.1.115.Final",
+    "netty-codec-http2:4.1.115.Final",
+    "netty-codec-memcache:4.1.115.Final",
+    "netty-codec-mqtt:4.1.115.Final",
+    "netty-codec-redis:4.1.115.Final",
+    "netty-codec-smtp:4.1.115.Final",
+    "netty-codec-socks:4.1.115.Final",
+    "netty-codec-stomp:4.1.115.Final",
+    "netty-codec-xml:4.1.115.Final",
+    "netty-codec:4.1.115.Final",
+    "netty-common:4.1.115.Final",
+    "netty-handler-proxy:4.1.115.Final",
+    "netty-handler-ssl-ocsp:4.1.115.Final",
+    "netty-handler:4.1.115.Final",
+    "netty-resolver-dns-classes-macos:4.1.115.Final",
+    "netty-resolver-dns-native-macos:4.1.115.Final",
+    "netty-resolver-dns:4.1.115.Final",
+    "netty-resolver:4.1.115.Final",
+    "netty-transport-classes-epoll:4.1.115.Final",
+    "netty-transport-classes-kqueue:4.1.115.Final",
+    "netty-transport-native-epoll:4.1.115.Final",
+    "netty-transport-native-kqueue:4.1.115.Final",
+    "netty-transport-native-unix-common:4.1.115.Final",
+    "netty-transport-rxtx:4.1.115.Final",
+    "netty-transport-sctp:4.1.115.Final",
+    "netty-transport-udt:4.1.115.Final",
+    "netty-transport:4.1.115.Final"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "javax.servlet": {
+   "name": "Java Servlet API",
+   "license": "(CDDL-1.1 OR GPL-2.0-only WITH Classpath-exception-2.0) AND Apache-2.0",
+   "notice_file": "notices/servlet-api.txt",
+   "status": "verified",
+   "artifacts": [
+    "javax.servlet-api:3.1.0"
+   ],
+   "pom_says": [
+    "CDDL + GPLv2 with classpath exception"
+   ],
+   "note": "Checked in javax.servlet-api-3.1.0-sources: all 72 files are 'GPL Version 2 only or CDDL' with the Classpath exception (glassfish CDDL+GPL_1_1); 40 of them are also 'Copyright 2004 The Apache Software Foundation' under Apache-2.0. We take the CDDL/GPL part under GPL-2.0 with the Classpath exception. The jar's own META-INF/LICENSE.txt (CDDL 1.0 + GPL 2 + Classpath exception) is attached."
+  },
+  "javazoom": {
+   "name": "JLayer (javazoom)",
+   "license": "LGPL-2.0-or-later",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "jlayer:1.0.1"
+   ],
+   "pom_says": [
+    "GNU Lesser General Public License"
+   ],
+   "note": "javazoom jlayer 1.0.1 ships no licence file and Maven Central's sources jar was not fetched (rate-limited). Its 47 classes are the same 47 that soundlibs' jlayer 1.0.1.4 repackages, whose source headers all say GNU Library General Public License version 2 or later, which matches JavaZOOM's own statement that JLayer is LGPL."
+  },
+  "org.apache.commons": {
+   "name": "Apache Commons (Lang 3, Text, Math 3)",
+   "license": "Apache-2.0",
+   "notice_file": [
+    "notices/commons-lang3.txt",
+    "notices/commons-math3.txt",
+    "notices/commons-text.txt"
+   ],
+   "status": "verified",
+   "artifacts": [
+    "commons-lang3:3.18.0",
+    "commons-math3:3.6.1",
+    "commons-text:1.12.0"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0",
+    "Apache-2.0"
+   ],
+   "note": "Three NOTICE files, one per artifact, each byte-identical to META-INF/NOTICE.txt in the Maven Central jar at the shipped version."
+  },
+  "org.apfloat": {
+   "name": "Apfloat",
+   "license": "MIT",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "apfloat:1.10.1"
+   ],
+   "pom_says": [
+    "MIT License"
+   ]
+  },
+  "org.eclipse.jetty": {
+   "name": "Eclipse Jetty",
+   "license": "Apache-2.0 OR EPL-1.0",
+   "notice_file": "notices/jetty.txt",
+   "status": "verified",
+   "artifacts": [
+    "jetty-client:9.4.57.v20241219",
+    "jetty-http:9.4.57.v20241219",
+    "jetty-io:9.4.57.v20241219",
+    "jetty-security:9.4.57.v20241219",
+    "jetty-server:9.4.57.v20241219",
+    "jetty-servlet:9.4.57.v20241219",
+    "jetty-util-ajax:9.4.57.v20241219",
+    "jetty-util:9.4.57.v20241219"
+   ],
+   "pom_says": [
+    "Apache Software License - Version 2.0",
+    "Eclipse Public License - Version 1.0"
+   ],
+   "note": "notices/jetty.txt is META-INF/NOTICE.txt from jetty-server-9.4.57.v20241219.jar (Maven Central). Replaced 2026-09-23: the first draft had a newer Jetty's NOTICE."
+  },
+  "org.jctools": {
+   "name": "JCTools",
+   "license": "Apache-2.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "jctools-core:4.0.5"
+   ],
+   "pom_says": [
+    "Apache License, Version 2.0"
+   ]
+  },
+  "org.jgrapht": {
+   "name": "JGraphT",
+   "license": "LGPL-2.1-or-later OR EPL-2.0",
+   "notice_file": "notices/jgrapht.txt",
+   "status": "verified",
+   "artifacts": [
+    "jgrapht-core:1.5.2"
+   ],
+   "pom_says": [
+    "Eclipse Public License (EPL) 2.0",
+    "GNU Lesser General Public License Version 2.1, February 1999"
+   ]
+  },
+  "org.jupnp": {
+   "name": "jUPnP",
+   "license": "CDDL-1.0",
+   "notice_file": null,
+   "status": "verified",
+   "artifacts": [
+    "org.jupnp.support:3.0.5",
+    "org.jupnp:3.0.5"
+   ],
+   "pom_says": [
+    "CDDL-1.0"
+   ],
+   "note": "CDDL-1.0 is listed by the FSF as incompatible with the GNU GPL. Forge uses jUPnP for its own network hosting. Since Round MP1 (2026-10-02) Manticore's bridge uses it too: Upnp.java asks the router to open the online-play port when hosting (the \"Try to open my router port automatically\" box). Karl's decision (OPEN_QUESTIONS A11, 2026-09-24, kept for MP1 in SONNET_SPEC_MP1): ship Forge's jar as is and list jUPnP honestly here rather than build a stand-in. UNVERIFIED (not legal advice): whether Manticore's own GPL code should carry a GPLv3 section 7 additional permission for linking with jUPnP; Karl, as the copyright holder of that code, can add one. Whether Forge's own bundle is compliant is Forge's packaging question, not ours - we redistribute forge.jar unchanged."
+  },
+  "org.slf4j": {
+   "name": "SLF4J API",
+   "license": "MIT",
+   "notice_file": "notices/slf4j.txt",
+   "status": "verified",
+   "artifacts": [
+    "slf4j-api:2.0.16"
+   ],
+   "pom_says": [
+    "MIT License"
+   ]
+  }
+ },
+ "native_libraries": {
+  "_source": "pygame_ce-2.5.8-cp314-cp314-win_amd64.whl from PyPI (sha256 b4c2e28c201240199356952e6bd0221969d2eb8a1a15c3454d77db209bad7891); each DLL matched byte for byte to an upstream package, see tools/native_libs_2026_10_02.py",
+  "libraries": [
+   {
+    "id": "sdl2",
+    "name": "SDL2",
+    "file": "SDL2.dll",
+    "version": "2.32.10",
+    "license": "Zlib",
+    "copyright": "Copyright (C) 1997-2025 Sam Lantinga",
+    "url": "https://github.com/libsdl-org/SDL",
+    "source": "byte-identical to SDL2-devel-2.32.10-VC.zip lib/x64",
+    "used_for": "Window, input, audio output",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/SDL2.txt",
+    "status": "verified"
+   },
+   {
+    "id": "sdl2-image",
+    "name": "SDL2_image",
+    "file": "SDL2_image.dll",
+    "version": "2.8.12 (pygame-ce build 2.8.12-pgce)",
+    "license": "Zlib AND MIT",
+    "copyright": "Copyright (C) 1997-2025 Sam Lantinga",
+    "url": "https://github.com/pygame-community/SDL_image/releases/tag/2.8.12-pgce",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VCpgce.zip lib/x64",
+    "used_for": "Loading card pictures and art",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": [
+     "notices/native/SDL2_image.txt",
+     "notices/native/nanosvg.txt",
+     "notices/native/qoi.txt"
+    ],
+    "status": "verified",
+    "note": "Built in: nanosvg (Zlib) and qoi (MIT). The source tree also carries public-domain stb_image, miniz and tiny_jpeg (no notice required). JPEG, PNG, TIFF and WebP are decoded by the separate DLLs listed below."
+   },
+   {
+    "id": "sdl2-mixer",
+    "name": "SDL2_mixer",
+    "file": "SDL2_mixer.dll",
+    "version": "2.8.2",
+    "license": "Zlib AND Artistic-1.0-Perl AND CC0-1.0 AND (MIT OR Unlicense) AND (Unlicense OR MIT-0)",
+    "copyright": "Copyright (C) 1997-2025 Sam Lantinga",
+    "url": "https://github.com/libsdl-org/SDL_mixer",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64",
+    "used_for": "Sound effects, ambience and music",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": [
+     "notices/native/SDL2_mixer.txt",
+     "notices/native/timidity-SDL_mixer.txt",
+     "notices/native/minimp3.txt",
+     "notices/native/stb_vorbis.txt",
+     "notices/native/dr_libs.txt"
+    ],
+    "status": "verified",
+    "note": "Built in (from SDL_mixer release-2.8.2 src/codecs): Timidity MIDI (Perl Artistic License, Tuukka Toivonen), minimp3 (CC0-1.0), stb_vorbis v1.22 (MIT or public domain), dr_flac from dr_libs (public domain or MIT-0). Manticore plays only Ogg Vorbis files; the MIDI code is present in the DLL but never used."
+   },
+   {
+    "id": "sdl2-ttf",
+    "name": "SDL2_ttf",
+    "file": "SDL2_ttf.dll",
+    "version": "2.24.0",
+    "license": "Zlib AND FTL AND MIT-Modern-Variant",
+    "copyright": "Copyright (C) 1997-2025 Sam Lantinga",
+    "url": "https://github.com/libsdl-org/SDL_ttf",
+    "source": "byte-identical to SDL2_ttf-devel-2.24.0-VC.zip lib/x64",
+    "used_for": "Drawing text",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": [
+     "notices/native/SDL2_ttf.txt",
+     "notices/native/freetype.txt",
+     "notices/native/harfbuzz.txt"
+    ],
+    "status": "verified",
+    "note": "Built in: FreeType 2.13.2 (used under the FreeType License, FTL; it is also offered under GPL-2.0) and HarfBuzz 8.1.1 (\"Old MIT\" = MIT-Modern-Variant), the libsdl-org submodule commits pinned by SDL_ttf release-2.24.0. Portions of this software are copyright (C) The FreeType Project (www.freetype.org). All rights reserved."
+   },
+   {
+    "id": "freetype",
+    "name": "FreeType",
+    "file": "freetype.dll",
+    "version": "2.11.1",
+    "license": "FTL",
+    "copyright": "Copyright (C) 2000-2021 The FreeType Project",
+    "url": "https://freetype.org",
+    "source": "byte-identical to pygame-ce prebuilt-x64-pygame-2.1.4-20220319_2.zip lib/",
+    "used_for": "pygame.freetype text drawing",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/freetype.txt",
+    "status": "verified",
+    "note": "Used under the FreeType License (FTL); FreeType is also offered under GPL-2.0. Portions of this software are copyright (C) 2021 The FreeType Project (www.freetype.org). All rights reserved."
+   },
+   {
+    "id": "libjpeg-turbo",
+    "name": "libjpeg-turbo",
+    "file": "libjpeg-62.dll",
+    "version": "libjpeg-turbo (2026 build, libjpeg API 6.2)",
+    "license": "IJG AND BSD-3-Clause AND Zlib",
+    "copyright": "Copyright (C) 1991-2026 The libjpeg-turbo Project and many others",
+    "url": "https://libjpeg-turbo.org",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VCpgce.zip lib/x64/optional",
+    "used_for": "JPEG card pictures",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libjpeg-turbo.txt",
+    "status": "verified",
+    "note": "This software is based in part on the work of the Independent JPEG Group."
+   },
+   {
+    "id": "libogg",
+    "name": "libogg",
+    "file": "libogg-0.dll",
+    "version": "as shipped with SDL2_mixer 2.8.2",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2002-2020 Xiph.org Foundation",
+    "url": "https://xiph.org/ogg/",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64/optional",
+    "used_for": "Ogg container for Opus",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libogg.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libopus",
+    "name": "Opus",
+    "file": "libopus-0.dll",
+    "version": "1.4",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright 2001-2011 Xiph.Org, Skype Limited, Octasic, Jean-Marc Valin, Timothy B. Terriberry, CSIRO, Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo",
+    "url": "https://opus-codec.org",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64/optional",
+    "used_for": "Opus audio decoding",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/opus.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libopusfile",
+    "name": "opusfile",
+    "file": "libopusfile-0.dll",
+    "version": "as shipped with SDL2_mixer 2.8.2",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright (c) 1994-2013 Xiph.Org Foundation and contributors",
+    "url": "https://opus-codec.org",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64/optional",
+    "used_for": "Opus file reading",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/opusfile.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libpng",
+    "name": "libpng",
+    "file": "libpng16-16.dll",
+    "version": "1.6.58 (with zlib 1.3.1 built in)",
+    "license": "libpng-2.0 AND Zlib",
+    "copyright": "Copyright (c) 1995-2026 The PNG Reference Library Authors, (c) 2018-2026 Cosmin Truta; zlib Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler",
+    "url": "http://www.libpng.org/pub/png/libpng.html",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VCpgce.zip lib/x64/optional",
+    "used_for": "PNG pictures",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libpng.txt",
+    "status": "verified",
+    "note": "The licence file is libpng's own LICENSE at tag v1.6.58 (github.com/pnggroup/libpng)."
+   },
+   {
+    "id": "libtiff",
+    "name": "LibTIFF",
+    "file": "libtiff-5.dll",
+    "version": "4.2.0",
+    "license": "libtiff",
+    "copyright": "Copyright (c) 1988-1997 Sam Leffler; Copyright (c) 1991-1997 Silicon Graphics, Inc.",
+    "url": "https://libtiff.gitlab.io/libtiff/",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VC.zip lib/x64/optional",
+    "used_for": "TIFF pictures (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libtiff.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libwavpack",
+    "name": "WavPack",
+    "file": "libwavpack-1.dll",
+    "version": "5.6.0",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright (c) 1998-2022 David Bryant",
+    "url": "https://www.wavpack.com",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64/optional",
+    "used_for": "WavPack audio (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/wavpack.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libwebp",
+    "name": "libwebp",
+    "file": "libwebp-7.dll",
+    "version": "as shipped with SDL2_image 2.8.12",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2010, Google Inc. All rights reserved.",
+    "url": "https://chromium.googlesource.com/webm/libwebp",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VC.zip lib/x64/optional",
+    "used_for": "WebP pictures (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libwebp.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libwebpdemux",
+    "name": "libwebpdemux",
+    "file": "libwebpdemux-2.dll",
+    "version": "as shipped with SDL2_image 2.8.12",
+    "license": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2010, Google Inc. All rights reserved.",
+    "url": "https://chromium.googlesource.com/webm/libwebp",
+    "source": "byte-identical to SDL2_image-devel-2.8.12-VC.zip lib/x64/optional",
+    "used_for": "Animated WebP (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libwebp.txt",
+    "status": "verified"
+   },
+   {
+    "id": "libxmp",
+    "name": "libxmp",
+    "file": "libxmp.dll",
+    "version": "4.6.3",
+    "license": "MIT",
+    "copyright": "Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr",
+    "url": "https://xmp.sourceforge.net",
+    "source": "byte-identical to SDL2_mixer-devel-2.8.2-VC.zip lib/x64/optional",
+    "used_for": "Tracker music modules (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/libxmp.txt",
+    "status": "verified"
+   },
+   {
+    "id": "portmidi",
+    "name": "PortMidi",
+    "file": "portmidi.dll",
+    "version": "as shipped in pygame-ce's 2022-03-19 prebuilt",
+    "license": "MIT",
+    "copyright": "Copyright (c) 1999-2000 Ross Bencina and Phil Burk; Copyright (c) 2001-2006 Roger B. Dannenberg",
+    "url": "https://github.com/PortMidi/portmidi",
+    "source": "byte-identical to pygame-ce prebuilt-x64-pygame-2.1.4-20220319_2.zip lib/",
+    "used_for": "pygame.midi (not used by Manticore)",
+    "shipped": "always (inside pygame-ce)",
+    "group": "Native libraries (pygame)",
+    "notice_file": "notices/native/portmidi.txt",
+    "status": "verified"
+   }
+  ]
+ },
+ "credits": [
+  {
+   "id": "wotc",
+   "title": "Wizards of the Coast",
+   "text": "Manticore is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC."
+  },
+  {
+   "id": "scryfall",
+   "title": "Card data and images",
+   "text": "Card data and card images come from Scryfall (scryfall.com) and are downloaded to this computer while you play; none are included with the program. Scryfall is not affiliated with and does not endorse this program."
+  },
+  {
+   "id": "artists",
+   "title": "Card art",
+   "text": "Card art is the work of the credited artists, © Wizards of the Coast."
+  },
+  {
+   "id": "grok-art",
+   "title": "Game art",
+   "text": "Some of Manticore's artwork was Created with Grok: the table backgrounds, the studio splash, the title screen and the window icon."
+  },
+  {
+   "id": "decksites",
+   "title": "Deck import",
+   "text": "Decks can be imported from text exports made on Moxfield and Archidekt. Manticore is not affiliated with either site."
+  }
+ ]
+}

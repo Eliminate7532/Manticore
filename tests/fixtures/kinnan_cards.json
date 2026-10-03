@@ -1,0 +1,1364 @@
+{
+ "ancient tomb": {
+  "name": "Ancient Tomb",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {C}{C}. This land deals 2 damage to you.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C"
+  ]
+ },
+ "arcane signet": {
+  "name": "Arcane Signet",
+  "type_line": "Artifact",
+  "mana_cost": "{2}",
+  "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+  "color_identity": [],
+  "cmc": 2.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "barkchannel pathway // tidechannel pathway": {
+  "name": "Barkchannel Pathway // Tidechannel Pathway",
+  "type_line": "Land // Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "modal_dfc",
+  "produced_mana": [
+   "G",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Barkchannel Pathway",
+    "type_line": "Land",
+    "mana_cost": "",
+    "oracle_text": "{T}: Add {G}."
+   },
+   {
+    "name": "Tidechannel Pathway",
+    "type_line": "Land",
+    "mana_cost": "",
+    "oracle_text": "{T}: Add {U}."
+   }
+  ]
+ },
+ "basalt monolith": {
+  "name": "Basalt Monolith",
+  "type_line": "Artifact",
+  "mana_cost": "{3}",
+  "oracle_text": "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{3}: Untap this artifact.",
+  "color_identity": [],
+  "cmc": 3.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C"
+  ]
+ },
+ "birds of paradise": {
+  "name": "Birds of Paradise",
+  "type_line": "Creature \u2014 Bird",
+  "mana_cost": "{G}",
+  "oracle_text": "Flying\n{T}: Add one mana of any color.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "0",
+  "toughness": "1",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "borne upon a wind": {
+  "name": "Borne Upon a Wind",
+  "type_line": "Instant",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "You may cast spells this turn as though they had flash.\nDraw a card.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "boseiju, who endures": {
+  "name": "Boseiju, Who Endures",
+  "type_line": "Legendary Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {G}.\nChannel \u2014 {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each legendary creature you control.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "botanical sanctum": {
+  "name": "Botanical Sanctum",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {G} or {U}.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G",
+   "U"
+  ]
+ },
+ "breeding pool": {
+  "name": "Breeding Pool",
+  "type_line": "Land \u2014 Forest Island",
+  "mana_cost": "",
+  "oracle_text": "({T}: Add {G} or {U}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G",
+   "U"
+  ]
+ },
+ "chain of vapor": {
+  "name": "Chain of Vapor",
+  "type_line": "Instant",
+  "mana_cost": "{U}",
+  "oracle_text": "Return target nonland permanent to its owner's hand. Then that permanent's controller may sacrifice a land of their choice. If the player does, they may copy this spell and may choose a new target for that copy.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "chord of calling": {
+  "name": "Chord of Calling",
+  "type_line": "Instant",
+  "mana_cost": "{X}{G}{G}{G}",
+  "oracle_text": "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {1} or one mana of that creature's color.)\nSearch your library for a creature card with mana value X or less, put it onto the battlefield, then shuffle.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "chrome mox": {
+  "name": "Chrome Mox",
+  "type_line": "Artifact",
+  "mana_cost": "{0}",
+  "oracle_text": "Imprint \u2014 When this artifact enters, you may exile a nonartifact, nonland card from your hand.\n{T}: Add one mana of any of the exiled card's colors.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "city of brass": {
+  "name": "City of Brass",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "Whenever this land becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "clever impersonator": {
+  "name": "Clever Impersonator",
+  "type_line": "Creature \u2014 Shapeshifter",
+  "mana_cost": "{2}{U}{U}",
+  "oracle_text": "You may have this creature enter as a copy of any nonland permanent on the battlefield.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "power": "0",
+  "toughness": "0",
+  "layout": "normal"
+ },
+ "command tower": {
+  "name": "Command Tower",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "commandeer": {
+  "name": "Commandeer",
+  "type_line": "Instant",
+  "mana_cost": "{5}{U}{U}",
+  "oracle_text": "You may exile two blue cards from your hand rather than pay this spell's mana cost.\nGain control of target noncreature spell. You may choose new targets for it. (If that spell is an artifact, enchantment, or planeswalker, the permanent enters under your control.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 7.0,
+  "layout": "normal"
+ },
+ "consecrated sphinx": {
+  "name": "Consecrated Sphinx",
+  "type_line": "Creature \u2014 Sphinx",
+  "mana_cost": "{4}{U}{U}",
+  "oracle_text": "Flying\nWhenever an opponent draws a card, you may draw two cards.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 6.0,
+  "power": "4",
+  "toughness": "6",
+  "layout": "normal"
+ },
+ "copy artifact": {
+  "name": "Copy Artifact",
+  "type_line": "Enchantment",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "You may have this enchantment enter as a copy of any artifact on the battlefield, except it's an enchantment in addition to its other types.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "copy enchantment": {
+  "name": "Copy Enchantment",
+  "type_line": "Enchantment",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "You may have this enchantment enter as a copy of any enchantment on the battlefield.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "delighted halfling": {
+  "name": "Delighted Halfling",
+  "type_line": "Creature \u2014 Halfling Citizen",
+  "mana_cost": "{G}",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "2",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "C",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "dispel": {
+  "name": "Dispel",
+  "type_line": "Instant",
+  "mana_cost": "{U}",
+  "oracle_text": "Counter target instant spell.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "disrupting shoal": {
+  "name": "Disrupting Shoal",
+  "type_line": "Instant \u2014 Arcane",
+  "mana_cost": "{X}{U}{U}",
+  "oracle_text": "You may exile a blue card with mana value X from your hand rather than pay this spell's mana cost.\nCounter target spell if its mana value is X.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "dizzy spell": {
+  "name": "Dizzy Spell",
+  "type_line": "Instant",
+  "mana_cost": "{U}",
+  "oracle_text": "Target creature gets -3/-0 until end of turn.\nTransmute {1}{U}{U} ({1}{U}{U}, Discard this card: Search your library for a card with the same mana value as this card, reveal it, put it into your hand, then shuffle. Transmute only as a sorcery.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "dramatic reversal": {
+  "name": "Dramatic Reversal",
+  "type_line": "Instant",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "Untap all nonland permanents you control.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "drift of phantasms": {
+  "name": "Drift of Phantasms",
+  "type_line": "Creature \u2014 Spirit",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "Defender (This creature can't attack.)\nFlying\nTransmute {1}{U}{U} ({1}{U}{U}, Discard this card: Search your library for a card with the same mana value as this card, reveal it, put it into your hand, then shuffle. Transmute only as a sorcery.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "power": "0",
+  "toughness": "5",
+  "layout": "normal"
+ },
+ "elvish mystic": {
+  "name": "Elvish Mystic",
+  "type_line": "Creature \u2014 Elf Druid",
+  "mana_cost": "{G}",
+  "oracle_text": "{T}: Add {G}.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "1",
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "elvish spirit guide": {
+  "name": "Elvish Spirit Guide",
+  "type_line": "Creature \u2014 Elf Spirit",
+  "mana_cost": "{2}{G}",
+  "oracle_text": "Exile this card from your hand: Add {G}.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 3.0,
+  "power": "2",
+  "toughness": "2",
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "endurance": {
+  "name": "Endurance",
+  "type_line": "Creature \u2014 Elemental Incarnation",
+  "mana_cost": "{1}{G}{G}",
+  "oracle_text": "Flash\nReach\nWhen this creature enters, up to one target player puts all the cards from their graveyard on the bottom of their library in a random order.\nEvoke\u2014Exile a green card from your hand.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 3.0,
+  "power": "3",
+  "toughness": "4",
+  "layout": "normal"
+ },
+ "enduring vitality": {
+  "name": "Enduring Vitality",
+  "type_line": "Enchantment Creature \u2014 Elk Glimmer",
+  "mana_cost": "{1}{G}{G}",
+  "oracle_text": "Vigilance\nCreatures you control have \"{T}: Add one mana of any color.\"\nWhen Enduring Vitality dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 3.0,
+  "power": "3",
+  "toughness": "3",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "faerie mastermind": {
+  "name": "Faerie Mastermind",
+  "type_line": "Creature \u2014 Faerie Rogue",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "Flash\nFlying\nWhenever an opponent draws their second card each turn, you draw a card.\n{3}{U}: Each player draws a card.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "2",
+  "toughness": "1",
+  "layout": "normal"
+ },
+ "fellwar stone": {
+  "name": "Fellwar Stone",
+  "type_line": "Artifact",
+  "mana_cost": "{2}",
+  "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+  "color_identity": [],
+  "cmc": 2.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "fierce guardianship": {
+  "name": "Fierce Guardianship",
+  "type_line": "Instant",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nCounter target noncreature spell.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "finale of devastation": {
+  "name": "Finale of Devastation",
+  "type_line": "Sorcery",
+  "mana_cost": "{X}{G}{G}",
+  "oracle_text": "Search your library and/or graveyard for a creature card with mana value X or less and put it onto the battlefield. If you search your library this way, shuffle. If X is 10 or more, creatures you control get +X/+X and gain haste until end of turn.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "flash photography": {
+  "name": "Flash Photography",
+  "type_line": "Sorcery",
+  "mana_cost": "{2}{U}{U}",
+  "oracle_text": "You may cast this spell as though it had flash if it targets a permanent you control.\nCreate a token that's a copy of target permanent.\nFlashback {4}{U}{U}",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "layout": "normal"
+ },
+ "flesh duplicate": {
+  "name": "Flesh Duplicate",
+  "type_line": "Creature \u2014 Shapeshifter Rebel",
+  "mana_cost": "{U}{U}",
+  "oracle_text": "You may have this creature enter as a copy of any creature on the battlefield, except it has vanishing 3 if that creature doesn't have vanishing. (A permanent with vanishing 3 enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "0",
+  "toughness": "0",
+  "layout": "normal"
+ },
+ "flooded strand": {
+  "name": "Flooded Strand",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "flusterstorm": {
+  "name": "Flusterstorm",
+  "type_line": "Instant",
+  "mana_cost": "{U}",
+  "oracle_text": "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "force of negation": {
+  "name": "Force of Negation",
+  "type_line": "Instant",
+  "mana_cost": "{1}{U}{U}",
+  "oracle_text": "If it's not your turn, you may exile a blue card from your hand rather than pay this spell's mana cost.\nCounter target noncreature spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "force of will": {
+  "name": "Force of Will",
+  "type_line": "Instant",
+  "mana_cost": "{3}{U}{U}",
+  "oracle_text": "You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost.\nCounter target spell.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 5.0,
+  "layout": "normal"
+ },
+ "forest": {
+  "name": "Forest",
+  "type_line": "Basic Land \u2014 Forest",
+  "mana_cost": "",
+  "oracle_text": "({T}: Add {G}.)",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "fyndhorn elves": {
+  "name": "Fyndhorn Elves",
+  "type_line": "Creature \u2014 Elf Druid",
+  "mana_cost": "{G}",
+  "oracle_text": "{T}: Add {G}.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "1",
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "gemstone caverns": {
+  "name": "Gemstone Caverns",
+  "type_line": "Legendary Land",
+  "mana_cost": "",
+  "oracle_text": "If this card is in your opening hand and you're not the starting player, you may begin the game with Gemstone Caverns on the battlefield with a luck counter on it. If you do, exile a card from your hand.\n{T}: Add {C}. If Gemstone Caverns has a luck counter on it, instead add one mana of any color.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "C",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "gene pollinator": {
+  "name": "Gene Pollinator",
+  "type_line": "Artifact Creature \u2014 Robot Insect",
+  "mana_cost": "{G}",
+  "oracle_text": "{T}, Tap an untapped permanent you control: Add one mana of any color.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "2",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "grim monolith": {
+  "name": "Grim Monolith",
+  "type_line": "Artifact",
+  "mana_cost": "{2}",
+  "oracle_text": "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{4}: Untap this artifact.",
+  "color_identity": [],
+  "cmc": 2.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C"
+  ]
+ },
+ "hidden strings": {
+  "name": "Hidden Strings",
+  "type_line": "Sorcery",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "You may tap or untap target permanent, then you may tap or untap another target permanent.\nCipher (Then you may exile this spell card encoded on a creature you control. Whenever that creature deals combat damage to a player, its controller may cast a copy of the encoded card without paying its mana cost.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "high fae trickster": {
+  "name": "High Fae Trickster",
+  "type_line": "Creature \u2014 Faerie Wizard",
+  "mana_cost": "{3}{U}",
+  "oracle_text": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\nYou may cast spells as though they had flash.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "power": "4",
+  "toughness": "2",
+  "layout": "normal"
+ },
+ "hullbreaker horror": {
+  "name": "Hullbreaker Horror",
+  "type_line": "Creature \u2014 Kraken Horror",
+  "mana_cost": "{5}{U}{U}",
+  "oracle_text": "Flash\nThis spell can't be countered.\nWhenever you cast a spell, choose up to one \u2014\n\u2022 Return target spell you don't control to its owner's hand.\n\u2022 Return target nonland permanent to its owner's hand.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 7.0,
+  "power": "7",
+  "toughness": "8",
+  "layout": "normal"
+ },
+ "imposter mech": {
+  "name": "Imposter Mech",
+  "type_line": "Artifact \u2014 Vehicle",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "You may have this Vehicle enter as a copy of a creature an opponent controls, except it's a Vehicle artifact with crew 3 and it loses all other card types.\nCrew 3",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "3",
+  "toughness": "1",
+  "layout": "normal"
+ },
+ "invasion of ikoria // zilortha, apex of ikoria": {
+  "name": "Invasion of Ikoria // Zilortha, Apex of Ikoria",
+  "type_line": "Battle \u2014 Siege // Legendary Creature \u2014 Dinosaur",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 2.0,
+  "layout": "transform",
+  "card_faces": [
+   {
+    "name": "Invasion of Ikoria",
+    "type_line": "Battle \u2014 Siege",
+    "mana_cost": "{X}{G}{G}",
+    "oracle_text": "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, exile it, then cast it transformed.)\nWhen this Siege enters, search your library and/or graveyard for a non-Human creature card with mana value X or less and put it onto the battlefield. If you search your library this way, shuffle."
+   },
+   {
+    "name": "Zilortha, Apex of Ikoria",
+    "type_line": "Legendary Creature \u2014 Dinosaur",
+    "mana_cost": "",
+    "oracle_text": "Reach\nFor each non-Human creature you control, you may have that creature assign its combat damage as though it weren't blocked."
+   }
+  ]
+ },
+ "ipnu rivulet": {
+  "name": "Ipnu Rivulet",
+  "type_line": "Land \u2014 Desert",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {C}.\n{T}, Pay 1 life: Add {U}.\n{1}{U}, {T}, Sacrifice a Desert: Target player mills four cards. (They put the top four cards of their library into their graveyard.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C",
+   "U"
+  ]
+ },
+ "island": {
+  "name": "Island",
+  "type_line": "Basic Land \u2014 Island",
+  "mana_cost": "",
+  "oracle_text": "({T}: Add {U}.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "U"
+  ]
+ },
+ "kinnan, bonder prodigy": {
+  "name": "Kinnan, Bonder Prodigy",
+  "type_line": "Legendary Creature \u2014 Human Druid",
+  "mana_cost": "{G}{U}",
+  "oracle_text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "2",
+  "toughness": "2",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "llanowar elves": {
+  "name": "Llanowar Elves",
+  "type_line": "Creature \u2014 Elf Druid",
+  "mana_cost": "{G}",
+  "oracle_text": "{T}: Add {G}.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "1",
+  "layout": "normal",
+  "produced_mana": [
+   "G"
+  ]
+ },
+ "lotus petal": {
+  "name": "Lotus Petal",
+  "type_line": "Artifact",
+  "mana_cost": "{0}",
+  "oracle_text": "{T}, Sacrifice this artifact: Add one mana of any color.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "mana confluence": {
+  "name": "Mana Confluence",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life: Add one mana of any color.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "mana vault": {
+  "name": "Mana Vault",
+  "type_line": "Artifact",
+  "mana_cost": "{1}",
+  "oracle_text": "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}.",
+  "color_identity": [],
+  "cmc": 1.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C"
+  ]
+ },
+ "mental misstep": {
+  "name": "Mental Misstep",
+  "type_line": "Instant",
+  "mana_cost": "{U/P}",
+  "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nCounter target spell with mana value 1.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "mindbreak trap": {
+  "name": "Mindbreak Trap",
+  "type_line": "Instant \u2014 Trap",
+  "mana_cost": "{2}{U}{U}",
+  "oracle_text": "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's mana cost.\nExile any number of target spells.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "layout": "normal"
+ },
+ "mirage mirror": {
+  "name": "Mirage Mirror",
+  "type_line": "Artifact",
+  "mana_cost": "{3}",
+  "oracle_text": "{2}: This artifact becomes a copy of target artifact, creature, enchantment, or land until end of turn.",
+  "color_identity": [],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "mirrormade": {
+  "name": "Mirrormade",
+  "type_line": "Enchantment",
+  "mana_cost": "{1}{U}{U}",
+  "oracle_text": "You may have this enchantment enter as a copy of any artifact or enchantment on the battlefield.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "misdirection": {
+  "name": "Misdirection",
+  "type_line": "Instant",
+  "mana_cost": "{3}{U}{U}",
+  "oracle_text": "You may exile a blue card from your hand rather than pay this spell's mana cost.\nChange the target of target spell with a single target.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 5.0,
+  "layout": "normal"
+ },
+ "misty rainforest": {
+  "name": "Misty Rainforest",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "mockingbird": {
+  "name": "Mockingbird",
+  "type_line": "Creature \u2014 Bird Bard",
+  "mana_cost": "{X}{U}",
+  "oracle_text": "Flying\nYou may have this creature enter as a copy of any creature on the battlefield with mana value less than or equal to the amount of mana spent to cast this creature, except it's a Bird in addition to its other types and it has flying.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "power": "1",
+  "toughness": "1",
+  "layout": "normal"
+ },
+ "mox amber": {
+  "name": "Mox Amber",
+  "type_line": "Legendary Artifact",
+  "mana_cost": "{0}",
+  "oracle_text": "{T}: Add one mana of any color among legendary creatures and planeswalkers you control.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "mox diamond": {
+  "name": "Mox Diamond",
+  "type_line": "Artifact",
+  "mana_cost": "{0}",
+  "oracle_text": "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add one mana of any color.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "mox opal": {
+  "name": "Mox Opal",
+  "type_line": "Legendary Artifact",
+  "mana_cost": "{0}",
+  "oracle_text": "Metalcraft \u2014 {T}: Add one mana of any color. Activate only if you control three or more artifacts.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "mystic remora": {
+  "name": "Mystic Remora",
+  "type_line": "Enchantment",
+  "mana_cost": "{U}",
+  "oracle_text": "Cumulative upkeep {1} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "nature's rhythm": {
+  "name": "Nature's Rhythm",
+  "type_line": "Sorcery",
+  "mana_cost": "{X}{G}{G}",
+  "oracle_text": "Search your library for a creature card with mana value X or less, put it onto the battlefield, then shuffle.\nHarmonize {X}{G}{G}{G}{G} (You may cast this card from your graveyard for its harmonize cost. You may tap a creature you control to reduce that cost by an amount of generic mana equal to its power. Then exile this spell.)",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "otawara, soaring city": {
+  "name": "Otawara, Soaring City",
+  "type_line": "Legendary Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {U}.\nChannel \u2014 {3}{U}, Discard this card: Return target artifact, creature, enchantment, or planeswalker to its owner's hand. This ability costs {1} less to activate for each legendary creature you control.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "U"
+  ]
+ },
+ "pact of negation": {
+  "name": "Pact of Negation",
+  "type_line": "Instant",
+  "mana_cost": "{0}",
+  "oracle_text": "Counter target spell.\nAt the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "polluted delta": {
+  "name": "Polluted Delta",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "rejuvenating springs": {
+  "name": "Rejuvenating Springs",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "This land enters tapped unless you have two or more opponents.\n{T}: Add {G} or {U}.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G",
+   "U"
+  ]
+ },
+ "rhystic study": {
+  "name": "Rhystic Study",
+  "type_line": "Enchantment",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "normal"
+ },
+ "samut, tyrant of naktamun": {
+  "name": "Samut, Tyrant of Naktamun",
+  "type_line": "Legendary Creature \u2014 Human Wizard",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "Instant and sorcery spells you control have split second. (As long as a spell with split second is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "2",
+  "toughness": "1",
+  "layout": "normal"
+ },
+ "scalding tarn": {
+  "name": "Scalding Tarn",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "sink into stupor // soporific springs": {
+  "name": "Sink into Stupor // Soporific Springs",
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "layout": "modal_dfc",
+  "produced_mana": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Sink into Stupor",
+    "type_line": "Instant",
+    "mana_cost": "{1}{U}{U}",
+    "oracle_text": "Return target spell or nonland permanent an opponent controls to its owner's hand."
+   },
+   {
+    "name": "Soporific Springs",
+    "type_line": "Land",
+    "mana_cost": "",
+    "oracle_text": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {U}."
+   }
+  ]
+ },
+ "snapback": {
+  "name": "Snapback",
+  "type_line": "Instant",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "You may exile a blue card from your hand rather than pay this spell's mana cost.\nReturn target creature to its owner's hand.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "sol ring": {
+  "name": "Sol Ring",
+  "type_line": "Artifact",
+  "mana_cost": "{1}",
+  "oracle_text": "{T}: Add {C}{C}.",
+  "color_identity": [],
+  "cmc": 1.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C"
+  ]
+ },
+ "springleaf drum": {
+  "name": "Springleaf Drum",
+  "type_line": "Artifact",
+  "mana_cost": "{1}",
+  "oracle_text": "{T}, Tap an untapped creature you control: Add one mana of any color.",
+  "color_identity": [],
+  "cmc": 1.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "subtlety": {
+  "name": "Subtlety",
+  "type_line": "Creature \u2014 Elemental Incarnation",
+  "mana_cost": "{2}{U}{U}",
+  "oracle_text": "Flash\nFlying\nWhen this creature enters, choose up to one target creature spell or planeswalker spell. Its owner puts it on their choice of the top or bottom of their library.\nEvoke\u2014Exile a blue card from your hand.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "power": "3",
+  "toughness": "3",
+  "layout": "normal"
+ },
+ "sudden substitution": {
+  "name": "Sudden Substitution",
+  "type_line": "Instant",
+  "mana_cost": "{2}{U}{U}",
+  "oracle_text": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nExchange control of target noncreature spell and target creature. Then the spell's controller may choose new targets for it.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 4.0,
+  "layout": "normal"
+ },
+ "swan song": {
+  "name": "Swan Song",
+  "type_line": "Instant",
+  "mana_cost": "{U}",
+  "oracle_text": "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 1.0,
+  "layout": "normal"
+ },
+ "sylvan library": {
+  "name": "Sylvan Library",
+  "type_line": "Enchantment",
+  "mana_cost": "{1}{G}",
+  "oracle_text": "At the beginning of your draw step, you may draw two additional cards. If you do, choose two cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on top of your library.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "talisman of curiosity": {
+  "name": "Talisman of Curiosity",
+  "type_line": "Artifact",
+  "mana_cost": "{2}",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {G} or {U}. This artifact deals 1 damage to you.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C",
+   "G",
+   "U"
+  ]
+ },
+ "tarnished citadel": {
+  "name": "Tarnished Citadel",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add one mana of any color. This land deals 3 damage to you.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "C",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "the cabbage merchant": {
+  "name": "The Cabbage Merchant",
+  "type_line": "Legendary Creature \u2014 Human Citizen",
+  "mana_cost": "{2}{G}",
+  "oracle_text": "Whenever an opponent casts a noncreature spell, create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\nWhenever a creature deals combat damage to you, sacrifice a Food token.\nTap two untapped Foods you control: Add one mana of any color.",
+  "color_identity": [
+   "G"
+  ],
+  "cmc": 3.0,
+  "power": "2",
+  "toughness": "2",
+  "layout": "normal",
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ "the one ring": {
+  "name": "The One Ring",
+  "type_line": "Legendary Artifact",
+  "mana_cost": "{4}",
+  "oracle_text": "Indestructible\nWhen The One Ring enters, if you cast it, you gain protection from everything until your next turn.\nAt the beginning of your upkeep, you lose 1 life for each burden counter on The One Ring.\n{T}: Put a burden counter on The One Ring, then draw a card for each burden counter on The One Ring.",
+  "color_identity": [],
+  "cmc": 4.0,
+  "layout": "normal"
+ },
+ "thrasios, triton hero": {
+  "name": "Thrasios, Triton Hero",
+  "type_line": "Legendary Creature \u2014 Merfolk Wizard",
+  "mana_cost": "{G}{U}",
+  "oracle_text": "{4}: Scry 1, then reveal the top card of your library. If it's a land card, put it onto the battlefield tapped. Otherwise, draw a card.\nPartner (You can have two commanders if both have partner.)",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "1",
+  "toughness": "3",
+  "layout": "normal"
+ },
+ "transmute artifact": {
+  "name": "Transmute Artifact",
+  "type_line": "Sorcery",
+  "mana_cost": "{U}{U}",
+  "oracle_text": "Sacrifice an artifact. If you do, search your library for an artifact card. If that card's mana value is less than or equal to the sacrificed artifact's mana value, put it onto the battlefield. If it's greater, you may pay {X}, where X is the difference. If you do, put it onto the battlefield. If you don't, put it into its owner's graveyard. Then shuffle.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "trophy mage": {
+  "name": "Trophy Mage",
+  "type_line": "Creature \u2014 Human Wizard",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "When this creature enters, you may search your library for an artifact card with mana value 3, reveal it, put it into your hand, then shuffle.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "power": "2",
+  "toughness": "2",
+  "layout": "normal"
+ },
+ "tropical island": {
+  "name": "Tropical Island",
+  "type_line": "Land \u2014 Forest Island",
+  "mana_cost": "",
+  "oracle_text": "({T}: Add {G} or {U}.)",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G",
+   "U"
+  ]
+ },
+ "twincast": {
+  "name": "Twincast",
+  "type_line": "Instant",
+  "mana_cost": "{U}{U}",
+  "oracle_text": "Copy target instant or sorcery spell. You may choose new targets for the copy.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "layout": "normal"
+ },
+ "valley floodcaller": {
+  "name": "Valley Floodcaller",
+  "type_line": "Creature \u2014 Otter Wizard",
+  "mana_cost": "{2}{U}",
+  "oracle_text": "Flash\nYou may cast noncreature spells as though they had flash.\nWhenever you cast a noncreature spell, Birds, Frogs, Otters, and Rats you control get +1/+1 until end of turn. Untap them.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 3.0,
+  "power": "2",
+  "toughness": "2",
+  "layout": "normal"
+ },
+ "verdant catacombs": {
+  "name": "Verdant Catacombs",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "volatile stormdrake": {
+  "name": "Volatile Stormdrake",
+  "type_line": "Creature \u2014 Drake",
+  "mana_cost": "{1}{U}",
+  "oracle_text": "Flying, hexproof from activated and triggered abilities\nWhen this creature enters, exchange control of this creature and target creature an opponent controls. If you do, you get {E}{E}{E}{E}, then sacrifice that creature unless you pay an amount of {E} equal to its mana value.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "3",
+  "toughness": "2",
+  "layout": "normal"
+ },
+ "wan shi tong, librarian": {
+  "name": "Wan Shi Tong, Librarian",
+  "type_line": "Legendary Creature \u2014 Bird Spirit",
+  "mana_cost": "{X}{U}{U}",
+  "oracle_text": "Flash\nFlying, vigilance\nWhen Wan Shi Tong enters, put X +1/+1 counters on him. Then draw half X cards, rounded down.\nWhenever an opponent searches their library, put a +1/+1 counter on Wan Shi Tong and draw a card.",
+  "color_identity": [
+   "U"
+  ],
+  "cmc": 2.0,
+  "power": "1",
+  "toughness": "1",
+  "layout": "normal"
+ },
+ "waterlogged grove": {
+  "name": "Waterlogged Grove",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life: Add {G} or {U}.\n{1}, {T}, Sacrifice this land: Draw a card.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "G",
+   "U"
+  ]
+ },
+ "windswept heath": {
+  "name": "Windswept Heath",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "wooded foothills": {
+  "name": "Wooded Foothills",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle.",
+  "color_identity": [],
+  "cmc": 0.0,
+  "layout": "normal"
+ },
+ "yavimaya coast": {
+  "name": "Yavimaya Coast",
+  "type_line": "Land",
+  "mana_cost": "",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {G} or {U}. This land deals 1 damage to you.",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "cmc": 0.0,
+  "layout": "normal",
+  "produced_mana": [
+   "C",
+   "G",
+   "U"
+  ]
+ }
+}

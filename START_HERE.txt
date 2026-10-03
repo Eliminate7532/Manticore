@@ -1,0 +1,153 @@
+MANTICORE ALPHA - START HERE
+============================
+
+Thanks for trying Manticore. It is a free Commander playtester: you play Magic: The Gathering Commander
+games against 1 to 3 AI opponents on your own PC, or against a friend online. The rules engine is Forge.
+
+This is an ALPHA, so things will break. When they do, a report from you (F8, see part 5) is the most
+useful thing you can send.
+
+
+1. WHAT YOU NEED
+----------------
+- Windows 10 or 11, 64-bit.
+- 8 GB of RAM. It runs with less, but more slowly: under 8 GB the deck screen shows an orange note and
+  the rules engine gets a smaller memory limit.
+- About [500 MB] of free disk space, plus room for card pictures (they are kept once downloaded).
+- An internet connection the first time you open a deck, to download card pictures from Scryfall.
+- You do NOT need Python, Java or administrator rights. The installer brings everything it needs.
+
+
+2. INSTALL, UPDATE, UNINSTALL
+-----------------------------
+Install
+  1. Run Manticore-[x.y.z]-setup.exe from the link Karl sends you.
+  2. The installer isn't signed yet, so Windows may say "Windows protected your PC". Click More info,
+     then Run anyway.
+  3. Accept the licence (GNU GPL v3), keep the suggested folder, and click Install. Leave "Run Manticore"
+     ticked on the last page.
+  Manticore installs for your Windows user only, and adds a Start menu shortcut.
+
+Update
+  When a new version is out, the title screen shows "A new version is ready". Click Update now:
+  Manticore downloads it, closes, installs it and opens again by itself. Later and Skip this version
+  work too (Cog > Updates turns the check off).
+  You can also install a new version over the old one by hand. Either way your decks, settings and saved
+  game are kept: they live in your own data folder (Cog > Open my data folder), not in the program folder.
+
+Uninstall
+  Windows Settings > Apps > Installed apps > Manticore > Uninstall. It asks "Also delete my decks, settings
+  and saved games?". No (the default) keeps them for a later reinstall; Yes removes them too.
+
+
+3. YOUR FIRST GAME
+------------------
+  1. Start Manticore and click Play on the title screen.
+  2. On the deck screen, pick YOUR DECK. There are six starter decks. To use your own: copy its text list
+     (in Moxfield: open the deck, Export, copy the text), click Import a deck, then Paste from clipboard.
+     Ctrl+V on the deck screen does the same.
+  3. Choose 1, 2 or 3 opponents and a deck for each AI: click its box, then a deck. Random and Same as mine
+     work too.
+  4. Click Start. The rules engine takes 10 to 20 seconds to wake up; the commanders face off while it does.
+  5. Keep or mulligan your hand.
+  6. A short tour of the table starts at your first chance to act: 12 steps, about a minute. It points at
+     each part of the screen and its keys. It is not a Magic lesson. Esc skips it, and
+     Cog > Tour of the table shows it again any time.
+
+Keys worth knowing
+  Space / Enter   OK, pass priority, move on (the bar above your hand says what it will do)
+  Esc             Cancel
+  E               End turn
+  A               Full Send: attack with everything that can
+  U / Ctrl+Z      Take back a land you just tapped for mana
+  M               Sound on / off
+  + / -           Bigger / smaller text
+  H               Every key and control
+  F8              Report a bug, or suggest an idea
+
+Formats
+  The deck screen's Format buttons (top right) switch between Commander and Brawl (MTG Arena's 100-card
+  Brawl: a creature or planeswalker commander, 25 life, 30 with 2-3 opponents, no commander damage). Import
+  an Arena deck with its Export button, then Ctrl+V on the deck screen. Online play is Commander only.
+
+Deck screen tags
+  NOT LEGAL means a deck breaks a rule of its format (a banned card, the wrong colours, too many or too few
+  cards...). The deck screen lists the lines; you can still play it. The one exception: a commander that
+  can't legally be a commander (or two that can't be partners) stops the deck from starting.
+  UNCHECKED means the card data needed to check hasn't arrived yet.
+
+Card art
+  Card art (deck screen) lets you choose the printing of each card in one of your decks. Pictures of your
+  own go in the my_art folder inside your data folder, named after the card ("Sol Ring.png").
+
+Resume
+  If the program closes mid-game, the next start offers Continue (title screen) or Resume last game (deck
+  screen). A game saved by an older version can't be resumed; you'll be offered Discard instead.
+
+
+4. PLAYING A FRIEND ONLINE (1 v 1)
+----------------------------------
+  One of you hosts, the other joins. The game runs on the host's PC.
+  Host:  on the deck screen pick your deck, click Host online, then send your friend the invite code
+         (Copy invite code) by message.
+  Join:  pick your deck, click Join online, and paste the invite code.
+  Both of you should have the same version of Manticore.
+  Windows Firewall may ask about Java the first time you host: allow it.
+  If the host screen says the router can't open the way (often "CGNAT"), the simplest fix is Tailscale
+  (free) on both PCs; the host screen fills in the address when Tailscale is running.
+  An online game can't be saved or resumed yet: if either side closes, the game ends.
+
+
+5. WHEN SOMETHING GOES WRONG: F8
+--------------------------------
+Press F8 at any time, even with a question on screen. Write what happened and what you expected, in a
+sentence or two, then send.
+
+What a report contains
+  - a picture of the table and the board (every card the game showed you)
+  - the game log and every click since the game began
+  - the deck lists of that game
+  - the program's own logs, the versions of Manticore and Forge, your Windows version and screen size
+  - the name you typed in the form, if any
+
+What it does not contain
+  - your Windows user name: folder paths are cut down to "~"
+  - your computer's name
+  - any of your files other than the program's own logs and the game's decks
+
+Reports go to Karl's alpha Discord channel. If sending fails, the report is saved as a zip file (the
+message says where): send that file to Karl instead.
+
+If the program crashes or freezes, the next start shows a red line: "closed unexpectedly last time".
+Click Send report, or Look first to see the zip before it goes. Nothing is ever sent without you clicking.
+
+Have an idea instead? The F8 window has a second tab, "Suggest a feature": say what you would like and
+what it would help you do. It sends only what you write (and a picture of the screen if you tick the box).
+On the deck screen F8 opens straight on that tab.
+
+
+6. KNOWN ISSUES (no need to report these)
+-----------------------------------------
+- The AI plays combo decks as midrange. It never goes infinite; scripted combo lines come later.
+- An AI that starts a pointless loop is stopped after 10 repeats of one ability in a turn.
+- The starter decks aren't balanced against each other. They are practice opponents in different styles.
+- One table freezes the engine before turn 1: Valgavoth + Light-Paws + Kinnan + Ojer Axonil together. The
+  deck screen warns you first.
+- A "reorder" window every draw step when two of your own triggers happen together. That is Forge.
+- The newest sets may be missing: the alpha uses one fixed Forge version. A card it doesn't know is named on
+  the deck screen ("not in this version of Forge yet") and left out of the game, never silently swapped.
+- At 200% text the screen is tight: some labels are shortened.
+- [Anything Karl's 20 test games turn up.]
+
+
+7. LICENCE AND CREDITS
+----------------------
+- Manticore is free software under the GNU GPL v3 or later (Cog > Licenses and credits, or Shift+F1).
+- Source code: github.com/Eliminate7532/manticore
+- Forge (the rules engine) is GPL v3 too.
+- Card images and card data come from Scryfall.
+- Sounds: free CC0 recordings, listed in Licenses and credits.
+- Some of Manticore's artwork was created with Grok: the table backgrounds, the splash and title screens,
+  and the window icon.
+- Manticore is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by
+  Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.

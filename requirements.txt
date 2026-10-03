@@ -1,0 +1,12 @@
+# The exact versions this program is tested with (Python 3.14 on Windows, and Linux).
+# Install them with:   python -m pip install -r requirements.txt
+#
+# Only pygame-ce and requests are used directly; the other four are what requests needs, pinned so a new release of any of them
+# cannot change how the program behaves. To move to newer versions later: change the numbers, run the tests
+# (python -m unittest discover tests), and only then keep the change.
+pygame-ce==2.5.8
+requests==2.34.2
+certifi==2026.7.22
+charset-normalizer==3.5.1
+idna==3.20
+urllib3==2.8.0

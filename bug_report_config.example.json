@@ -1,0 +1,5 @@
+{
+  "discord_webhook": "PASTE THE DISCORD WEBHOOK ADDRESS HERE (https://discord.com/api/webhooks/...)",
+  "owner_name": "Karl",
+  "ideas_webhook": "OPTIONAL: a second webhook address, only if ideas (F8 > Suggest a feature) should go to their own channel; otherwise leave this as it is"
+}

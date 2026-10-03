@@ -1,0 +1,628 @@
+{
+"abby, merciless soldier": {
+"color_identity": [
+"G",
+"R"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Abby, Merciless Soldier",
+"oracle_text": "When you cast this spell, create a number of 1/1 black Fungus Zombie creature tokens named Cordyceps Infected equal to the amount of mana spent to cast it.\nAbby enters under the control of an opponent of your choice.\nPartner—Survivors (You can have two commanders if both have this ability.)",
+"power": "4",
+"type_line": "Legendary Creature — Human Survivor"
+},
+"arcane signet": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Arcane Signet",
+"oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+"type_line": "Artifact"
+},
+"atreus, impulsive son": {
+"color_identity": [
+"R",
+"U"
+],
+"keywords": [
+"Reach",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Atreus, Impulsive Son",
+"oracle_text": "Reach\n{3}, {T}: Draw a card for each experience counter you have, then discard a card. Atreus deals 2 damage to each opponent.\nPartner—Father & son (You can have two commanders if both have this ability.)",
+"power": "2",
+"type_line": "Legendary Creature — God Archer"
+},
+"bjorna, nightfall alchemist": {
+"color_identity": [
+"R",
+"U"
+],
+"keywords": [
+"Goad",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Bjorna, Nightfall Alchemist",
+"oracle_text": "{T}, Sacrifice an artifact: Bjorna, Nightfall Alchemist deals 1 damage to target creature. Goad that creature. (Until your next turn, that creature attacks each combat if able and attacks a player other than you if able.)\nPartner—Friends forever (You can have two commanders if both have this ability.)",
+"power": "1",
+"type_line": "Legendary Creature — Human"
+},
+"boros charm": {
+"color_identity": [
+"R",
+"W"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Boros Charm",
+"oracle_text": "Choose one —\n• Boros Charm deals 4 damage to target player or planeswalker.\n• Permanents you control gain indestructible until end of turn.\n• Target creature gains double strike until end of turn.",
+"type_line": "Instant"
+},
+"cecily, haunted mage": {
+"color_identity": [
+"B",
+"R",
+"U"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Cecily, Haunted Mage",
+"oracle_text": "Your maximum hand size is eleven.\nWhenever Cecily, Haunted Mage attacks, you draw a card and you lose 1 life. Then if you have eleven or more cards in your hand, you may cast an instant or sorcery spell from your hand without paying its mana cost.\nPartner—Friends forever (You can have two commanders if both have this ability.)",
+"power": "3",
+"type_line": "Legendary Creature — Human Wizard"
+},
+"chaos orb": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "banned"
+},
+"name": "Chaos Orb",
+"oracle_text": "{1}, {T}: If this artifact is on the battlefield, flip it onto the battlefield from a height of at least one foot. If this artifact turns over completely at least once during the flip, destroy all nontoken permanents it touches. Then destroy this artifact.",
+"type_line": "Artifact"
+},
+"delver of secrets": {
+"card_faces": [
+{
+"name": "Delver of Secrets",
+"oracle_text": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform this creature.",
+"power": "1",
+"type_line": "Creature — Human Wizard"
+},
+{
+"name": "Insectile Aberration",
+"oracle_text": "Flying",
+"power": "3",
+"type_line": "Creature — Human Insect"
+}
+],
+"color_identity": [
+"U"
+],
+"keywords": [
+"Flying",
+"Transform"
+],
+"layout": "transform",
+"legalities": {
+"commander": "legal"
+},
+"name": "Delver of Secrets // Insectile Aberration",
+"type_line": "Creature — Human Wizard // Creature — Human Insect"
+},
+"donatello, the brains": {
+"color_identity": [
+"U"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Donatello, the Brains",
+"oracle_text": "If one or more tokens would be created under your control, those tokens plus a Mutagen token are created instead.\nPartner—Character select (You can have two commanders if both have this ability.)",
+"power": "2",
+"type_line": "Legendary Creature — Mutant Ninja Turtle"
+},
+"dryad arbor": {
+"color_identity": [
+"G"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Dryad Arbor",
+"oracle_text": "(This land isn't a spell, it's affected by summoning sickness, and it has \"{T}: Add {G}.\")",
+"power": "1",
+"type_line": "Land Creature — Forest Dryad"
+},
+"ellie, vengeful hunter": {
+"color_identity": [
+"B",
+"R"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Ellie, Vengeful Hunter",
+"oracle_text": "Pay 2 life, Sacrifice another creature: Ellie deals 2 damage to target player and gains indestructible until end of turn.\nPartner—Survivors (You can have two commanders if both have this ability.)",
+"power": "3",
+"type_line": "Legendary Creature — Human Survivor"
+},
+"esika, god of the tree": {
+"card_faces": [
+{
+"name": "Esika, God of the Tree",
+"oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\"",
+"power": "1",
+"type_line": "Legendary Creature — God"
+},
+{
+"name": "The Prismatic Bridge",
+"oracle_text": "At the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+"type_line": "Legendary Enchantment"
+}
+],
+"color_identity": [
+"B",
+"G",
+"R",
+"U",
+"W"
+],
+"keywords": [
+"Vigilance"
+],
+"layout": "modal_dfc",
+"legalities": {
+"commander": "legal"
+},
+"name": "Esika, God of the Tree // The Prismatic Bridge",
+"type_line": "Legendary Creature — God // Legendary Enchantment"
+},
+"forest": {
+"color_identity": [
+"G"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Forest",
+"oracle_text": "({T}: Add {G}.)",
+"type_line": "Basic Land — Forest"
+},
+"grist, the hunger tide": {
+"color_identity": [
+"B",
+"G"
+],
+"keywords": [
+"Mill"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Grist, the Hunger Tide",
+"oracle_text": "As long as Grist isn't on the battlefield, it's a 1/1 Insect creature in addition to its other types.\n+1: Create a 1/1 black and green Insect creature token, then mill a card. If an Insect card was milled this way, put a loyalty counter on Grist and repeat this process.\n−2: You may sacrifice a creature. When you do, destroy target creature or planeswalker.\n−5: Each opponent loses life equal to the number of creature cards in your graveyard.",
+"type_line": "Legendary Planeswalker — Grist"
+},
+"hearthhull, the worldseed": {
+"color_identity": [
+"B",
+"G",
+"R"
+],
+"keywords": [
+"Station"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Hearthhull, the Worldseed",
+"oracle_text": "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 8+.)\n2+ | {1}, {T}, Sacrifice a land: Draw two cards. You may play an additional land this turn.\n8+ | Flying, vigilance, haste\nWhenever you sacrifice a land, each opponent loses 2 life.",
+"power": "6",
+"type_line": "Legendary Artifact — Spacecraft"
+},
+"kinnan, bonder prodigy": {
+"color_identity": [
+"G",
+"U"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Kinnan, Bonder Prodigy",
+"oracle_text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+"power": "2",
+"type_line": "Legendary Creature — Human Druid"
+},
+"kitchen finks": {
+"color_identity": [
+"G",
+"W"
+],
+"keywords": [
+"Persist"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Kitchen Finks",
+"oracle_text": "When this creature enters, you gain 2 life.\nPersist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)",
+"power": "3",
+"type_line": "Creature — Ouphe"
+},
+"kratos, stoic father": {
+"color_identity": [
+"R",
+"W"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Kratos, Stoic Father",
+"oracle_text": "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner—Father & son (You can have two commanders if both have this ability.)",
+"power": "4",
+"type_line": "Legendary Creature — God Warrior"
+},
+"leonardo, the balance": {
+"color_identity": [
+"B",
+"G",
+"R",
+"U",
+"W"
+],
+"keywords": [
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Leonardo, the Balance",
+"oracle_text": "Whenever a token you control enters, you may put a +1/+1 counter on each creature you control. Do this only once each turn.\n{W}{U}{B}{R}{G}: Creatures you control gain menace, trample, and lifelink until end of turn.\nPartner—Character select (You can have two commanders if both have this ability.)",
+"power": "3",
+"type_line": "Legendary Creature — Mutant Ninja Turtle"
+},
+"lightning bolt": {
+"color_identity": [
+"R"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Lightning Bolt",
+"oracle_text": "Lightning Bolt deals 3 damage to any target.",
+"type_line": "Instant"
+},
+"llanowar elves": {
+"color_identity": [
+"G"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Llanowar Elves",
+"oracle_text": "{T}: Add {G}.",
+"power": "1",
+"type_line": "Creature — Elf Druid"
+},
+"mana crypt": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "banned"
+},
+"name": "Mana Crypt",
+"oracle_text": "At the beginning of your upkeep, flip a coin. If you lose the flip, this artifact deals 3 damage to you.\n{T}: Add {C}{C}.",
+"type_line": "Artifact"
+},
+"mox lotus": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "not_legal"
+},
+"name": "Mox Lotus",
+"oracle_text": "{T}: Add {∞}.\n{100}: Add one mana of any color.",
+"type_line": "Artifact"
+},
+"pir, imaginative rascal": {
+"color_identity": [
+"G"
+],
+"keywords": [
+"Partner with",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Pir, Imaginative Rascal",
+"oracle_text": "Partner with Toothy, Imaginary Friend (When this creature enters, target player may put Toothy into their hand from their library, then shuffle.)\nIf one or more counters would be put on a permanent your team controls, that many plus one of each of those kinds of counters are put on that permanent instead.",
+"power": "1",
+"type_line": "Legendary Creature — Human"
+},
+"raised by giants": {
+"color_identity": [
+"G"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Raised by Giants",
+"oracle_text": "Commander creatures you own have base power and toughness 10/10 and are Giants in addition to their other types.",
+"type_line": "Legendary Enchantment — Background"
+},
+"relentless rats": {
+"color_identity": [
+"B"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Relentless Rats",
+"oracle_text": "This creature gets +1/+1 for each other creature on the battlefield named Relentless Rats.\nA deck can have any number of cards named Relentless Rats.",
+"power": "2",
+"type_line": "Creature — Rat"
+},
+"rose tyler": {
+"color_identity": [
+"W"
+],
+"keywords": [
+"Bad Wolf",
+"Doctor's companion"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Rose Tyler",
+"oracle_text": "Rose Tyler gets +1/+1 for each time counter on it.\nBad Wolf — Whenever Rose Tyler attacks, put a time counter on it for each suspended card you own and each other permanent you control with a time counter on it.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+"power": "2",
+"type_line": "Legendary Creature — Human"
+},
+"seven dwarves": {
+"color_identity": [
+"R"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Seven Dwarves",
+"oracle_text": "This creature gets +1/+1 for each other creature named Seven Dwarves you control.\nA deck can have up to seven cards named Seven Dwarves.",
+"power": "2",
+"type_line": "Creature — Dwarf"
+},
+"shabraz, the skyshark": {
+"color_identity": [
+"U",
+"W"
+],
+"keywords": [
+"Flying",
+"Partner with",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Shabraz, the Skyshark",
+"oracle_text": "Partner with Brallin, Skyshark Rider\nFlying\nWhenever you draw a card, put a +1/+1 counter on Shabraz and you gain 1 life.\n{W/U}: Target Human gains flying until end of turn.",
+"power": "3",
+"type_line": "Legendary Creature — Shark Bird"
+},
+"snow-covered island": {
+"color_identity": [
+"U"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Snow-Covered Island",
+"oracle_text": "({T}: Add {U}.)",
+"type_line": "Basic Snow Land — Island"
+},
+"sol ring": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Sol Ring",
+"oracle_text": "{T}: Add {C}{C}.",
+"type_line": "Artifact"
+},
+"sothera, the supervoid": {
+"color_identity": [
+"B"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Sothera, the Supervoid",
+"oracle_text": "Whenever a creature you control dies, each opponent chooses a creature they control and exiles it.\nAt the beginning of your end step, if a player controls no creatures, sacrifice Sothera, then put a creature card exiled with it onto the battlefield under your control with two additional +1/+1 counters on it.",
+"type_line": "Legendary Enchantment"
+},
+"teferi, temporal archmage": {
+"color_identity": [
+"U"
+],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Teferi, Temporal Archmage",
+"oracle_text": "+1: Look at the top two cards of your library. Put one of them into your hand and the other on the bottom of your library.\n−1: Untap up to four target permanents.\n−10: You get an emblem with \"You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.\"\nTeferi, Temporal Archmage can be your commander.",
+"type_line": "Legendary Planeswalker — Teferi"
+},
+"the tenth doctor": {
+"color_identity": [
+"R",
+"U"
+],
+"keywords": [
+"Allons-y!",
+"Time Travel",
+"Timey-Wimey"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "The Tenth Doctor",
+"oracle_text": "Allons-y! — Whenever you attack, exile cards from the top of your library until you exile a nonland card. Put three time counters on it. If it doesn't have suspend, it gains suspend.\nTimey-Wimey — {7}: Time travel three times. Activate only as a sorcery. (For each suspended card you own and each permanent you control with a time counter on it, you may add or remove a time counter. Then do it two more times.)",
+"power": "3",
+"type_line": "Legendary Creature — Time Lord Doctor"
+},
+"thrasios, triton hero": {
+"color_identity": [
+"G",
+"U"
+],
+"keywords": [
+"Partner",
+"Scry"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Thrasios, Triton Hero",
+"oracle_text": "{4}: Scry 1, then reveal the top card of your library. If it's a land card, put it onto the battlefield tapped. Otherwise, draw a card.\nPartner (You can have two commanders if both have partner.)",
+"power": "1",
+"type_line": "Legendary Creature — Merfolk Wizard"
+},
+"toothy, imaginary friend": {
+"color_identity": [
+"U"
+],
+"keywords": [
+"Partner with",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Toothy, Imaginary Friend",
+"oracle_text": "Partner with Pir, Imaginative Rascal (When this creature enters, target player may put Pir into their hand from their library, then shuffle.)\nWhenever you draw a card, put a +1/+1 counter on Toothy.\nWhen Toothy leaves the battlefield, draw a card for each +1/+1 counter on it.",
+"power": "1",
+"type_line": "Legendary Creature — Illusion"
+},
+"tymna the weaver": {
+"color_identity": [
+"B",
+"W"
+],
+"keywords": [
+"Lifelink",
+"Partner"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Tymna the Weaver",
+"oracle_text": "Lifelink\nAt the beginning of each of your postcombat main phases, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.\nPartner (You can have two commanders if both have partner.)",
+"power": "2",
+"type_line": "Legendary Creature — Human Cleric"
+},
+"wastes": {
+"color_identity": [],
+"keywords": [],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Wastes",
+"oracle_text": "{T}: Add {C}.",
+"type_line": "Basic Land"
+},
+"wilson, refined grizzly": {
+"color_identity": [
+"G"
+],
+"keywords": [
+"Reach",
+"Vigilance",
+"Choose a background",
+"Trample",
+"Ward"
+],
+"layout": "normal",
+"legalities": {
+"commander": "legal"
+},
+"name": "Wilson, Refined Grizzly",
+"oracle_text": "This spell can't be countered.\nReach, vigilance, trample\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)\nChoose a Background (You can have a Background as a second commander.)",
+"power": "2",
+"type_line": "Legendary Creature — Bear Warrior"
+}
+}

@@ -1,0 +1,79 @@
+# format: brawl
+# MTG Arena Brawl sample (Round FMT1). Goblins, more goblins, then Krenko makes a goblin for every power he has.
+
+Commander
+1 Krenko, Tin Street Kingpin
+
+Deck
+1 Abrade
+1 Arcane Signet
+1 Ashnod's Altar
+1 Beetleback Chief
+1 Big Score
+1 Birgi, God of Storytelling // Harnfel, Horn of Bounty
+1 Brash Taunter
+1 Breeches, Eager Pillager
+1 Castle Embereth
+1 Chandra's Ignition
+1 Chaos Warp
+1 Crackle with Power
+1 Crime Novelist
+1 Den of the Bugbear
+1 Dragon Fodder
+1 Dragonlord's Servant
+1 Empty the Warrens
+1 Evolving Wilds
+1 Fable of the Mirror-Breaker // Reflection of Kiki-Jiki
+1 Fabled Passage
+1 Fiery Confluence
+1 Forsaken Monument
+1 General Kreat, the Boltbringer
+1 Goblin Chieftain
+1 Goblin Engineer
+1 Goblin Instigator
+1 Goblin Matron
+1 Goblin Negotiation
+1 Goblin Rabblemaster
+1 Goblin Sharpshooter
+1 Goblin Trashmaster
+1 Goblin Warchief
+1 Goro-Goro, Disciple of Ryusei
+1 Great Train Heist
+1 Guttersnipe
+1 Hexing Squelcher
+1 Hobgoblin Bandit Lord
+1 Hordeling Outburst
+1 Howlsquad Heavy
+1 Jeska's Will
+1 Krenko's Command
+1 Krenko, Mob Boss
+1 Laelia, the Blade Reforged
+1 Legion Warboss
+1 Light Up the Stage
+1 Lightning Bolt
+1 Lightning Greaves
+1 Lightning Strike
+1 Mind Stone
+28 Mountain
+1 Muxus, Goblin Grandee
+1 Palladium Myr
+1 Pashalik Mons
+1 Professional Face-Breaker
+1 Purphoros, God of the Forge
+1 Ramunap Ruins
+1 Rising of the Day
+1 Roaming Throne
+1 Rogue's Passage
+1 Searslicer Goblin
+1 Shock
+1 Siege-Gang Commander
+1 Skirk Prospector
+1 Sokenzan, Crucible of Defiance
+1 Solemn Simulacrum
+1 Squee, the Immortal
+1 Sting, the Glinting Dagger
+1 Swiftfoot Boots
+1 The Last Agni Kai
+1 The One Ring
+1 Wayfarer's Bauble
+1 Worn Powerstone

@@ -1,0 +1,73 @@
+1 Abomination of Llanowar
+1 Abrupt Decay
+1 Arcane Signet
+1 Asceticism
+1 Assassin's Trophy
+1 Beast Whisperer
+1 Beastmaster Ascension
+1 Canopy Tactician
+1 Craterhoof Behemoth
+1 Demonic Tutor
+1 Dwynen, Gilt-Leaf Daen
+1 Elderfang Venom
+1 Eldrazi Monument
+1 Elves of Deep Shadow
+1 Elvish Archdruid
+1 Elvish Clancaller
+1 Elvish Mystic
+1 Elvish Promenade
+1 Elvish Warmaster
+1 Ezuri, Renegade Leader
+1 Feed the Swarm
+17 Forest
+1 Fyndhorn Elves
+1 Gala Greeters
+1 Golgari Charm
+1 Greenweaver Druid
+1 Heroic Intervention
+1 Immaculate Magistrate
+1 Imperious Perfect
+1 Inspiring Call
+1 Jaheira, Friend of the Forest
+1 Leaf-Crowned Visionary
+1 Lifecrafter's Bestiary
+1 Lightning Greaves
+1 Llanowar Elves
+1 Llanowar Tribe
+1 Llanowar Visionary
+1 Llanowar Wastes
+1 Lys Alana Huntmaster
+1 Marwyn, the Nurturer
+1 Miara, Thorn of the Glade
+1 Overgrown Tomb
+1 Poison-Tip Archer
+1 Priest of Titania
+1 Quest for Renewal
+1 Realmwalker
+1 Reclamation Sage
+1 Return of the Wildspeaker
+1 Rishkar's Expertise
+1 Ruthless Winnower
+1 Seedborn Muse
+1 Shaman of the Pack
+1 Shamanic Revelation
+1 Skemfar Avenger
+1 Skemfar Shadowsage
+1 Skullclamp
+1 Sol Ring
+13 Swamp
+1 Swiftfoot Boots
+1 Tear Asunder
+1 The Meathook Massacre
+1 Throne of the God-Pharaoh
+1 Timberwatch Elf
+1 Tyvar, Jubilant Brawler
+1 Underground Mortuary
+1 Wellwisher
+1 Whispersilk Cloak
+1 Wirewood Lodge
+1 Wolverine Riders
+1 Wood Elves
+1 Wrap in Vigor
+
+1 Lathril, Blade of the Elves

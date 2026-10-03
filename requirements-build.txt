@@ -1,0 +1,9 @@
+# Only for BUILDING the installer (python tools\build_installer.py, Round 29). The game itself needs only requirements.txt:
+# nothing here is shipped to testers except what PyInstaller bundles from requirements.txt.
+#
+# One-time setup on the build PC:
+#     python -m pip install -r requirements-build.txt
+#     winget install JRSoftware.InnoSetup        (Inno Setup 6; "iscc" must then be found)
+# The JDK (Temurin 21, for jlink) is already installed on Karl's PC; build_installer.py finds it through JAVA_HOME or PATH.
+-r requirements.txt
+pyinstaller==6.22.3

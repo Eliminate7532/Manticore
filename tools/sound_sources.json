@@ -1,0 +1,555 @@
+{
+ "_comment": "Where every recording in sounds/ came from. All CC0-1.0 (public domain dedication). tools/build_sounds.py downloads these into a cache and builds sounds/*.ogg from them.",
+ "sources": {
+  "kenney-casino": {
+   "url": "https://kenney.nl/media/pages/assets/casino-audio/2472606a04-1721639069/kenney_casino-audio.zip",
+   "kind": "zip",
+   "page": "https://kenney.nl/assets/casino-audio",
+   "author": "Kenney (kenney.nl)",
+   "licence": "CC0-1.0"
+  },
+  "kenney-rpg": {
+   "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+   "kind": "zip",
+   "page": "https://kenney.nl/assets/rpg-audio",
+   "author": "Kenney (kenney.nl)",
+   "licence": "CC0-1.0"
+  },
+  "kenney-impact": {
+   "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+   "kind": "zip",
+   "page": "https://kenney.nl/assets/impact-sounds",
+   "author": "Kenney (kenney.nl)",
+   "licence": "CC0-1.0"
+  },
+  "kenney-interface": {
+   "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+   "kind": "zip",
+   "page": "https://kenney.nl/assets/interface-sounds",
+   "author": "Kenney (kenney.nl)",
+   "licence": "CC0-1.0"
+  },
+  "oga-swishes": {
+   "url": "https://opengameart.org/sites/default/files/swishes.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "author": "artisticdude",
+   "licence": "CC0-1.0"
+  },
+  "oga-dings": {
+   "url": "https://opengameart.org/sites/default/files/ding_-_starninjas.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/4-metal-dingsrings",
+   "author": "StarNinjas",
+   "licence": "CC0-1.0"
+  },
+  "oga-sword": {
+   "url": "https://opengameart.org/sites/default/files/sword_-_starninjas_1.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+   "author": "StarNinjas",
+   "licence": "CC0-1.0"
+  },
+  "oga-swordclash": {
+   "url": "https://opengameart.org/sites/default/files/sword_clash_-_starninjas_0.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes",
+   "author": "StarNinjas",
+   "licence": "CC0-1.0"
+  },
+  "oga-shield": {
+   "url": "https://opengameart.org/sites/default/files/impact_-_starninjas.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/10-impactshield-blocks",
+   "author": "StarNinjas",
+   "licence": "CC0-1.0"
+  },
+  "oga-breaking": {
+   "url": "https://opengameart.org/sites/default/files/sfx_breaking_and_falling.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0"
+  },
+  "oga-rpg80": {
+   "url": "https://opengameart.org/sites/default/files/80-CC0-RPG-SFX_0.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/80-cc0-rpg-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0"
+  },
+  "oga-darkmagic": {
+   "url": "https://opengameart.org/sites/default/files/dark_magic.7z",
+   "kind": "7z",
+   "page": "https://opengameart.org/content/3-dark-magic-spells",
+   "author": "qubodup",
+   "licence": "CC0-1.0"
+  },
+  "oga-drain": {
+   "url": "https://opengameart.org/sites/default/files/qubodup-PowerDrain.7z",
+   "kind": "7z",
+   "page": "https://opengameart.org/content/energy-drain",
+   "author": "qubodup",
+   "licence": "CC0-1.0"
+  },
+  "oga-ghostbreath": {
+   "url": "https://opengameart.org/sites/default/files/ghostbreath.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/ghost-breath",
+   "author": "qubodup",
+   "licence": "CC0-1.0"
+  },
+  "oga-heartbeat": {
+   "url": "https://opengameart.org/sites/default/files/heartbeat_slow_reverb.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/heartbeat-sounds",
+   "author": "bart",
+   "licence": "CC0-1.0"
+  },
+  "oga-heartbeat-dry": {
+   "url": "https://opengameart.org/sites/default/files/heartbeat_slow_0.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/heartbeat-sounds",
+   "author": "bart",
+   "licence": "CC0-1.0"
+  },
+  "oga-healing": {
+   "url": "https://opengameart.org/sites/default/files/healing.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/spell-sounds",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "note": "also offered as OGA-BY 3.0; used under CC0"
+  },
+  "oga-treecreak": {
+   "url": "https://opengameart.org/sites/default/files/tree_creak.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/tree-creaking",
+   "author": "AntumDeluge",
+   "licence": "CC0-1.0"
+  },
+  "oga-rain": {
+   "url": "https://opengameart.org/sites/default/files/Rain%20OGG.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/rain-loopable",
+   "author": "Ylmir",
+   "licence": "CC0-1.0"
+  },
+  "oga-thunder": {
+   "url": "https://opengameart.org/sites/default/files/rain-thunder.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/rain-long-thunder",
+   "author": "WuxiaScrub",
+   "licence": "CC0-1.0"
+  },
+  "oga-drips": {
+   "url": "https://opengameart.org/sites/default/files/atmosbasement.mp3_.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/dripping-water-loop",
+   "author": "qubodup",
+   "licence": "CC0-1.0"
+  },
+  "oga-boulder": {
+   "url": "https://opengameart.org/sites/default/files/boulder_drop_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/moving-boulder",
+   "author": "themightyglider",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-1": {
+   "url": "https://opengameart.org/sites/default/files/magical_1_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-2": {
+   "url": "https://opengameart.org/sites/default/files/magical_2.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-3": {
+   "url": "https://opengameart.org/sites/default/files/magical_3.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-4": {
+   "url": "https://opengameart.org/sites/default/files/magical_4.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-5": {
+   "url": "https://opengameart.org/sites/default/files/magical_5.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-6": {
+   "url": "https://opengameart.org/sites/default/files/magical_6_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "oga-magic-7": {
+   "url": "https://opengameart.org/sites/default/files/magical_7_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0"
+  },
+  "mus-forest": {
+   "url": "https://opengameart.org/sites/default/files/GameMusic_ForestTheme_24_0.mp3",
+   "kind": "file",
+   "page": "https://opengameart.org/content/dark-forest-theme",
+   "author": "cynicmusic",
+   "licence": "CC0-1.0"
+  },
+  "mus-eternal": {
+   "url": "https://opengameart.org/sites/default/files/10_eternal_sleep.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/eternal-sleep",
+   "author": "The Oracle",
+   "licence": "CC0-1.0"
+  },
+  "mus-lament": {
+   "url": "https://opengameart.org/sites/default/files/Lament_for_a_Warriors_Soul_REUPLOAD.mp3",
+   "kind": "file",
+   "page": "https://opengameart.org/content/fantasy-lament-for-a-warriors-soul",
+   "author": "RandomMind",
+   "licence": "CC0-1.0"
+  },
+  "mus-cathedral-forest": {
+   "url": "https://opengameart.org/sites/default/files/forest_2_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/cathedral-in-the-forest-ambient-loop",
+   "author": "congusbongus",
+   "licence": "CC0-1.0"
+  },
+  "mus-wastelands": {
+   "url": "https://opengameart.org/sites/default/files/Juhani%20Junkala%20-%20Post%20Apocalyptic%20Wastelands%20%5BLoop%20Ready%5D.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/horror-atmosphere",
+   "author": "SubspaceAudio",
+   "licence": "CC0-1.0"
+  },
+  "mus-tragic": {
+   "url": "https://opengameart.org/sites/default/files/ambientmain_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/tragic-ambient-main-menu",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "note": "also offered as OGA-BY 3.0; used under CC0"
+  },
+  "mus-victory": {
+   "url": "https://opengameart.org/sites/default/files/victory.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/medieval-victory-theme",
+   "author": "RandomMind",
+   "licence": "CC0-1.0"
+  },
+  "mus-defeat": {
+   "url": "https://opengameart.org/sites/default/files/defeat.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/medieval-defeat-theme",
+   "author": "RandomMind",
+   "licence": "CC0-1.0"
+  },
+  "mus-gameoverdark": {
+   "url": "https://opengameart.org/sites/default/files/gameoverdark.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/game-over-dark-short-music-clips",
+   "author": "Robin Lamb",
+   "licence": "CC0-1.0"
+  },
+  "mus-cold-silence": {
+   "url": "https://opengameart.org/sites/default/files/cold_silence.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/cold-silence",
+   "author": "Eponasoft",
+   "licence": "CC0-1.0"
+  },
+  "mus-vampires-piano": {
+   "url": "https://opengameart.org/sites/default/files/vampires_piano_1.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/vampires-piano",
+   "author": "TAD",
+   "licence": "CC0-1.0"
+  },
+  "mus-dark-intro": {
+   "url": "https://opengameart.org/sites/default/files/Dark%20Intro_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/dark-intro",
+   "author": "Nikke",
+   "licence": "CC0-1.0"
+  },
+  "mus-lament-war": {
+   "url": "https://opengameart.org/sites/default/files/Lament%20of%20the%20War%20-%20Lossless%20FLAC.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/laments-of-the-war",
+   "author": "Cethiel",
+   "licence": "CC0-1.0"
+  },
+  "mus-bleeding-out": {
+   "url": "https://opengameart.org/sites/default/files/bleeding_out2.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/bleeding-out",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "note": "also offered as OGA-BY 3.0; used under CC0"
+  },
+  "mus-echoes": {
+   "url": "https://opengameart.org/sites/default/files/echoes_of_the_past.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/echoes-of-the-past",
+   "author": "isaiah658",
+   "licence": "CC0-1.0"
+  },
+  "mus-cathedral": {
+   "url": "https://opengameart.org/sites/default/files/cathedral.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/cathedral-0",
+   "author": "Umplix",
+   "licence": "CC0-1.0"
+  },
+  "mus-dark-bishop": {
+   "url": "https://opengameart.org/sites/default/files/dark_bishop.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/dark-bishop",
+   "author": "ARoachIFoundOnMyPillow",
+   "licence": "CC0-1.0"
+  },
+  "fs-toll": {
+   "url": "https://cdn.freesound.org/previews/454/454855_8031303-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/454855/",
+   "author": "SamuelGremaud",
+   "licence": "CC0-1.0",
+   "title": "TOLLING BELL",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-toll-distant": {
+   "url": "https://cdn.freesound.org/previews/824/824588_2047664-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/824588/",
+   "author": "TicAshfield",
+   "licence": "CC0-1.0",
+   "title": "St Peters Church, Kinver - Distant Tolling Bell",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-gong": {
+   "url": "https://cdn.freesound.org/previews/133/133804_2287151-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/133804/",
+   "author": "Rodrigo The Mad",
+   "licence": "CC0-1.0",
+   "title": "deep gong.wav",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-gong-toll": {
+   "url": "https://cdn.freesound.org/previews/415/415200_7919598-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/415200/",
+   "author": "Yin_Yang_Jake007",
+   "licence": "CC0-1.0",
+   "title": "Deep Gong Tolling.mp3",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-choir-men": {
+   "url": "https://cdn.freesound.org/previews/619/619558_2282212-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/619558/",
+   "author": "szegvari",
+   "licence": "CC0-1.0",
+   "title": "Myst Men Choir Dark Atmo Drone Thriller Mood Cinematic.wav",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-choir-monk": {
+   "url": "https://cdn.freesound.org/previews/620/620473_2282212-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/620473/",
+   "author": "szegvari",
+   "licence": "CC0-1.0",
+   "title": "Myst Dark Tribal Voice Monster Creatures Monk Choir Drone Synth Fantasy Thriller Cinematic Atmo.wav",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-drone-rumble": {
+   "url": "https://cdn.freesound.org/previews/632/632682_13504080-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/632682/",
+   "author": "xkeril",
+   "licence": "CC0-1.0",
+   "title": "Deep rumbling drone",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-drone-low": {
+   "url": "https://cdn.freesound.org/previews/871/871510_17997500-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/871510/",
+   "author": "kkenny101",
+   "licence": "CC0-1.0",
+   "title": "Textured Low Drone 02 - Loop",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-dungeon": {
+   "url": "https://cdn.freesound.org/previews/516/516566_2247456-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/516566/",
+   "author": "Kinoton",
+   "licence": "CC0-1.0",
+   "title": "Dark Dungeon Ambience",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-wind-door": {
+   "url": "https://cdn.freesound.org/previews/234/234000_1661766-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/234000/",
+   "author": "felix.blume",
+   "licence": "CC0-1.0",
+   "title": "Wind howling in the door of a building",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-wind-howl": {
+   "url": "https://cdn.freesound.org/previews/620/620539_13128969-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/620539/",
+   "author": "AbolGuga",
+   "licence": "CC0-1.0",
+   "title": "Howling Wind.aif",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-crow": {
+   "url": "https://cdn.freesound.org/previews/741/741366_16104671-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/741366/",
+   "author": "Mish7913",
+   "licence": "CC0-1.0",
+   "title": "Hooded Crow: Cawing",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-crow2": {
+   "url": "https://cdn.freesound.org/previews/813/813115_71257-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/813115/",
+   "author": "qubodup",
+   "licence": "CC0-1.0",
+   "title": "Crow Caw",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-torch": {
+   "url": "https://cdn.freesound.org/previews/483/483692_7662631-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/483692/",
+   "author": "LordStirling",
+   "licence": "CC0-1.0",
+   "title": "torch ambience loop",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-fire": {
+   "url": "https://cdn.freesound.org/previews/363/363092_6612464-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/363092/",
+   "author": "TheWoodlandNomad",
+   "licence": "CC0-1.0",
+   "title": "Fire Crackle and Flames 002",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-sword-draw": {
+   "url": "https://cdn.freesound.org/previews/581/581594_5487341-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/581594/",
+   "author": "SamsterBirdies",
+   "licence": "CC0-1.0",
+   "title": "Sword draw unsheathe",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-stone-door": {
+   "url": "https://cdn.freesound.org/previews/578/578491_6911631-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/578491/",
+   "author": "PostProdDog",
+   "licence": "CC0-1.0",
+   "title": "Heavy stone door opens 2",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-stone-scrape": {
+   "url": "https://cdn.freesound.org/previews/321/321488_5485024-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/321488/",
+   "author": "dslrguide",
+   "licence": "CC0-1.0",
+   "title": "Scraping Stone",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-parchment": {
+   "url": "https://cdn.freesound.org/previews/753/753282_13973196-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/753282/",
+   "author": "Vrymaa",
+   "licence": "CC0-1.0",
+   "title": "Parchment - Unroll",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-crumple": {
+   "url": "https://cdn.freesound.org/previews/398/398898_5923045-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/398898/",
+   "author": "Anthousai",
+   "licence": "CC0-1.0",
+   "title": "paper - crumple 01.wav",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-bodyfall": {
+   "url": "https://cdn.freesound.org/previews/504/504626_4437257-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/504626/",
+   "author": "leonelmail",
+   "licence": "CC0-1.0",
+   "title": "BODY FALL - V HVY - DIRT",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-spell-pad": {
+   "url": "https://cdn.freesound.org/previews/812/812623_2520418-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/812623/",
+   "author": "CVLTIV8R",
+   "licence": "CC0-1.0",
+   "title": "Illusion Spell Synth Pad Burst",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-ghostly": {
+   "url": "https://cdn.freesound.org/previews/825/825857_13973196-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/825857/",
+   "author": "Vrymaa",
+   "licence": "CC0-1.0",
+   "title": "Dark Mystical atmosphere - Healing / Ghostly Presence",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-distant-boom": {
+   "url": "https://cdn.freesound.org/previews/149/149966_2514850-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/149966/",
+   "author": "NenadSimic",
+   "licence": "CC0-1.0",
+   "title": "Muffled Distant Explosion",
+   "note": "Freesound's high-quality preview of the original"
+  },
+  "fs-reverb-perc": {
+   "url": "https://cdn.freesound.org/previews/468/468903_3692246-hq.ogg",
+   "kind": "file",
+   "page": "https://freesound.org/s/468903/",
+   "author": "Shark_Anthony",
+   "licence": "CC0-1.0",
+   "title": "Reverb Percussion.wav",
+   "note": "Freesound's high-quality preview of the original"
+  }
+ }
+}

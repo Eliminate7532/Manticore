@@ -1,0 +1,64 @@
+# What is NOT backed up: things the program makes again by itself, and things that are only yours.
+
+# The unpacked Forge engine (about 200 MB). setup_forge.py rebuilds it from forge_bundle/.
+forge_runtime/
+
+# Card pictures and card data downloaded from Scryfall (re-downloaded when needed).
+cache/
+
+# Made every time you play.
+forge_engine.log
+forge_engine.prev.log
+forge_engine.crashed.log
+session.json
+crash_log.txt
+crash_log.old.txt
+crash_native.txt
+perf_log.txt
+forge_decks/
+*.jsonl
+backup.log
+
+# Overnight soak runs (tools\soak.py, Round 28b): can be large, and it's Karl's own test output.
+soak_runs/
+
+# Your window size, text size and last deck choice.
+settings.json
+
+# Python leftovers.
+__pycache__/
+*.pyc
+
+# Bug reports friends send you, and the file holding your Discord webhook address (anyone with that address can post to your channel).
+bug_reports/
+bug_report_config.json
+bug_report_config.bundled.json
+
+# The installer build (Round 29): the built folder holds the bundled webhook, so it is never committed or pushed.
+build/
+dist/
+installer_out/
+installer/sandbox/results/
+installer/sandbox/*.wsb
+
+# Never back up passwords, tokens or keys.
+.env
+# Round MP1: the host's own certificate and private key for online play (made on this PC, never shared).
+net/
+*.p12
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Screenshots and scratch files made while testing.
+shots*/
+GUI_SHOTS/
+*.tmp
+
+# Where the local copies go on this computer, and whether the last backup worked (read by the table's deck-screen banner).
+backup_settings.json
+backup_status.json
+
+# big one-off transfer files (2026-10-01): kept on disk, not committed or pushed
+docs/incoming/ad1_rebase/

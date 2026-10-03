@@ -1,0 +1,3 @@
+Copyright 2011 The Alegreya Project Authors (https://github.com/huertatipografica/Alegreya)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.

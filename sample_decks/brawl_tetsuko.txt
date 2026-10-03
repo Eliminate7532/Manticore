@@ -1,0 +1,77 @@
+# format: brawl
+# MTG Arena Brawl sample (Round FMT1). Small creatures can't be blocked while Tetsuko is out; they chip in and draw cards.
+
+Commander
+1 Tetsuko Umezawa, Fugitive
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Signet
+1 Archaeomancer
+1 Archmage Emeritus
+1 Ascendant Spirit
+1 Baral, Chief of Compliance
+1 Basilisk Collar
+1 Bilbo, Luckwearer // Burglar's Plot
+1 Borne Upon a Wind
+1 Brainstorm
+1 Castle Vantress
+1 Chasm Skulker
+1 Consider
+1 Counterspell
+1 Cryptic Command
+1 Cyclonic Rift
+1 Drake Hatcher
+1 Evolving Wilds
+1 Fabled Passage
+1 Faerie Mastermind
+1 Force of Negation
+1 Ghostly Pilferer
+1 Guildpact Informant
+1 Hall of Storm Giants
+1 Hullbreaker Horror
+1 Into the Flood Maw
+30 Island
+1 Ledger Shredder
+1 Liberator, Urza's Battlethopter
+1 Lightning Greaves
+1 Merfolk Windrobber
+1 Mind Stone
+1 Mischievous Catgeist // Catlike Curiosity
+1 Mithril Coat
+1 Mystic Sanctuary
+1 Negate
+1 Opt
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Otawara, Soaring City
+1 Palladium Myr
+1 Panharmonicon
+1 Patchwork Banner
+1 Ponder
+1 Pongify
+1 Preordain
+1 Pristine Talisman
+1 Pull from Tomorrow
+1 Rapid Hybridization
+1 Ray Fillet, Wave Warrior
+1 Rhystic Study
+1 Roaming Throne
+1 Ruin Crab
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Snapcaster Mage
+1 Solemn Simulacrum
+1 Spell Pierce
+1 Startled Awake // Persistent Nightmare
+1 Sublime Epiphany
+1 Swiftfoot Boots
+1 The One Ring
+1 Thrummingbird
+1 Treasure Cruise
+1 Triskaidekaphile
+1 Wan Shi Tong, Librarian
+1 Wayfarer's Bauble
+1 Wharf Infiltrator
+1 Worn Powerstone

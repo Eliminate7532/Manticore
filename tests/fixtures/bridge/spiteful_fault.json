@@ -1,0 +1,21 @@
+{
+ "name": "spiteful_fault",
+ "about": "as spiteful_ok with the ORDER_IGNORES_SORTED fault: the reorder on my draw step loses both triggers",
+ "deck": "kinnan_nbc_moxfield_export.txt",
+ "seed": 7,
+ "faults": [
+  "ORDER_IGNORES_SORTED"
+ ],
+ "bridge_checks_seen": [
+  [
+   "order",
+   "wrong_count"
+  ]
+ ],
+ "expected_fail_rules": [
+  "bridge_check"
+ ],
+ "recorded": "2026-09-26",
+ "forge": "3a74143",
+ "bridge": "round 27d"
+}

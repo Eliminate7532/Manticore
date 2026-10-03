@@ -1,0 +1,5 @@
+{
+  "_note": "Round 30: where an INSTALLED copy looks for a newer version (Karl's own git copy never does). Fill in ONE of these before building an installer: repo = the GitHub repository whose Releases hold the installer and latest.json (owner/name, must be public), or feed_url = a full https address of a latest.json. Both empty = updates off. tools/make_update_feed.py writes latest.json for a release.",
+  "repo": "",
+  "feed_url": ""
+}
