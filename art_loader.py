@@ -14,6 +14,7 @@ import time
 
 import pygame
 
+import deck_art
 import mpc_art
 from card_data import art_key, is_art_key, key_name, safe_part
 
@@ -435,8 +436,8 @@ class ArtLoader:
         key = ("crop", name, w, h)
         if key in self._preview:
             return self._preview[key]
-        if self.custom_path(name) or mpc_art.is_mpc(name):   # round ALT1/ALT2: your own or an MPC Autofill picture has no
-            return None                                     # art crop - the full picture is used
+        if self.custom_path(name) or mpc_art.is_mpc(name) or deck_art.is_img(name):  # round ALT1/ALT2, patch 40: your own,
+            return None                                     # an MPC Autofill or an imported picture has no art crop - the full one
         path = self.store.peek_image_path(name, size="art_crop")
         if not path:
             self._request_bigger(name, "art_crop")

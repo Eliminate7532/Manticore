@@ -18,6 +18,7 @@ from typing import NamedTuple, Optional
 
 import requests
 
+import deck_art
 import mpc_art
 import paths
 from forge_scripts import ForgeScriptStore
@@ -34,6 +35,7 @@ IMAGE_CACHE_DIR_LARGE = CACHE_DIR / "images_large"          # round 26: 672x936 
 IMAGE_CACHE_DIR_ART = CACHE_DIR / "images_art"               # round 26: art_crop pictures for small-card board frames
 IMAGE_CACHE_DIR_SMALL = CACHE_DIR / "images_small"           # round ALT1: 146x204 pictures for the printings strip
 MPC_KEPT_DIR = Path(paths.mpc_art_dir())                      # patch 38: MPC Autofill pictures you picked, kept for good
+DECK_ART_DIR = Path(paths.deck_art_dir())                     # patch 40: pictures imported into one deck (deck_art.py)
 DATA_CACHE_FILE = CACHE_DIR / "card_data.json"
 
 SCRYFALL_API = "https://api.scryfall.com"
@@ -287,6 +289,10 @@ class CardDataStore:
         printing (round ALT1) is <safe name>__<set>_<safe cn>.jpg in the same folder."""
         name = key_name(key)
         safe_name = safe_part(name)
+        if deck_art.is_img(key):                      # patch 40: an imported picture - one file, by its id, for every size
+            if size == "art_crop":                    # (there is no art crop of it: this file never exists)
+                return IMAGE_CACHE_DIR_ART / f"{safe_name}__img_{key.collector_no}.jpg"
+            return DECK_ART_DIR / f"{key.collector_no}.jpg"
         if mpc_art.is_mpc(key):                       # round ALT2: an MPC Autofill picture, by its Drive id (case matters)
             safe_name += "__" + mpc_art.file_part(key.collector_no)
             if size in ("normal", "large"):           # patch 38: one kept picture (1400 px high) serves the table and the preview
@@ -409,6 +415,11 @@ class CardDataStore:
                 return self.get_image_path(key.name, size)
             if mpc_art.is_mpc(key):                   # round ALT2
                 return self.mpc_image_path(key, size)
+            if deck_art.is_img(key):                  # patch 40: an imported picture is never downloaded; one that isn't on
+                local_path = self._image_file(key, size)                     # this computer (a deck file copied from another)
+                if size != "art_crop" and local_path.exists():               # falls back to the default printing
+                    return str(local_path)
+                return None if size == "art_crop" else self.get_image_path(key.name, size)
             local_path = self._image_file(key, size)
             if local_path.exists():
                 return str(local_path)

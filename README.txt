@@ -110,6 +110,16 @@ MPC AUTOFILL ART (round ALT2): in the Card art window, click a card, then the "M
   stays if the cache is cleared, you're offline, or its maker takes it down. mpc_art/ is in the local backup zips but not pushed
   to GitHub. Card size: the "Card size" - and + buttons at the top of the Card art window (or the - and + keys, or Ctrl+wheel)
   make the pictures smaller or bigger, in every part of that window; the size is remembered.
+PICTURES FOR ONE DECK (patch 40): in the Card art window, "Import pictures" (or drag a .zip, a folder of pictures, or one picture
+  onto that window) puts pictures into THAT deck only - other decks don't change. Made for Proxxied's Export Card Images > ZIP
+  Archive, but any .zip or folder of .png/.jpg pictures named after the cards works ("001 - Sol Ring.png", "Sol Ring.jpg").
+  Matched by file name, without case or punctuation; a double-faced card's back ("Searstep Pathway") is matched through
+  Scryfall's card data and shown when that face is up; a card back ("Default") is left out. The pictures are kept in deck_art/
+  beside my_art/ (the card alone, bleed cut off, at most 1400 pixels high; about 25 MB for 100 cards), and the deck file gets
+  "# art: <card> = image:<id>" lines at the top - its card lines stay as Moxfield wrote them. A report then lists what matched,
+  which pictures aren't cards of the deck and which cards have no picture, with Undo. One picture dropped on a card's page is
+  that card's picture, whatever the file is called. "Remove imported" takes them all out again (a printing or an MPC pick
+  replaces one). deck_art/ is in the local backup zips but not pushed to GitHub, and never in the public source copy.
 Your last choice (your deck, each AI's deck or Random, and the number of opponents) is remembered in settings.json.
 
 PLAYING (press H in the game for the same list)

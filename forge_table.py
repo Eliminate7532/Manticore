@@ -1650,6 +1650,10 @@ class ForgeTable:
                 d.setdefault(name.lower(), tuple(pr))
                 front = re.split(r"\s+//?\s+", name)[0].strip().lower()
                 d.setdefault(front, tuple(pr))
+                faces = [f for f in re.split(r"\s*//?\s*", name) if f.strip()]
+                if len(faces) > 1:                        # patch 40: "Spiked Corridor/Torture Pit" as Forge may name it too
+                    d.setdefault(" // ".join(faces).lower(), tuple(pr))
+                    d.setdefault(faces[0].strip().lower(), tuple(pr))
             out.append(d)
         self.seat_printings = out if any(out) else []
 

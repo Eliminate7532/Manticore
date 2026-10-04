@@ -10,11 +10,14 @@ Decks live as plain text files (the same Moxfield / Archidekt text export you pa
 Round FMT1: a deck's format is a "# format: brawl" line in its file (formats.py); no line = Commander. DeckEntry.format.
 Round ALT2: a card's MPC Autofill picture is a "# art: Sol Ring = mpc:<Google Drive id>" line (set_mpc_art); it overrides the
 card line's "(SET) CN" for the pictures and leaves the card line as Moxfield wrote it.
+Patch 40: a picture imported into this deck (deck_art.py) is a "# art: Sol Ring = image:<id>" line (set_imported_art); a
+double-faced card's back face can have one of its own ("# art: Searstep Pathway = image:<id>").
 """
 import os
 import re
 import shutil
 
+import deck_art
 import formats
 import mpc_art
 import paths
@@ -176,9 +179,11 @@ class DeckEntry:
             self.format = formats.from_text(text)
             self.commanders, self.deck, self.printings = import_from_text_with_printings(text)
             names = {n.lower() for n in list(self.commanders or []) + list(self.deck or [])}
-            for name, drive_id in mpc_art_lines(text).items():          # round ALT2: "# art: <card> = mpc:<id>"
-                if name in names:
-                    self.printings[name] = (mpc_art.MPC_SET, drive_id)
+            for name, (kind, pic) in art_lines(text).items():          # round ALT2 / patch 40: "# art: <card> = mpc:|image:<id>"
+                if kind == "image":                                     # patch 40: a back face's picture is kept by that face's
+                    self.printings[name] = (deck_art.IMG_SET, pic)      # name, which isn't a card line of the deck
+                elif name in names:
+                    self.printings[name] = (mpc_art.MPC_SET, pic)
             self.error = None
         except (OSError, UnicodeDecodeError, DeckImportError) as e:
             self.commanders = self.deck = None
@@ -368,19 +373,21 @@ def set_printing(entry, card_name, printing):
     Only the "(SET) CN" part changes; quantity, foil marker and tags stay. Atomic (.tmp, then os.replace). Returns how many lines
     changed. A sample deck is refused (the deck screen offers to copy it first). Round ALT2: the card's MPC Autofill line, if
     it has one, goes too (a Scryfall printing or the default replaces it); `printing` may itself be ("_mpc", id), which is
-    set_mpc_art()."""
+    set_mpc_art(). Patch 40: the same for an imported picture's line, and ("_img", id) sets one."""
     from deck_importer import _strip_printing_info, _SECTION_HEADER
     if entry.builtin:
         raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
     if mpc_art.is_mpc_printing(printing):
         return set_mpc_art(entry, card_name, printing[1])
+    if deck_art.is_img_printing(printing):
+        return set_imported_art(entry, {card_name: printing[1]}) > 0
     want = card_name.strip().lower()
     with open(entry.path, "r", encoding="utf-8-sig") as f:
         text = f.read()
     out, changed = [], 0
     for line in text.splitlines():
         a = _ART_LINE.match(line)
-        if a and a.group("name").strip().lower() == want:      # round ALT2: its MPC Autofill picture is replaced too
+        if a and a.group("name").strip().lower() == want:      # round ALT2 / patch 40: its MPC or imported picture goes too
             changed += 1
             continue
         m = _LINE.match(line)
@@ -403,30 +410,117 @@ def set_printing(entry, card_name, printing):
     return changed
 
 
-# ---- Round ALT2: a picture from MPC Autofill, as a comment line --------------------------------------------------------------------
+# ---- Round ALT2: a picture from MPC Autofill, as a comment line (patch 40: or an imported one) ------------------------------------
 
-_ART_LINE = re.compile(r"^\s*#\s*art\s*:\s*(?P<name>.+?)\s*=\s*mpc\s*:\s*(?P<id>\S+)\s*$", re.IGNORECASE)
+_ART_LINE = re.compile(r"^\s*#\s*art\s*:\s*(?P<name>.+?)\s*=\s*(?P<kind>mpc|image)\s*:\s*(?P<id>\S+)\s*$", re.IGNORECASE)
+
+
+def art_lines(text):
+    """{card name lower: (kind, id)} from a deck file's "# art:" lines, kind "mpc" (a Google Drive id) or "image" (an imported
+    picture, deck_art.py). The last line for a card wins; a line whose id can't be one is ignored."""
+    out = {}
+    for line in (text or "").splitlines():
+        m = _ART_LINE.match(line)
+        if not m:
+            continue
+        kind, pic = m.group("kind").lower(), m.group("id")
+        if (mpc_art.valid_id(pic) if kind == "mpc" else deck_art.valid_id(pic)):
+            out[m.group("name").strip().lower()] = (kind, pic)
+    return out
 
 
 def mpc_art_lines(text):
     """{card name lower: Drive id} from a deck file's "# art: <card> = mpc:<id>" lines (the last line for a card wins; a line
     with an id that can't be a Drive id is ignored)."""
-    out = {}
-    for line in (text or "").splitlines():
-        m = _ART_LINE.match(line)
-        if m and mpc_art.valid_id(m.group("id")):
-            out[m.group("name").strip().lower()] = m.group("id")
-    return out
+    return {name: pic for name, (kind, pic) in art_lines(text).items() if kind == "mpc"}
 
 
-def art_line(card_name, drive_id):
-    return f"# art: {card_name} = mpc:{drive_id}"
+def art_line(card_name, drive_id, kind="mpc"):
+    return f"# art: {card_name} = {kind}:{drive_id}"
+
+
+def _write_lines(entry, out):
+    tmp = entry.path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write("\n".join(out) + "\n")
+        os.replace(tmp, entry.path)
+    except OSError as e:
+        raise DeckImportError(f"Could not save the deck: {e}")
+    entry._mtime = None
+    entry.load()
+
+
+def _art_insert_at(lines):
+    at = 0
+    while at < len(lines) and lines[at].lstrip().startswith("#"):
+        at += 1
+    return at
+
+
+def set_imported_art(entry, pictures):
+    """Patch 40: use imported pictures in this deck - {card or face name: picture id} (deck_art.py). Each name's earlier "# art:"
+    line (MPC or imported) is replaced; the new lines go together at the top, after any other leading "#" lines, sorted by
+    name. One atomic write. Returns how many lines were written. A sample deck is refused."""
+    if entry.builtin:
+        raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
+    bad = [p for p in pictures.values() if not deck_art.valid_id(p)]
+    if bad:
+        raise DeckImportError(f"'{bad[0]}' isn't an imported picture.")
+    if not pictures:
+        return 0
+    want = {n.strip().lower() for n in pictures}
+    with open(entry.path, "r", encoding="utf-8-sig") as f:
+        lines = f.read().splitlines()
+    out = [ln for ln in lines if not ((a := _ART_LINE.match(ln)) and a.group("name").strip().lower() in want)]
+    at = _art_insert_at(out)
+    new = [art_line(n.strip(), p, "image") for n, p in sorted(pictures.items(), key=lambda kv: kv[0].lower())]
+    out[at:at] = new
+    if out != lines:
+        _write_lines(entry, out)
+    return len(new)
+
+
+def imported_art_count(entry):
+    """Patch 40: how many "# art: ... = image:" lines the deck file has."""
+    try:
+        with open(entry.path, "r", encoding="utf-8-sig") as f:
+            return sum(1 for kind, _p in art_lines(f.read()).values() if kind == "image")
+    except OSError:
+        return 0
+
+
+def remove_imported_art(entry):
+    """Patch 40: take every imported picture out of this deck (its "# art: ... = image:" lines; MPC lines stay). Returns how
+    many lines went. The pictures stay in deck_art/ (another deck may use them)."""
+    if entry.builtin:
+        raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
+    with open(entry.path, "r", encoding="utf-8-sig") as f:
+        lines = f.read().splitlines()
+    out = [ln for ln in lines if not ((a := _ART_LINE.match(ln)) and a.group("kind").lower() == "image")]
+    if out != lines:
+        _write_lines(entry, out)
+    return len(lines) - len(out)
+
+
+def read_text(entry):
+    """The deck file's text as it is now (patch 40: kept so an import can be undone)."""
+    with open(entry.path, "r", encoding="utf-8-sig") as f:
+        return f.read()
+
+
+def restore_text(entry, text):
+    """Patch 40: put the deck file back to `text` (Undo an import). Atomic."""
+    if entry.builtin:
+        raise DeckImportError("The sample decks that come with the program can't be changed.")
+    _write_lines(entry, text.splitlines())
 
 
 def set_mpc_art(entry, card_name, drive_id):
     """Use an MPC Autofill picture for `card_name` in this deck (drive_id None: remove it, back to the card line's printing).
     Writes one "# art:" line at the top of the file, after any other leading "#" lines ("# format: brawl"); the card lines are
-    not touched, so the deck still pastes into Moxfield. Atomic. Returns True when the file changed. A sample deck is refused."""
+    not touched, so the deck still pastes into Moxfield. Atomic. Returns True when the file changed. A sample deck is refused.
+    Patch 40: an imported picture's line for the card goes too."""
     if entry.builtin:
         raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
     if drive_id is not None and not mpc_art.valid_id(drive_id):
@@ -437,21 +531,10 @@ def set_mpc_art(entry, card_name, drive_id):
     lines = text.splitlines()
     out = [ln for ln in lines if not ((a := _ART_LINE.match(ln)) and a.group("name").strip().lower() == want)]
     if drive_id is not None:
-        at = 0
-        while at < len(out) and out[at].lstrip().startswith("#"):
-            at += 1
-        out.insert(at, art_line(card_name.strip(), drive_id))
+        out.insert(_art_insert_at(out), art_line(card_name.strip(), drive_id))
     if out == lines:
         return False
-    tmp = entry.path + ".tmp"
-    try:
-        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-            f.write("\n".join(out) + "\n")
-        os.replace(tmp, entry.path)
-    except OSError as e:
-        raise DeckImportError(f"Could not save the deck: {e}")
-    entry._mtime = None
-    entry.load()
+    _write_lines(entry, out)
     return True
 
 

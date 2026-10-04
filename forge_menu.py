@@ -516,6 +516,10 @@ class DeckMenu:
             self.scroll = max(0, min(self.scroll - dy * int(50 * _fs(gui) * 0.6), max(0, self.content_h - self.list_rect.h)))
 
     def drop_file(self, gui, path):
+        ext = os.path.splitext(path)[1].lower()
+        if os.path.isdir(path) or ext in (".zip", ".png", ".jpg", ".jpeg"):     # patch 40: card pictures, not a deck list
+            return self.say("That looks like card pictures: click the deck in the list, press Card art, and drop it there "
+                            "(they go into that deck only).", GOLD)
         try:
             with open(path, "r", encoding="utf-8-sig") as f:
                 text = f.read()
@@ -1160,6 +1164,10 @@ class ImportDialog(dlg.Dialog):
         self.scroll = max(0, self.scroll - dy * 3)
 
     def drop_file(self, gui, path):
+        ext = os.path.splitext(path)[1].lower()
+        if os.path.isdir(path) or ext in (".zip", ".png", ".jpg", ".jpeg"):     # patch 40: card pictures, not a deck list
+            return self.say("That looks like card pictures: click the deck in the list, press Card art, and drop it there "
+                            "(they go into that deck only).", GOLD)
         try:
             with open(path, "r", encoding="utf-8-sig") as f:
                 self.set_text(f.read())

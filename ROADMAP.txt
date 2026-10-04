@@ -650,3 +650,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     installer (forge_card_names.json), is saved in the cache otherwise, and is built on a background thread; the deck screen
     never waits. Reports from an installed copy describe the program (they said "code unknown", "forge_runtime: missing") and
     say "AMD64 on ARM64 (emulated)" on Arm; a missing first release (404) is no longer a crash-log entry.
+[x] Patch 40 (2026-10-04, Claude (Opus), 0.28.44), Karl: "I don't want to apply to every deck just the one I exported." Card
+    pictures imported into ONE deck from a .zip (Proxxied's ZIP Archive), a folder or one picture (deck_art.py): matched by file
+    name, double-faced backs through Scryfall's card data, kept in deck_art/, written into that deck file only as
+    "# art: <card> = image:<id>" lines; a report with Undo; Remove imported. Karl's real export (100 files): 90 cards + 7 backs
+    matched, 2 pictures of other cards and 2 cards without a picture listed, the card back left out; 25 s, 24 MB.
