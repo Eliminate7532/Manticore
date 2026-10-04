@@ -307,8 +307,15 @@ class Builder:
             dest = os.path.join(self.dist_dir, name)
             _rmtree(dest)
             shutil.copytree(src, dest, ignore=ignore)
+        # patch 38: Forge's card-name index, made once here so an installed copy never reads 34,000 card scripts at its first start
+        # (Karl's Surface froze for 50 s on the deck screen doing that, 4 Oct)
+        import forge_client as fc
+        runtime = os.path.join(self.dist_dir, "forge_runtime")
+        names = fc.build_card_name_index(runtime)
+        if not names or not fc.save_card_index(names, runtime, os.path.join(self.dist_dir, fc.CARD_INDEX_FILE)):
+            raise BuildError("could not write forge_card_names.json (Forge's card-name index) into the build")
         n, size = file_count_and_size(self.dist_dir)
-        return f"{n} files, {size / (1024 * 1024):.0f} MB in the build folder"
+        return f"{n} files, {size / (1024 * 1024):.0f} MB in the build folder; card-name index: {len(names)} names"
 
     # ---- 6. identity ---------------------------------------------------------------------------------------------------
     def write_identity(self):

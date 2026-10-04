@@ -48,7 +48,7 @@ class UpdateNotice:
                 self.state = "offer"
             else:
                 self.state = "hidden"
-                if job.error:
+                if job.error and job.error != updater.NO_RELEASE:          # patch 38: no release yet isn't a problem to log
                     _note("Update check failed", job.error)
         elif self.state == "downloading" and self.download and self.download.finished:
             job, self.download = self.download, None

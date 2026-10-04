@@ -62,7 +62,7 @@ FONT_BASE = dict(title=17, body=14, small=12, btn=15, hint=13, toast=15, status=
                  help=15, boxlabel=13)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DECK = os.path.join(BASE_DIR, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+DEFAULT_DECK = os.path.join(BASE_DIR, "sample_decks", "stompy_goreclaw.txt")      # patch 38 (was the Kinnan sample)
 SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 ART_RETRY_SECONDS = 30   # wait this long before retrying a card whose art failed

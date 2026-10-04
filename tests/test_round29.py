@@ -289,7 +289,8 @@ def make_tree(root, natives=True):
     files = ["Manticore.exe", "Manticore-cli.exe", "jre/bin/java.exe", "forge_runtime/forge.jar", "forge_runtime/forge_bridge.jar",
              "forge_runtime/VERSION.txt", "forge_runtime/res/cardsfolder/a.txt", "sounds/cues.json", "LICENSE",
              "THIRD_PARTY_NOTICES.txt", "README_FIRST.txt", "assets/fonts/f.ttf", "jre/legal/x.txt",
-             "banned_commander.snapshot.json", "banned_brawl.snapshot.json", "START_HERE.txt"]
+             "banned_commander.snapshot.json", "banned_brawl.snapshot.json", "START_HERE.txt",
+             "forge_card_names.json"]                                                # patch 38
     for i in range(cd.EXPECTED_SAMPLE_DECKS):
         files.append(f"sample_decks/d{i}.txt")
     for rel in files:

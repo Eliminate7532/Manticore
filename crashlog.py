@@ -61,16 +61,64 @@ def set_context(fn):
 
 # ---- gathering facts ---------------------------------------------------------------------------------------------------------
 
+_NATIVE_MACHINES = {0x014c: "x86", 0x8664: "AMD64", 0xAA64: "ARM64", 0x01c4: "ARM"}
+
+
+def native_machine():
+    """Patch 37: the processor Windows itself runs on, which an emulated process can't see in platform.machine(): an x64 build
+    on Windows 11 on Arm (Karl's Surface Pro 11) reports AMD64 there. kernel32.IsWow64Process2 gives the native machine (Windows 10
+    1709 and later). None elsewhere, or when Windows can't say."""
+    if sys.platform != "win32":
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        fn = getattr(k32, "IsWow64Process2", None)
+        if fn is None:
+            return None
+        fn.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.USHORT), ctypes.POINTER(wintypes.USHORT)]
+        fn.restype = wintypes.BOOL
+        k32.GetCurrentProcess.restype = wintypes.HANDLE
+        process, native = wintypes.USHORT(0), wintypes.USHORT(0)
+        if not fn(k32.GetCurrentProcess(), ctypes.byref(process), ctypes.byref(native)):
+            return None
+        return _NATIVE_MACHINES.get(native.value, hex(native.value))
+    except Exception:
+        return None
+
+
+def process_machine():
+    """The processor this Python was built for: "AMD64" for the x64 build, even when Windows runs it on an Arm processor.
+    Patch 38: platform.machine() can't tell - on Karl's Surface Pro 11 it said ARM64 for the x64 build (Python 3.14 asks
+    Windows for the processor), so the report read "Python 3.14.7 (ARM64)" and never said "emulated"."""
+    import sysconfig
+    plat = (sysconfig.get_platform() or "").lower()
+    return {"win-amd64": "AMD64", "win-arm64": "ARM64", "win32": "x86"}.get(plat) or platform.machine()
+
+
+def machine_text():
+    """"AMD64", or "AMD64 on ARM64 (emulated)" when Windows runs this x64 build on an Arm processor."""
+    here = process_machine()
+    native = native_machine() or platform.machine()
+    if here and native and native.upper() != here.upper():
+        return f"{here} on {native} (emulated)"
+    return here or native
+
+
 def environment(folder=None):
     """Lines about this computer and this copy of the program."""
     folder = folder or _cfg["folder"]
     lines = []
+    # Patch 38: in an installed copy `folder` is the logs folder, not the program's - the report said "code unknown | installed
+    # build unknown" and "forge_runtime: missing" (Karl's Surface, 4 Oct). The program folder describes the program.
+    prog = folder if paths.is_portable() else paths.program_dir()
     try:
-        lines.append(version.describe(folder))
+        lines.append(version.describe(prog))
     except Exception as e:
         lines.append(f"version unknown ({e})")
     try:
-        lines.append(f"Python {platform.python_version()} ({platform.machine()}), {platform.platform()}")
+        lines.append(f"Python {platform.python_version()} ({machine_text()}), {platform.platform()}")
     except Exception:
         pass
     try:
@@ -91,7 +139,7 @@ def environment(folder=None):
     except Exception:
         pass
     try:
-        rt = os.path.join(folder, "forge_runtime")
+        rt = os.path.join(prog, "forge_runtime")
         if os.path.isdir(rt):
             jars = [f"{n} {os.path.getsize(os.path.join(rt, n))} bytes" for n in sorted(os.listdir(rt)) if n.lower().endswith(".jar")]
             lines.append("forge_runtime: " + (", ".join(jars) if jars else "no .jar files"))

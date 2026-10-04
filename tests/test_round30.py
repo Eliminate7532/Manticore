@@ -178,9 +178,14 @@ class FeedTests(unittest.TestCase):
             with mock.patch.dict(os.environ, {"MANTICORE_UPDATE_FEED": "https://y.example/f.json"}):
                 self.assertEqual(updater.feed_url(d), "https://y.example/f.json")
 
-    def test_the_shipped_config_leaves_updates_off_until_karl_names_a_repository(self):
+    def test_the_shipped_config_names_the_public_repository(self):
+        """Patch 35 (3 Oct 2026): Karl made the public repository; until then this test checked that both were empty."""
         cfg = updater.read_config(BASE_DIR)
-        self.assertEqual((cfg.get("repo"), cfg.get("feed_url")), ("", ""))
+        self.assertEqual((cfg.get("repo"), cfg.get("feed_url")), ("Eliminate7532/Manticore", ""))
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("MANTICORE_UPDATE_FEED", None)
+            self.assertEqual(updater.feed_url(BASE_DIR),
+                             "https://github.com/Eliminate7532/Manticore/releases/latest/download/latest.json")
         with open(os.path.join(BASE_DIR, "commander_sim.spec"), encoding="utf-8") as f:
             spec = f.read()
         self.assertIn('_data("update_config.json", ".")', spec)

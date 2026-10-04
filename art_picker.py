@@ -8,17 +8,25 @@ card (Scryfall's small pictures, fetched on the art loader's thread; "Loading pr
 Hover shows the set and year, a click picks it. The pick is written into the deck file as Moxfield writes it ("1 Sol Ring (C21)
 263"), so the deck still round-trips with Moxfield. A sample deck is never changed: the first pick offers to save a copy.
 Pictures from my_art/ (your own) replace Scryfall's; "Reload my art" scans the folder again.
+
+Round ALT2: screen 2 has two tabs, Printings (Scryfall, as above) and MPC Autofill: that card's community renders from
+mpcfill.com (mpc_art.py), searched when the tab is first opened, shown as Google Drive's small thumbnails (hover: who made it,
+its DPI and tags). A click picks one: only that picture is downloaded, and the deck file gets a "# art: <card> = mpc:<id>" line
+(deck_library.set_mpc_art) while its card line stays as Moxfield wrote it. Default, or any printing, takes the MPC picture out.
 """
 import pygame
 
+import art_loader
 import card_data
 import deck_library as lib
 import forge_dialogs as dlg
 import gfx
+import mpc_art
 from deck_importer import DeckImportError
 from gfx import DIM, GOLD, GREEN, ORANGE, RED, WHITE, clip_text, draw_text, round_rect, wrap_text
 
 CARD_ASPECT = 488 / 680
+ZOOM_STEPS = (0.6, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0)      # patch 38: the card size (- / +, Ctrl+wheel); 1.0 = as before
 TYPE_ORDER = ("Creature", "Planeswalker", "Battle", "Instant", "Sorcery", "Artifact", "Enchantment", "Land")
 
 
@@ -60,6 +68,7 @@ class ArtPicker(dlg.Dialog):
         self.hover_info = ""
         self.message = None                  # (text, colour) under the title
         self._cards = None
+        self.source = "scryfall"             # round ALT2: the card screen's tab, "scryfall" (printings) or "mpc"
 
     # ---- state
     def cards(self, gui):
@@ -73,8 +82,50 @@ class ArtPicker(dlg.Dialog):
     def key_for(self, name, printing):
         return card_data.art_key(name, *printing) if printing else name
 
+    # ---- patch 38: the card size
+    def zoom(self, gui):
+        z = getattr(gui, "art_picker_zoom", 1.0)
+        return min(ZOOM_STEPS, key=lambda step: abs(step - (z if isinstance(z, (int, float)) else 1.0)))
+
+    def change_zoom(self, gui, step):
+        """One step bigger (+1) or smaller (-1); remembered in settings.json (art_picker_zoom). The scroll keeps the same place."""
+        old = self.zoom(gui)
+        i = max(0, min(len(ZOOM_STEPS) - 1, ZOOM_STEPS.index(old) + step))
+        new = ZOOM_STEPS[i]
+        if new == old:
+            return
+        self.scroll = int(self.scroll * new / old)
+        gui.art_picker_zoom = new
+        save = getattr(gui, "save_settings", None)
+        if save:
+            save()
+
+    def tile_width(self, gui, label_h):
+        """A tile's width: the base size (110 px at 100% text) times the card size, but never wider than the area or taller than
+        it (one whole card always fits)."""
+        w = int(max(84, 110 * gui.L.fs) * self.zoom(gui))
+        w = min(w, max(40, self.area.w - 10))
+        room = self.area.h - label_h - 4
+        if room > 0:
+            w = min(w, int(room * CARD_ASPECT))
+        return max(40, w)
+
     def open_card(self, name):
         self.card, self.scroll = name, 0
+        self.source = "mpc" if mpc_art.is_mpc_printing(self.chosen(name)) else "scryfall"
+
+    def mpc_info(self, gui, drive_id):
+        """The kept details of an MPC Autofill picture ({source, dpi, tags, name}), or None."""
+        store = getattr(getattr(gui, "art", None), "store", None)
+        get = getattr(store, "mpc_card", None)
+        return get(drive_id) if get else None
+
+    def describe(self, gui, printing):
+        """A chosen printing in words: "C21 263", or "MPC Autofill (by Chilli_Axe)"."""
+        if mpc_art.is_mpc_printing(printing):
+            c = self.mpc_info(gui, printing[1])
+            return "MPC Autofill" + (f" (by {c['source']})" if c and c.get("source") else "")
+        return f"{printing[0].upper()} {printing[1]}"
 
     def back_to_grid(self):
         self.card, self.scroll = None, 0
@@ -115,7 +166,7 @@ class ArtPicker(dlg.Dialog):
             self.message = (str(e), RED)
             return
         if printing:
-            self.message = (f"{name}: {printing[0].upper()} {printing[1]} saved in '{self.entry.name}'.", GREEN)
+            self.message = (f"{name}: {self.describe(gui, printing)} saved in '{self.entry.name}'.", GREEN)
         else:
             self.message = (f"{name}: back to the default picture.", GREEN)
         if gui.art is not None:
@@ -132,6 +183,16 @@ class ArtPicker(dlg.Dialog):
             return
         if name == "back":
             self.back_to_grid()
+            return
+        if name in ("src_scryfall", "src_mpc"):                   # round ALT2: the card screen's two tabs
+            self.source, self.scroll = name[4:], 0
+            return
+        if name == "retry_mpc":
+            if gui.art is not None and self.card:
+                gui.art.retry_mpc(self.card)
+            return
+        if name in ("zoom_in", "zoom_out"):                       # patch 38
+            self.change_zoom(gui, 1 if name == "zoom_in" else -1)
             return
         if name == "reload":
             if gui.art is not None:
@@ -150,6 +211,12 @@ class ArtPicker(dlg.Dialog):
                 return
 
     def key(self, gui, ev):
+        if ev.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):          # patch 38: the card size
+            self.change_zoom(gui, 1)
+            return
+        if ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+            self.change_zoom(gui, -1)
+            return
         if ev.key == pygame.K_ESCAPE:
             if self.card is not None:
                 self.back_to_grid()
@@ -157,6 +224,10 @@ class ArtPicker(dlg.Dialog):
                 self.done = True
 
     def wheel(self, gui, dy):
+        if pygame.key.get_mods() & pygame.KMOD_CTRL:              # patch 38: Ctrl+wheel changes the card size
+            if dy:
+                self.change_zoom(gui, 1 if dy > 0 else -1)
+            return
         step = int(60 * max(1.0, gui.L.fs))
         self.scroll = max(0, min(self.scroll - dy * step, max(0, self.content_h - self.area.h)))
 
@@ -172,6 +243,18 @@ class ArtPicker(dlg.Dialog):
         cw = max(gui.button_width("Close"), int(120 * fs))
         self.button(gui, pygame.Rect(rect.right - pad - cw, y, cw, bh), "Close", "close", True)
         right = rect.right - pad - cw - 10
+        # patch 38: the card size, - and + (also the - / + keys and Ctrl+wheel)
+        z = self.zoom(gui)
+        self.button(gui, pygame.Rect(right - bh, y, bh, bh), "+", "zoom_in", z < ZOOM_STEPS[-1])
+        self.button(gui, pygame.Rect(right - 2 * bh - 6, y, bh, bh), "\u2212", "zoom_out", z > ZOOM_STEPS[0])
+        right -= 2 * bh + 6
+        size_label = "Card size"
+        if title.size(size_label)[0] < (right - x) // 3:
+            lw = small.size(size_label)[0]
+            draw_text(scr, size_label, right - 8, y + bh // 2, small, gfx.BODY_TEXT, "midright")
+            right -= lw + 16
+        else:
+            right -= 10
         if self.card is None:
             if gui.art is not None:
                 rw = max(gui.button_width("Reload my art"), int(160 * fs))
@@ -185,9 +268,22 @@ class ArtPicker(dlg.Dialog):
             head = self.card
         draw_text(scr, clip_text(head, title, right - x - 10), x, y + bh // 2, title, WHITE, "midleft")
         y += bh + 6
+        if self.card is not None:                                # round ALT2: Printings | MPC Autofill
+            th = int(max(28, 32 * fs))
+            tx = x
+            for src, label in (("scryfall", "Printings"), ("mpc", "MPC Autofill")):
+                tw_ = max(gui.button_width(label), int(150 * fs))
+                self.button(gui, pygame.Rect(tx, y, tw_, th), label, "src_" + src, True, src == self.source, False)
+                tx += tw_ + int(8 * fs)
+            pygame.draw.line(scr, GOLD, (x, y + th + 3), (x + tw, y + th + 3), 1)
+            y += th + 8
         if self.card is None:
-            hint = ("Click a card to choose its printing. A gold dot marks a card with a chosen printing. Your own pictures go in "
-                    "the my_art folder (\"Sol Ring.png\", or \"Sol Ring__C21_263.png\" for one printing).")
+            hint = ("Click a card to choose its printing or an MPC Autofill picture. A gold dot marks a card with a chosen "
+                    "picture. Card size: \u2212 and + (or Ctrl+wheel). Your own pictures go in the my_art folder (\"Sol Ring.png\", or "
+                    "\"Sol Ring__C21_263.png\" for one printing).")
+        elif self.source == "mpc":
+            hint = ("Community renders from MPC Autofill (mpcfill.com); each belongs to the person who made it. Only the "
+                    "picture you click is downloaded. Hover for who made it and its DPI. Esc goes back.")
         else:
             hint = "Click a printing to use it in this deck. Default is Scryfall's usual picture. Esc goes back."
         for ln in wrap_text(hint, small, tw)[:2]:
@@ -202,6 +298,8 @@ class ArtPicker(dlg.Dialog):
         self.hover_info = ""
         if self.card is None:
             self.draw_grid(gui)
+        elif self.source == "mpc":
+            self.draw_mpc(gui)
         else:
             self.draw_printings(gui)
         if self.hover_info:
@@ -227,18 +325,29 @@ class ArtPicker(dlg.Dialog):
             return None
         if small and card_data.is_art_key(key) and not art.custom_path(key):
             return art.small(key, w, h)
+        k = ("picker", key, w, h, art.custom_gen if art.is_custom(key) else 0)
+        hit = gfx.recall(k)
+        if hit is not None:
+            return hit
+        radius = max(3, int(w * 0.05))
+        if h > art_loader.SOURCE_SIZE[1] + 20:          # patch 38: a big card size - the full picture, not the 244x340 copy
+            big = art.preview(key, w, h)
+            if big is not None:
+                return gfx.remember(k, gfx.rounded_image(big, w, h, radius))
         img = art.get(key)
         if img is None:
             return None
-        k = ("picker", key, w, h, art.custom_gen if art.is_custom(key) else 0)
-        return gfx.recall(k) or gfx.remember(k, gfx.rounded_image(img, w, h, max(3, int(w * 0.05))))
+        surf = gfx.rounded_image(img, w, h, radius)
+        if h > art_loader.SOURCE_SIZE[1] + 20:          # the small copy only until the full one is here: not remembered
+            return surf
+        return gfx.remember(k, surf)
 
     def draw_grid(self, gui):
         scr, fs = gui.screen, gui.L.fs
         tiny = gui.font("tiny", True)
         names = self.cards(gui)
-        tile_w = int(max(84, 110 * fs))
         label_h = tiny.get_height() + 4
+        tile_w = self.tile_width(gui, label_h)
         gap, cols, tile_h = self._layout(len(names), tile_w, label_h)
         scr.set_clip(self.area)
         for i, name in enumerate(names):
@@ -254,7 +363,7 @@ class ArtPicker(dlg.Dialog):
             hot = r.collidepoint(gui.mouse) and self.area.collidepoint(gui.mouse)
             if hot:
                 pygame.draw.rect(scr, GOLD, r.inflate(4, 4), 2, border_radius=4)
-                self.hover_info = name + (f"  -  {pr[0].upper()} {pr[1]}" if pr else "  -  default picture")
+                self.hover_info = name + (f"  -  {self.describe(gui, pr)}" if pr else "  -  default picture")
             if pr:
                 rad = max(4, int(5 * fs))
                 pygame.draw.circle(scr, gfx.BADGE_DARK, (r.right - rad - 3, r.y + rad + 3), rad + 2)
@@ -270,10 +379,15 @@ class ArtPicker(dlg.Dialog):
         prints = gui.art.printings(name) if gui.art is not None else []
         options = [None] + [(p["set"], p["cn"]) for p in (prints or []) if p.get("set") and p.get("cn")]
         info = {(p["set"], p["cn"]): p for p in (prints or []) if p.get("set")}
-        tile_w = int(max(84, 110 * fs))
         label_h = tiny.get_height() + 4
+        tile_w = self.tile_width(gui, label_h)
         gap, cols, tile_h = self._layout(len(options) + (1 if prints is None else 0), tile_w, label_h)
         current = self.chosen(name)
+        if mpc_art.is_mpc_printing(current):                     # round ALT2: an MPC picture is chosen; no printing is
+            current = None                                       # marked, and neither is Default
+            mpc_chosen = True
+        else:
+            mpc_chosen = False
         scr.set_clip(self.area)
         for i, pr in enumerate(options):
             r = pygame.Rect(self.area.x + (i % cols) * (tile_w + gap),
@@ -287,7 +401,7 @@ class ArtPicker(dlg.Dialog):
             else:
                 scr.blit(pic, r)
             hot = r.collidepoint(gui.mouse) and self.area.collidepoint(gui.mouse)
-            sel = (pr is None and not current) or (pr is not None and current and tuple(current) == tuple(pr))
+            sel = (pr is None and not current and not mpc_chosen) or (pr is not None and current and tuple(current) == tuple(pr))
             if sel or hot:
                 pygame.draw.rect(scr, GOLD, r.inflate(4, 4), 3 if sel else 2, border_radius=4)
             if pr is None:
@@ -310,4 +424,65 @@ class ArtPicker(dlg.Dialog):
         elif not prints:
             draw_text(scr, "No other printings found (or Scryfall can't be reached right now).",
                       self.area.x + tile_w + gap + 10, self.area.y + tile_h // 2, small, ORANGE, "midleft")
+        scr.set_clip(None)
+
+    # ---- round ALT2: the MPC Autofill tab
+    def draw_mpc(self, gui):
+        scr, fs = gui.screen, gui.L.fs
+        tiny, small = gui.font("tiny", True), gui.font("small")
+        name, art = self.card, gui.art
+        found = art.mpc_results(name) if art is not None else []
+        label_h = tiny.get_height() + 4
+        tile_w = self.tile_width(gui, label_h)
+        gap, cols, tile_h = self._layout(len(found or []), tile_w, label_h)
+        if found is None:
+            draw_text(scr, "Searching MPC Autofill...", self.area.x + 10, self.area.y + small.get_height(), small, DIM, "midleft")
+            return
+        if not found:
+            err = art.mpc_error(name) if art is not None else None
+            ty = self.area.y + small.get_height()
+            if err:
+                why = f"The search didn't work: {err}. Your internet connection, or mpcfill.com, may be down."
+                for ln in wrap_text(why, small, self.area.w - 20)[:2]:
+                    draw_text(scr, ln, self.area.x + 10, ty, small, ORANGE, "midleft")
+                    ty += small.get_height()
+                bw = max(gui.button_width("Try again"), int(130 * fs))
+                bh = int(max(30, 34 * fs))
+                self.button(gui, pygame.Rect(self.area.x + 10, ty, bw, bh), "Try again", "retry_mpc", True)
+            elif art is None:
+                draw_text(scr, "Card pictures aren't available here.", self.area.x + 10, ty, small, DIM, "midleft")
+            else:
+                draw_text(scr, "MPC Autofill has no pictures of this card.", self.area.x + 10, ty, small, DIM, "midleft")
+            return
+        current = self.chosen(name)
+        scr.set_clip(self.area)
+        for i, c in enumerate(found):
+            r = pygame.Rect(self.area.x + (i % cols) * (tile_w + gap),
+                            self.area.y + (i // cols) * (tile_h + label_h + gap) - self.scroll, tile_w, tile_h)
+            if r.bottom < self.area.y or r.y > self.area.bottom:
+                continue
+            pr = (mpc_art.MPC_SET, c["id"])
+            key = card_data.art_key(name, *pr)
+            pic = self._picture(gui, key, tile_w, tile_h, small=True)
+            if pic is None:
+                round_rect(scr, r, gfx.LOG_BG, 6, 1, gfx.LOG_EDGE)
+                gone = art is not None and art.small_unavailable(key)
+                draw_text(scr, "No picture" if gone else "...", r.centerx, r.centery, tiny if gone else small, DIM, "center")
+            else:
+                scr.blit(pic, r)
+            hot = r.collidepoint(gui.mouse) and self.area.collidepoint(gui.mouse)
+            sel = bool(current) and tuple(current) == pr
+            if sel or hot:
+                pygame.draw.rect(scr, GOLD, r.inflate(4, 4), 3 if sel else 2, border_radius=4)
+            if hot:
+                bits = [c.get("source") or "unknown maker"]
+                if c.get("dpi"):
+                    bits.append(f"{c['dpi']} DPI")
+                if c.get("tags"):
+                    bits.append(", ".join(c["tags"]))
+                bits.append(c.get("name") or name)
+                self.hover_info = "  -  ".join(bits)
+            draw_text(scr, clip_text(c.get("source") or "?", tiny, tile_w), r.centerx, r.bottom + 2, tiny,
+                      GOLD if sel else (WHITE if hot else DIM), "midtop")
+            self.tiles.append((r.clip(self.area), pr))
         scr.set_clip(None)

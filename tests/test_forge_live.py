@@ -20,7 +20,7 @@ from tests.forge_bot import Bot
 
 PROBLEM = live.live_problem()
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SAMPLE = os.path.join(BASE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+SAMPLE = os.path.join(BASE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 def write_decks(directory):

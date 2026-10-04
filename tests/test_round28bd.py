@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(BASE, "tools"))
 
 import tests.live as live
 
-KINNAN = os.path.join(BASE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+KINNAN = os.path.join(BASE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 class BusySourceTests(unittest.TestCase):

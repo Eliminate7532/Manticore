@@ -15,7 +15,7 @@ import card_check as cc, forge_client as fc
 from tests.test_round27c import play_spiteful_to_my_second_draw, prompt, names
 
 OUT = "tests/fixtures/bridge"
-KINNAN = "sample_decks/kinnan_nbc_moxfield_export.txt"
+KINNAN = "tests/fixtures/decks/kinnan_nbc_moxfield_export.txt"   # patch 38: no longer a sample deck
 
 class Shim:
     def assertTrue(self, x, msg=None):

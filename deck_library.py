@@ -8,12 +8,15 @@ Decks live as plain text files (the same Moxfield / Archidekt text export you pa
   sample_decks/        decks that ship with the program (listed too, but they can't be removed)
 
 Round FMT1: a deck's format is a "# format: brawl" line in its file (formats.py); no line = Commander. DeckEntry.format.
+Round ALT2: a card's MPC Autofill picture is a "# art: Sol Ring = mpc:<Google Drive id>" line (set_mpc_art); it overrides the
+card line's "(SET) CN" for the pictures and leaves the card line as Moxfield wrote it.
 """
 import os
 import re
 import shutil
 
 import formats
+import mpc_art
 import paths
 from deck_importer import DeckImportError, import_from_text, import_from_text_with_printings
 
@@ -29,12 +32,12 @@ _BAD_NAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 SAMPLE_NAMES = {                                             # file name in sample_decks/ -> the name on the deck screen
-    "kinnan_nbc_moxfield_export": "Kinnan NBC (sample)",
     "typal_lathril": "Tap for Mana, Tap for Violence (Typal)",
     "go_wide_adeline": "Clown Car Crusade (Tokens / Go Wide)",
     "aristocrats_teysa": "Organ Harvesting for Fun & Profit (Aristocrats)",
     "voltron_light_paws": "What Does The Fox Say (Voltron)",
     "spellslinger_veyran": "This Turn Could Have Been an Email (Spellslinger)",
+    "stompy_goreclaw": "We Just Need to Punch Them (Stompy)",  # patch 38: Karl's Goreclaw deck, in the alpha instead of Kinnan
     # Round FMT1: MTG Arena Brawl samples (their files start with "# format: brawl")
     "brawl_nissa": "Every Forest Is a Weapon (Lands)",
     "brawl_krenko": "Goblin Union Meeting (Goblins)",
@@ -43,9 +46,14 @@ SAMPLE_NAMES = {                                             # file name in samp
 }
 
 
+# Patch 38: the Kinnan list left the alpha (Goreclaw took its place) and is now only a test deck, tests/fixtures/decks/. Tests that
+# put it in a sample folder still see its old name.
+TEST_DECK_NAMES = {"kinnan_nbc_moxfield_export": "Kinnan NBC (sample)"}
+
+
 def display_name(stem, builtin):
     if builtin:
-        return SAMPLE_NAMES.get(stem, stem.replace("_", " ").strip().title() + " (sample)")
+        return SAMPLE_NAMES.get(stem) or TEST_DECK_NAMES.get(stem) or stem.replace("_", " ").strip().title() + " (sample)"
     return stem
 
 
@@ -73,7 +81,7 @@ def unknown_in(entry, runtime=None):
     """Round 28d (F2): the cards of a DeckEntry that this Forge doesn't know ([] when it can't tell). Never raises."""
     try:
         import forge_client as fc
-        return fc.unknown_cards(list(entry.commanders or []) + list(entry.deck or []), runtime)
+        return fc.unknown_cards(list(entry.commanders or []) + list(entry.deck or []), runtime, wait=False)     # patch 38
     except Exception:
         return []
 
@@ -87,7 +95,7 @@ def describe_problems(commanders, deck, error=None, runtime=None, fmt=None):
         out.append(("No commander found. Put the commander on the first line, or under a line that says Commander.", True))
     try:
         import forge_client as fc
-        missing = fc.unknown_cards(list(commanders or []) + list(deck or []), runtime)
+        missing = fc.unknown_cards(list(commanders or []) + list(deck or []), runtime, wait=False)     # patch 38: never freeze
     except Exception:                                       # a card check must never stop the menu
         missing = []
     if missing:
@@ -167,6 +175,10 @@ class DeckEntry:
                 text = f.read()
             self.format = formats.from_text(text)
             self.commanders, self.deck, self.printings = import_from_text_with_printings(text)
+            names = {n.lower() for n in list(self.commanders or []) + list(self.deck or [])}
+            for name, drive_id in mpc_art_lines(text).items():          # round ALT2: "# art: <card> = mpc:<id>"
+                if name in names:
+                    self.printings[name] = (mpc_art.MPC_SET, drive_id)
             self.error = None
         except (OSError, UnicodeDecodeError, DeckImportError) as e:
             self.commanders = self.deck = None
@@ -192,7 +204,7 @@ class DeckEntry:
     def problems(self, runtime=None):
         """describe_problems() for this deck; remembered until the file changes (or, Round BAN1, the banned list or card data
         changes: legality.version()), because the deck screen asks every frame."""
-        key = (self._mtime, runtime, _legality_version(), self.format)
+        key = (self._mtime, runtime, _legality_version(), self.format, _card_index_ready(runtime))
         if getattr(self, "_problems_key", None) != key:
             self._problems = describe_problems(self.commanders, self.deck, self.error, runtime, self.format)
             self._problems_key = key
@@ -208,6 +220,16 @@ class DeckEntry:
             self._legality = legality(self.commanders, self.deck, self.format)
             self._legality_key = key
         return self._legality
+
+
+def _card_index_ready(runtime):
+    """Patch 38: whether Forge's card-name index is ready, so the deck's problems are worked out again once it is (the
+    "not in this version of Forge" line needs it)."""
+    try:
+        import forge_client as fc
+        return fc.card_index_ready(runtime)
+    except Exception:
+        return True
 
 
 def _legality_version():
@@ -344,15 +366,23 @@ def _with_printing(rest, printing):
 def set_printing(entry, card_name, printing):
     """Rewrite every line of `entry`'s file that is `card_name` so it names `printing` ((set, cn), or None for the default).
     Only the "(SET) CN" part changes; quantity, foil marker and tags stay. Atomic (.tmp, then os.replace). Returns how many lines
-    changed. A sample deck is refused (the deck screen offers to copy it first)."""
+    changed. A sample deck is refused (the deck screen offers to copy it first). Round ALT2: the card's MPC Autofill line, if
+    it has one, goes too (a Scryfall printing or the default replaces it); `printing` may itself be ("_mpc", id), which is
+    set_mpc_art()."""
     from deck_importer import _strip_printing_info, _SECTION_HEADER
     if entry.builtin:
         raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
+    if mpc_art.is_mpc_printing(printing):
+        return set_mpc_art(entry, card_name, printing[1])
     want = card_name.strip().lower()
     with open(entry.path, "r", encoding="utf-8-sig") as f:
         text = f.read()
     out, changed = [], 0
     for line in text.splitlines():
+        a = _ART_LINE.match(line)
+        if a and a.group("name").strip().lower() == want:      # round ALT2: its MPC Autofill picture is replaced too
+            changed += 1
+            continue
         m = _LINE.match(line)
         if m and line.strip() and not _SECTION_HEADER.match(line.strip()) and _strip_printing_info(m.group("rest")).lower() == want:
             new = m.group("lead") + _with_printing(m.group("rest"), printing)
@@ -371,6 +401,58 @@ def set_printing(entry, card_name, printing):
         entry._mtime = None                         # re-read even if the clock didn't move
         entry.load()
     return changed
+
+
+# ---- Round ALT2: a picture from MPC Autofill, as a comment line --------------------------------------------------------------------
+
+_ART_LINE = re.compile(r"^\s*#\s*art\s*:\s*(?P<name>.+?)\s*=\s*mpc\s*:\s*(?P<id>\S+)\s*$", re.IGNORECASE)
+
+
+def mpc_art_lines(text):
+    """{card name lower: Drive id} from a deck file's "# art: <card> = mpc:<id>" lines (the last line for a card wins; a line
+    with an id that can't be a Drive id is ignored)."""
+    out = {}
+    for line in (text or "").splitlines():
+        m = _ART_LINE.match(line)
+        if m and mpc_art.valid_id(m.group("id")):
+            out[m.group("name").strip().lower()] = m.group("id")
+    return out
+
+
+def art_line(card_name, drive_id):
+    return f"# art: {card_name} = mpc:{drive_id}"
+
+
+def set_mpc_art(entry, card_name, drive_id):
+    """Use an MPC Autofill picture for `card_name` in this deck (drive_id None: remove it, back to the card line's printing).
+    Writes one "# art:" line at the top of the file, after any other leading "#" lines ("# format: brawl"); the card lines are
+    not touched, so the deck still pastes into Moxfield. Atomic. Returns True when the file changed. A sample deck is refused."""
+    if entry.builtin:
+        raise DeckImportError("The sample decks that come with the program can't be changed; save a copy to My decks first.")
+    if drive_id is not None and not mpc_art.valid_id(drive_id):
+        raise DeckImportError(f"'{drive_id}' isn't an MPC Autofill picture.")
+    want = card_name.strip().lower()
+    with open(entry.path, "r", encoding="utf-8-sig") as f:
+        text = f.read()
+    lines = text.splitlines()
+    out = [ln for ln in lines if not ((a := _ART_LINE.match(ln)) and a.group("name").strip().lower() == want)]
+    if drive_id is not None:
+        at = 0
+        while at < len(out) and out[at].lstrip().startswith("#"):
+            at += 1
+        out.insert(at, art_line(card_name.strip(), drive_id))
+    if out == lines:
+        return False
+    tmp = entry.path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write("\n".join(out) + "\n")
+        os.replace(tmp, entry.path)
+    except OSError as e:
+        raise DeckImportError(f"Could not save the deck: {e}")
+    entry._mtime = None
+    entry.load()
+    return True
 
 
 def copy_to_library(entry, library_dir=LIBRARY_DIR, base_dir=BASE_DIR):

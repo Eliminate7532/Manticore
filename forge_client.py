@@ -280,9 +280,103 @@ def forge_card_name(name, runtime=None):
 
 
 _NAME_INDEX = {}
+_INDEX_THREADS = {}          # patch 38: runtime -> the thread building its index in the background
+_INDEX_LOCK = threading.Lock()
+CARD_INDEX_FILE = "forge_card_names.json"     # patch 38: the index kept on disk, keyed by the Forge build
 
 
-def _card_name_index(runtime):
+def _index_key(runtime):
+    """Which Forge build an index belongs to: forge_runtime/VERSION.txt ("Forge 2.0.16-SNAPSHOT | commit fb4d809"), or None."""
+    try:
+        with open(os.path.join(runtime, "VERSION.txt"), encoding="utf-8", errors="replace") as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
+
+def card_index_files():
+    """Where a saved index is looked for: the one an installed build ships beside the program (tools/build_installer.py writes
+    it), then the one this computer saved in its card cache."""
+    return [os.path.join(paths.program_dir(), CARD_INDEX_FILE), os.path.join(paths.cache_dir(), CARD_INDEX_FILE)]
+
+
+def _load_saved_index(runtime):
+    key = _index_key(runtime)
+    if not key:
+        return None
+    for path in card_index_files():
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, dict) and data.get("forge") == key and isinstance(data.get("names"), list) and data["names"]:
+            return set(data["names"])
+    return None
+
+
+def save_card_index(names, runtime, path=None):
+    """Write an index (sorted names) for this runtime's Forge build. Atomic; a failure only costs a rebuild next time."""
+    key = _index_key(runtime)
+    if not key or not names:
+        return None
+    if path is None and os.environ.get("MANTICORE_NO_CARD_INDEX_SAVE"):      # the test suite: never into the project's cache/
+        return None
+    path = path or os.path.join(paths.cache_dir(), CARD_INDEX_FILE)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"forge": key, "names": sorted(names)}, f)
+        os.replace(tmp, path)
+        return path
+    except OSError:
+        return None
+
+
+def build_card_name_index(runtime):
+    """Every Name: line of every card script under res/cardsfolder (a set), or None when the folder is missing. Reads about
+    34,000 files: seconds on Karl's PC, and 50 seconds on the first start of an installed copy on his Surface (soak/bug report
+    of 4 Oct: x64 emulation, a cold disk and the virus scanner) - so the GUI never waits for this (patch 38)."""
+    root = os.path.join(runtime, "res", "cardsfolder")
+    if not os.path.isdir(root):
+        return None
+    names = set()
+    for dirpath, _dirs, files in os.walk(root):
+        for fn in files:
+            if not fn.endswith(".txt"):
+                continue
+            try:
+                with open(os.path.join(dirpath, fn), "r", encoding="utf-8", errors="replace") as f:
+                    for line in f:
+                        if line.startswith("Name:"):
+                            names.add(line.split(":", 1)[1].strip())
+            except OSError:
+                continue
+    return names
+
+
+def _build_and_keep(runtime):
+    names = build_card_name_index(runtime)
+    if names:
+        save_card_index(names, runtime)
+    _NAME_INDEX[runtime] = names
+
+
+def warm_card_index(runtime=None):
+    """Patch 38: have the index ready without ever blocking - from a saved file at once, else built on a background thread
+    (started once). Returns True when it is ready now."""
+    runtime = runtime or os.environ.get("FORGE_RUNTIME") or DEFAULT_RUNTIME
+    _card_name_index(runtime, wait=False)
+    return card_index_ready(runtime)
+
+
+def card_index_ready(runtime=None):
+    runtime = runtime or os.environ.get("FORGE_RUNTIME") or DEFAULT_RUNTIME
+    return runtime in _NAME_INDEX
+
+
+def _card_name_index(runtime, wait=True):
     """Every card name Forge's database actually answers to, read straight from the Name: lines inside its card
     scripts (res/cardsfolder/**/*.txt), cached per runtime. A two-faced card's script declares one Name: line per
     face (front, then another after ALTERNATE for the back), so this knows a card like Blightstep Pathway or
@@ -290,39 +384,44 @@ def _card_name_index(runtime):
     scripts joins both faces together (blightstep_pathway_searstep_pathway.txt), which is not how anyone writes a
     decklist and is why guessing a file name from the pasted text (the old approach here) wrongly warned Karl that
     Forge did not have cards it actually has (confirmed by starting a real game with them: no card lost, no error
-    logged - see the round 15 notes). Returns None when the folder itself is missing."""
-    root = os.path.join(runtime, "res", "cardsfolder")
-    if runtime not in _NAME_INDEX:
-        names = None
-        if os.path.isdir(root):
-            names = set()
-            for dirpath, _dirs, files in os.walk(root):
-                for fn in files:
-                    if not fn.endswith(".txt"):
-                        continue
-                    try:
-                        with open(os.path.join(dirpath, fn), "r", encoding="utf-8", errors="replace") as f:
-                            for line in f:
-                                if line.startswith("Name:"):
-                                    names.add(line.split(":", 1)[1].strip())
-                    except OSError:
-                        continue
-        _NAME_INDEX[runtime] = names
-    return _NAME_INDEX[runtime]
+    logged - see the round 15 notes). Returns None when the folder itself is missing.
+    Patch 38: a saved index for the same Forge build (shipped with an installed copy, or kept in the card cache) is used
+    instead of reading every script; a new one is saved after a build. wait=False never blocks: it starts (or leaves
+    running) a background build and returns None until it's done."""
+    if runtime in _NAME_INDEX:
+        return _NAME_INDEX[runtime]
+    saved = _load_saved_index(runtime)
+    if saved:
+        _NAME_INDEX[runtime] = saved
+        return saved
+    with _INDEX_LOCK:
+        t = _INDEX_THREADS.get(runtime)
+        if t is None and runtime not in _NAME_INDEX:
+            t = threading.Thread(target=_build_and_keep, args=(runtime,), daemon=True, name="card-name-index")
+            _INDEX_THREADS[runtime] = t
+            t.start()
+    if not wait:
+        return _NAME_INDEX.get(runtime)
+    if t is not None:
+        t.join()
+    return _NAME_INDEX.get(runtime)
 
 
-def forge_knows(name, runtime=None):
+def forge_knows(name, runtime=None, wait=True):
     """True/False: does Forge's card database have this card, under any of its face names? None when the script
     folder is not there at all (then nothing can be said). Used to warn about typos in a pasted deck before Forge
     silently drops the card. Checks the real Name: lines Forge's scripts declare first (see _card_name_index), so a
     two-faced card is recognised by its front face alone; falls back to the old guess-a-file-name check only if a
-    script's Name: line could not be read for some reason."""
+    script's Name: line could not be read for some reason. Patch 38: wait=False (the deck screen) answers None while
+    the index is still being built, instead of freezing the window."""
     runtime = runtime or os.environ.get("FORGE_RUNTIME") or DEFAULT_RUNTIME
     root = os.path.join(runtime, "res", "cardsfolder")
     if not os.path.isdir(root):
         return None
     name = name.strip()
-    index = _card_name_index(runtime)
+    index = _card_name_index(runtime, wait)
+    if index is None and not wait:
+        return None
     faces = [f.strip() for f in _FACE_SPLIT.split(name) if f.strip()]
     if index:
         if name in index or any(f in index for f in faces):
@@ -338,14 +437,15 @@ def forge_knows(name, runtime=None):
     return False
 
 
-def unknown_cards(names, runtime=None):
-    """The card names (each once, in first-seen order) that Forge's database does not have."""
+def unknown_cards(names, runtime=None, wait=True):
+    """The card names (each once, in first-seen order) that Forge's database does not have. wait=False (patch 38): [] while the
+    index is still being built."""
     seen, missing = set(), []
     for n in names:
         if n in seen:
             continue
         seen.add(n)
-        if forge_knows(n, runtime) is False:
+        if forge_knows(n, runtime, wait) is False:
             missing.append(n)
     return missing
 

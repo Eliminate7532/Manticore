@@ -32,8 +32,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 sys.path.insert(0, os.path.join(BASE_DIR, "tools"))
 
-ALPHA_DECKS = ["typal_lathril", "go_wide_adeline", "aristocrats_teysa", "voltron_light_paws", "spellslinger_veyran"]
-EXTRA_SAMPLES = ["kinnan_nbc_moxfield_export"]
+ALPHA_DECKS = ["typal_lathril", "go_wide_adeline", "aristocrats_teysa", "voltron_light_paws", "spellslinger_veyran",
+               "stompy_goreclaw"]                       # patch 38: Goreclaw in, the Kinnan sample out of the alpha
+EXTRA_SAMPLES = []
 STATE_FILE = "nightly_state.json"
 MIN_SOAK_MINUTES = 30          # the card check never takes the whole night: at least this long is left for soak games
 

@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(BASE, "tools"))
 
 import tests.live as live
 
-ALPHA = ["typal_lathril", "go_wide_adeline", "aristocrats_teysa", "voltron_light_paws", "spellslinger_veyran"]
+ALPHA = ["typal_lathril", "go_wide_adeline", "aristocrats_teysa", "voltron_light_paws", "spellslinger_veyran", "stompy_goreclaw"]
 
 
 def deck(stem):
@@ -162,8 +162,8 @@ class RotationTests(unittest.TestCase):
     def test_alpha_decks_first(self):
         import nightly
         stems = [s for s, _p in nightly.deck_rotation("sample")]
-        self.assertEqual(stems[:5], ALPHA)
-        self.assertIn("kinnan_nbc_moxfield_export", stems)
+        self.assertEqual(stems[:6], ALPHA)
+        self.assertNotIn("kinnan_nbc_moxfield_export", stems)          # patch 38: out of the alpha (a test deck now)
         self.assertFalse(any(s.startswith("mine/") for s in stems))
 
     def test_next_deck_resumes_then_takes_the_first_unfinished_then_the_oldest(self):

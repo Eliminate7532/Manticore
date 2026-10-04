@@ -22,7 +22,7 @@ import tests.live as live
 
 SRC = os.path.join(BASE, "java_bridge", "src", "forge", "bridge")
 JAR = os.path.join(BASE, "java_bridge", "forge_bridge.jar")
-KINNAN = os.path.join(BASE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+KINNAN = os.path.join(BASE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 def read(name):

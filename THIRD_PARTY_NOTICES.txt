@@ -22,6 +22,9 @@ Card art is the work of the credited artists, © Wizards of the Coast.
 Game art
 Some of Manticore's artwork was Created with Grok: the table backgrounds, the studio splash, the title screen and the window icon.
 
+MPC Autofill pictures (optional)
+The Card art picker's MPC Autofill tab shows community-made card renders indexed by MPC Autofill (mpcfill.com; its software is free under the GNU GPL v3). Nothing is fetched until you open that tab, and only the picture you pick is downloaded, to this computer's card cache; none are included with the program. Each picture belongs to the person who made it. MPC Autofill and its contributors are not affiliated with this program.
+
 Deck import
 Decks can be imported from text exports made on Moxfield and Archidekt. Manticore is not affiliated with either site.
 

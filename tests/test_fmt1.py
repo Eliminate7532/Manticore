@@ -190,7 +190,7 @@ class LibraryTests(unittest.TestCase):
         e = lib.DeckEntry(os.path.join(SAMPLES, "brawl_nissa.txt"), "n", True).load()
         self.assertEqual(e.format, "brawl")
         self.assertEqual(e.commanders, ["Nissa, Who Shakes the World"])
-        k = lib.DeckEntry(os.path.join(SAMPLES, "kinnan_nbc_moxfield_export.txt"), "k", True).load()
+        k = lib.DeckEntry(os.path.join(BASE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt"), "k", True).load()
         self.assertEqual(k.format, "commander")
 
     def test_saving_a_pasted_deck_writes_its_format(self):

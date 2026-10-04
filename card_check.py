@@ -3,7 +3,7 @@
 card_check.py - play every card of a deck through the real Forge engine, one card at a time, the way the table does, and report the ones that
 go wrong: a question the table cannot answer, a click that does nothing, an engine error, or an answer the bridge had to make for you.
 
-    python card_check.py sample_decks\\kinnan_nbc_moxfield_export.txt                 the whole deck (10 to 30 minutes)
+    python card_check.py sample_decks\\stompy_goreclaw.txt                            the whole deck (10 to 30 minutes)
     python card_check.py my_deck.txt --card "Force of Will" --card "Sol Ring"       only these
     python card_check.py my_deck.txt --out report.txt --json report.json
 

@@ -389,7 +389,7 @@ class ReplayNumberTests(unittest.TestCase):
 
 def kinnan_decks(tmp):
     from deck_loader import load_deck
-    c, d = load_deck(os.path.join(ROOT, "sample_decks", "kinnan_nbc_moxfield_export.txt"))
+    c, d = load_deck(os.path.join(ROOT, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt"))
     return (fc.write_deck_file(os.path.join(tmp, "player.dck"), c, d, "Player"),
             fc.write_deck_file(os.path.join(tmp, "opponent1.dck"), c, d, "Opponent 1"))
 

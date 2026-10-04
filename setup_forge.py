@@ -244,7 +244,7 @@ def write_notes(manifest):
 def smoke_test(seconds=150):
     """Start a real two-player game and wait for the first snapshot. Returns (ok, message)."""
     from deck_loader import load_deck
-    sample = os.path.join(BASE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+    sample = os.path.join(BASE, "sample_decks", "stompy_goreclaw.txt")      # patch 38 (was the Kinnan sample)
     commanders, deck = load_deck(sample)
     path = fc.write_deck_file(os.path.join(BASE, "forge_decks", "check.dck"), commanders, deck, "Check", RUNTIME)
     session = fc.ForgeSession(path, [path], name="Check", seed=1, runtime=RUNTIME)

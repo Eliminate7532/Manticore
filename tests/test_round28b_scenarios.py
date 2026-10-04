@@ -38,7 +38,7 @@ sys.path.insert(0, BASE)
 import bridge_rules as br
 import tests.live as live
 
-KINNAN = os.path.join(BASE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+KINNAN = os.path.join(BASE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 def prompt(s):

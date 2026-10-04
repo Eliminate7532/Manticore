@@ -168,6 +168,11 @@ def _user_agent():
     return "Manticore/%s (+update check)" % version.VERSION
 
 
+# Patch 38: GitHub answers 404 for releases/latest/... while the repository has no release yet - every start of Karl's installed
+# test copy wrote "Update check failed" into the crash log (4 Oct). Still "failed", but not worth a crash-log entry.
+NO_RELEASE = "no release has been published yet (the update feed answered 404)"
+
+
 def check(url, timeout=FEED_TIMEOUT, session=None):
     """(UpdateInfo, None) when the feed could be read, else (None, the reason). Never raises."""
     if not url_ok(url):
@@ -176,6 +181,8 @@ def check(url, timeout=FEED_TIMEOUT, session=None):
         import requests
         http = session or requests
         r = http.get(url, timeout=timeout, headers={"User-Agent": _user_agent()}, stream=True)
+        if r.status_code == 404:
+            return None, NO_RELEASE
         if r.status_code != 200:
             return None, "the update feed answered %s" % r.status_code
         raw = b""

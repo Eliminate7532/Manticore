@@ -272,7 +272,7 @@ class LiveResumeTests(unittest.TestCase):
         from tests.forge_bot import Bot
         tmp = tempfile.mkdtemp(prefix="resume_live_")
         self.addCleanup(shutil.rmtree, tmp, True)
-        c, d = load_deck(os.path.join(ROOT, "sample_decks", "kinnan_nbc_moxfield_export.txt"))
+        c, d = load_deck(os.path.join(ROOT, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt"))
         me = fc.write_deck_file(os.path.join(tmp, "player.dck"), c, d, "Player")
         opp = fc.write_deck_file(os.path.join(tmp, "opponent1.dck"), c, d, "Opponent 1")
         s = fc.ForgeSession(me, [opp], name="Karl", seed=4242).start()

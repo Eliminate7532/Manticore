@@ -27,7 +27,7 @@ from tests.forge_fake import FakeSession, StubStore, load_log, load_state
 from tests.test_forge_table import click, frame, key, move
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SAMPLE = os.path.join(HERE, "sample_decks", "kinnan_nbc_moxfield_export.txt")
+SAMPLE = os.path.join(HERE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 def sample_text():
@@ -702,9 +702,9 @@ class BundledDeckTests(unittest.TestCase):
                 self.assertEqual([p for p in e.problems(os.path.join(HERE, "no_forge_here"))
                                   if not legality.is_unchecked_line(p[0])], [])      # Round BAN1: no card data in a test run
 
-    def test_the_five_archetypes_are_named(self):
+    def test_the_six_archetypes_are_named(self):
         names = " ".join(lib.SAMPLE_NAMES.values())
-        for archetype in ("Typal", "Tokens / Go Wide", "Aristocrats", "Voltron", "Spellslinger"):
+        for archetype in ("Typal", "Tokens / Go Wide", "Aristocrats", "Voltron", "Spellslinger", "Stompy"):
             self.assertIn(f"({archetype})", names)
 
     def test_no_bundled_card_is_one_forge_says_its_ai_cannot_play(self):
@@ -713,11 +713,15 @@ class BundledDeckTests(unittest.TestCase):
         folder = os.path.join(fc.DEFAULT_RUNTIME, "res", "cardsfolder")
         if not os.path.isdir(folder):
             self.skipTest("Forge's card scripts are not installed (python setup_forge.py)")
+        # Patch 38: Karl's own Goreclaw list went into the alpha as it is; Forge flags these six of its cards (checked 4 Oct 2026,
+        # Forge fb4d809). An AI piloting it may misplay or hold them. Any other flagged card still fails.
+        karls_own = {"We Just Need to Punch Them (Stompy)": {"Beast Within", "Momentous Fall", "Life's Legacy", "Early Harvest",
+                                                            "Greater Good", "Hunter's Insight"}}
         flagged = []
         for e in lib.list_decks(os.path.join(HERE, "no_such_folder"), lib.SAMPLE_DIR, HERE):
-            if "kinnan" in e.id:
-                continue                                    # Karl's own cEDH list, not an AI starter deck
             for name in set(e.commanders + e.deck):
+                if name in karls_own.get(e.name, ()):
+                    continue
                 slug = fc._slug(" ".join(f.strip() for f in name.split("/")))
                 for sub in (slug[:1], "upcoming", "rebalanced"):
                     path = os.path.join(folder, sub, slug + ".txt")

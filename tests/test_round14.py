@@ -657,7 +657,7 @@ class SaveRegressionTests(unittest.TestCase):
 # ---------------------------------------------------------------------------------------
 
 PROBLEM = live.live_problem()
-SAMPLE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sample_decks", "kinnan_nbc_moxfield_export.txt")
+SAMPLE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt")
 
 
 def combat_lines(blockers=2, ai_life=5):

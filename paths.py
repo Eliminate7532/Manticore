@@ -147,6 +147,13 @@ def my_art_dir():
     return os.path.join(user_dir(), "my_art")
 
 
+def mpc_art_dir():
+    """Patch 38: the MPC Autofill pictures you picked in the Card art window, kept for good (not in the card cache): mpc_art/
+    beside my_art/. Downloaded once when picked; they stay if the cache is cleared, the computer is offline, or the maker takes
+    the file down. In the local backup zips but not git (.gitignore), never in the public source copy."""
+    return os.path.join(user_dir(), "mpc_art")
+
+
 def forge_decks_dir():
     return os.path.join(local_dir(), "forge_decks")
 
@@ -191,7 +198,7 @@ def describe():
 def ensure_dirs():
     """Create every folder the current mode needs. Call once, at program start - not at import time, and
     not from any other function in this module."""
-    for d in (user_dir(), local_dir(), cache_dir(), library_dir(), my_art_dir(), forge_decks_dir(), bug_reports_dir(),
+    for d in (user_dir(), local_dir(), cache_dir(), library_dir(), my_art_dir(), mpc_art_dir(), forge_decks_dir(), bug_reports_dir(),
               log_dir(), saves_dir()):
         try:
             os.makedirs(d, exist_ok=True)

@@ -14,6 +14,7 @@ import time
 
 import pygame
 
+import mpc_art
 from card_data import art_key, is_art_key, key_name, safe_part
 
 SOURCE_SIZE = (244, 340)
@@ -21,6 +22,10 @@ RETRY_SECONDS = 30
 IMAGES_PER_FRAME = 4
 CUSTOM_EXTS = (".png", ".jpg", ".jpeg")
 CUSTOM_MAX_SIDE = 4096          # round ALT1: a bigger picture in my_art/ is refused (with a toast), never scaled
+MPC_THREADS = 4                 # round ALT2: MPC Autofill thumbnails come from Google Drive four at a time, newest first
+MPC_SMALL_MAX_H = 400           # patch 38: a picker tile taller than this gets the 800 px MPC thumbnail
+SCRYFALL_SMALL_MAX_H = 230      # patch 38: ... and a Scryfall printing its normal picture (the small one is 146x204)
+SMALL_CACHE = 240               # patch 38: picker tiles kept as Surfaces (was 48; a small card size shows more than 48 tiles)
 
 
 def custom_stem(text):
@@ -70,6 +75,11 @@ class ArtLoader:
         self._custom_imgs = {}              # path -> full-size Surface (loaded once, on the GUI thread)
         self._printings_failed = {}
         self._from_custom = {}
+        self._mpc_failed = {}               # round ALT2: card name -> why its MPC Autofill search failed
+        self._small_failed = {}             # round ALT2: small picture key -> time.time() after which it may be asked again
+        self._mpc_stack = []                # round ALT2: MPC thumbnails to fetch (the newest asked for is fetched first)
+        self._mpc_cv = threading.Condition()
+        self._mpc_threads = []
         self._thread = threading.Thread(target=self._worker, daemon=True, name="art-loader")
         self._thread.start()
         names = sorted({art_key(n) for n in (prefetch_names or [])}, key=str)
@@ -102,13 +112,19 @@ class ArtLoader:
                     self.store.prefetch_cards(payload)
                     self.data_ready.set()
                     continue
+                if kind == "mpc":                                  # round ALT2: the picker's MPC Autofill search
+                    got = self.store.mpc_search(payload)
+                    if got is None:
+                        self._mpc_failed[payload] = getattr(self.store, "last_error", None) or "MPC Autofill can't be reached"
+                    self._done.put((kind, payload, None, None if got is not None else self._mpc_failed.get(payload)))
+                    continue
                 if kind == "printings":                            # round ALT1: the picker's list of printings
                     got = self.store.list_printings(payload)
                     if got is None:
                         self._printings_failed[payload] = []
                     self._done.put((kind, payload, None, None if got is not None else self.store.last_error))
                     continue
-                if kind in ("large", "art_crop", "small"):         # round 26: a bigger picture, fetched in the background
+                if kind in ("large", "art_crop", "small", "medium"):    # round 26: a bigger picture, in the background
                     path = self.store.get_image_path(payload, size=kind)
                     self._done.put((kind, payload, path, None if path else self.store.last_error))
                     continue
@@ -131,12 +147,14 @@ class ArtLoader:
             except queue.Empty:
                 return done
             done += 1
-            if kind == "printings":
+            if kind in ("printings", "mpc"):
                 continue
-            if kind in ("large", "art_crop", "small"):  # round 26: nothing to build here -- preview()/art_crop() re-peek the file
-                self._requested_large.discard((kind, name))
+            if kind in ("large", "art_crop", "small", "medium"):  # round 26: nothing to build here -- preview()/art_crop()
+                self._requested_large.discard((kind, name))       # re-peek the file
                 if not path:
                     self.error = err
+                    if kind in ("small", "medium"):     # round ALT2: a tile whose picture can't be had isn't asked again
+                        self._small_failed[name] = time.time() + RETRY_SECONDS      # every frame
                 continue
             self._requested.discard(name)
             if not name:
@@ -163,7 +181,63 @@ class ArtLoader:
         if key in self._requested_large:
             return
         self._requested_large.add(key)
+        if mpc_art.is_mpc(name) and hasattr(self.store, "mpc_image_path"):
+            self._mpc_fetch(name, kind)
+            return
         self._jobs.put((0, next(self._seq), kind, name))
+
+    # ---- round ALT2: MPC Autofill ----
+    def _mpc_fetch(self, key, size):
+        """Queue an MPC Autofill picture on the thumbnail threads (started the first time). The newest request is fetched
+        first, so the tiles on the screen arrive before the ones scrolled past."""
+        with self._mpc_cv:
+            self._mpc_stack.append((key, size))
+            if len(self._mpc_threads) < MPC_THREADS:
+                t = threading.Thread(target=self._mpc_worker, daemon=True, name=f"mpc-art-{len(self._mpc_threads)}")
+                self._mpc_threads.append(t)
+                t.start()
+            self._mpc_cv.notify()
+
+    def _mpc_worker(self):
+        while True:
+            with self._mpc_cv:
+                while not self._mpc_stack:
+                    self._mpc_cv.wait()
+                key, size = self._mpc_stack.pop()
+            try:
+                path = self.store.mpc_image_path(key, size)
+                self._done.put((size, key, path, None if path else getattr(self.store, "last_error", None)))
+            except Exception as e:                    # these threads must never die silently either
+                self._done.put((size, key, None, f"{type(e).__name__}: {e}"))
+
+    def mpc_results(self, name):
+        """The MPC Autofill pictures of this card ([{id, name, source, dpi, size, tags, ...}], best first) once searched,
+        else None (searched in the background; "Searching..." meanwhile). [] when there are none or the search failed
+        (mpc_error() then says why)."""
+        peek = getattr(self.store, "peek_mpc", None)
+        if peek is None:
+            return []
+        got = peek(name)
+        if got is not None:
+            return got
+        if ("mpc", name) in self._requested_large:
+            return [] if name in self._mpc_failed else None
+        self._requested_large.add(("mpc", name))
+        self._jobs.put((0, next(self._seq), "mpc", name))
+        return None
+
+    def small_unavailable(self, key):
+        """True when this small picture couldn't be had a moment ago (the tile says so instead of waiting)."""
+        return time.time() < self._small_failed.get(art_key(key), 0)
+
+    def mpc_error(self, name):
+        """Why this card's MPC Autofill search failed, or None."""
+        return self._mpc_failed.get(name)
+
+    def retry_mpc(self, name):
+        """Forget a failed MPC Autofill search, so the next mpc_results() asks again."""
+        self._mpc_failed.pop(name, None)
+        self._requested_large.discard(("mpc", name))
 
     # ---- round ALT1: my_art/ ----
     def custom_path(self, key):
@@ -300,23 +374,46 @@ class ArtLoader:
         self._preview[key] = surf
 
     def small(self, key, w, h):
-        """Round ALT1: the "small" (146x204) Scryfall picture for the printings strip, or None while it downloads."""
+        """Round ALT1: the "small" (146x204) Scryfall picture for the printings strip, or None while it downloads.
+        Patch 38 (the picker's card size): a tile taller than the small picture gets a bigger one instead of a blurry stretch -
+        an MPC Autofill tile its "medium" (800 px) thumbnail, a Scryfall printing its normal picture (preview())."""
         key = art_key(key)
         pkey = ("small", key, w, h)
         if pkey in self._preview:
             return self._preview[pkey]
-        path = self.store.peek_image_path(key, size="small")
+        size = "small"
+        if mpc_art.is_mpc(key):
+            if h > MPC_SMALL_MAX_H:
+                size = "medium"
+        elif h > SCRYFALL_SMALL_MAX_H:
+            surf = self.preview(key, w, h)
+            if surf is not None:
+                self._remember_small(pkey, surf)
+            return surf
+        path = self.store.peek_image_path(key, size=size)
         if not path:
-            self._request_bigger(key, "small")
-            return None
+            if time.time() < self._small_failed.get(key, 0):
+                return None
+            self._request_bigger(key, size)
+            if size == "medium":                          # the small one meanwhile, if it's already here
+                path = self.store.peek_image_path(key, size="small")
+            if not path:
+                return None
+            try:
+                return pygame.transform.smoothscale(pygame.image.load(path).convert(), (w, h))
+            except Exception:
+                return None
         try:
             surf = pygame.transform.smoothscale(pygame.image.load(path).convert(), (w, h))
         except Exception:
             return None
-        if len(self._preview) >= 48:
+        self._remember_small(pkey, surf)
+        return surf
+
+    def _remember_small(self, pkey, surf):
+        if len(self._preview) >= SMALL_CACHE:
             self._preview.pop(next(iter(self._preview)))
         self._preview[pkey] = surf
-        return surf
 
     def printings(self, name):
         """Round ALT1: the card's printings ([{set, cn, set_name, released, ...}]) once fetched, else None (asked for in the
@@ -338,8 +435,8 @@ class ArtLoader:
         key = ("crop", name, w, h)
         if key in self._preview:
             return self._preview[key]
-        if self.custom_path(name):                      # round ALT1: a custom picture has no art crop - the full picture is used
-            return None
+        if self.custom_path(name) or mpc_art.is_mpc(name):   # round ALT1/ALT2: your own or an MPC Autofill picture has no
+            return None                                     # art crop - the full picture is used
         path = self.store.peek_image_path(name, size="art_crop")
         if not path:
             self._request_bigger(name, "art_crop")

@@ -10,7 +10,8 @@ useful thing you can send.
 
 1. WHAT YOU NEED
 ----------------
-- Windows 10 or 11, 64-bit.
+- Windows 10 or 11, 64-bit, on an ordinary (Intel or AMD) PC. Or Windows 11 on an Arm PC, such as a
+  Surface Pro with a Snapdragon: it runs there through Windows' own translation, perhaps more slowly.
 - 8 GB of RAM. It runs with less, but more slowly: under 8 GB the deck screen shows an orange note and
   the rules engine gets a smaller memory limit.
 - About [500 MB] of free disk space, plus room for card pictures (they are kept once downloaded).
@@ -79,6 +80,8 @@ Deck screen tags
 Card art
   Card art (deck screen) lets you choose the printing of each card in one of your decks. Pictures of your
   own go in the my_art folder inside your data folder, named after the card ("Sol Ring.png").
+  Its MPC Autofill tab shows community-made pictures of a card from mpcfill.com; only the one you click is
+  downloaded, and it is kept. "Card size" - and + make the pictures smaller or bigger.
 
 Resume
   If the program closes mid-game, the next start offers Continue (title screen) or Resume last game (deck
@@ -143,7 +146,7 @@ On the deck screen F8 opens straight on that tab.
 7. LICENCE AND CREDITS
 ----------------------
 - Manticore is free software under the GNU GPL v3 or later (Cog > Licenses and credits, or Shift+F1).
-- Source code: github.com/Eliminate7532/manticore
+- Source code: github.com/Eliminate7532/Manticore
 - Forge (the rules engine) is GPL v3 too.
 - Card images and card data come from Scryfall.
 - Sounds: free CC0 recordings, listed in Licenses and credits.

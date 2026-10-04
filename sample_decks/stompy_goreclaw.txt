@@ -1,0 +1,72 @@
+1 Apex Devastator
+1 Beast Within
+1 Bighorner Rancher
+1 Birds of Paradise
+1 Bloomvine Regent
+1 Bridgeworks Battle
+1 Castle Garenbrig
+1 Collective Resistance
+1 Concordant Crossroads
+1 Craterhoof Behemoth
+1 Cultivator Colossus
+1 Disciple of Freyalise
+1 Early Harvest
+1 Elvish Mystic
+1 Emerald Medallion
+1 Explore
+1 Fanatic of Rhonas
+30 Forest
+1 Fyndhorn Elves
+1 Garruk, Primal Hunter
+1 Garruk's Uprising
+1 Ghalta the Unstoppable
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 God-Eternal Rhonas
+1 Greater Good
+1 Gwenna, Eyes of Gaea
+1 Heroic Intervention
+1 Hulking Raptor
+1 Hunter's Insight
+1 Ilysian Caryatid
+1 Khalni Ambush
+1 Kogla, the Titan Ape
+1 Kona, Rescue Beastie
+1 Last March of the Ents
+1 Life's Legacy
+1 Lifestream's Blessing
+1 Llanowar Elves
+1 Momentous Fall
+1 Mosswort Bridge
+1 Nature's Lore
+1 Ohran Frostfang
+1 Ojer Kaslem, Deepest Growth
+1 Primeval Protector
+1 Railway Brawler
+1 Ram Through
+1 Rampant Growth
+1 Regal Behemoth
+1 Reliquary Tower
+1 Return of the Wildspeaker
+1 Rishkar's Expertise
+1 Rogue's Passage
+1 Season of Gathering
+1 Selvala, Heart of the Wilds
+1 Shamanic Revelation
+1 Shared Roots
+1 Silverback Elder
+1 Sol Ring
+1 Soul's Majesty
+1 Surrak and Goreclaw
+1 The Earth King
+1 The Legend of Kyoshi
+1 Thought Vessel
+1 Three Visits
+1 Topiary Stomper
+1 Unnatural Growth
+1 Vorinclex
+1 War Room
+1 Wayward Swordtooth
+1 Zopandrel, Hunger Dominus
+
+1 Goreclaw, Terror of Qal Sisma

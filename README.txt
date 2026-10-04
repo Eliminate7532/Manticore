@@ -100,6 +100,16 @@ CARD ART (round ALT1): select a deck, press "Card art". Click a card to see ever
   "Sol Ring.png" (every printing) or "Sol Ring__C21_263.png" (one printing); png or jpg, at most 4096 px on a side; press "Reload
   my art" in the Card art window. They are backed up with your decks, but never published or (later) sent to other players, and
   the preview says "custom art". One printing per card name per deck: 15 Swamps can't have 3 different pictures yet.
+MPC AUTOFILL ART (round ALT2): in the Card art window, click a card, then the "MPC Autofill" tab: that card's community-made
+  renders from MPC Autofill (mpcfill.com), as small pictures (hover one for who made it and its DPI). Click one to use it: only that
+  picture is downloaded (about 1000 pixels high, 1400 for the big preview), its print bleed cut off, into your card cache. The
+  deck file gets one line at the top, "# art: Sol Ring = mpc:<id>"; the card's own line stays as Moxfield wrote it. Default, or
+  any printing, takes it out again. Nothing is asked of mpcfill.com until you open that tab; a card's search is kept for a week.
+  The pictures belong to the people who made them: they are never bundled, published or sent to other players.
+  Patch 38: a picked MPC picture is downloaded at once (1400 pixels high) into mpc_art/ beside my_art/, not the card cache, so it
+  stays if the cache is cleared, you're offline, or its maker takes it down. mpc_art/ is in the local backup zips but not pushed
+  to GitHub. Card size: the "Card size" - and + buttons at the top of the Card art window (or the - and + keys, or Ctrl+wheel)
+  make the pictures smaller or bigger, in every part of that window; the size is remembered.
 Your last choice (your deck, each AI's deck or Random, and the number of opponents) is remembered in settings.json.
 
 PLAYING (press H in the game for the same list)
@@ -531,7 +541,7 @@ A report from a game started before this update has no seed, and the replay says
 
 CHECKING A DECK CARD BY CARD (round 14)
 ---------------------------------------
-    python card_check.py sample_decks\kinnan_nbc_moxfield_export.txt --out card_check_report.txt
+    python card_check.py sample_decks\stompy_goreclaw.txt --out card_check_report.txt
 plays every card of a deck through the real Forge engine, one at a time, the way the table does it: Forge's own developer "Setup Game State"
 puts a board in place (twelve basic lands, a small library for each player, an opponent with a creature, an artifact, an enchantment and a nonbasic
 land), a scripted player casts the card (plays it, for a land), and answers every question by taking the first legal answer; permanents are then
@@ -664,6 +674,10 @@ single changed line (free first mulligan); it carries the GPL notice and is a de
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
+DONE 3 Oct 2026: the public repository is github.com/Eliminate7532/Manticore (one commit, "Manticore 0.28.38", made from
+Documents\manticore_public - later exports go over that folder, below). Patch 35 put it in update_config.json and in
+licenses/NOTICES.json "source_url". Still to do with the first release: the installer, the gh release, Forge's source archive.
+In PowerShell, write $env:USERPROFILE for %USERPROFILE%, and run the &&-joined commands below one at a time.
 Friends' installed copies look for updates in a PUBLIC GitHub repository's Releases (update_config.json), and the GPL owes
 them the source of what they run. Both live in one public repository, separate from this private one: GitHub makes a whole
 repository public or private, never one branch, and making this one public would publish its entire history (round notes,
@@ -689,8 +703,8 @@ the file, if anything it would copy holds a Discord webhook address or this PC's
     release's tag is exactly that version's source.
   Forge's own source: with the first release, also attach Forge's source archive for commit fb4d809 (Licenses and credits
   names it); keep your own copy rather than only linking to Forge's site.
-  Then set licenses/NOTICES.json "source_url" to the public repository's address and run python tools\build_notices.py, so
-  the program's Licenses and credits window points at it.
+  licenses/NOTICES.json "source_url" names the public repository (patch 35), so the program's Licenses and credits window
+  points at it.
 
 TESTS
 -----
@@ -732,7 +746,8 @@ mid-game board (turn 4-6, 5-6 lands and a creature or two already in play, from 
     python tools\nightly.py --hours 8          start now, stop 8 hours later
     python tools\nightly.py --until 07:00      stop at 07:00
 
-The sweep takes the 5 alpha decks in turn (Lathril, Adeline, Teysa, Light-Paws, Veyran), then the Kinnan sample
+The sweep takes the 6 alpha decks in turn (Lathril, Adeline, Teysa, Light-Paws, Veyran, Goreclaw; patch 38 put Goreclaw in
+the alpha instead of the Kinnan sample, which is now only a test deck in tests\fixtures\decks\), then the other samples
 (--decks mine: then your own decks, read-only). It spends up to --card-hours (default 2) on it, about one deck; an
 unfinished deck carries on from the same card next night. Progress: soak_runs\nightly_state.json.
 
@@ -833,7 +848,8 @@ FILES - new table and engine
 - ../commander_sim_backups/ - created next to the project (or wherever you chose): snapshots/ (dated zips), forge_bundle/ (one copy)
 - deck_library.py      - the decks you can pick from: reads my_decks/ and sample_decks/, saves imports, removes (no pygame)
 - my_decks/            - created when you import: your decks as <name>.txt; my_decks/_removed/ holds removed ones
-- sample_decks/        - the bundled Kinnan sample deck
+- sample_decks/        - the decks that come with the program: the 6 alpha Commander decks and 4 Brawl decks (patch 38: Goreclaw in,
+                         Kinnan out - its list is a test deck now, tests/fixtures/decks/)
 - forge_log.py         - turns Forge's game log into readable rows (no pygame; tested on its own)
 - gfx.py               - colours, fonts, mana symbols, card rendering helpers
 - art_loader.py        - card art loaded in a background thread
@@ -883,12 +899,17 @@ KNOWN GAPS / NEXT STEPS
 ------------------------
 See ROADMAP.txt.
 
-INSTALLER (Round 29, not yet built on Windows)
-----------------------------------------------
+INSTALLER (Round 29; first built on Windows 3 Oct 2026)
+------------------------------------------------------
 Manticore is also built as a one-file Windows installer for alpha testers: no Python, no Java, no admin rights, installed for the
 current user only. Karl builds it with  python tools\build_installer.py --test  (see EVENING_CHECKLIST.txt). Uninstalling removes
 the program and keeps your decks, settings and saved games unless you answer Yes to the question (or pass /PURGE to a silent
 uninstall). Forge's own folder is never touched.
+It is an x64 build. Patch 37: it also installs on Windows 11 on Arm (a Snapdragon Surface, say), which runs x64 programs through
+its own emulation; before that the installer said "This program does not support the version of Windows your computer is
+running". How well it plays there isn't known yet: Karl's Surface Pro 11 is the first test. Windows 10 on Arm can't run it.
+Unsigned: SmartScreen says "Windows protected your PC" (Run anyway; on some PCs it's behind "More info"). A PC with Smart App
+Control on blocks it with no way past, which only code signing fixes.
 
 UPDATES (Round 30: an installed copy updates itself)
 ----------------------------------------------------
@@ -901,7 +922,8 @@ Cog > Help > Updates turns the check off. `Manticore-cli.exe --version` says whe
 Your own git copy never updates itself (it updates through git), and the tests never look.
 
 Where it looks: update_config.json next to the program - {"repo": "owner/name"} (the GitHub repository whose Releases hold the
-installer and latest.json; it must be PUBLIC) or {"feed_url": "https://..."}. Both empty (as shipped today) = updates off.
+installer and latest.json; it must be PUBLIC) or {"feed_url": "https://..."}. Both empty = updates off. Patch 35 (3 Oct 2026) set
+"repo": "Eliminate7532/Manticore".
 To publish an update (Karl only):
   1. raise version.VERSION, build:          python tools\build_installer.py --release
   2. write the feed:                        python tools\make_update_feed.py installer_out\Manticore-<version>-setup.exe --notes "..."

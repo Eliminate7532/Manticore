@@ -76,7 +76,7 @@ SETTINGS_FILE = paths.settings_file()          # round 28: user_dir()/settings.j
 SOUNDS_DIR = paths.sounds_dir()               # unchanged: always ships with the program (Round 29: via paths, so a frozen build looks in _MEIPASS)
 CUES_FILE = os.path.join(SOUNDS_DIR, "cues.json")
 _AUDIO_SHARED = {"director": None, "building": False, "lock": threading.Lock(), "event": threading.Event()}  # round 24
-DEFAULT_DECK = os.path.join(paths.sample_dir(), "kinnan_nbc_moxfield_export.txt")
+DEFAULT_DECK = os.path.join(paths.sample_dir(), "stompy_goreclaw.txt")      # patch 38 (was the Kinnan sample)
 DECK_DIR = paths.forge_decks_dir()             # round 28: local_dir()/forge_decks
 
 DEFAULT_WINDOW = (1360, 840)
@@ -669,6 +669,7 @@ class ForgeTable:
                       "music_on": True, "ambience_on": True}        # round AU1: music and ambience, each with its own switch
         self.frames = False                 # round 26: small battlefield cards use an art-crop board frame; default OFF (Karl, OPEN_QUESTIONS A5)
         self.hand_sort_by_type = False      # off = Forge's own hand order (usually draw order); on = grouped by card type (cog: "Sort hand by type")
+        self.art_picker_zoom = 1.0          # patch 38: the Card art window's card size (art_picker.ZOOM_STEPS), remembered
         self.auto_pass = False              # Forge passes for me whenever I have nothing to do (Skip window); remembered between runs
         self.table_background = "rotate"    # Round AD1: "rotate" (a new picture each game) | one of BG_ORDER | "plain"; cog: Table
         self.table_background_last = None   # the picture the last game started on (None: no game yet, so the first one is BG_ORDER[0])
@@ -806,6 +807,10 @@ class ForgeTable:
                 self.sound.update({k: v for k, v in data["sound"].items() if k in self.sound})
             self.frames = bool(data.get("frames", False))
             self.hand_sort_by_type = bool(data.get("hand_sort_by_type", False))
+            try:                                                    # patch 38
+                self.art_picker_zoom = max(0.5, min(3.0, float(data.get("art_picker_zoom", 1.0))))
+            except (TypeError, ValueError):
+                self.art_picker_zoom = 1.0
             self.auto_pass = bool(data.get("auto_pass", False))
             bg = data.get("table_background")
             self.table_background = bg if bg in BG_CHOICES else "rotate"         # a missing or unknown value (even "alternate") is Rotate
@@ -839,7 +844,8 @@ class ForgeTable:
         data.update({"text_scale": self.text_scale, "fullscreen": self.fullscreen, "animations": self.animations,
                      "auto_pass": self.auto_pass, "window_size": list(self.windowed_size), "sound": self.sound,
                      "frames": self.frames, "hand_sort_by_type": self.hand_sort_by_type,
-                     "table_background": self.table_background, "table_background_last": self.table_background_last})
+                     "table_background": self.table_background, "table_background_last": self.table_background_last,
+                     "art_picker_zoom": self.art_picker_zoom})
         key = screen_key(self.desktop)
         if key:                             # round 27e: each screen size keeps its own window and text size
             screens = data.get("screens") if isinstance(data.get("screens"), dict) else {}
@@ -5566,6 +5572,7 @@ def main(argv):
         print(problem)
         sys.exit(1)
     launcher = Launcher(args.runtime, args.name, args.seed, args.record)
+    fc.warm_card_index(args.runtime)                      # patch 38: Forge's card-name index, read or built in the background
 
     if args.deck is None and not args.opp:
         # No deck named on the command line: open on the deck screen, with no game running yet.

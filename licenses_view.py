@@ -105,11 +105,13 @@ def _about_lines(manifest, describe_fn):
            (describe_fn(), DIM, False), ("", None, False),
            (project.get("copyright", ""), None, False), ("", None, False),
            (project.get("notice", ""), None, False), ("", None, False),
-           ("Getting the source", GOLD, True),
-           ("This program is free software licensed under the GNU General Public License v3 or later. The complete "
-            "source code for this exact copy is what it was built from - ask Karl for it, or (once published) get it "
-            "from the project's repository.", None, False)]
+           ("Getting the source", GOLD, True)]
     src = project.get("source_url")
+    # Patch 35 (3 Oct 2026): the public repository exists, so the sentence points at it instead of "(once published)".
+    where = ("get it from the project's repository:" if src else
+             "ask Karl for it, or (once published) get it from the project's repository.")
+    out.append(("This program is free software licensed under the GNU General Public License v3 or later. The complete "
+                "source code for this exact copy is what it was built from - " + where, None, False))
     if src:
         out.append((src, None, False))
     return out

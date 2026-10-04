@@ -43,7 +43,8 @@ WEBHOOK_BYTES = re.compile(rb"discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9_\
 REQUIRED_FILES = ["Manticore{exe}", "Manticore-cli{exe}", "jre/bin/java{exe}", "forge_runtime/forge.jar",
                   "forge_runtime/forge_bridge.jar", "forge_runtime/VERSION.txt", "sounds/cues.json", "licenses/NOTICES.json",
                   "LICENSE", "THIRD_PARTY_NOTICES.txt", "build_info.json", "README_FIRST.txt", "START_HERE.txt",
-                  "banned_commander.snapshot.json", "banned_brawl.snapshot.json"]
+                  "banned_commander.snapshot.json", "banned_brawl.snapshot.json",
+                  "forge_card_names.json"]                         # patch 38: Forge's card-name index, made by the build
 REQUIRED_DIRS = ["sample_decks", "assets/fonts", "forge_runtime/res/cardsfolder", "jre/legal"]
 FORBIDDEN_TOP = [".git", "portable.txt", "settings.json", "my_decks", "bug_report_config.json", "soak_runs", "cache"]
 

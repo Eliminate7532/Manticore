@@ -35,8 +35,13 @@ DefaultDirName={userpf}\Manticore
 DisableProgramGroupPage=yes
 DisableDirPage=auto
 PrivilegesRequired=lowest
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+; Patch 37: x64compatible, not x64. "x64" (Inno's old name for x64os) refused Windows 11 on Arm - Karl's Surface Pro 11, a
+; Snapdragon X, said "This program does not support the version of Windows your computer is running" (Inno's
+; WindowsVersionNotSupported message for a processor it isn't allowed on). x64compatible is x64 Windows plus Windows 11 on Arm,
+; which runs this x64 build (Python, pygame, Java) through its x64 emulation. Windows 10 on Arm can't run x64 programs, so it
+; stays refused.
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 LicenseFile={#SourceDir}\LICENSE
 OutputDir={#OutputDir}
 OutputBaseFilename=Manticore-{#MyAppVersion}-setup

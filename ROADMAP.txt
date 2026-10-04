@@ -626,3 +626,27 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [x] Round FR1 (2026-10-03, Claude (Opus), 0.28.38, patch 34 after UI5's 33; built as 0.28.35 on 28 + UI5): "Suggest a feature" beside bug reports - a second
     tab in the F8 window (F8 on the deck screen opens on it; the cog's button is "Bug or idea"). One text message to the
     same Discord channel (or an optional ideas_webhook), a picture only if ticked, and an idea_*.txt copy every time.
+[x] Patch 35 (2026-10-03, 0.28.39): the public repository, github.com/Eliminate7532/Manticore (Karl made it from the 0.28.38
+    export). update_config.json names it, so installed copies look for updates there; the Licenses window links to it.
+[ ] The first release from it: the installer (Round 29, never built on Windows yet), the gh release line, Forge's source archive.
+[x] Round ALT2 (2026-10-03, Claude (Opus), 0.28.40, patch 36): MPC Autofill as a second source in the Card art picker, the
+    way proxxied.com does it - one card's community renders as thumbnails (mpcfill.com's search, then Google Drive's small
+    pictures), one click picks one and only that picture is downloaded, bleed cut off, kept per deck as "# art: <card> =
+    mpc:<id>". Before friends get it: ask the MPC Autofill maintainer (chilli-axe) that a third-party client using the
+    server is fine (its /2/editorSearch/ is "kept for unofficial third-party clients"; that wording is the only signal so far).
+[x] Patch 37 (2026-10-04, Claude (Opus), 0.28.41): Karl's Surface Pro 11 (Snapdragon X, Windows 11 on Arm) - the installer said
+    "This program does not support the version of Windows your computer is running" (ArchitecturesAllowed=x64); now x64compatible,
+    so it installs there and runs through Windows' x64 emulation. Speed on Arm unknown until Karl plays a game on it. Also: soak
+    night 12's only FAIL (game 131, a Forge AI StackOverflowError with Jeska's Will) was the AI loop guard's frame counted as
+    bridge code; it is a warning again, as before Round 28e.
+[ ] A native Arm64 build - only if the emulated one is too slow. First check that Python, pygame-ce (its wheels and DLLs) and a
+    Java runtime all exist for Windows Arm64 (UNVERIFIED).
+[x] Patch 38 (2026-10-04, Claude (Opus), 0.28.42), from Karl's first look at the MPC tab on his Surface: a card size in the Card
+    art window (- / + buttons, keys, Ctrl+wheel; remembered); picked MPC pictures kept in mpc_art/ (1400 px, downloaded when
+    picked, survive a cleared cache and the maker deleting them); the alpha decks: Karl's Goreclaw deck (We Just Need to Punch
+    Them) in sample_decks/, the Kinnan list moved to tests/fixtures/decks/ (tests and tools still use it).
+[x] Patch 39 (2026-10-04, Claude (Opus), 0.28.43), from Karl's bug report off the Surface (09:06): the first start froze ~50 s on the
+    deck screen reading all ~35,000 card scripts for the "not in this version of Forge" check. The card-name index ships with the
+    installer (forge_card_names.json), is saved in the cache otherwise, and is built on a background thread; the deck screen
+    never waits. Reports from an installed copy describe the program (they said "code unknown", "forge_runtime: missing") and
+    say "AMD64 on ARM64 (emulated)" on Arm; a missing first release (404) is no longer a crash-log entry.

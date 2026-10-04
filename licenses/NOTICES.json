@@ -4,7 +4,7 @@
   "name": "Manticore",
   "license": "GPL-3.0-or-later",
   "copyright": "Copyright (C) 2026 the Manticore contributors",
-  "source_url": null,
+  "source_url": "https://github.com/Eliminate7532/Manticore",
   "notice": "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details."
  },
  "components": [
@@ -842,6 +842,11 @@
    "id": "grok-art",
    "title": "Game art",
    "text": "Some of Manticore's artwork was Created with Grok: the table backgrounds, the studio splash, the title screen and the window icon."
+  },
+  {
+   "id": "mpc-autofill",
+   "title": "MPC Autofill pictures (optional)",
+   "text": "The Card art picker's MPC Autofill tab shows community-made card renders indexed by MPC Autofill (mpcfill.com; its software is free under the GNU GPL v3). Nothing is fetched until you open that tab, and only the picture you pick is downloaded, to this computer's card cache; none are included with the program. Each picture belongs to the person who made it. MPC Autofill and its contributors are not affiliated with this program."
   },
   {
    "id": "decksites",

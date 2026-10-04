@@ -23,7 +23,7 @@ from game_state import GameState, Player
 from mana_system import card_face
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DECK = os.path.join(paths.sample_dir(), "kinnan_nbc_moxfield_export.txt")
+DEFAULT_DECK = os.path.join(paths.sample_dir(), "stompy_goreclaw.txt")      # patch 38 (was the Kinnan sample)
 REPORT_FILE = paths.log_file("rules_report.txt")     # round 28: moves to local_dir()/logs in an installed copy
 
 

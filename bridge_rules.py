@@ -263,7 +263,7 @@ def _rule_engine_error(messages, engine_log_lines):
             out.append(_finding("ai_interrupted", WARN, -1, "engine log line %d: %s (an AI thread stopped at its time limit)" % (
                 n, line.strip())))
             continue
-        if finished and block and "forge.bridge." not in " ".join(block) and "bridge:" not in line:
+        if finished and block and not _bridge_code_in(block) and "bridge:" not in line:
             # Round 28bc: an exception inside Forge's own code - no bridge frame anywhere in its trace - in a game that still
             # reached game over. Soak night 2 had two (a ConcurrentModificationException in Tracker.unfreeze, a
             # StackOverflowError in the AI's think thread); the game went on both times. Shown as a warning, not hidden:
@@ -277,6 +277,27 @@ def _rule_engine_error(messages, engine_log_lines):
 
 
 _CAUSED_BY = re.compile(r"^\s*Caused by: ")
+
+# Patch 37 (soak night 12, game 131; night 10's game 59 too): since Round 28e every AI choice goes through the loop guard,
+# forge.bridge.LoopGuard$Controller.chooseSpellAbilityToPlay, which only counts and hands the call on to Forge's own
+# PlayerControllerAi. So every exception from the AI's think thread carries that one bridge frame, and a Forge AI
+# StackOverflowError in a finished game was a FAIL where before 28e it was a forge_internal_error warning. A LoopGuard frame
+# whose callee (the frame printed just above it) is outside the bridge is that hand-on, not bridge code. One where the
+# exception starts (the first frame of a trace or of a "Caused by:") is the guard's own, and still counts.
+_LOOP_GUARD_FRAME = re.compile(r"^\s+at forge\.bridge\.LoopGuard[$.]")
+
+
+def _bridge_code_in(block):
+    """True when a stack trace has a frame of the bridge's own code (the loop guard handing a call on doesn't count)."""
+    for i, line in enumerate(block):
+        if "forge.bridge." not in line:
+            continue
+        if _LOOP_GUARD_FRAME.match(line) and i > 0:
+            callee = block[i - 1]
+            if _STACK_LINE.match(callee) and "forge.bridge." not in callee and callee.strip().startswith("at "):
+                continue
+        return True
+    return False
 
 
 def _exception_block(lines, n):

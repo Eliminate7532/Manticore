@@ -10,6 +10,7 @@ broken lookup does not hit the network again on every frame.
 import functools
 import json
 import re
+import shutil
 import threading
 import time
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import NamedTuple, Optional
 
 import requests
 
+import mpc_art
 import paths
 from forge_scripts import ForgeScriptStore
 
@@ -31,6 +33,7 @@ IMAGE_CACHE_DIR = CACHE_DIR / "images"
 IMAGE_CACHE_DIR_LARGE = CACHE_DIR / "images_large"          # round 26: 672x936 pictures for the big preview
 IMAGE_CACHE_DIR_ART = CACHE_DIR / "images_art"               # round 26: art_crop pictures for small-card board frames
 IMAGE_CACHE_DIR_SMALL = CACHE_DIR / "images_small"           # round ALT1: 146x204 pictures for the printings strip
+MPC_KEPT_DIR = Path(paths.mpc_art_dir())                      # patch 38: MPC Autofill pictures you picked, kept for good
 DATA_CACHE_FILE = CACHE_DIR / "card_data.json"
 
 SCRYFALL_API = "https://api.scryfall.com"
@@ -284,7 +287,13 @@ class CardDataStore:
         printing (round ALT1) is <safe name>__<set>_<safe cn>.jpg in the same folder."""
         name = key_name(key)
         safe_name = safe_part(name)
-        if is_art_key(key) and key.set_code and key.collector_no:
+        if mpc_art.is_mpc(key):                       # round ALT2: an MPC Autofill picture, by its Drive id (case matters)
+            safe_name += "__" + mpc_art.file_part(key.collector_no)
+            if size in ("normal", "large"):           # patch 38: one kept picture (1400 px high) serves the table and the preview
+                return MPC_KEPT_DIR / f"{safe_name}.jpg"
+            if size == "medium":                      # patch 38: a zoomed-in tile in the picker (800 px), cache only
+                return IMAGE_CACHE_DIR_SMALL / f"{safe_name}_m.jpg"
+        elif is_art_key(key) and key.set_code and key.collector_no:
             safe_name += f"__{safe_part(key.set_code)}_{safe_part(key.collector_no)}"
         base = {"large": IMAGE_CACHE_DIR_LARGE, "art_crop": IMAGE_CACHE_DIR_ART, "small": IMAGE_CACHE_DIR_SMALL}.get(size, IMAGE_CACHE_DIR)
         return base / f"{safe_name}.jpg"
@@ -398,6 +407,8 @@ class CardDataStore:
             key = name
             if not (key.set_code and key.collector_no):
                 return self.get_image_path(key.name, size)
+            if mpc_art.is_mpc(key):                   # round ALT2
+                return self.mpc_image_path(key, size)
             local_path = self._image_file(key, size)
             if local_path.exists():
                 return str(local_path)
@@ -436,6 +447,85 @@ class CardDataStore:
             self._fail(img_key, f"No {size} image URL in Scryfall data for '{name}'", permanent=True)
             return None
         return str(local_path) if self._download(image_url, local_path, img_key, name) else None
+
+    # ---- round ALT2: MPC Autofill -------------------------------------------------------------------------------------------
+    @property
+    def mpc(self):
+        """The MPC Autofill client (mpc_art.MpcClient), made the first time it's needed. Its searches are kept in
+        cache/mpc/; its requests carry the program's own User-Agent, not Scryfall's."""
+        with self._lock:
+            if getattr(self, "_mpc", None) is None:
+                self._mpc = mpc_art.MpcClient(CACHE_DIR)
+            return self._mpc
+
+    def peek_mpc(self, name):
+        """The kept MPC Autofill results for this card, or None when it hasn't been searched. Never touches the network."""
+        return self.mpc.peek(name)
+
+    def mpc_search(self, name):
+        """Search MPC Autofill for this card (network; the art loader's thread). A list, or None (last_error says why).
+        Not under the store's lock, so a slow search never holds up the table's pictures."""
+        got = self.mpc.search(name)
+        if got is None:
+            self.last_error = self.mpc.last_error
+        return got
+
+    def mpc_card(self, drive_id):
+        """The kept details (source, DPI, tags) of one MPC Autofill picture, or None."""
+        return self.mpc.card(drive_id)
+
+    def mpc_image_path(self, key, size="normal"):
+        """The picture for an MPC Autofill key, bleed cut off, downloading it the first time.
+        "normal" and "large" (the table, the VS screen, the big preview): ONE kept picture, 1400 px high, in mpc_art/ (patch 38;
+        paths.mpc_art_dir) - not the card cache, so it stays when the cache is cleared, offline, or if the maker takes the file
+        down. A picture round ALT2 put in the cache is moved there without downloading again.
+        "small" (400 px) and "medium" (800 px, a zoomed-in tile): the picker's thumbnails, in the cache.
+        There is no art crop of an MPC picture (None: board frames use the whole card, as for your own pictures). A picture that
+        can't be had falls back to Scryfall's default printing at the table; a picker tile gets None instead, so it never shows
+        some other picture. Safe to call from several threads at once: only the store's own bookkeeping takes its lock."""
+        if size == "art_crop":
+            return None
+        local_path = self._image_file(key, size)
+        if local_path.exists():
+            return str(local_path)
+        kept = size in ("normal", "large")
+        if kept:
+            old = self._round_alt2_cache_file(key)
+            if old is not None:
+                try:
+                    local_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(old, local_path)
+                    return str(local_path)
+                except OSError:
+                    return str(old)
+        img_key = f"img:{'kept' if kept else size}:mpc/{key.collector_no}"
+        with self._lock:
+            blocked = self._is_blocked(img_key)
+        if not blocked:
+            if self.mpc.fetch_image(key.collector_no, local_path, "large" if kept else size):
+                return str(local_path)
+            with self._lock:
+                self._fail(img_key, f"No MPC Autofill picture for '{key.name}' ({self.mpc.last_error})"
+                                    + ("; using the default printing" if kept else ""))
+        if not kept:
+            return None
+        return self.get_image_path(key.name, size)
+
+    @staticmethod
+    def _round_alt2_cache_file(key):
+        """The picture round ALT2 (0.28.40) downloaded into the card cache for this MPC key, if any: its 1400 px "large" one
+        first, else its 1000 px "normal" one."""
+        name = safe_part(key_name(key)) + "__" + mpc_art.file_part(key.collector_no) + ".jpg"
+        for folder in (IMAGE_CACHE_DIR_LARGE, IMAGE_CACHE_DIR):
+            p = folder / name
+            if p.exists():
+                return p
+        return None
+
+    def kept_mpc_picture(self, key):
+        """Patch 38: the kept picture of an MPC Autofill key (a path), or None when it isn't on this computer yet."""
+        p = self._image_file(key, "large")
+        return str(p) if p.exists() else None
 
     def _download(self, image_url, local_path, img_key, label):
         try:

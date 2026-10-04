@@ -123,7 +123,7 @@ class ParserTests(unittest.TestCase):
             self.assertEqual((c, d), deck_importer.import_from_text(text))
 
     def test_the_kinnan_sample_names_a_printing_on_every_line(self):
-        e = lib.DeckEntry(os.path.join(HERE, "sample_decks", "kinnan_nbc_moxfield_export.txt"), "k", True).load()
+        e = lib.DeckEntry(os.path.join(HERE, "tests", "fixtures", "decks", "kinnan_nbc_moxfield_export.txt"), "k", True).load()
         self.assertEqual(e.printings["ancient tomb"], ("uma", "236"))
         self.assertGreater(len(e.printings), 60)
 

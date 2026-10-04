@@ -6,6 +6,10 @@ forge_runtime/
 # Card pictures and card data downloaded from Scryfall (re-downloaded when needed).
 cache/
 
+# MPC Autofill pictures you picked (patch 38): other people's art, kept on this computer and in the local backup zips, but not
+# pushed to GitHub.
+mpc_art/
+
 # Made every time you play.
 forge_engine.log
 forge_engine.prev.log
