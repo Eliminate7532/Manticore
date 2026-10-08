@@ -5,6 +5,8 @@ update_screens.py - Round 30: the title screen's "a new version is ready" card (
     checking (nothing shown) -> offer: "Manticore 0.30.1 is ready (you have 0.30.0)", the notes, Update now / Later / Skip this
     version -> downloading: a bar and Cancel -> installing: "Manticore will close and reopen by itself" -> the program closes.
     A failed download shows why, with Try again / Later.
+    Patch 41: the first card of a run also settles the last update this copy started (updater.last_attempt): a crash-log line
+    either way, and when it didn't finish the offer says so and Update now opens the installer's own window instead.
 
 Only the title screen's menu shows it (boot_screens.BootFlow), so it can never interrupt a game. It sits in the top-right
 corner, clear of the menu row along the bottom.
@@ -17,7 +19,7 @@ import gfx
 import updater
 from gfx import DIM, GOLD, GREEN, ORANGE, WHITE, draw_text, round_rect, wrap_text
 
-_STARTED = {"done": False}            # one check per run of the program, however often the title is shown
+_STARTED = {"done": False, "last": None}   # one check per run of the program, however often the title is shown
 
 
 class UpdateNotice:
@@ -33,8 +35,14 @@ class UpdateNotice:
         ok, url = updater.enabled(getattr(gui, "check_updates", True))
         if ok and not _STARTED["done"]:
             _STARTED["done"] = True
+            _STARTED["last"] = _settle_last_attempt()
             self.check_job = updater.CheckJob(url).start()
             self.state = "checking"
+        self.last = _STARTED["last"]
+
+    def retry_visible(self):
+        """The last update this copy started didn't finish: this time the installer opens its own window (no /SILENT)."""
+        return bool(self.last and not self.last.get("ok"))
 
     # ---- ticking --------------------------------------------------------------------------------------------------------
     def poll(self, gui):
@@ -84,15 +92,18 @@ class UpdateNotice:
 
     def install(self, gui, path):
         game = bool(getattr(gui, "game_in_progress", lambda: False)())
-        ok, why = updater.launch_installer(path, game_running=game)
+        visible = self.retry_visible()
+        ok, why = updater.launch_installer(path, game_running=game, to_version=self.info.version, visible=visible)
         if not ok:
             self.state = "failed"
             self.message = why
             _note("Update could not start the installer", why)
             return
-        _note("Update started", "installing %s; the program closes itself now" % self.info.version)
+        how = "the installer's own window" if (visible or why) else "silently"
+        _note("Update started", "installing %s %s; the program closes itself now" % (self.info.version, how))
         self.state = "installing"
-        self.closing_at = time.monotonic() + 1.2                # long enough to read the line, then close
+        self.message = why                                      # updater.MANUAL when only the installer's window could open
+        self.closing_at = time.monotonic() + (2.5 if why else 1.2)   # long enough to read the line, then close
 
     def click(self, gui, pos):
         """True when the click was on the card."""
@@ -140,10 +151,14 @@ class UpdateNotice:
         if self.state == "offer" and info is not None:
             lines.append(("%d MB to download. Your decks, settings and saved games stay." % max(1, round(info.size / 1e6)),
                           small, DIM))
+        if self.state == "offer" and self.retry_visible():
+            lines += [(ln, small, ORANGE) for ln in wrap_text(RETRY_LINE, small, tw)[:2]]
         if self.state == "downloading" and self.download is not None:
             lines.append(("Downloading...  %d%%" % int(self.download.fraction() * 100), small, WHITE))
         if self.state == "installing":
-            lines += [(ln, small, GREEN) for ln in wrap_text("Installing: Manticore will close and reopen by itself.", small, tw)]
+            text = self.message or ("Installing: follow the installer's window. Manticore closes now." if self.retry_visible()
+                                    else "Installing: Manticore will close and reopen by itself.")
+            lines += [(ln, small, GREEN) for ln in wrap_text(text, small, tw)[:3]]
         if self.state == "failed" and self.message:
             lines += [(ln, small, ORANGE) for ln in wrap_text(self.message, small, tw)[:3]]
         h = pad + title.get_height() + gap + sum(f.get_height() + 2 for _t, f, _c in lines) + gap
@@ -188,6 +203,27 @@ class UpdateNotice:
             bx += bw + gap
 
 
+RETRY_LINE = "The last update didn't finish. Update now opens the installer's own window this time."
+
+
+def _settle_last_attempt():
+    """updater.last_attempt() once per run, and its crash-log line (an F8 report carries the crash log)."""
+    try:
+        last = updater.last_attempt()
+    except Exception:
+        return None
+    if last is None:
+        return None
+    if last.get("ok"):
+        _note("Update finished", "%s -> %s (%s)" % (last.get("from"), last.get("to"), last.get("how")))
+    elif not last.get("noted"):
+        _note("Update didn't finish",
+              "Still %s: the update to %s was started %s (%s; in a job: %s), and this copy is not that version.\n"
+              "updates\\install.log, last lines:\n%s" % (updater.version.VERSION, last.get("to"), last.get("at"), last.get("how"),
+                                                         last.get("in_job"), "\n".join(last.get("log") or ["(no install.log)"])))
+    return last
+
+
 def _note(title, text):
     try:
         import crashlog
@@ -198,3 +234,4 @@ def _note(title, text):
 
 def reset_for_tests():
     _STARTED["done"] = False
+    _STARTED["last"] = None

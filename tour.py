@@ -36,8 +36,8 @@ STEPS = (
          "A one-minute look at what is where. Esc skips it, and Cog > Help > Tour of the table shows it again any time.",
          ()),
     Step("bar", "Turn and phases",
-         "The lit pill is the phase the game is in. The dots under each pill choose where the game stops for you: blue on your "
-         "turn, orange on the others'.",
+         "The lit pill is the phase the game is in. The dots under each pill choose where the game stops for you (blue on your "
+         "turn, orange on the others'), and where you can't do anything the game passes for you.",
          ()),
     Step("me", "You",
          "Your life, and your library, graveyard and exile piles. Click the graveyard or exile pile to look inside.",
@@ -58,7 +58,8 @@ STEPS = (
          ()),
     Step("actions", "What the game wants",
          "This bar always says what you are being asked, and its buttons answer it. The same answers are on the keyboard:",
-         ("Space  OK / pass", "Esc  cancel", "E  end turn", "A  attack with all", "S  skip ahead", "U  undo a mana tap")),
+         ("Space  OK / pass once", "Enter  pass until an opponent acts", "Esc  cancel", "A  attack with all", "S  skip ahead",
+          "U  undo a mana tap")),
     Step("preview", "A closer look",
          "Hover any card to see it large here, and right-click to keep it. When an opponent casts something, it shows here too.",
          ()),
@@ -102,11 +103,11 @@ def region_rect(gui, region):
     elif region == "actions":
         r = L.bar
     elif region == "preview":
-        r = L.preview
+        r = L.preview if getattr(L, "panel_on", True) else None            # patch UI6: Focus: Over card / Hidden has no panel to show
     elif region == "stacklog":
-        r = L.log
+        r = L.log if L.log.h > 0 else None                                  # patch UI6: Log: Corner / Hidden has no log in the column
         if getattr(L, "stack", None) is not None and L.stack.h > 0:
-            r = L.stack.union(L.log)
+            r = L.stack.union(L.log) if r is not None else pygame.Rect(L.stack)
     elif region == "cog":
         r = getattr(gui, "cog_rect", None)
     if r is None:

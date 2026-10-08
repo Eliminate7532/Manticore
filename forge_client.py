@@ -32,6 +32,7 @@ import time
 from collections import deque
 
 import forge_net
+import java_crash
 import paths
 
 BASE_DIR = paths.program_dir()      # Round 29: for a frozen build this is _MEIPASS, not wherever this module's __file__ claims to be
@@ -192,8 +193,8 @@ def sync_bridge(runtime=None, source=None):
 
 
 def class_path(runtime):
-    """The bridge comes BEFORE forge.jar: it carries one patched Forge class (MulliganService: the free first mulligan), and
-    the first jar on the class path wins."""
+    """The bridge comes BEFORE forge.jar: it carries two patched Forge classes (MulliganService: the free first mulligan;
+    patch 45's InputPayMana: the payment waits while a mana ability is being paid), and the first jar on the class path wins."""
     return os.path.join(runtime, "forge_bridge.jar") + os.pathsep + os.path.join(runtime, "forge.jar")
 
 
@@ -559,7 +560,8 @@ class ForgeSession:
     for a single GUI thread (the reader thread only appends to a queue)."""
 
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
-                 java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None):
+                 java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
+                 classic_stops=False):
         import formats
         self.deck_path = deck_path
         # Round FMT1: the game's format. None = what the player's .dck says ("Deck Type=Brawl"), so a resumed game, a bug report
@@ -594,6 +596,7 @@ class ForgeSession:
         self.exited = False
         self.bad_action_at = 0.0
         self.stderr_path = os.path.join(DATA_DIR, "forge_engine.log")
+        self.crash_dir = None               # patch 46: where Java writes its own crash report (the folder forge_engine.log is in)
         self._record = None
         self._err = None
         self._cards = {}                    # id -> latest card dict seen anywhere
@@ -609,6 +612,11 @@ class ForgeSession:
         self.loop_cap = loop_cap            # round 28e: the AI loop guard's limit for tests (needs dev=True; None = the bridge's own 10, 0 = off)
         self.loop_guards = []               # round 28e: {"t": "ai_loop_guard", ...} - the bridge stopped an AI repeating one ability
         self.loop_cap_used = None           # round 28e: the limit the bridge's "ready" line reports
+        # Patch 43: the bridge passes priority for me when nothing meaningful is happening (Passing.java). classic_stops=True asks for
+        # every stop as before (the card check's scripted boards rely on them); "passing" is what the bridge's "ready" line says.
+        self.classic_stops = bool(classic_stops)
+        self.passing = None
+        self.passed = []                    # patch 43: {"t":"passed","card","player","kind"} - an opponent's trigger/ability passed for me
         self._checks_noted = set()
         # Round MP1 (online play). None/"host"/"guest"; the rest are the network host's own messages (java_bridge NetHost).
         self.online = None
@@ -649,8 +657,9 @@ class ForgeSession:
                 raise ForgeUnavailable(problem)
             java = self.java or find_java()
             cp = class_path(self.runtime)
-            cmd = [java, f"-Xmx{self.memory_mb}m", "-Dfile.encoding=UTF-8", "-Dio.netty.tryReflectionSetAccessible=true",
-                   "-cp", cp] + self._bridge_args()
+            self.crash_dir = self.crash_folder()
+            java_crash.move_strays(self.runtime, self.crash_dir)     # patch 46: crash reports left in forge_runtime/ move out
+            cmd = self.java_command(java, cp)
             cwd = self.runtime
         flags = 0x08000000 if os.name == "nt" else 0        # CREATE_NO_WINDOW: no console flashing on Windows
         keep_previous_engine_log(self.stderr_path)
@@ -667,6 +676,42 @@ class ForgeSession:
         threading.Thread(target=self._read, daemon=True, name="forge-reader").start()
         return self
 
+    def crash_folder(self):
+        """Patch 46: the folder Java's own crash report goes to - the one forge_engine.log is in (the logs folder; a soak game's
+        own folder). Created here: if it doesn't exist Java falls back to its working folder, forge_runtime/."""
+        folder = os.path.dirname(os.path.abspath(self.stderr_path)) if self.stderr_path else DATA_DIR
+        try:
+            os.makedirs(folder, exist_ok=True)
+        except OSError:
+            pass
+        return folder
+
+    def java_command(self, java, cp):
+        """The bridge's command line. Patch 46: the crash-file options come before -cp (they are Java's, not the bridge's)."""
+        return ([java, f"-Xmx{self.memory_mb}m", "-Dfile.encoding=UTF-8", "-Dio.netty.tryReflectionSetAccessible=true"]
+                + java_crash.jvm_flags(self.crash_dir or self.crash_folder()) + ["-cp", cp] + self._bridge_args())
+
+    def crash_report(self):
+        """Patch 46: Java's own crash report for this session's engine (hs_err_pid<pid>.log), or None. Only once Java has
+        died: a running engine has none. Looked for in the crash folder first, then where Java falls back to (forge_runtime/)."""
+        pid = getattr(self.proc, "pid", None)
+        if not pid or self.command:
+            return None
+        try:
+            if self.proc.poll() is None:
+                if not self.exited:
+                    return None
+                self.proc.wait(timeout=1.0)     # its output has ended: the process is a moment from gone
+        except Exception:
+            return None
+        path = java_crash.report_for_pid(pid, self.crash_dir, self.runtime)
+        try:                                     # pids are reused: an older report under the same number isn't this engine's
+            if path and self._t0 and os.path.getmtime(path) < self._t0 - 2:
+                return None
+        except OSError:
+            return None
+        return path
+
     def _bridge_args(self):
         """The bridge's main class and its arguments (round MP1: HostSession runs NetHost instead)."""
         args = [BRIDGE_MAIN, "--deck", self.deck_path, "--name", self.name]
@@ -678,6 +723,8 @@ class ForgeSession:
         args += ["--parent-pid", str(os.getpid())]        # round 29a: the bridge exits the moment this process is gone (ParentWatch.java)
         if self.fmt != "commander":
             args += ["--format", self.fmt]                # round FMT1 (a Commander game's command line is unchanged)
+        if self.classic_stops:
+            args.append("--classic-stops")                # patch 43: every priority stop, as before
         if self.dev:
             args.append("--dev")
             for f in self.faults:
@@ -784,6 +831,7 @@ class ForgeSession:
             self.ai_timeout = m.get("aiTimeout")
             self.loop_cap_used = m.get("loopCap")
             self.format_used = m.get("format", "commander")
+            self.passing = m.get("passing")         # patch 43: "smart" or "classic" (None: a bridge from before patch 43)
             if self.format_used != self.fmt and not self.command:
                 # Round FMT1: a bridge from before the formats round ignores --format and would quietly play Commander
                 self.fatal = (f"The engine started a {self.format_used.title()} game instead of {self.fmt.title()}: its bridge "
@@ -797,6 +845,9 @@ class ForgeSession:
             self.setups_done += 1               # round 28c: a dev "setup" has finished applying (see SetupState.java)
         elif t == "ai_loop_guard":
             self._note_loop_guard(m)
+        elif t == "passed":
+            self.passed.append(m)                   # patch 43: shown in the table's feed
+            del self.passed[:-200]
         elif t == "bad_action":
             self.bad_action_at = time.time()
         elif t == "fatal":
@@ -1007,6 +1058,27 @@ class ForgeSession:
     def reset_yields(self):
         """Forget every "always pass" and "always yes / no" and stop any skip."""
         return self.send(c="yieldreset")
+
+    # ---- patch 43: only the meaningful stops (java_bridge Passing.java) ----
+    def hold_priority(self):
+        """Ctrl held while casting: the next time I get priority with my own spell or ability on top, it's a stop."""
+        return self.send(c="hold")
+
+    def pass_turn(self):
+        """Shift+Enter: pass everything for the rest of this turn (I am still asked to block)."""
+        return self.send(c="passturn")
+
+    def full_control(self, mode="on"):
+        """"on" / "off" (Ctrl+Shift), or "turn" (Ctrl: every stop until this turn ends)."""
+        return self.send(c="fullcontrol", mode=mode)
+
+    def always_stop(self, names, on=True):
+        """Card names whose spells, triggers and abilities always stop me (when I can do something)."""
+        return self.send(c="alwaysstop", names=list(names), on=bool(on))
+
+    def passing_state(self):
+        """{classic, fullControl, turnControl, passTurn, hold, passed, alwaysStop} from the newest snapshot ({} before patch 43)."""
+        return ((self.state or {}).get("yield") or {}).get("passing") or {}
 
     def answer(self, request, value):
         """Reply to a request from the engine and drop it from the queue."""

@@ -443,20 +443,67 @@ def _watchdog_kill(holder):
         pass
 
 
+RECORD_JUDGE_LIMIT = 400 * 1024 * 1024   # patch 44: bytes of record (uncompressed) the rules and the summary still read
+
+
+def _too_big(path):
+    """Patch 44: a record so big that reading it back would take gigabytes of memory - a game that went round in a loop (6 Oct:
+    a 1.9 GB record, 28,000 refused attacks; reading it killed the soak). A .gz counts about ten times its size."""
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        return 0
+    size = size * 10 if path.endswith(".gz") else size
+    return size if size > RECORD_JUDGE_LIMIT else 0
+
+
+def _load_messages(path):
+    """The record's messages, or None when it is too big to read back."""
+    if not path or _too_big(path):
+        return None
+    try:
+        return bridge_rules.load_stream(path)
+    except OSError:
+        return []
+
+
+def _note_java_crash(result, session):
+    """Patch 46 (soak night 14, game 75): when Java itself crashed, the game's "fatal" finding says so - what and where, and
+    the crash report's name (it is in the game's folder: forge_client writes it beside forge_engine.log). Returns its path or
+    None. Night 14's only clue was the bare "the stream ended (_exit) ..." and a file nobody looked at in forge_runtime/."""
+    try:
+        crash = session.crash_report() if hasattr(session, "crash_report") else None
+    except Exception:
+        crash = None
+    if not isinstance(crash, str) or not os.path.isfile(crash):      # a path, or nothing (a stand-in session gives neither)
+        return None
+    import java_crash
+    note = "Java itself crashed: %s (%s)" % (java_crash.summary(crash), os.path.basename(crash))
+    fatal = [f for f in result.findings if f.get("rule") == "fatal"]
+    if fatal:
+        fatal[0]["detail"] = "%s - %s" % (fatal[0]["detail"], note)
+    else:
+        result.findings.append({"rule": "fatal", "severity": "fail", "at": -1, "detail": note})
+    return crash
+
+
 def _finish_report(result, session, record_path, game_dir, out_root):
     """bridge_rules over what was recorded, and a bug-report zip when a rule failed."""
-    try:
-        messages = bridge_rules.load_stream(record_path)
-    except OSError:
+    messages = _load_messages(record_path)
+    if messages is None:
+        result.findings.append({"rule": "huge_record", "severity": "warn", "at": -1,
+                                "detail": "record of %d MB not read back (a loop?)" % (_too_big(record_path) // (1024 * 1024))})
         messages = []
     engine_lines = bridge_rules.load_engine_log(session.stderr_path)
     result.findings = result.findings + bridge_rules.check_stream(messages, engine_lines)
+    crash = _note_java_crash(result, session)            # patch 46
     if not bridge_rules.has_fail(result.findings):
         return
     info = {"name": "soak", "happened": "; ".join("%s: %s" % (f["rule"], f["detail"]) for f in result.findings if f["severity"] == "fail")[:1400],
            "expected": "no bridge_check / commander_stranded / unanswered_request / fatal / engine_error / stall findings", "seed": result.seed}
     path = reporting.build_report(info, state=session.state, log_lines=[e.get("text", "") for e in session.log],
-                                  commands=session.sent_all, screenshot=None, folder=game_dir, dest_dir=out_root)
+                                  commands=session.sent_all, screenshot=None, folder=game_dir, dest_dir=out_root,
+                                  extra_files=reporting.java_crash_files(crash))
     rule_tag = "+".join(result.fail_rules()) or "fail"
     date_tag = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     wanted = os.path.join(out_root, "soak_%s_%d_%s.zip" % (date_tag, result.index, rule_tag))
@@ -582,10 +629,7 @@ def write_outputs(out_root, results, shapes, header=None, canary=None, history_d
     _load_modules()
     healths = []
     for r in results:
-        try:
-            messages = bridge_rules.load_stream(r.record_path) if r.record_path else []
-        except OSError:
-            messages = []
+        messages = (_load_messages(r.record_path) or []) if r.record_path else []        # patch 44: never a huge one
         health = soak_report.game_health(messages)
         health["board"] = getattr(r, "start", "turn 1") == "board"      # round 28c: see soak_report.run_verdict
         healths.append(health)

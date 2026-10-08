@@ -59,11 +59,18 @@ public class BridgeGui extends AbstractGuiGame {
     /** Phases where the human wants priority even with an empty stack (everything else is passed automatically). */
     final java.util.Set<PhaseType> stopsMine = java.util.concurrent.ConcurrentHashMap.newKeySet();
     final java.util.Set<PhaseType> stopsTheirs = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** Patch 43: which priority stops are passed for this seat (see Passing). */
+    final Passing passing = new Passing();
 
     {
-        java.util.Collections.addAll(stopsMine, PhaseType.MAIN1, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.MAIN2,
-                PhaseType.END_OF_TURN);
-        java.util.Collections.addAll(stopsTheirs, PhaseType.UPKEEP, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.END_OF_TURN);
+        if (Passing.classic) {                           // before patch 43 (--classic-stops)
+            java.util.Collections.addAll(stopsMine, PhaseType.MAIN1, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.MAIN2,
+                    PhaseType.END_OF_TURN);
+            java.util.Collections.addAll(stopsTheirs, PhaseType.UPKEEP, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.END_OF_TURN);
+        } else {                                         // patch 43, Karl's choice: my Main 1 and Main 2, their end step
+            java.util.Collections.addAll(stopsMine, PhaseType.MAIN1, PhaseType.MAIN2);
+            java.util.Collections.addAll(stopsTheirs, PhaseType.END_OF_TURN);
+        }
     }
 
     void setStops(boolean mine, java.util.Collection<String> names) {
@@ -543,6 +550,9 @@ public class BridgeGui extends AbstractGuiGame {
     @Override public void setPlayerAvatar(LobbyPlayer player, IHasIcon ihi) { }
     @Override
     public boolean isUiSetToSkipPhase(PlayerView playerTurn, PhaseType phase) {
+        if (!Passing.classic && passing.fullControlNow(getGameView())) {
+            return false;                                // patch 43: full control stops at every step
+        }
         PlayerView m = me();
         boolean mine = m != null && m.equals(playerTurn);
         return !(mine ? stopsMine : stopsTheirs).contains(phase);
@@ -557,6 +567,7 @@ public class BridgeGui extends AbstractGuiGame {
         m.addProperty("peakHeapMb", HeapWatch.peakMb());          // round 28d: memory the game needed (see HeapWatch)
         m.addProperty("peakLiveMb", HeapWatch.peakLiveMb());
         m.addProperty("maxHeapMb", HeapWatch.maxMb());
+        m.add("result", Outcome.describe(Main.match == null ? null : Main.match.getGame()));    // patch 44: stats
         wire.send(m);
     }
 

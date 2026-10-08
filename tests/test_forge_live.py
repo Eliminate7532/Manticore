@@ -57,8 +57,8 @@ class LiveForgeTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    def start(self, mine, opp, seed, dev=False):
-        s = fc.ForgeSession(mine, [opp], name="Tester", seed=seed, dev=dev)
+    def start(self, mine, opp, seed, dev=False, classic_stops=False):
+        s = fc.ForgeSession(mine, [opp], name="Tester", seed=seed, dev=dev, classic_stops=classic_stops)
         s.stderr_path = os.path.join(self.tmp.name, f"engine_{seed}.log")
         s.start()
         self.addCleanup(s.close)
@@ -318,8 +318,11 @@ class LiveForgeTests(unittest.TestCase):
                     s.use_mana("C")
                     self.assertTrue(wait_for(s, lambda: (s.me().get("manaPool") or {}).get("C") == left, 10),
                                     f"one click should spend one C (expected {left} left, pool {s.me().get('manaPool')})")
-                self.assertTrue(wait_for(s, lambda: s.state.get("stack"), 10), "the untap should be on the stack once paid")
-                s.ok()
+                # Patch 43: my own ability resolves without a stop, so the untap may already be done when this looks
+                untapped = lambda: mine("battlefield", "Basalt Monolith")[0]["tapped"] is False
+                self.assertTrue(wait_for(s, lambda: s.state.get("stack") or untapped(), 10), "the untap should be on the stack once paid")
+                if s.state.get("stack"):
+                    s.ok()
                 self.assertTrue(wait_for(s, lambda: mine("battlefield", "Basalt Monolith")[0]["tapped"] is False, 10),
                                 "the Monolith should be untapped")
                 return
@@ -379,11 +382,13 @@ class LiveForgeTests(unittest.TestCase):
         self.assertNotIn("mode", s.state["yield"], "the skip should be over once my turn came round")
 
     def test_an_opponents_attack_ends_a_skip_to_my_next_turn(self):
-        """Round 12 (was unverified in round 10): Forge's YIELD_INTERRUPT_ON_ATTACKERS stops the skip when a creature attacks me."""
+        """Round 12 (was unverified in round 10): Forge's YIELD_INTERRUPT_ON_ATTACKERS stops the skip when a creature attacks me.
+        With the classic stops (patch 43's default stops have none in the opponent's combat, Karl's decision 3: Forge asks for
+        blockers anyway)."""
         me_deck = fc.write_deck_file(os.path.join(self.tmp.name, "islands2.dck"), ["Kinnan, Bonder Prodigy"], ["Island"] * 99, "Islands")
         bears = fc.write_deck_file(os.path.join(self.tmp.name, "bears.dck"), ["Kinnan, Bonder Prodigy"],
                                    ["Forest"] * 45 + ["Grizzly Bears"] * 54, "Bears")
-        s = self.start(me_deck, bears, seed=3)
+        s = self.start(me_deck, bears, seed=3, classic_stops=True)
         self.assertTrue(self.to_my_main1(s), "never reached my first main phase")
         mine = lambda: s.state.get("activePlayer") == s.state.get("me")
         end = time.time() + 120
@@ -543,7 +548,9 @@ class LiveForgeTests(unittest.TestCase):
     def test_always_pass_lets_the_same_ability_resolve_without_asking(self):
         bauble = fc.write_deck_file(os.path.join(self.tmp.name, "baubles.dck"), ["Kinnan, Bonder Prodigy"],
                                     ["Mishra's Bauble"] * 40 + ["Island"] * 59, "Baubles")
-        s = self.start(bauble, self.gems, seed=3)
+        # Classic stops: since patch 43 my own ability resolves without a stop, so there would be nothing waiting to always pass
+        # on (tests/test_patch43.py checks "always pass" on an opponent's trigger with the new stops).
+        s = self.start(bauble, self.gems, seed=3, classic_stops=True)
         count = lambda sess: sum(1 for c in sess.me()["zones"]["hand"] if c["name"] == "Mishra's Bauble")
         self.assertTrue(self.to_my_main1(s, lambda sess: count(sess) >= 2), "never got two Baubles in hand")
 

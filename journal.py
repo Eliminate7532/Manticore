@@ -4,6 +4,7 @@ journal.py - every game is written down as it is played, so a crash or a closed 
 
 saves/current_game.jsonl, one JSON object per line:
     {"t": "start", "v": 1, "seed": 123, "name": "Karl", "decks": {"player.dck": "...", "opponent1.dck": "..."}, "code": "a4c0bcc3", "at": 1790000000.0}
+        (patch 44: plus "stats": {"id", "format", "deck", "opponent_decks"} - see stats.py)
     {"t": "cmd", "i": 0, "dt": 1.25, "c": {"c": "ok"}}                 one per command sent to Forge (clicks, replies, stops, yields ...)
     {"t": "end", "result": "won" | "lost" | "conceded" | "closed", "at": ...}
 A journal without an "end" line is an unfinished game: the next start offers to resume it (replay.Replayer sends the same commands to a
@@ -27,7 +28,7 @@ class GameJournal:
         self.count = 0
         self.t0 = None
 
-    def start(self, seed, name, decks, code, now, replay=None, printings=None, fmt=None):
+    def start(self, seed, name, decks, code, now, replay=None, printings=None, fmt=None, stats=None):
         """Begin a new journal (an unfinished older one is moved to finished/ as 'abandoned' first, never overwritten)."""
         os.makedirs(self.folder, exist_ok=True)
         self.close()                                       # Windows cannot move a file that is still open
@@ -42,6 +43,8 @@ class GameJournal:
             head["printings"] = printings    # round ALT1: [mine, AI 1's, ...] {name lower: [set, cn]} - the pictures, for Resume
         if fmt and fmt != "commander":
             head["format"] = fmt             # round FMT1: for people and tools; Resume reads it from player.dck's "Deck Type=Brawl"
+        if stats:
+            head["stats"] = stats            # patch 44: the game's id and decks for the stats, so a resumed game is the same game
         self._write(head)
         self._sync()
 

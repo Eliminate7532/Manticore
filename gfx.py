@@ -184,6 +184,21 @@ PARTICLE_GREEN = (120, 235, 140)
 PARTICLE_PURPLE = (190, 120, 255)
 PARTICLE_RED = (255, 90, 80)
 PARTICLE_WHITE = (220, 235, 255)
+# Patch 48 (Scope B): the flourish palette. Additive sprites, so these are "light" colours: an ember, cold ash, bone dust, the void
+# a card drains into when exiled, and the energy of a spell on its way to the stack.
+PARTICLE_EMBER = (255, 150, 50)
+PARTICLE_ASH = (150, 142, 132)
+PARTICLE_BONE = (222, 206, 170)
+PARTICLE_VOID = (110, 70, 190)
+PARTICLE_MAGIC = (120, 190, 255)
+AURA_CREATURE = (222, 206, 170)         # the arrival rings (drawn OUTSIDE the card, never on it)
+AURA_ARTIFACT = (235, 240, 250)
+AURA_ENCHANTMENT = (190, 130, 255)
+AURA_PLANESWALKER = (240, 206, 132)
+AURA_LAND = (160, 130, 90)
+AURA_TOKEN = (240, 230, 200)
+HIT_FLASH = (255, 230, 220)             # the first frame of a combat hit, fading to the loss red
+FIZZLE_MARK = (220, 70, 60)             # the cross beside a countered / fizzled stack entry
 PAY_BG = (16, 30, 26)
 PAY_EDGE = (110, 200, 150)
 PAY_TEXT = (150, 235, 185)

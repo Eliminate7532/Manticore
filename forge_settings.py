@@ -27,7 +27,7 @@ class SettingsPopup(Dialog):
     table (Round UX1). Anything outside it (or Esc) closes it."""
 
     SWITCHES = (("full", "Full screen   (F11)"), ("motion", "Animations"), ("frames", "Compact board cards"),
-                ("hand_sort", "Sort hand by type"))
+                ("hand_sort", "Sort hand by type"))              # (patch UI6: the last two are buttons in one row now)
 
     def draw(self, gui):
         L, scr = gui.L, gui.screen
@@ -67,6 +67,7 @@ class SettingsPopup(Dialog):
             y += sect_h
 
         heading("DISPLAY")
+        half = (inner - gap) // 2
         # text size:  Text size  [A-]  100%  [A+]
         bw = int(max(gui.button_width("A+", "small"), 46 * fs))
         r_plus = pygame.Rect(rect.right - pad - bw, y, bw, row_h)
@@ -86,16 +87,24 @@ class SettingsPopup(Dialog):
         self._small_button(gui, b_prev, "<", "bg_prev")
         self._small_button(gui, b_next, ">", "bg_next")
         y += row_h + gap
-        half = (inner - gap) // 2
         # round AU1: Full screen | Animations share a row (short labels; F11 is in the Controls list), so SOUND has room for
         # Music | Ambience and the pop-up stays at 12 rows
         self.switch(gui, pygame.Rect(x, y, half, row_h), "Full screen", "full", gui.fullscreen, "small")
         self.switch(gui, pygame.Rect(x + half + gap, y, inner - half - gap, row_h), "Animations", "motion", gui.animations, "small")
         y += row_h + gap
-        for name, label in self.SWITCHES[2:]:
-            on = gui.frames if name == "frames" else gui.hand_sort_by_type
-            self.switch(gui, pygame.Rect(x, y, inner, row_h), label, name, on)
-            y += row_h + gap
+        # patch UI6: Compact cards | Sort hand share a row (two buttons, gold while on), which makes room for Log | Focus below
+        # without the pop-up growing past 12 rows (a half-width switch has only about 60 px left for its label)
+        self.button(gui, pygame.Rect(x, y, half, row_h), f"Compact: {'On' if gui.frames else 'Off'}", "frames", True,
+                    primary=bool(gui.frames), fkey="small")
+        self.button(gui, pygame.Rect(x + half + gap, y, inner - half - gap, row_h),
+                    f"Sort hand: {'On' if gui.hand_sort_by_type else 'Off'}", "hand_sort", True, primary=bool(gui.hand_sort_by_type), fkey="small")
+        y += row_h + gap
+        # patch UI6: the game log and the focus card each cycle through three modes (right click goes back)
+        self.button(gui, pygame.Rect(x, y, half, row_h), f"Log: {gui.log_label()}", "log_mode", True,
+                    primary=gui.log_mode != "always", fkey="small")
+        self.button(gui, pygame.Rect(x + half + gap, y, inner - half - gap, row_h), f"Focus: {gui.preview_label()}", "preview_mode", True,
+                    primary=gui.preview_mode != "always", fkey="small")
+        y += row_h + gap
         heading("SOUND")
         half = (inner - gap) // 2
         self.switch(gui, pygame.Rect(x, y, half, row_h), "Sound", "sound", gui.sound.get("on", True), "small")
@@ -191,6 +200,10 @@ class SettingsPopup(Dialog):
             gui.toggle_frames()
         elif name == "hand_sort":
             gui.toggle_hand_sort()
+        elif name == "log_mode":
+            gui.change_log_mode(-1 if button == 3 else 1)          # patch UI6: right click goes back
+        elif name == "preview_mode":
+            gui.change_preview_mode(-1 if button == 3 else 1)
         elif name == "sound":
             gui.toggle_sound()
         elif name == "vol_down":
@@ -413,7 +426,8 @@ class ReportDialog(Dialog):
             else:
                 self.path = reporting.build_report(info, self.context.get("state"), self.context.get("log_lines"), self.context.get("commands"),
                                                    self.context.get("screenshot"), folder=self.folder,
-                                                   extra_env=[self.context["perf"]] if self.context.get("perf") else None)
+                                                   extra_env=[self.context["perf"]] if self.context.get("perf") else None,
+                                                   extra_files=self.context.get("extra_files"))     # patch 46: Java's crash report
             return True
         except Exception as e:                                 # the report is a helper: it must never take the game down
             what = "idea" if self.idea else "report"

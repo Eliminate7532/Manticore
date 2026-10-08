@@ -647,9 +647,12 @@ class PickerTests(unittest.TestCase):
     def settle(self, g, p):
         for _ in range(100):
             g.art.collect(50)
+            # Decided BEFORE the frame is drawn. The picker reads the search results while it draws, so a search that finishes between
+            # the draw and this check used to pass here with the tiles of a frame that still said "Searching..." (all() of no tiles
+            # is true), and the test then failed with an empty list in roughly one run in four.
+            ready = bool(p.card and p.source == "mpc" and g.art.mpc_results(p.card) is not None)
             g.render()
-            if p.card and p.source == "mpc" and g.art.mpc_results(p.card) is not None and \
-                    all(g.art.small(card_data.art_key(p.card, *v), 1, 1) is not None for _r, v in p.tiles):
+            if ready and all(g.art.small(card_data.art_key(p.card, *v), 1, 1) is not None for _r, v in p.tiles):
                 return
             time.sleep(0.01)
 

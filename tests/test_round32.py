@@ -123,7 +123,7 @@ class UiFontTests(unittest.TestCase):
             click(gui, point_for(gui, "button", name="settings"))
             frame(gui, 1)
         fonts = {s: f for s, f in seen}
-        for text in ("Settings", "DISPLAY", "Text size", "Volume", "Compact board cards", "Pass priority", "Upkeep", "YOUR TURN",
+        for text in ("Settings", "DISPLAY", "Text size", "Volume", "Compact: Off", "Log: Always", "Pass priority", "Upkeep", "YOUR TURN",
                      "Game log"):
             with self.subTest(text=text):
                 self.assertIn(text, fonts)

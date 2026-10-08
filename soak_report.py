@@ -31,14 +31,19 @@ def game_health(messages):
     lands = spells = answered = dropped = 0
     kinds = set()
     memory = {}
+    stops, passed = set(), 0                                  # patch 43: priority questions the seat was asked; passed for it
     for m in messages:
         t = m.get("t")
-        if t == "game_over":                                  # round 28d: the bridge's memory figures for this game
+        if t == "passed":
+            passed += 1
+        elif t == "game_over":                                  # round 28d: the bridge's memory figures for this game
             memory = {k: m[k] for k in ("peakHeapMb", "peakLiveMb", "maxHeapMb") if isinstance(m.get(k), (int, float))}
         elif t == "state":
             if me is None and m.get("me") is not None:
                 me = m.get("me")
             seats = max(seats, len(m.get("players") or []))
+            if m.get("asking") and m.get("input") == "InputPassPriority" and m.get("inputSeq") is not None:
+                stops.add(m.get("inputSeq"))
         elif t == "event":
             if me is None or m.get("player") != me:
                 continue
@@ -54,7 +59,31 @@ def game_health(messages):
         elif t == "dropped":
             dropped += 1
     return {"seats": seats, "lands": lands, "spells": spells, "answered": answered,
-            "kinds": sorted(kinds), "dropped": dropped, "memory": memory}
+            "kinds": sorted(kinds), "dropped": dropped, "memory": memory, "stops": len(stops), "passed": passed}
+
+
+def stop_lines(healths):
+    """Patch 43: how many priority questions the soak seat was asked a game (each one an OK for a person), per number of
+    players, and how many opponents' triggers / abilities the bridge passed for it. Night 12, before patch 43: 175 a game
+    (110 two-player, 182 three, 247 four)."""
+    by_seats = {}
+    for h in healths:
+        if not h.get("seats") or "stops" not in h:
+            continue
+        cur = by_seats.setdefault(h["seats"], [0, 0, 0])
+        cur[0] += 1
+        cur[1] += h.get("stops", 0)
+        cur[2] += h.get("passed", 0)
+    if not by_seats:
+        return []
+    games = sum(c[0] for c in by_seats.values())
+    out = ["PRIORITY STOPS (questions the soak seat was asked, a game)",
+           "  all: %.0f a game over %d game(s); %.1f opponents' triggers/abilities passed for it"
+           % (sum(c[1] for c in by_seats.values()) / games, games, sum(c[2] for c in by_seats.values()) / games)]
+    for seats in sorted(by_seats):
+        n, st, ps = by_seats[seats]
+        out.append("  %d players: %.0f a game (%d game(s)), %.1f passed" % (seats, st / n, n, ps / n))
+    return out
 
 
 def memory_lines(healths):
@@ -182,6 +211,10 @@ def summary_text(header, results, healths, verdict, canary, groups, new_signatur
     lines.append("")
     lines += memory_lines(healths)
     lines.append("")
+    stops = stop_lines(healths)                         # patch 43
+    if stops:
+        lines += stops
+        lines.append("")
     lines.append("GAMES")
     for r, h in zip(results, healths):
         lines.append("  game %d: seed=%s seats=%d turns=%d ended=%s | bot: %d land(s), %d spell(s), %d answer(s), "

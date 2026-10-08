@@ -381,7 +381,10 @@ WORDS = {"won": "VICTORY", "lost": "DEFEAT", "draw": "DRAW", "out": "DEFEAT", "o
 def draw_end(gui, end):
     scr, L = gui.screen, gui.L
     layer(gui, 222)
-    t = ease_out((time.monotonic() - end.t0) / END_ANIM) if gui.animations else 1.0
+    now = time.monotonic()
+    t = ease_out((now - end.t0) / END_ANIM) if gui.animations else 1.0
+    if gui.animations and hasattr(gui, "anim"):
+        gui.anim.end_particles(gui, end, now)       # patch 48: embers rising for VICTORY, ash falling for DEFEAT (a few seconds)
     colour = {"won": gfx.VICTORY, "draw": gfx.GOLD, "over": gfx.GOLD}.get(end.kind, gfx.DEFEAT)
     px = int(max(54, 120 * L.fs) * (0.82 + 0.18 * t))
     word = WORDS[end.kind]
@@ -389,7 +392,17 @@ def draw_end(gui, end):
     while px > 30 and font.size(word)[0] > L.W - 2 * L.margin:
         px -= 6
         font = get_font(px, True, "display")
-    cy = int(L.H * 0.42)
+    body, small, stat_font = gui.font("title"), gui.font("small"), gui.font("body")
+    # patch 44: how the game ended and this deck's record, under the line (gui.end_stats_lines: [] when there are none)
+    stat_w = min(L.W - 2 * L.margin, int(1000 * L.fs))
+    stat_lines = []
+    for text in (getattr(gui, "end_stats_lines", None) or (lambda: []))():
+        stat_lines += wrap_text(text, stat_font, stat_w)[:2]
+    stats_h = len(stat_lines) * (stat_font.get_height() + 2) + (int(14 * L.fs) if stat_lines else 0)
+    bh = int(max(40, 48 * L.fs))
+    below = (font.get_height() // 2 + int(34 * L.fs) + body.get_height() + int(26 * L.fs) + stats_h + bh + int(12 * L.fs)
+             + small.get_height() + int(8 * L.fs))
+    cy = max(font.get_height() // 2 + int(30 * L.fs), min(int(L.H * 0.42), L.H - below))
     half = min(int(L.W * 0.36), int(font.size(word)[0] * 0.95))
     rule_col = gfx.lerp(gfx.BACKDROP, gfx.GOLD, t)
     ornament(scr, L.W // 2, cy - font.get_height() // 2 - int(18 * L.fs), half, rule_col)
@@ -399,11 +412,14 @@ def draw_end(gui, end):
     r = img.get_rect(center=(L.W // 2, cy))
     scr.blit(shadow, r.move(4, 4))
     scr.blit(img, r)
-    body, small = gui.font("title"), gui.font("small")
     y = cy + font.get_height() // 2 + int(34 * L.fs)
     draw_text(scr, end.line, L.W // 2, y, body, gfx.WHITE, "midtop")
-    y += body.get_height() + int(26 * L.fs)
-    bh = int(max(40, 48 * L.fs))
+    y += body.get_height() + int(14 * L.fs if stat_lines else 26 * L.fs)
+    for i, text in enumerate(stat_lines):
+        draw_text(scr, text, L.W // 2, y, stat_font, gfx.TEXT if i else gfx.WHITE, "midtop")
+        y += stat_font.get_height() + 2
+    if stat_lines:
+        y += int(14 * L.fs)
     if end.kind == "out":
         labels = [("Keep watching", "end_watch", False), ("Leave the game", "end_leave", True)]
     else:

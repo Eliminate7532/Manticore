@@ -106,13 +106,21 @@ def machine_text():
     return here or native
 
 
+def _is_program_folder(folder):
+    """Patch 46: a copy of the program (its source, or a build's build_info.json), not just a folder of logs."""
+    return any(os.path.isfile(os.path.join(folder or "", n)) for n in ("version.py", "build_info.json"))
+
+
 def environment(folder=None):
     """Lines about this computer and this copy of the program."""
     folder = folder or _cfg["folder"]
     lines = []
     # Patch 38: in an installed copy `folder` is the logs folder, not the program's - the report said "code unknown | installed
     # build unknown" and "forge_runtime: missing" (Karl's Surface, 4 Oct). The program folder describes the program.
-    prog = folder if paths.is_portable() else paths.program_dir()
+    # Patch 46: the same in a portable copy whose logs go elsewhere - a soak night's folder (MANTICORE_DATA_DIR) or a soak game's
+    # report said "commit none yet | code unknown" and "forge_runtime: missing" (soak nights 12-14). `folder` describes the
+    # program only when it IS a program folder.
+    prog = folder if (paths.is_portable() and _is_program_folder(folder)) else paths.program_dir()
     try:
         lines.append(version.describe(prog))
     except Exception as e:

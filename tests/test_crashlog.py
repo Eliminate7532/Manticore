@@ -129,9 +129,11 @@ class RecordTests(LogBase):
         crashlog.set_context(lambda: ["Showing: the table", "Game: turn 4"])
         self.assertTrue(crashlog.record(self.boom("kaboom")))
         text = self.log()
+        # patch 46: the log folder here is a temp folder, so the forge_runtime line describes the PROGRAM's forge_runtime (present
+        # or "missing" depending on the machine) - it used to say "missing" because it looked in the log folder
         for want in ("ERROR: ValueError at test_crashlog.py:", "ValueError: kaboom", "Traceback", version.VERSION,
                      "code ", "Python " + sys.version.split()[0],
-                     "Showing: the table", "Game: turn 4", "forge_runtime: missing", "line two", "forge_engine.log"):
+                     "Showing: the table", "Game: turn 4", "forge_runtime: ", "line two", "forge_engine.log"):
             self.assertIn(want, text)
 
     def test_the_same_error_is_written_once_and_counted_later(self):

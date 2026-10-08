@@ -174,6 +174,22 @@ class ParticlePool:
             self.x[i], self.y[i], self.vx[i], self.vy[i] = float(x), float(y), math.cos(a) * v, math.sin(a) * v
             self.age[i], self.life[i], self.grav[i], self.colour[i], self.alive[i] = 0.0, life * rnd.uniform(0.7, 1.0), gravity, colour, True
 
+    def stream(self, n, x0, y0, x1, y1, colour, speed=900.0, jitter=0.25, rnd=random):
+        """Patch 48: `n` particles that fly from (x0, y0) to (x1, y1) and die on arrival - the energy of a spell going to the stack,
+        or a card draining into the void. Each gets its own speed and a little sideways scatter; no gravity, so they arrive."""
+        dx, dy = x1 - x0, y1 - y0
+        dist = math.hypot(dx, dy)
+        if dist < 1:
+            return
+        ux, uy = dx / dist, dy / dist
+        for _ in range(n):
+            i = self._free_slot()
+            v = speed * rnd.uniform(0.7, 1.0)
+            side = rnd.uniform(-jitter, jitter) * v
+            self.x[i], self.y[i] = float(x0) + rnd.uniform(-4, 4), float(y0) + rnd.uniform(-4, 4)
+            self.vx[i], self.vy[i] = ux * v - uy * side, uy * v + ux * side
+            self.age[i], self.life[i], self.grav[i], self.colour[i], self.alive[i] = 0.0, dist / v, 0.0, colour, True
+
     def _free_slot(self):
         for k in range(self.capacity):
             i = (self.next + k) % self.capacity

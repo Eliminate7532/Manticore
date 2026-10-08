@@ -24,6 +24,11 @@ forge_decks/
 *.jsonl
 backup.log
 
+# Java's own crash reports (patch 46): written beside forge_engine.log; they hold this PC's user name, PATH and temp folder.
+hs_err_pid*.log
+replay_pid*.log
+*.mdmp
+
 # Overnight soak runs (tools\soak.py, Round 28b): can be large, and it's Karl's own test output.
 soak_runs/
 

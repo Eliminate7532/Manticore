@@ -32,6 +32,7 @@ BLUE_TAG = gfx.TAG_BLUE
 ORANGE_TAG = gfx.TAG_ORANGE
 RANDOM = "*random*"                     # round 27b: an AI seat set to "a random deck from the library, picked at Start"
 SEAT_KEYS = ("opp", "opp2", "opp3")     # the slot/active names of AI seats 1-3 ("opp" is seat 1, as before round 27b)
+MAIN_MENU_LABEL = "Main menu"            # patch 42: the deck screen's button back to the title and main menu
 HINTS = ("Pick your deck, then one for each AI (or Random), then press Start.  Type to search the list.  "
          "Paste a new deck with Import (or Ctrl+V).  F8: a bug or an idea.",
          "Pick your deck and the AIs', then Start.  Type to search.  Ctrl+V pastes a deck.  F8: a bug or an idea.")   # Round FR1
@@ -361,6 +362,11 @@ class DeckMenu:
             gui.say(".   ".join(notes), ORANGE if left_out else CYAN, 10.0 if left_out else 6.0)
         return None
 
+    def can_go_to_title(self, gui):
+        """Patch 42: True when Esc (and the Main menu button) goes back to the title and main menu: no game running, and the
+        program came through the title (main(); not the --deck command line or a test)."""
+        return not self.has_game and bool(getattr(gui, "title_ok", False))
+
     def back(self, gui):
         if self.has_game:
             gui.menu = None
@@ -386,6 +392,14 @@ class DeckMenu:
             return self.say("Click a deck in the list first, then press Card art.", DIM)
         import art_picker
         gui.modal = art_picker.ArtPicker(self, e)
+        return None
+
+    def open_stats(self, gui):
+        """Patch 44: the Stats page for the deck in focus (or every deck, when none is chosen)."""
+        import stats_view
+        rec = getattr(gui, "stats_rec", None)
+        current = rec.id if rec is not None and rec.end is None else None       # the game on the table isn't finished yet
+        gui.modal = stats_view.StatsPage(self.entry(self.focus_id), current_id=current)
         return None
 
     def remove_focus(self, gui):
@@ -432,6 +446,9 @@ class DeckMenu:
             self.start(gui)
         elif name == "back":
             self.back(gui)
+        elif name == "main_menu":                                     # patch 42
+            if self.can_go_to_title(gui):
+                gui.open_title()
         elif name == "resume":
             gui.resume_last_game()
         elif name == "discard_saved":                                 # round 28d
@@ -442,6 +459,8 @@ class DeckMenu:
             self.remove_focus(gui)
         elif name == "card_art":                                      # round ALT1
             self.open_art(gui)
+        elif name == "stats":                                         # patch 44
+            self.open_stats(gui)
         elif name == "minus":
             self.step_count(-1)
         elif name == "plus":
@@ -540,8 +559,21 @@ class DeckMenu:
         m = int(max(14, 16 * fs))
         big, title, body, small, tiny = (gui.font("big", True), gui.font("title", True), gui.font("body"), gui.font("small"),
                                          gui.font("tiny", True))
-        draw_text(scr, "Choose your decks", m, m - 4, big, GOLD)
-        self.draw_formats(gui, L.W - m, m - 4, big.get_height(), m + big.size("Choose your decks")[0] + int(24 * fs))
+        tx, self.main_menu_rect = m, None
+        if self.can_go_to_title(gui):
+            # Patch 42: a Main menu button at the top left, shown exactly when Esc goes back to the title and main menu (no game
+            # running, and the program came through the title). Before, only Esc did it, and nothing on the screen said so.
+            mh = int(min(big.get_height(), max(30, 38 * fs)))
+            mw = max(gui.button_width(MAIN_MENU_LABEL, "small"), int(120 * fs))
+            r = pygame.Rect(m, m - 4 + (big.get_height() - mh) // 2, mw, mh)
+            self.button(gui, r, MAIN_MENU_LABEL, "main_menu", True, False, False, fkey="small")
+            self.main_menu_rect = r
+            tx = r.right + int(16 * fs)
+        title_text = "Choose your decks"
+        self.formats_left = None
+        self.draw_formats(gui, L.W - m, m - 4, big.get_height(), tx + big.size(title_text)[0] + int(24 * fs))
+        room = (self.formats_left or L.W - m) - int(16 * fs) - tx
+        self.title_rect = draw_text(scr, clip_text(title_text, big, room), tx, m - 4, big, GOLD)
         y = m - 4 + big.get_height()
         hint = HINTS[0] if small.size(HINTS[0])[0] <= L.W - 2 * m else HINTS[1]        # Round FR1: the F8 hint, a shorter line at big text
         draw_text(scr, clip_text(hint, small, L.W - 2 * m), m, y, small, DIM)
@@ -652,6 +684,7 @@ class DeckMenu:
                 break
         x = right - sum(widths) - 6 * (len(widths) - 1)
         by = y + (h - bh) // 2
+        self.formats_left = x - int(12 * fs) - cap.size("Format")[0]          # patch 42: the title is clipped to end before it
         draw_text(gui.screen, "Format", x - int(12 * fs), by + bh // 2, cap, DIM, "midright")
         self.format_rects = {}
         for (label, name, on), w in zip(labels, widths):
@@ -719,10 +752,10 @@ class DeckMenu:
             pygame.draw.rect(scr, gfx.SCROLLBAR, pygame.Rect(self.list_rect.right - 5, bar_y, 5, bar_h), border_radius=3)
         by = rect.bottom - foot_h - pad // 2
         e = self.entry(self.focus_id)
-        labels = ["Import a deck", "Remove", "Card art"]                    # round ALT1: Card art (choose printings, your own art)
+        labels = ["Import a deck", "Remove", "Card art", "Stats"]           # round ALT1: Card art; patch 44: Stats
         widths = [max(gui.button_width("Import a deck"), int(190 * fs)), max(gui.button_width("Remove"), int(120 * fs)),
-                  max(gui.button_width("Card art"), int(120 * fs))]
-        room = rect.w - 2 * pad - 20
+                  max(gui.button_width("Card art"), int(120 * fs)), max(gui.button_width("Stats"), int(100 * fs))]
+        room = rect.w - 2 * pad - 30
         if sum(widths) > room:                                              # big text: the buttons only as wide as their words
             widths = [gui.button_width(t) for t in labels]
         if sum(widths) > room:
@@ -734,6 +767,9 @@ class DeckMenu:
         bx += widths[1] + 10
         if bx + widths[2] <= rect.right - pad // 2:
             self.button(gui, pygame.Rect(bx, by, widths[2], foot_h), labels[2], "card_art", bool(e and e.ok))
+            bx += widths[2] + 10
+            if bx + widths[3] <= rect.right - pad // 2:
+                self.button(gui, pygame.Rect(bx, by, widths[3], foot_h), labels[3], "stats", True)
 
     def row_tags(self, e):
         """The coloured tags on a list row: YOU, and which AI seats play this deck (random seats are not tagged)."""

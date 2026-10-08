@@ -56,7 +56,10 @@ Uninstall
      Cog > Tour of the table shows it again any time.
 
 Keys worth knowing
-  Space / Enter   OK, pass priority, move on (the bar above your hand says what it will do)
+  Space           OK, pass priority once, move on (the bar above your hand says what it will do)
+  Enter           Pass until an opponent acts, or the turn ends
+  Shift+Enter     Pass the rest of this turn (you are still asked to block)
+  Ctrl+Shift      Full control on or off: every stop, nothing passed for you
   Esc             Cancel
   E               End turn
   A               Full Send: attack with everything that can
@@ -82,6 +85,12 @@ Card art
   own go in the my_art folder inside your data folder, named after the card ("Sol Ring.png").
   Its MPC Autofill tab shows community-made pictures of a card from mpcfill.com; only the one you click is
   downloaded, and it is kept. "Card size" - and + make the pictures smaller or bigger.
+
+Stats
+  Stats (deck screen) shows a deck's record - games won and lost, by number of players, by your seat, and
+  against each deck - on which of your turns you win and lose, and how (what beat you). Only games played to
+  the end count; conceded and unfinished ones are listed apart. Online games are a separate record. The
+  end-of-game screen says how the game ended and the deck's record so far.
 
 Resume
   If the program closes mid-game, the next start offers Continue (title screen) or Resume last game (deck

@@ -35,6 +35,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+import java_crash                                  # patch 46: is_crash_file
+
 BUNDLED_CONFIG = "bug_report_config.bundled.json"
 EMPTY_HASH_CODE = "da39a3ee"                      # sha1 of nothing: what a frozen copy printed before build_info.json existed
 EXPECTED_SAMPLE_DECKS = 10                         # round FMT1: 6 Commander + 4 Brawl
@@ -113,6 +115,10 @@ def check_layout(folder, tree, dirs, exe=".exe", sample_decks=EXPECTED_SAMPLE_DE
     loose = [rel for rel, _ in tree if "/" not in rel and rel.lower().endswith(".py")]
     if loose:
         problems.append(f"must not ship: loose .py source in the program folder ({', '.join(sorted(loose)[:5])})")
+    crashes = sorted(rel for rel, _ in tree if java_crash.is_crash_file(rel))       # patch 46 (soak night 14)
+    if crashes:
+        problems.append("must not ship: a Java crash report is in the build (" + ", ".join(crashes[:3]) + ") - it holds the "
+                        "PC's user name, PATH and temp folder")
     return problems
 
 

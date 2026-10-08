@@ -263,7 +263,7 @@ class SwitchFitTests(unittest.TestCase):
                 click(gui, point_for(gui, "button", name="settings"))
                 with mock.patch.object(fset, "draw_text", spy):
                     frame(gui, 1)
-                self.assertGreaterEqual(len(drawn), 8)
+                self.assertGreaterEqual(len(drawn), 7)      # seven switches since patch UI6 made Compact and Sort hand buttons (nine before)
                 for t in drawn:
                     row = next(r for r, _n in gui.overlay.buttons if r.collidepoint(t.center))
                     ph = int(row.h * 0.56)

@@ -120,6 +120,21 @@ PICTURES FOR ONE DECK (patch 40): in the Card art window, "Import pictures" (or 
   which pictures aren't cards of the deck and which cards have no picture, with Undo. One picture dropped on a card's page is
   that card's picture, whatever the file is called. "Remove imported" takes them all out again (a printing or an MPC pick
   replaces one). deck_art/ is in the local backup zips but not pushed to GitHub, and never in the public source copy.
+STATS (patch 44, Karl's decisions of 6 Oct 2026): select a deck, press "Stats". "This deck" shows:
+    - its record: games won and lost, and the win %. Only games played to the end count; conceded and unfinished games are
+      listed apart ("Not counted: 2 conceded, 1 unfinished").
+    - the record by number of players, by your seat in turn order (1st to play, 2nd ...), and against each opponent's deck.
+    - on which of your own turns you win and lose (average, fastest, slowest, and a bar per turn).
+    - how you won and lost (combat damage, noncombat damage, life loss, commander damage, poison, an empty library, a
+      "lose the game" card, an alternate win, a concede), the cards that won it and what beat you (card and player).
+    - the same for that deck's online games, a separate record.
+  "All decks" has one line per deck. The end-of-game screen says how the game ended ("Lost on your turn 6 (game turn 21) -
+  commander damage from AI 1's Light-Paws, Emperor's Voice.") and the deck's record so far.
+  How: every game is written to stats/games.ndjson (beside saves/, in your data folder) as it goes - a "start" line when the
+  first board shows, an "end" line when it ends - so a crash never loses a finished game; a resumed game is the same game.
+  Forge says how each player lost and which card won (the bridge's game_over "result"); the table works out which card and
+  player did the damage or the life loss from Forge's events. Games played before patch 44 aren't in it. Nothing is recorded
+  while watching someone else's game. stats/ is backed up like your decks and never in the public source copy.
 Your last choice (your deck, each AI's deck or Random, and the number of opponents) is remembered in settings.json.
 
 PLAYING (press H in the game for the same list)
@@ -130,7 +145,13 @@ that is what it does.
 
   Click a glowing card ........ play it / cast it / activate it (glow = Forge says you can)
   Click a card when asked ..... choose it (targets, discards, sacrifices, ...)
-  Space or Enter .............. OK (pass priority / confirm / next step); not on the play/draw window
+  Space ....................... OK (pass priority once / confirm / next step); not on the play/draw window
+  Enter ....................... when you have priority: pass until an opponent casts something or attacks you, or the
+                                turn ends (patch 43); otherwise OK, like Space
+  Shift+Enter ................. when you have priority: pass the rest of this turn (you are still asked to block)
+  Ctrl / Ctrl+Shift ........... full control until this turn ends / on or off (every stop, nothing passed for you)
+  Ctrl+click a card ........... cast it and keep priority over it (your own spells otherwise resolve without a stop)
+  Y ........................... always pass on the trigger or ability on top of the stack, this game
   E ........................... End Turn (when that is the Cancel button)
   A ........................... Full Send: attack with everything (when offered)
   Esc ......................... Cancel - but only when the button really says Cancel/Undo, so a
@@ -185,6 +206,18 @@ The row of little buttons that used to sit at the top right is now ONE cog. Clic
             SWITCHES (green ON, grey OFF). Clicking a switch flips it and the panel stays open, so you see it move. Compact board
             cards shrinks a small battlefield card down to an art-crop picture with a dark name strip and a type letter (C/A/E/L/P)
             instead of the plain shrunk card - all its counters/keywords/P&T badges still show. Default OFF.
+            Log and Focus (patch UI6) sit side by side: click one to go on to its next setting, right-click to go back.
+            Log: Always (the game log in the right column, as before), Corner (no log in the column: it opens over the lower-right
+            corner of the window while the mouse is in that corner - a square of about 48 pixels, bigger with the text size; the
+            wheel scrolls it, and it closes a quarter of a second after the mouse has left it; a faint "Log" shows where the
+            corner is) or Hidden (never drawn; the game still keeps it and a bug report still carries it). The stack takes the room.
+            Focus: Always (the big card panel, as before), Over card (no panel: rest the mouse on a card for about a tenth of a
+            second and its big picture appears over that card, kept inside the window and off the action bar; it takes no clicks, so
+            everything under it still works; for a card in your hand it appears above the hand) or Hidden (no panel and no picture
+            unless you pin one). With Over card or Hidden a right-click on a card pins its picture over it until you right-click
+            again or press Esc. With the panel off, what an AI casts and the card a question is about (surveil, scry, "return your
+            commander?") show in a card slot under the stack when there is room. Both start as Always; settings.json keeps them as
+            "log_mode" and "preview_mode", and a missing or unknown value is read as Always.
   SOUND     (round 24) Sound on/off (same as the M key), Volume - / +  (10% steps), and a Hover tick switch that silences the
             little tick when you hover a hand card (everything else still plays). Round AU1 adds Music and Ambience switches.
   GAME      New game...   asks what you mean: "Same decks, new shuffle" (ends the game if one is running and starts another with
@@ -226,6 +259,8 @@ asking you a question, and it takes a picture of the table BEFORE the form appea
      table, the board as the game saw it, the game log, every click since the game began and the shuffle seed, the decks in the
      game, the version stamp (the "code xxxxxxxx" fingerprint), your Windows / Python / Java versions, and the
      newest lines of forge_engine.log and crash_log.txt. Your Windows user name is taken out of file paths.
+     From patch 46: if Java itself crashed in that game, the start of its crash report (hs_err_pid<N>.log) too - without its
+     list of environment variables (your user name, PATH, temp folder).
      Nothing else leaves the computer. The zip stays under about 5 MB (logs are trimmed and the picture shrunk).
   4. If Discord is set up the zip is posted to the channel by itself. If not, or if that fails (no internet, Discord
      refuses the file), the window says so and shows the file: press "Open folder" and drag it into Discord.
@@ -414,7 +449,7 @@ Prompt bar (above your hand): a big headline saying what the game wants right no
 main phase", "Pay {G} - Llanowar Elves", "Choose blockers ...") and a small hint line under it
 ("Play a land or cast a spell (glowing cards), or Pass priority."). Forge's OK button is
 relabelled "Pass priority" when that is what it does.
-Game log (right column): a dark bar for each turn ("Turn 6 - AI 1"), a small label for each step
+Game log (right column; Cog > Log can turn it into a corner overlay or hide it): a dark bar for each turn ("Turn 6 - AI 1"), a small label for each step
 (Main 1, Attackers, Blockers, Damage ...), and one plain-English line per event: "You cast Sol Ring",
 "AI 1 attacks you with Wall of Blossoms", "Your life: 40 to 37 (-3)". You are in blue, opponents in
 orange, card names in bold; hover a card name in the log to see the card. Debug tails and the
@@ -502,6 +537,28 @@ arrived (before, every permanent with the same name glowed). How it works: Forge
 compares the card ids on the battlefield from one snapshot to the next; the first snapshot of a game is history, not news.
 Tested in the sandbox with the real card art (preview GIF made from the real table code); NOT yet seen in a real game. Unknown:
 what a blinked/flickered card does (it may keep its id and so get no ring), and whether many rings at once (a token burst) is too busy.
+ONLY THE STOPS THAT MATTER (patch 43, Karl's decisions of 5-6 Oct 2026; java_bridge Passing.java)
+  Your games had 73% of all clicks be OK (passing priority); a 4-player soak game asked the soak seat 247 times. Now the bridge
+  passes for you whenever a stop means nothing:
+    - When you can't do anything, Forge passes for you (auto-pass, ON by default now; a settings file from before is switched on
+      once - the Skip window turns it off). It no longer stops you for an opponent's spell you couldn't answer anyway.
+    - Your own spells and abilities resolve without a stop. Hold Ctrl as you click the card to keep priority over it.
+    - Your own triggers stop you when you could do something (Thassa's Oracle's trigger, then Demonic Consultation).
+    - An opponent's trigger or activated ability stops you only if you hold an answer to it: a card you can play now that can
+      target it (Stifle, Tale's End, Disallow...). Counterspell can't, so it doesn't count. The board's feed says "Passed for you:
+      AI 2's Rhystic Study trigger" for each one passed.
+    - Any card can be marked "always stop" (Skip window, with that card's item on the stack; remembered): its spells, triggers
+      and abilities then stop you whenever you could act.
+    - Default stops: your Main 1 and Main 2, and each opponent's end step. The turn bar's dots still add any stop.
+      There is no stop in combat, yours or theirs (Forge still asks you to attack and to block): for a combat trick, tap
+      Ctrl first (every stop this turn) or click that step's dot on the turn bar.
+    - Enter passes until an opponent casts something or attacks you (then the usual stops apply), or the turn ends;
+      Shift+Enter passes the rest of the turn; Ctrl gives full control until the turn ends, Ctrl+Shift until you press it
+      again (the Skip button then reads "Full control").
+    - The second time the same card's trigger stops you in a turn, the table offers Y = always pass on it.
+  The soak summary has a PRIORITY STOPS section (questions the soak seat was asked a game). The card check keeps every stop
+  (--classic-stops), because its scripted boards rely on them.
+
 SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its desktop window has)
   Skip... (the button left of Undo, or the S key) opens a window with:
     Let the stack resolve ........ Forge passes priority for you until the stack is empty. An opponent casting something new stops it.
@@ -509,7 +566,7 @@ SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its d
                                    It stops early if an opponent casts a spell or attacks you. The turn-bar stops you set are respected again
                                    once you get there. (This is the answer to "three AIs take nine stops before my turn comes back".)
     Auto-pass when I can't do anything: ON / OFF .... Forge passes by itself whenever it finds nothing you could do; an opponent's spell or an attack
-                                   on you still stops it. Off by default, remembered in settings.json, and the button then reads "Skip (auto)".
+                                   on you still stops it. On by default since patch 43, remembered in settings.json; the button reads "Skip (auto)".
                                    Forge decides what counts as "can do", so if it ever passes when you wanted to act, turn this off and tell me.
     Always pass on <card>'s trigger / ability ... when that ability is on top of the stack it resolves without asking you every time (per ability,
                                    for the rest of the game). Use it for the things you never respond to (City of Brass damage, a mana rock's trigger).
@@ -651,6 +708,11 @@ The program writes a report by itself, into crash_log.txt in this folder, when:
                when it came back. Holding the window's title bar also freezes it; that is not a bug.
   HARD CRASH   the whole program died (a fault in a library). Python leaves crash_native.txt, and the NEXT start copies it into
                crash_log.txt.
+  JAVA CRASH   (patch 46) Java itself died - not a Forge error, the whole engine: the table says "Forge stopped - Java itself
+               crashed" and names the file. Java writes hs_err_pid<N>.log beside forge_engine.log (this folder; the logs folder
+               of an installed copy). Press F8 before closing: the report includes it, without its environment variables.
+               Older copies left it in forge_runtime\, where the installer build would have picked it up; the next start
+               moves any found there. Never committed to GitHub (.gitignore) and never put into an installer (check_dist).
 Every entry names the exact copy of the program (version, backup commit, and a 'code' fingerprint of the .py files), your Python /
 Windows / pygame versions, what the table was doing, and the last lines of forge_engine.log. To report a problem, send me the
 newest entry (the bottom of the file) as copied text. It contains folder names such as C:\Users\Karl\..., nothing else personal.
@@ -679,8 +741,10 @@ forge_bundle/ contains Forge itself (forge.jar and its card scripts), built from
 github.com/Card-Forge/forge (commit fb4d809, version 2.0.16-SNAPSHOT, 2 Oct 2026). Forge is free software
 under the GNU GPL v3 (forge_bundle/FORGE_LICENSE.txt, also LICENSE at the project root).
 The small forge_bridge.jar in java_bridge/ is this project's own code that connects Forge to
-Python (source in java_bridge/src). One file in it, MulliganService.java, is Forge's own source with a
-single changed line (free first mulligan); it carries the GPL notice and is a derivative of Forge.
+Python (source in java_bridge/src). Two files in it are Forge's own source with small changes, and carry
+the GPL notice as derivatives of Forge: MulliganService.java (one changed line: the free first mulligan) and,
+from patch 45, InputPayMana.java (the mana payment waits while a mana ability is still being paid; the
+header of the file and tests/test_patch45.py say what changed and why).
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
@@ -866,9 +930,13 @@ FILES - new table and engine
 - forge_client.py      - starts Forge (Java) and talks to it: JSON lines over stdin/stdout
 - java_bridge/         - forge_bridge.jar and its Java source (the bridge into Forge's GUI interface); a newer jar
                          here is copied into forge_runtime/ automatically when the game starts. The jar also holds
-                         a patched copy of Forge's MulliganService (src/forge/game/mulligan/) that makes the first
-                         mulligan free; the game puts the bridge jar FIRST on the Java class path so it replaces
-                         Forge's own copy. Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
+                         two patched copies of Forge classes: MulliganService (src/forge/game/mulligan/: the first
+                         mulligan is free) and, from patch 45, InputPayMana (src/forge/gamemodes/match/input/: the
+                         payment waits while a mana ability is still being paid); the game puts the bridge jar FIRST
+                         on the Java class path so they replace Forge's own copies. When Forge is updated, re-copy
+                         them from the new Forge and re-apply the marked changes (tests/test_patch45.py goes red
+                         until InputPayMana is redone).
+                         Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
                          and commit it with the change: the jar carries a stamp of the sources it was built from, and
                          tests/test_round27c.py fails when the two differ (round 27c: an old jar once shipped that way).
                          Round 27d: the bridge checks its own answers (Checks.java); a broken rule writes "Bridge
@@ -878,6 +946,8 @@ FILES - new table and engine
 - deck_loader.py       - deck files / URLs -> commander + 99 cards
 - forge_engine.log     - created when playing: Forge's own messages (look here if something breaks)
 - crash_log.txt        - created only when something goes wrong: the reports described above (crash_native.txt: hard crashes)
+- hs_err_pid<N>.log    - created only when Java itself crashes (patch 46): Java's own report, beside forge_engine.log
+- java_crash.py        - patch 46: where Java's crash reports go, and what a bug report takes from one
 - crashlog.py / version.py - the report writer and the version stamp (no game code; tested on their own)
 - requirements.txt     - the exact package versions (pinned)
 - forge_decks/         - created when playing: the .dck files handed to Forge
@@ -928,6 +998,18 @@ a game. When there is one, a card in the top-right corner says so: Update now / 
 new installer (its size and SHA-256 checksum must match what the release says, or it is thrown away), closes Manticore, installs over
 the top without questions, and starts the new version. Decks, settings and saved games live in the per-user folders, so they stay.
 Cog > Help > Updates turns the check off. `Manticore-cli.exe --version` says whether this copy looks, and where.
+Patch 41 (0.28.45): Manticore starts the installer itself (/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /UPDATE
+/LOG="...\install.log") and closes; the installer closes anything still holding its files and reopens Manticore when it's done.
+If the installer can't be started that way, its own window opens to click through. Copies from 0.28.41 to 0.28.44 used a hidden
+PowerShell helper that never installed anything on Karl's Surface: they must get 0.28.45 or later installed by hand once.
+What each update did, in the tester's %LOCALAPPDATA%\Manticore\updates\ folder:
+    install.log           the installer's own log of the last update (Inno Setup's /LOG)
+    last_update.txt       what Manticore started, how, and when
+    pending_update.json   written when an update starts; the next start reads it and removes it if the update finished
+                          (and the ~130 MB installer with it; one that didn't finish keeps both, for the next try)
+The next start also writes one line in the crash log: "Update finished", or "Update didn't finish" with install.log's last
+lines (so an F8 report carries them). After one that didn't finish, the card says so and Update now opens the installer's own
+window instead of a silent install. A manual install also leaves a log: %TEMP%\Setup Log <date> #NNN.txt (SetupLogging).
 
 Your own git copy never updates itself (it updates through git), and the tests never look.
 

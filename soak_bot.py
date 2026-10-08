@@ -436,11 +436,19 @@ class SoakBot:
             mem["soak_attackers_chosen"] = None
         ok = prompt.get("ok") or {}
         if refusals[1]:
+            k = (turn, refusals[1])
             cancel = prompt.get("cancel") or {}
-            if mem.get("soak_alpha") != (turn, refusals[1]) and cancel.get("enabled") \
-                    and "alpha" in (cancel.get("label") or "").lower():
-                mem["soak_alpha"] = (turn, refusals[1])
-                return ("cancel",)
+            label = (cancel.get("label") or "").lower()
+            if cancel.get("enabled") and mem.get("soak_alpha") != k:
+                if "alpha" in label:
+                    mem["soak_alpha"] = k
+                    return ("cancel",)
+                if "call back" in label and mem.get("soak_callback") != k:
+                    # Patch 44 (the Brawl soak of 6 Oct, Goblin Rabblemaster): the refusal came after some attackers were
+                    # declared, so Cancel reads "Call Back", not "Alpha Strike", and the bot pressed OK 28,000 times. Take
+                    # them back first; Cancel then reads "Alpha Strike".
+                    mem["soak_callback"] = k
+                    return ("cancel",)
             return ("ok",) if ok.get("enabled") else None
         battlefield = (me.get("zones") or {}).get("battlefield") or []
         creatures = [c for c in battlefield if _playable(c) and c.get("isCreature") and not c.get("tapped")]

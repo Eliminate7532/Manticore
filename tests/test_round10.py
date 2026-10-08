@@ -195,9 +195,18 @@ class SkipWindowTests(unittest.TestCase):
         d = tempfile.mkdtemp()
         path = os.path.join(d, "settings.json")
         gui = self.open_skip(with_yield("stack_two_late"), settings=path)
+        # Patch 43: auto-pass is on by default now, so the switch is turned off and on again.
+        self.assertIn("Auto-pass when I can't do anything: ON", labels(gui))
+        choose(gui, "Auto-pass")
+        self.assertFalse(gui.auto_pass)
+        frame(gui, 1)
+        click(gui, point_for(gui, "button", name="skip"))
+        frame(gui, 1)
         self.assertIn("Auto-pass when I can't do anything: OFF", labels(gui))
         choose(gui, "Auto-pass")
-        self.assertEqual(gui.session.commands("autopass"), [{"c": "autopass", "on": True}])
+        # (the first "on" is the saved choice told to Forge with the game's first snapshot)
+        self.assertEqual(gui.session.commands("autopass"),
+                         [{"c": "autopass", "on": True}, {"c": "autopass", "on": False}, {"c": "autopass", "on": True}])
         self.assertTrue(gui.auto_pass)
         with open(path, encoding="utf-8") as f:
             self.assertIs(json.load(f)["auto_pass"], True)

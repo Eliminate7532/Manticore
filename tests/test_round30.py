@@ -4,10 +4,10 @@ Round 30: an installed copy updates itself (updater.py, update_screens.py, tools
 
 Everything here is offline: the feed and the installer come from a small HTTP server on 127.0.0.1 (MANTICORE_UPDATE_TEST=1
 lets updater.py use plain http there, and stands in for "this is an installed copy"); the installer is never really run -
-launch_installer gets a fake Popen. NOT tested here (needs Windows): the PowerShell helper itself, Inno Setup's /SILENT, and
-the new copy starting by itself.
+launch_installer gets a fake Popen. NOT tested here (needs Windows): Inno Setup's /SILENT, /CLOSEAPPLICATIONS and /LOG, and
+the new copy starting by itself. Patch 41 replaced the PowerShell helper with a direct start of the installer: the launch is
+tested here as before, the rest (the command line, the fallback, the next start's verdict) in tests/test_patch41.py.
 """
-import base64
 import hashlib
 import http.server
 import io
@@ -330,19 +330,6 @@ class NetworkTests(unittest.TestCase):
 
 # ---- the installer helper ---------------------------------------------------------------------------------------------
 class InstallerTests(unittest.TestCase):
-    def test_the_helper_waits_installs_quietly_and_starts_the_new_copy(self):
-        script = updater.helper_script(r"C:\Users\Kar'l\AppData\Local\Manticore\updates\Manticore-9.0.0-setup.exe",
-                                       r"C:\Users\Kar'l\AppData\Local\Programs\Manticore\Manticore.exe", 4242)
-        lines = script.splitlines()
-        self.assertIn("Wait-Process -Id 4242 -Timeout 120", lines)
-        install = next(ln for ln in lines if "-ArgumentList" in ln)
-        self.assertIn("'/SILENT','/SUPPRESSMSGBOXES','/NORESTART'", install)
-        self.assertIn("-Wait", install)
-        self.assertIn(r"'C:\Users\Kar''l\AppData\Local\Manticore\updates\Manticore-9.0.0-setup.exe'", install)   # ' doubled
-        self.assertEqual(lines[-1], r"Start-Process -FilePath 'C:\Users\Kar''l\AppData\Local\Programs\Manticore\Manticore.exe'")
-        self.assertLess(lines.index("Wait-Process -Id 4242 -Timeout 120"), lines.index(install))
-        self.assertEqual(base64.b64decode(updater.encoded(script)).decode("utf-16-le"), script)
-
     def test_launch_refuses_during_a_game_and_without_the_file(self):
         with tempfile.TemporaryDirectory() as d:
             setup = os.path.join(d, "Manticore-9.0.0-setup.exe")
@@ -355,40 +342,40 @@ class InstallerTests(unittest.TestCase):
                 put(setup, b"x")
                 self.assertEqual(updater.launch_installer(setup, popen=mock.Mock())[0], False)   # Windows only for real
 
-    def test_launch_starts_a_hidden_powershell_and_keeps_a_copy_of_what_it_said(self):
+    def test_launch_starts_the_installer_itself_and_keeps_a_copy_of_what_it_ran(self):
+        """Patch 41: the installer, not a PowerShell helper (Round 30's helper never started it on Karl's Surface)."""
         with tempfile.TemporaryDirectory() as d, testing_env():
             setup = os.path.join(d, "Manticore-9.0.0-setup.exe")
             put(setup, b"x")
             popen = mock.Mock()
-            self.assertEqual(updater.launch_installer(setup, exe=r"C:\P\Manticore.exe", pid=77, popen=popen), (True, None))
+            self.assertEqual(updater.launch_installer(setup, to_version="9.0.0", popen=popen), (True, None))
             cmd = popen.call_args[0][0]
-            self.assertEqual(cmd[0], "powershell.exe")
-            self.assertIn("Hidden", cmd)
-            script = base64.b64decode(cmd[cmd.index("-EncodedCommand") + 1]).decode("utf-16-le")
-            self.assertIn("Wait-Process -Id 77", script)
-            with open(os.path.join(d, "last_update.ps1.txt"), encoding="utf-8") as f:
-                self.assertEqual(f.read(), script + "\n")
-            popen.side_effect = OSError("no powershell")
-            ok, why = updater.launch_installer(setup, exe=r"C:\P\Manticore.exe", pid=77, popen=popen)
+            self.assertTrue(cmd.startswith('"%s" /SILENT ' % setup), cmd)
+            self.assertNotIn("powershell", cmd.lower())
+            self.assertEqual(popen.call_args[1]["cwd"], d)
+            with open(os.path.join(d, updater.COMMAND_NAME), encoding="utf-8") as f:
+                self.assertIn(cmd, f.read())
+            popen.side_effect = OSError("blocked")
+            ok, why = updater.launch_installer(setup, popen=popen, startfile=mock.Mock(side_effect=OSError("also blocked")))
             self.assertFalse(ok)
-            self.assertIn("no powershell", why)
+            self.assertIn("blocked", why)
 
-    def test_on_windows_the_helper_breaks_away_from_a_job_if_it_may(self):
+    def test_on_windows_the_installer_breaks_away_from_a_job_if_it_may(self):
         with tempfile.TemporaryDirectory() as d:
             setup = os.path.join(d, "Manticore-9.0.0-setup.exe")
             put(setup, b"x")
             popen = mock.Mock(side_effect=[OSError("Access is denied"), mock.Mock()])
-            with mock.patch.object(updater.os, "name", "nt"):
-                self.assertEqual(updater.launch_installer(setup, exe=r"C:\P\Manticore.exe", pid=77, popen=popen), (True, None))
+            with mock.patch.object(updater.os, "name", "nt"), mock.patch.object(updater, "in_job", return_value=True):
+                self.assertEqual(updater.launch_installer(setup, popen=popen), (True, None))
             first, second = (c[1]["creationflags"] for c in popen.call_args_list)
             self.assertEqual(first, second | 0x01000000)                  # CREATE_BREAKAWAY_FROM_JOB, then without it
-            self.assertEqual(second & 0x00000008, 0x00000008)             # DETACHED_PROCESS: no console window
+            self.assertEqual(second & 0x00000208, 0x00000208)             # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
 
     def test_the_installer_does_not_start_the_program_a_second_time(self):
         with open(os.path.join(BASE_DIR, "installer", "commander_sim.iss"), encoding="utf-8") as f:
             iss = f.read()
-        run = iss.split("[Run]", 1)[1].split("[", 1)[0]
-        self.assertIn("skipifsilent", run)          # /SILENT skips "Run Manticore": the helper starts it instead
+        run = iss.split("[Run]", 1)[1].split("[Code]", 1)[0]
+        self.assertIn("skipifsilent", run)          # /SILENT skips "Run Manticore": patch 41's SilentSelfUpdate line starts it
 
 
 # ---- the title screen's card ------------------------------------------------------------------------------------------
@@ -423,6 +410,8 @@ class CardTests(TempDecks):
                                        "a" * 64, 150_000_000, "Online play with a friend.")
         self.check = FakeCheck(self.info)
         self.enabled = mock.patch.object(updater, "enabled", return_value=(True, "https://x/latest.json"))
+        self.last = mock.patch.object(updater, "last_attempt", return_value=None)         # patch 41: no update pending
+        self.last.start()
         self.job = mock.patch.object(updater, "CheckJob", side_effect=lambda url: mock.Mock(start=lambda: self.check))
         self.enabled.start()
         self.job.start()
@@ -431,6 +420,7 @@ class CardTests(TempDecks):
     def tearDown(self):
         self.enabled.stop()
         self.job.stop()
+        self.last.stop()
         update_screens.reset_for_tests()
         self.work.cleanup()
         super().tearDown()
@@ -501,12 +491,12 @@ class CardTests(TempDecks):
         with mock.patch.object(updater, "launch_installer", return_value=(True, None)) as launch:
             frame(gui, 1)
         self.assertEqual(launch.call_args[0][0], os.path.join(self.work.name, "setup.exe"))
-        self.assertEqual(launch.call_args[1], {"game_running": False})
+        self.assertEqual(launch.call_args[1], {"game_running": False, "to_version": "9.0.0", "visible": False})
         self.assertEqual(card.state, "installing")
         self.assertTrue(gui.running)
         card.closing_at = 0
         frame(gui, 1)
-        self.assertFalse(gui.running)                                        # the helper waits for exactly this
+        self.assertFalse(gui.running)                                        # the installer closes what's left (patch 41)
 
     def test_cancel_goes_back_to_the_offer_and_a_failure_offers_try_again(self):
         gui = self.menu_gui()
@@ -539,7 +529,7 @@ class CardTests(TempDecks):
         with mock.patch.object(gui, "game_in_progress", return_value=True):
             with mock.patch.object(updater, "launch_installer", wraps=updater.launch_installer) as launch:
                 card.install(gui, "x.exe")
-        self.assertEqual(launch.call_args[1], {"game_running": True})
+        self.assertTrue(launch.call_args[1]["game_running"])
         self.assertEqual(card.state, "failed")
 
     def test_nothing_when_up_to_date_or_the_check_failed(self):
@@ -576,7 +566,7 @@ class CardTests(TempDecks):
 
 class EndToEndTests(TempDecks):
     """The real check and the real download from a server on this computer, through the title screen's card, up to the point
-    where the helper would start (launch_installer is replaced: it would run PowerShell)."""
+    where the installer would start (launch_installer is replaced: it would run the installer)."""
 
     def test_title_card_to_installer(self):
         server = Server()

@@ -83,6 +83,7 @@ class CogTests(Base):
                          ["smaller", "bigger", "bg_prev", "bg_next",                                            # round AD1: Table < Rotate >
                           "full", "motion", "frames",                                                           # round 26
                           "hand_sort",                                                                          # "Sort hand by type"
+                          "log_mode", "preview_mode",                                                           # patch UI6: Log | Focus
                           "sound", "hover_tick", "music_on", "ambience_on",        # round 24 (AD1: Sound | Hover tick share a row; AU1: Music | Ambience)
                           "vol_down", "vol_up",
                           "newgame", "concede", "help", "report", "licenses",

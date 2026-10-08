@@ -451,7 +451,7 @@ Karl, 2 Oct 2026: "We absolutely have to update Forge before alpha release." Rou
 "through the alpha" below is superseded. Policy otherwise: stay pinned to one Forge build (now fb4d809, in forge_bundle/). Upgrade on purpose, in a round
 of its own ("Forge bump"), never mixed with other work - when a new set is wanted, when a Forge fix is needed, or about
 once a quarter after the alpha (the longer between bumps, the bigger each one). The bridge leans on Forge internals
-(AbstractGuiGame, GuiDesktop, PlayerControllerHuman's input queue, InputPayMana, GameState, a modified MulliganService), so
+(AbstractGuiGame, GuiDesktop, PlayerControllerHuman's input queue, GameState, a modified MulliganService and, from patch 45, a modified InputPayMana), so
 a new Forge can change behaviour silently; the self-checks, card-check sweep and soak are what catch that.
 Before the alpha (small):
 [x] F1. (Round 28d) Show the Forge build in --version and in every F8 bug report (which Forge a report came from).
@@ -461,7 +461,8 @@ Each Forge bump round (FB1, 2 Oct 2026: 3a74143 -> fb4d809, before the alpha - s
 [ ] F3. Diff our forge.jar / runtime against official Forge at 3a74143 first (UNVERIFIED whether it carries patches beyond
         java_bridge/ - the source seen in the sandbox had headless-mode handling), and list every patch.
 [ ] F4. Pick the new commit; rebuild the bridge (compile errors show API changes); re-check each Forge internal we hook
-        into and re-apply MulliganService and any other patched class.
+        into and re-apply MulliganService, InputPayMana (patch 45: tests/test_patch45.py checks the copy against the bundled
+        Forge commit and forge.jar's members) and any other patched class.
 [ ] F5. Full suite + live tests + recorded fixtures (re-record only where a question's shape changed on purpose).
 [ ] F6. Card-check sweep of all alpha decks, then 2-3 soak nights (tools\nightly.py) - VALID, nothing unexplained.
 [ ] F7. Regenerate licence notices (tools\build_notices.py --release checks forge.jar's library list) and the bundle.
@@ -510,7 +511,7 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [x] AU1 (0.28.12): the sound overhaul - every cue is a real recording (CC0: Kenney, OpenGameArt, Freesound) processed into one
     dark style (pitched down, darkened, stone-room reverb); ambience loop per table picture; title music and a shuffled in-game
     playlist with silences; VICTORY / DEFEAT stings; title-screen and VS sounds; Cog > Music / Ambience (tools/build_sounds.py)
-[ ] AU1 follow-ups: Karl's Keep/Redo marks from the Manticore Sound Review page; his choice of music (alternatives are on the
+[ ] AU1 follow-ups: Karl's Keep/Redo marks READ 7 Oct (17 Keep / 36 Redo; claude/SOUND_ANIM_PLAN_2026-10-07.md); his choice of music (alternatives are on the
     page); a sound for knocked-out-of-a-pod; per-card-type cast sounds (creature / instant / sorcery) if wanted
 [ ] AD3: grain switch, remaining polish from Karl's screenshots
 [ ] Karl, before a public release: re-check AvQest's licence (GemFonts' own terms, its "restricted embedding" flag, whether it
@@ -655,3 +656,78 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     name, double-faced backs through Scryfall's card data, kept in deck_art/, written into that deck file only as
     "# art: <card> = image:<id>" lines; a report with Undo; Remove imported. Karl's real export (100 files): 90 cards + 7 backs
     matched, 2 pictures of other cards and 2 cards without a picture listed, the card back left out; 25 s, 24 MB.
+[x] Patch 41 (2026-10-04, Claude (Opus), 0.28.45): the self-update never installed on Karl's Surface (0.28.41 -> 0.28.43 and
+    0.28.44: card, download and checksum fine, the program closed, then nothing - no installer, no relaunch, no trace). Round 30's
+    hidden PowerShell helper is gone: Manticore starts the installer itself (/SILENT /CLOSEAPPLICATIONS /UPDATE /LOG), Inno closes
+    whatever still holds its files (CloseApplications=force) and reopens Manticore after a silent /UPDATE; a visible installer
+    when the silent start fails or the last update didn't finish; updates\install.log, last_update.txt and pending_update.json;
+    the next start's crash-log line says whether it finished. NOT yet seen working on Windows: 0.28.45 by hand on the Surface,
+    then an update to 0.28.46 is the test. Copies 0.28.41-0.28.44 can't update themselves (their helper is the broken one).
+[x] Patch 42 (2026-10-04, Claude (Opus), 0.28.46), Karl: "The 'Choose your deck' screen needs a button to return to menu."
+    A Main menu button top left of the deck screen, before the title: back to the title and main menu, exactly what Esc does
+    there. Shown only when no game is running and the program came through the title (not over a game, where the screen keeps
+    Back to the game; not with --deck). The title is shortened before it runs into the Format switch. Also the 0.28.46 that
+    patch 41's Surface update test needs to update to.
+[x] Patch 43 (2026-10-06, Claude (Opus), 0.28.47), Karl: "What can we do to reduce turn clicks to just the meaningful ones?"
+    (claude/CLICKS_AND_STATS_2026-10-05.md; his choices of 6 Oct). java_bridge Passing.java decides each priority stop for a human
+    seat: Forge's auto-pass on by default and no longer paused by an opponent's spell you can't answer; your own spells and
+    abilities resolve without a stop (Ctrl+click keeps priority); your own triggers stop you only when you could act; an
+    opponent's trigger or activated ability only when you hold an answer that can target it (the feed lists each one passed);
+    "always stop" per card. Default stops: your Main 1 and Main 2, each opponent's end step. Arena's keys: Enter passes until
+    an opponent acts, Shift+Enter the turn, Ctrl full control this turn, Ctrl+Shift on/off, Y always pass. Online seats too.
+    The card check keeps every stop (--classic-stops). The soak summary counts the stops (PRIORITY STOPS).
+[x] Patch 44 (2026-10-06, Claude (Opus), 0.28.48), stats per Karl's choices of 6 Oct: record and matchups (by deck, opponent deck,
+    pod size, seat in turn order), when and how games end (your turn number, the cause, which card and player); conceded and
+    unfinished games apart from wins and losses; online games a separate record; a Stats page on the deck screen and two lines
+    on the end-of-game screen. stats/games.ndjson, written as each game goes; Forge's own result per player in game_over
+    (java_bridge Outcome.java). Games before patch 44 aren't counted.
+[x] Patch 45 (2026-10-06, Claude (Opus), 0.28.49), the mana-payment race (soak nights 11-12's A, B, C; spec
+    claude/FIX_PAYMENT_RACE_SPEC_2026-10-04.md): paying with a source whose cost asks a question (Ashnod's Altar, Phyrexian Altar,
+    Springleaf Drum), Forge put the payment back on screen while its game thread was still paying - it rescanned the board beside
+    that thread and unlocked the payment early, so a second tap ran a second mana ability beside the first (reproduced live; once
+    it killed the game thread). The bridge carries its own copy of Forge's InputPayMana: no scan and no unlock until the ability
+    has finished, and an ability that throws still unlocks the payment. A Forge update must re-copy it (tests/test_patch45.py).
+[x] Patch 46 (2026-10-07, Claude (Opus), 0.28.50), Java's own crash reports (soak night 14, game 75: EXCEPTION_ACCESS_VIOLATION
+    in JIT-compiled Forge code, hs_err_pid24052.log left in forge_runtime/): the bridge's Java writes them beside
+    forge_engine.log (-XX:ErrorFile, -XX:ReplayDataFile, no core dump); strays move out of forge_runtime/ at the next start;
+    the installer build skips them and check_dist fails on one; .gitignore; an F8 report carries one without its environment
+    variables; "Forge stopped" names it; the soak's fatal finding says what crashed and where. The crash itself is NOT fixed
+    (one event; a JIT bug or the PC's hardware can't be told apart) - if a second one comes, compare the frames.
+[x] Patch 47 (2026-10-07, Claude (Fable), 0.28.51; built as 0.28.50 beside patch 46, renumbered when 46 took that number), AU1b - the fixes from Karl's review of every sound that need no judgement:
+    Undo plays 'rewind' when Forge took something back (AU1 built the file; nothing played it); damage.player scales -2..+3 dB with
+    the hit like damage.creature; two guards in tests/test_au1.py (every one-shot cue is played by some module; no cue on the sfx/ui
+    buses with a cooldown under 100 ms is longer than 1.2 s - today's long ones are allow-listed until AU2 replaces them). The review:
+    17 Keep / 36 Redo, every note in claude/SOUND_ANIM_PLAN_2026-10-07.md. Next: a candidates page (2-3 versions per Redo cue, Karl
+    picks by ear), patch 48 AD2d (the four unbuilt AD2c animations), patch 49 AU2 (the palette rebuild from the picks).
+[x] Patch 48 (2026-10-07, Claude (Fable), 0.28.52), AD3a - Scope B (Karl: "a real overhaul" - the 1 Oct rule "explain, not
+    decorate" relaxed to "explain first, then flourish"). Everything drawn around the cards, never on the pictures; nothing takes a
+    click or waits on anything; off with Animations off. A trigger / ability: its source pulses in the stack's colour and a line runs
+    to its stack entry; a spell: motes stream from the caster to the stack; a resolved entry: a glowing dot flies from its row to its
+    first target with a trail and a burst there (nothing to go to: it fades where it was); countered / fizzled: a red cross beside
+    the row with a puff of ash. Arrivals glow by type (creature bone, artifact white, enchantment violet, planeswalker gold, land
+    earth, token pale) and throw dust once (bone, sparks, motes, a gold bloom, ash, a puff); a hit flashes the creature, knocks it
+    sideways, throws embers, and the floating number is bigger for 5+ and 10+; a hit panel flashes; counters pop the badge corner;
+    a destroyed permanent throws embers as its ghost goes, an exiled one drains into the void; embers off the turn banner; VICTORY
+    gold embers rising, DEFEAT ash falling, for 6 s then they settle. Particle sprites scale with the layout (a 5 px dot at 1280x800
+    is lost at 4K). Not built (patch 50, AD3b): ambient motes per table picture, the title torch flicker, Vermis grain, bench-gated.
+    Frame time (sandbox, noisy): the idle scenes within noise of patch 45; a busy turn at 4K @175% about +2.5 ms a frame while eight
+    effects are live (cached outlines; measured by profile). D1 amended: feedback 150-600 ms, banners / spotlight / reveals up to ~1 s.
+[x] Patch UI6 (2026-10-08, Claude (Sonnet 5.5), 0.28.53.1 (Karl's name for it, 8 Oct; built as 0.28.53 beside patches 49 and 50, which now renumber above it); the patch number is Karl's to assign),
+    Log and Focus modes (claude/SONNET_SPEC_NOTES_2026-10-08.md section B). Cog > Log: Always | Corner | Hidden; Cog > Focus: Always |
+    Over card | Hidden (click goes on, right-click goes back; settings.json log_mode / preview_mode, a bad value reads as Always).
+    Corner: the log opens over the window's lower-right corner while the mouse is in a 48 px x text-size square there (the wheel
+    scrolls it; it closes 250 ms after the mouse leaves; opaque; it may cover the stack, never the action bar). Over card: the big
+    picture over the card the mouse has rested on for 120 ms (60 ms to move to the next), kept inside the window and off the action
+    bar, above the hand for a hand card, taking no clicks; a right-click pin shows it in Over card and Hidden until a second
+    right-click or Esc. The stack is never removed and takes the room the log and the panel give up; with the panel off, AI casts
+    and question cards (surveil, commander) show in a card slot under the stack. Always + Always is exactly today's layout
+    (tests/fixtures/ui6/layout_baseline.json and layout_baseline_win32.json, 28 layouts each). Not done: no fade; the tour's wording is not adapted to the modes
+    (its focus and log steps are left out when those are off); the Cog controls are click-to-cycle buttons, not arrow cyclers.
+    Found, not fixed: Undo drops off the action bar at some bar widths even in Always/Always (see CLAUDE.md, Patch UI6).
+[x] Patch TFIX1 (2026-10-08, Claude (Sonnet 5.5), tests only, 0.28.53.1 unchanged): the two tests that kept quick_tests red. tests/test_patch41.py's sample paths no
+    longer hold a real user name (the public source export refused the project on Karl's PC); tests/test_round_alt2.py's PickerTests.settle() no longer passes before the
+    tiles are drawn (test_pick_an_mpc_picture and test_offline_says_so_and_try_again_searches_again failed 13 percent of runs in the sandbox, 60-75 percent under load).
+    quick_tests' run time (about 428 s against the 180 s target) is not touched.
+[ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
+    commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
+    and by commander-on-turn-N, missed land drops, colour screw.

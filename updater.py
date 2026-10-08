@@ -11,16 +11,24 @@ How it works, for a friend's installed copy (Karl's own git checkout never updat
      release meant for friends must not be marked pre-release). Nothing set: updates are off, and --version says so.
   2. A newer version: the title shows "Update now / Later / Skip this version".
   3. Update now: the installer downloads into the per-user updates/ folder (DownloadJob), its size and SHA-256 must match the
-     feed, and then launch_installer() starts a small hidden PowerShell helper and the program closes itself. The helper
-     waits until this program (and so its Java, which follows within ~2 s: ParentWatch) has gone, runs the installer with
-     /SILENT (a progress window, no questions; the same AppId installs over this copy, and decks, settings and saves live in
-     the per-user folders, so they stay), then starts the new Manticore.exe.
+     feed, and then launch_installer() starts the installer itself and the program closes itself (1.2 s later):
+         "<updates>\\Manticore-0.30.1-setup.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /UPDATE /LOG="<updates>\\install.log"
+     /SILENT is a progress window with no questions; the same AppId installs over this copy (decks, settings and saves live in
+     the per-user folders, so they stay); /CLOSEAPPLICATIONS lets Inno's Restart Manager close this program and its Java if
+     they still hold a file it must replace (CloseApplications=force in the .iss); /UPDATE makes the .iss's last [Run] line
+     start the new Manticore.exe; /LOG keeps a record of every install in updates\\install.log.
+     Patch 41 (4 Oct 2026): this used to be a hidden PowerShell helper (-EncodedCommand) that waited for the program, ran the
+     installer and started the new copy. On Karl's Surface (Windows 11 on Arm) it never installed anything and never reopened
+     the program, three times out of three, with no trace: its script silenced its own errors and kept no log.
+  4. The next start reads updates\\pending_update.json (last_attempt): the version it is now at says whether that update
+     finished. A finished one is one crash-log line; one that didn't finish is a crash-log entry with install.log's last lines
+     (so an F8 report carries it), and the next Update now opens the installer's own window (no /SILENT) so its questions and
+     errors can be seen.
 
 Trust: the feed and the installer both come over HTTPS from the same place (GitHub), and the checksum in the feed must match
 the download - the same trust as downloading the installer by hand from that page. Signed updates (an offline key) are the
 "production" step in BRIEFS_ROUNDS_28_31 (tufup); not this round.
 """
-import base64
 import hashlib
 import json
 import os
@@ -41,7 +49,13 @@ MIN_SIZE = 1_000_000                   # an installer is ~100+ MB; anything tiny
 MAX_SIZE = 1_500_000_000
 CHUNK = 256 * 1024
 NOTES_MAX = 2000
-SETUP_SWITCHES = ("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART")
+SETUP_SWITCHES = ("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", "/UPDATE")
+VISIBLE_SWITCHES = ("/UPDATE",)       # the installer's own window, after an update that didn't finish
+INSTALL_LOG = "install.log"            # Inno Setup's /LOG, in updates/
+PENDING_NAME = "pending_update.json"   # written when an installer is started; read at the next start (last_attempt)
+COMMAND_NAME = "last_update.txt"       # what was started, how, and when: for support
+LOG_TAIL_LINES = 25
+MANUAL = "The installer is open: follow its steps. Manticore closes now."
 _VERSION_RE = re.compile(r"^\d+(\.\d+){1,3}$")
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 
@@ -329,69 +343,146 @@ def sha256_file(path):
 
 
 # ---- running the installer ------------------------------------------------------------------------------------------
-def ps_quote(text):
-    """A PowerShell single-quoted string: nothing inside is special except the quote itself, which is doubled."""
-    return "'" + str(text).replace("'", "''") + "'"
+def setup_command(setup, log_path, visible=False):
+    """The installer's command line, as one string: Inno Setup reads /LOG="<path>" with the quotes around the path only, and
+    Windows paths can't contain a quote, so nothing here needs escaping."""
+    switches = VISIBLE_SWITCHES if visible else SETUP_SWITCHES
+    return '"%s" %s /LOG="%s"' % (setup, " ".join(switches), log_path)
 
 
-def helper_script(setup, app_exe, pid):
-    """The PowerShell the helper runs: wait for this program (and its Java) to go, install silently, start the new copy."""
-    args = ",".join(ps_quote(s) for s in SETUP_SWITCHES)
-    app_dir = os.path.dirname(app_exe)
-    return "\n".join([
-        "$ErrorActionPreference = 'SilentlyContinue'",
-        "Wait-Process -Id %d -Timeout 120" % int(pid),
-        # Java exits within about 2 s of its parent (ParentWatch); wait for any java.exe from this program's own folder
-        "$deadline = (Get-Date).AddSeconds(20)",
-        "while ((Get-Date) -lt $deadline -and (Get-Process java -ErrorAction SilentlyContinue | Where-Object { $_.Path -like (%s + '*') })) "
-        "{ Start-Sleep -Milliseconds 500 }" % ps_quote(app_dir),
-        "Start-Sleep -Seconds 1",
-        "$p = Start-Process -FilePath %s -ArgumentList %s -PassThru -Wait" % (ps_quote(setup), args),
-        "Start-Process -FilePath %s" % ps_quote(app_exe),
-    ])
+def in_job():
+    """Is this program inside a Windows job object? (None = unknown.) Written down with each update: a job that closes with the
+    program can take the installer with it, which is what CREATE_BREAKAWAY_FROM_JOB is for."""
+    if os.name != "nt":
+        return None
+    try:
+        import ctypes
+        result = ctypes.c_int(0)
+        k32 = ctypes.windll.kernel32
+        k32.GetCurrentProcess.restype = ctypes.c_void_p
+        if not k32.IsProcessInJob(ctypes.c_void_p(k32.GetCurrentProcess()), None, ctypes.byref(result)):
+            return None
+        return bool(result.value)
+    except Exception:
+        return None
 
 
-def encoded(script):
-    """powershell -EncodedCommand wants base64 of the script in UTF-16LE: no quoting problems at all on the command line."""
-    return base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+def _now():
+    return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def app_exe():
-    """Manticore.exe in this program's folder (also when running Manticore-cli.exe)."""
-    return os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "Manticore.exe")
+def _write_text(path, text):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+    except OSError:
+        pass
 
 
-def launch_installer(setup, game_running=False, exe=None, pid=None, popen=None):
-    """Start the hidden helper (see helper_script). (True, None) once it's running - the caller then closes the program -
-    or (False, why). Never during a game."""
+def launch_installer(setup, game_running=False, to_version=None, visible=False, popen=None, startfile=None):
+    """Start the downloaded installer, then the caller closes the program. Never during a game.
+    (True, None): the installer is running silently and will reopen Manticore. (True, MANUAL): it couldn't be started that
+    way, so its own window was opened instead (os.startfile) for the person to click through. (False, why): nothing started.
+    Either way that something started, updates/pending_update.json says what, for last_attempt() at the next start."""
     if game_running:
         return False, "Finish or leave the game first."
     if os.name != "nt" and not testing():
         return False, "Updating itself only works on Windows."
     if not os.path.isfile(setup):
         return False, "The downloaded installer is missing."
-    exe = exe or app_exe()
-    pid = pid or os.getpid()
-    script = helper_script(setup, exe, pid)
-    try:
-        with open(os.path.join(os.path.dirname(setup), "last_update.ps1.txt"), "w", encoding="utf-8") as f:
-            f.write(script + "\n")                                  # for support: what the helper was told to do
-    except OSError:
-        pass
-    cmd = ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
-           "-EncodedCommand", encoded(script)]
+    folder = os.path.dirname(os.path.abspath(setup))
+    log_path = os.path.join(folder, INSTALL_LOG)
+    _remove(log_path)                                                # install.log is always this attempt's
+    cmd = setup_command(setup, log_path, visible)
+    job = in_job()
     tries = [0]
     if os.name == "nt":
-        flags = 0x00000008 | 0x00000200 | 0x08000000          # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
-        # CREATE_BREAKAWAY_FROM_JOB first: if whatever started Manticore put it in a job that closes with it, the helper must
-        # not die with it. A job that forbids breaking away refuses that flag, so then try without it.
+        flags = 0x00000200 | 0x00000008                              # CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
+        # CREATE_BREAKAWAY_FROM_JOB first: if whatever started Manticore put it in a job that closes with it, the installer must
+        # not die with it. A job that forbids breaking away refuses that flag (OSError), so then try without it.
         tries = [flags | 0x01000000, flags]
-    error = None
+    error, how = None, None
     for flags in tries:
         try:
-            (popen or subprocess.Popen)(cmd, creationflags=flags, close_fds=True, stdin=subprocess.DEVNULL,
+            (popen or subprocess.Popen)(cmd, creationflags=flags, close_fds=True, cwd=folder, stdin=subprocess.DEVNULL,
                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True, None
+            how = "visible" if visible else "silent"
+            break
         except OSError as e:
             error = e
-    return False, "Couldn't start the installer (%s)." % error
+    result = (True, None)
+    if how is None:
+        try:
+            (startfile or getattr(os, "startfile"))(setup)            # the installer's own window: the person clicks through
+            how = "manual"
+            result = (True, MANUAL)
+        except (OSError, AttributeError) as e:
+            _write_text(os.path.join(folder, COMMAND_NAME), "%s\nNOT started: %s / %s\n%s\n" % (_now(), error, e, cmd))
+            return False, "Couldn't start the installer (%s)." % (error or e)
+    _write_text(os.path.join(folder, COMMAND_NAME),
+                "%s\nstarted: %s (creation flags %s; in a job: %s)\n%s\n" % (_now(), how, hex(flags) if how != "manual" else "-",
+                                                                             job, cmd if how != "manual" else setup))
+    try:
+        with open(os.path.join(folder, PENDING_NAME), "w", encoding="utf-8") as f:
+            json.dump({"from": version.VERSION, "to": str(to_version or ""), "how": how, "at": _now(), "in_job": job}, f)
+    except OSError:
+        pass
+    return result
+
+
+def log_tail(path, lines=LOG_TAIL_LINES, max_bytes=64 * 1024):
+    """The last lines of a log, [] when there is none. Only its end is read: Inno's log names every file it copies (~37,000 in
+    this program). UTF-8 or UTF-16 (a byte-order mark, or a zero second byte), whichever the installer wrote - UNVERIFIED which."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(4)
+            f.seek(0, os.SEEK_END)
+            start = max(0, f.tell() - max_bytes)
+            f.seek(start)
+            raw = f.read()
+    except OSError:
+        return []
+    if head.startswith((b"\xff\xfe", b"\xfe\xff")) or head[1:2] == b"\x00":
+        raw = raw[start % 2:]
+        text = raw.decode("utf-16-be" if head.startswith(b"\xfe\xff") else "utf-16-le", errors="replace")
+    else:
+        text = raw.decode("utf-8", errors="replace")
+    out = text.lstrip("\ufeff").splitlines()
+    if start and out:
+        out = out[1:]                                                # the first line read is most likely cut
+    return out[-lines:]
+
+
+def last_attempt(folder=None, current=None):
+    """What became of the last update this copy started, read once per run (update_screens). None: none pending. Else the
+    pending record plus "ok" (this copy is now at least that version) and "log" (install.log's last lines).
+    A finished one's record is removed, and so is the installer it ran (~130 MB each). One that didn't finish keeps its record,
+    marked "failed" (the next Update now opens the installer's own window) and "noted" (its crash-log entry is written once, not
+    at every start), and keeps the installer (Update now reuses a download whose size and checksum still match)."""
+    folder = folder or updates_dir()
+    path = os.path.join(folder, PENDING_NAME)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or parse_version(data.get("to")) is None:
+        _remove(path)
+        return None
+    ok = not newer(data["to"], current)
+    result = dict(data, ok=ok, log=log_tail(os.path.join(folder, INSTALL_LOG)))
+    if ok:
+        _remove(path)
+        try:
+            for name in os.listdir(folder):
+                if name.lower().endswith((".exe", ".part")):
+                    _remove(os.path.join(folder, name))
+        except OSError:
+            pass
+    else:
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(dict(data, failed=True, noted=True), f)
+        except OSError:
+            pass
+    return result

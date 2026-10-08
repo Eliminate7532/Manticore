@@ -276,6 +276,7 @@ public final class Snapshot {
             trig.addProperty(e.getKey(), e.getValue().name().toLowerCase());
         }
         y.add("autoTriggers", trig);
+        y.add("passing", gui.passing.toJson(gui.getGameView()));          // patch 43: what Passing does for me
         return y;
     }
 

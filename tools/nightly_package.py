@@ -42,7 +42,7 @@ PACKAGE_SKIP_DIRS = {"docs", "ci", ".github", "tests", "build", "dist", "install
 PACKAGE_SKIP_FILES = {"CLAUDE.md", "EVENING_CHECKLIST.txt", "backup_status.json", "backup.bat", "backup_task.bat",
                       "test_results.txt", "quick_results.txt", "card_check_report.txt"}
 # Never in a package, whatever else changes: checked in the finished zip itself, not just in the copy step.
-NEVER = ("my_decks/", "settings.json", "bug_report_config.json", "bug_report_config.bundled.json", "bug_reports/", "forge_runtime/", "saves/", "cache/",
+NEVER = ("my_decks/", "settings.json", "bug_report_config.json", "bug_report_config.bundled.json", "bug_reports/", "forge_runtime/", "saves/", "stats/", "cache/",
          "build/", "dist/", "installer_out/")
 
 HOW_TO_RUN = """Manticore - nightly test build {date}

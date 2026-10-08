@@ -97,7 +97,8 @@ public class NetHost {
     static final int NAME_MAX = 24;
     /** Commands a guest may send; everything else (quit, setup, anything unknown) is refused and answered with refused_cmd. */
     static final Set<String> REMOTE_ALLOWED = Set.of("ok", "cancel", "card", "player", "mana", "undo", "alpha", "concede", "flush",
-            "stops", "yield", "autoyield", "trigger", "autopass", "yieldreset");
+            "stops", "yield", "autoyield", "trigger", "autopass", "yieldreset",
+            "hold", "passturn", "fullcontrol", "alwaysstop");                                  // patch 43
 
     static int blockSeconds = 60;
     static int graceSeconds = 60;                           // round MP2: how long a dropped guest's seat is held
@@ -1080,7 +1081,7 @@ public class NetHost {
         List<RegisteredPlayer> players = new ArrayList<>();
         Map<RegisteredPlayer, IGuiGame> guis = new LinkedHashMap<>();
         RegisteredPlayer p1 = RegisteredPlayer.forCommander(hostDeck);
-        p1.setPlayer(new LobbyPlayerHuman(hostName));
+        p1.setPlayer(new Passing.Human(hostName));          // patch 43
         BridgeGui g1 = new BridgeGui(hostWire);
         g1.events = new EventForwarder(hostWire);
         players.add(p1);
@@ -1088,7 +1089,7 @@ public class NetHost {
         for (SeatWire seat : guests) {
             Deck d = DeckSerializer.fromFile(new File(seat.deckPath));
             RegisteredPlayer rp = RegisteredPlayer.forCommander(d);
-            rp.setPlayer(new LobbyPlayerHuman(seat.name));
+            rp.setPlayer(new Passing.Human(seat.name));         // patch 43
             BridgeGui g = new BridgeGui(seat);
             g.events = new EventForwarder(seat);
             seat.gui = g;

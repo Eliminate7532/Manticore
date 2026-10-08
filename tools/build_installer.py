@@ -61,6 +61,10 @@ JLINK_MODULES = ("java.base,java.compiler,java.desktop,java.management,java.nami
                  "java.security.jgss,java.sql,jdk.crypto.ec,jdk.httpserver,jdk.sctp,jdk.unsupported")
 COPYRIGHT = "Copyright (C) 2026 the Manticore contributors. Free software under the GNU GPL v3 or later."
 STEP_TITLES = ["tools", "checks", "jre", "pyinstaller", "runtime", "identity", "check_dist", "inno", "sandbox"]
+# Patch 46 (soak night 14): Java writes its crash report (hs_err_pid*.log: the PC's user name, PATH, temp folder) into its working
+# folder, forge_runtime/, unless told otherwise - and add_runtime copied that folder whole. Never copied now; check_dist fails on one.
+import java_crash
+RUNTIME_IGNORE = ("__pycache__", "*.pyc") + java_crash.CRASH_PATTERNS
 INSTALL_HELP = ("Install Inno Setup 6 once with:  winget install JRSoftware.InnoSetup\n"
                 "and the build tools with:        python -m pip install -r requirements-build.txt")
 
@@ -302,7 +306,7 @@ class Builder:
 
     # ---- 5. runtime ----------------------------------------------------------------------------------------------------
     def add_runtime(self):
-        ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+        ignore = shutil.ignore_patterns(*RUNTIME_IGNORE)          # patch 46: never a Java crash report
         for src, name in ((os.path.join(self.base, "forge_runtime"), "forge_runtime"), (self.jre_dir, "jre")):
             dest = os.path.join(self.dist_dir, name)
             _rmtree(dest)

@@ -107,7 +107,9 @@ def draw_focus_zoom(gui, card):
     hovering a card on the board shows it) - on top of the dimmed table so it stays bright and legible even while a
     dialog's own thumbnails are too small to read (Karl's request, 2026-09-22: 'I should be able to read the cards
     in the card focus area' - the assign-combat-damage window's little card portraits had no way to blow one up)."""
-    r = gui.L.preview
+    r = getattr(gui.L, "zoom", None)                         # patch UI6: the panel's place, even when the panel is off
+    if r is None:
+        r = gui.L.preview
     x, y, w, h = r.x, r.y, r.w, r.h
     surf = None
     aname = None

@@ -10,6 +10,8 @@ One report = ONE zip file in the bug_reports folder next to the program, holding
   commands.json     every click since the game began (with the seed and the decks: what replay.py needs)
   decks/            the deck files the game was started with
   forge_engine.log.txt / crash_log.txt   the newest lines of both, when they exist
+  java_crash_hs_err_pid<N>.txt   patch 46: when Java itself crashed in this game, its crash report - without the
+                    "Environment Variables" block (user name, PATH, temp folder) and shortened (java_crash.excerpt)
 Paths are cleaned: your Windows user folder becomes "~". The zip is kept small (MAX_ZIP_BYTES) by trimming logs and shrinking the picture.
 
 If bug_report_config.json next to the program holds a Discord webhook address, the zip can be posted straight to that Discord
@@ -31,6 +33,7 @@ import time
 import zipfile
 
 import crashlog
+import java_crash
 import paths
 import version
 
@@ -267,6 +270,18 @@ def _tail_file(path, lines):
             return [ln.rstrip("\n") for ln in f.readlines()][-lines:]
     except OSError:
         return []
+
+
+def java_crash_files(path):
+    """Patch 46: [(name, text)] for build_report's extra_files - Java's own crash report as a bug report carries it (no
+    environment variables, shortened; build_report scrubs it like everything else), or [] when there is none."""
+    if not isinstance(path, str) or not os.path.isfile(path):
+        return []
+    try:
+        text = java_crash.excerpt(path)
+    except Exception as e:                                     # a report must never fail because of this file
+        text = f"(Java's crash report {os.path.basename(path)} could not be read: {type(e).__name__})\n"
+    return [("java_crash_" + os.path.splitext(os.path.basename(path))[0] + ".txt", text)]
 
 
 def _deck_files_in(deck_dir):

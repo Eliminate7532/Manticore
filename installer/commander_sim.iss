@@ -14,6 +14,12 @@
 ;   * uninstalling always removes the program folder. The per-user folders (%APPDATA%\Manticore and %LOCALAPPDATA%\Manticore) are
 ;     removed only if the tester says yes, or with /PURGE on a silent uninstall. Forge's own folder is NEVER touched: a friend may
 ;     have real Forge installed.
+;   * patch 41, self-updates: an installed copy starts this installer itself with
+;       /SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /UPDATE /LOG="<updates>\install.log"   (updater.setup_command)
+;     and closes. CloseApplications=force lets Inno's Restart Manager close Manticore and its Java if they still hold a file it
+;     must replace, and the last [Run] line starts the new Manticore.exe after a silent /UPDATE (the "Run Manticore" box is
+;     skipped in silent mode). Before patch 41 a hidden PowerShell helper did the waiting and the restart; on Karl's Surface it
+;     never got as far as starting this installer.
 
 #ifndef MyAppVersion
   #define MyAppVersion "0.0.0"
@@ -50,6 +56,12 @@ UninstallDisplayName=Manticore
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; Patch 41: close what still holds a file being replaced (Manticore, the java.exe of its jre\) instead of failing on it; in a
+; silent install Inno closes them without asking. *.pyd and *.jar are added to Inno's default filter (exe, dll, chm).
+CloseApplications=force
+CloseApplicationsFilter=*.exe,*.dll,*.pyd,*.jar
+; A log of every install in %TEMP% ("Setup Log <date> #NNN.txt"); a self-update writes updates\install.log instead (/LOG=).
+SetupLogging=yes
 #ifdef IconFile
 SetupIconFile={#IconFile}
 #endif
@@ -81,6 +93,9 @@ Name: "{autodesktop}\Manticore"; Filename: "{app}\Manticore.exe"; Tasks: desktop
 Filename: "{app}\Manticore.exe"; Description: "Run Manticore"; Flags: nowait postinstall skipifsilent
 ; The testers' first page (START_HERE.txt beside the program), in their text editor; ticked.
 Filename: "{app}\START_HERE.txt"; Description: "Read START_HERE (first game, bug reports, known issues)"; Flags: shellexec postinstall skipifsilent nowait
+; Patch 41: a silent self-update (/SILENT ... /UPDATE, from updater.launch_installer) starts the new Manticore itself. A visible
+; one (/UPDATE alone, after a silent one didn't finish) leaves it to the ticked "Run Manticore" box above.
+Filename: "{app}\Manticore.exe"; WorkingDir: "{app}"; Flags: nowait; Check: SilentSelfUpdate
 
 [UninstallDelete]
 ; The program folder always goes (anything left in it, such as a stray log, is not the tester's data).
@@ -101,6 +116,12 @@ begin
       Result := True;
       Exit;
     end;
+end;
+
+{ Patch 41: the self-update's relaunch ([Run], last line). }
+function SilentSelfUpdate(): Boolean;
+begin
+  Result := HasSwitch('/UPDATE') and (HasSwitch('/SILENT') or HasSwitch('/VERYSILENT'));
 end;
 
 function InitializeUninstall(): Boolean;

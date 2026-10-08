@@ -68,6 +68,55 @@ class AssetTests(unittest.TestCase):
         for bg in ft.BG_ORDER:
             self.assertIn(f"amb.{bg}", manifest())
 
+    # ---- patch 47: two guards from the 7 Oct review of the sounds -------------------------------------------------------------
+    @staticmethod
+    def _played_by_code():
+        """Every cue id any top-level module hands to play_cue(...) or music_sting_after(...), including the second literal of a
+        ternary ('tap' if ... else 'untap'): the call's arguments are cut at the balanced closing bracket, not the first ')'."""
+        lit = re.compile(r'["\']([a-z_]+(?:\.[a-z_]+)+|tap|untap|flurry|destroy|exile|rewind)["\']')
+        played = set()
+        for path in glob.glob(os.path.join(ROOT, "*.py")):
+            with open(path, encoding="utf-8") as f:
+                src = f.read()
+            for name in ("play_cue", "music_sting_after"):
+                for m in re.finditer(re.escape(name) + r"\(", src):
+                    i, depth = m.end(), 1
+                    while i < len(src) and depth:
+                        depth += {"(": 1, ")": -1}.get(src[i], 0)
+                        i += 1
+                    played |= set(lit.findall(src[m.end():i - 1]))
+        return played
+
+    def test_every_one_shot_cue_is_played_by_some_module(self):
+        """AU1 shipped 'rewind' with nothing playing it (found 7 Oct); a cue nobody plays is a dead file in every download."""
+        cues = manifest()
+        one_shots = {cid for cid, spec in cues.items() if not spec.get("stream")}
+        self.assertEqual(sorted(one_shots - self._played_by_code()), [], "cues in sounds/cues.json that no module plays")
+
+    # Long files the 7 Oct review left in place: Karl marked these Redo (AU2 replaces them) or Keep (exile: long on purpose).
+    # Every entry must still be over the limit, so the list is pruned as AU2 replaces the files.
+    LONG_FOR_NOW = {"ability.trigger", "spell.cast", "spell.resolve", "destroy", "damage.player", "damage.creature", "land.play",
+                    "exile"}
+    FREQUENT_MS = 100
+    SHORT_S = 1.2
+
+    def test_frequent_cues_are_short(self):
+        """A cue that may fire every 100 ms or less (the sfx and ui buses) must not carry a stinger-length tail: AU1's spell.cast
+        was 4.8 s on an 80 ms cooldown, so a busy turn stacked or cut them (measured 7 Oct). Stingers (their own bus) may ring."""
+        pygame.mixer.init(44100, -16, 2, 512)
+        long_now, stale = {}, set()
+        for cid, spec in manifest().items():
+            if spec.get("stream") or spec.get("bus") == "stinger" or spec.get("cooldown_ms", 0) >= self.FREQUENT_MS:
+                continue
+            longest = max(pygame.mixer.Sound(os.path.join(SOUNDS, f)).get_length() for f in spec["files"])
+            if longest > self.SHORT_S:
+                long_now[cid] = round(longest, 2)
+            elif cid in self.LONG_FOR_NOW:
+                stale.add(cid)
+        self.assertEqual({c: s for c, s in long_now.items() if c not in self.LONG_FOR_NOW}, {},
+                         "frequent cues longer than %.1f s that are not on the LONG_FOR_NOW list" % self.SHORT_S)
+        self.assertEqual(stale, set(), "LONG_FOR_NOW entries that are short now: take them off the list")
+
     def test_every_source_is_cc0_and_credited(self):
         with open(os.path.join(ROOT, "tools", "sound_sources.json"), encoding="utf-8") as f:
             sources = json.load(f)["sources"]
@@ -243,6 +292,33 @@ class DirectorTests(unittest.TestCase):
 
 # ---- the table ------------------------------------------------------------------------------------------------------------------
 class TableTests(unittest.TestCase):
+    def test_an_undo_that_changed_the_table_plays_rewind_and_one_that_did_not_stays_silent(self):
+        """Patch 47. track_undo: the signature changing means Forge took something back -> 'rewind'; the deadline passing with
+        nothing changed means there was nothing to undo -> the orange note, no sound."""
+        import time
+        gui = make_gui("main1_start")
+        played = []
+        gui.play_cue = lambda cid, *a, **k: played.append(cid) or True
+        gui.undo_check = (time.time() + 5, "something else")           # Forge changed the board since the Undo
+        gui.track_undo()
+        self.assertEqual(played, ["rewind"])
+        self.assertIsNone(gui.undo_check)
+        gui.toast = None
+        gui.undo_check = (time.time() - 1, gui.undo_signature())        # nothing changed and the wait is over
+        gui.track_undo()
+        self.assertEqual(played, ["rewind"])                            # no second sound
+        self.assertEqual(gui.toast[0], ft.UNDO_NOTHING)
+
+    def test_player_damage_is_louder_for_a_bigger_hit(self):
+        """Patch 47: the same -3..+3 dB scale damage.creature has had since round 24."""
+        gui = make_gui("main1_start")
+        calls = []
+        gui.play_cue = lambda cid, *a, **k: calls.append((cid, k.get("gain_db"))) or True
+        for amount, gain in ((1, -2), (3, 0), (6, 3), (12, 3), (None, -2)):
+            calls.clear()
+            gui._play_beat(beat("damage_player", player=99, amount=amount), 99, "Karl")
+            self.assertEqual(calls, [("damage.player", gain)], f"amount {amount}")
+
     def test_what_each_screen_sounds_like(self):
         gui = make_gui("main1_start")
         gui.current_bg = "cathedral"

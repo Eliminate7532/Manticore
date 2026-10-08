@@ -399,8 +399,11 @@ class Result:
 
 
 class Checker:
-    def __init__(self, deck_file, runtime=None, seed=7, say=print, per_check=40.0, faults=()):
+    def __init__(self, deck_file, runtime=None, seed=7, say=print, per_check=40.0, faults=(), classic_stops=True):
         self.deck_file, self.runtime, self.seed, self.say, self.per_check = deck_file, runtime, seed, say, per_check
+        # Patch 43: the checker's scripted boards expect every priority stop (its own spell on the stack, the AI's upkeep), so it
+        # plays with the bridge's classic stops unless a caller asks for the player's (classic_stops=False).
+        self.classic_stops = classic_stops
         self.faults = tuple(faults)         # round 27d: deliberate bridge mistakes, for tests that prove a check goes red
         self.tmp = tempfile.TemporaryDirectory(prefix="card_check_")
         self.s = None
@@ -414,7 +417,8 @@ class Checker:
         mine = fc.write_deck_file(os.path.join(self.tmp.name, "me.dck"), commanders, deck, "Check")
         filler = fc.write_deck_file(os.path.join(self.tmp.name, "opp.dck"), ["Kinnan, Bonder Prodigy"], ["Forest"] * 99, "Filler")
         fc.sync_bridge(self.runtime) if self.runtime else fc.sync_bridge()
-        self.s = fc.ForgeSession(mine, [filler], name="Checker", seed=self.seed, runtime=self.runtime, dev=True, faults=self.faults)
+        self.s = fc.ForgeSession(mine, [filler], name="Checker", seed=self.seed, runtime=self.runtime, dev=True, faults=self.faults,
+                                 classic_stops=self.classic_stops)
         self.s.stderr_path = os.path.join(self.tmp.name, f"engine_{self.restarts}.log")
         self.s.start()
         self.err_offset = 0

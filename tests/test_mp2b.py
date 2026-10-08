@@ -384,7 +384,8 @@ class LiveTests(unittest.TestCase):
         self.assertTrue(wait_for(lambda: h.ready and g.ready and h.seat_list, 60, pump=[h, g]))
         seats = [osk.Seat("host", h, 31), osk.Seat("guest", g, 41)]
         end = time.time() + 240
-        while time.time() < end and ((h.state or {}).get("turn") or 0) < 5:
+        # Turn 5, and (patch 43: far fewer priority questions now, so fewer commands a turn) enough commands to play back.
+        while time.time() < end and (((h.state or {}).get("turn") or 0) < 5 or online_save.count_lines(journal) <= 10):
             for seat in seats:
                 seat.step()
             time.sleep(0.02)

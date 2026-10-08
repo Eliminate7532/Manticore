@@ -87,6 +87,7 @@ public class Main {
                 case "--ai-timeout": aiTimeout = Integer.parseInt(args[++i]); break;
                 case "--loop-cap": LoopGuard.cap = Integer.parseInt(args[++i]); break;      // round 28e, see LoopGuard (0 = off)
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
+                case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
                 case "--format": {                                                          // round FMT1: commander (default) or brawl
                     String f = args[++i].toLowerCase(java.util.Locale.ROOT);
                     if (f.equals("commander") || f.equals("brawl")) format = f;
@@ -131,7 +132,7 @@ public class Main {
         List<RegisteredPlayer> players = new ArrayList<>();
         int seats = 1 + opponents.size();
         RegisteredPlayer human = register(mine, seats);
-        human.setPlayer(new LobbyPlayerHuman(name));
+        human.setPlayer(new Passing.Human(name));       // patch 43: the seat's controller asks Passing first
         players.add(human);
         int i = 1;
         for (String path : opponents) {
@@ -156,6 +157,7 @@ public class Main {
         ready.addProperty("loopCap", LoopGuard.cap);         // round 28e
         ready.addProperty("format", format);                 // round FMT1: the Python side checks it
         ready.addProperty("startingLife", human.getStartingLife());
+        ready.addProperty("passing", Passing.classic ? "classic" : "smart");   // patch 43
         wire.send(ready);
         // The applied-variant set must include Commander. With null (as before round 27c) Forge's GameRules had no applied variant,
         // so GameAction.stateBasedAction_Commander, which checks GameRules.hasAppliedVariant(Commander), never ran: nobody was asked
@@ -261,6 +263,19 @@ public class Main {
             System.err.println("bridge: no game controller yet for command " + c);
             return;
         }
+        // Patch 44 (the online soak of 6 Oct, game 13): a seat that has conceded or lost is out of the game - its cards are gone -
+        // but the question it was asked last can still look current. A click there made Forge look the card up in no zone
+        // ("findByView: ... not found in any zone"), which failed the soak game. Such a click is dropped ("out").
+        if (STALE_CHECKED.contains(c) && gc instanceof forge.game.player.PlayerController pc && pc.getPlayer() != null
+                && pc.getPlayer().hasLost()) {
+            JsonObject d = new JsonObject();
+            d.addProperty("t", "dropped");
+            d.addProperty("c", c);
+            d.addProperty("reason", "out");
+            d.addProperty("now", gui.inputSeq());
+            gui.wire.send(d);
+            return;
+        }
         if (cmd.has("at") && STALE_CHECKED.contains(c) && !gui.clickIsCurrent(cmd.get("at").getAsLong())) {
             JsonObject d = new JsonObject();                   // a click made for a question Forge is no longer asking: drop it, visibly
             d.addProperty("t", "dropped");
@@ -349,8 +364,17 @@ public class Main {
                 gui.markDirty();
                 break;
             }
-            case "autopass": {                                 // pass by myself whenever Forge finds nothing I can do (an opponent's spell or attack still stops it)
+            case "autopass": {                                 // pass by myself whenever Forge finds nothing I can do
                 boolean on = cmd.get("on").getAsBoolean();
+                if (!Passing.classic) {
+                    // Patch 43: Passing keeps the wish and sets this controller's own preferences at every priority (they win over
+                    // FModel's): on, never paused by an opponent's spell I can't answer, off while I have full control.
+                    gui.passing.autoPass = on;
+                    gui.passing.syncAutoPass(gc.getYieldController(), gui.passing.fullControlNow(gui.getGameView()));
+                    gc.setYieldPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, String.valueOf(on));
+                    gui.markDirty();
+                    break;
+                }
                 if (online) {
                     // Round MP1: YieldController keeps a per-controller override that wins over FModel (Forge's own network
                     // host uses it for remote players); the global preference would switch auto-pass on for BOTH seats.
@@ -362,6 +386,46 @@ public class Main {
                 }
                 gc.setYieldPref(FPref.YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, "true");
                 gc.setYieldPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, String.valueOf(on));
+                gui.markDirty();
+                break;
+            }
+            case "hold": {                                     // patch 43: Ctrl held while casting - keep priority over that spell
+                gui.passing.holdNext = cmd.has("on") ? cmd.get("on").getAsBoolean() : true;
+                break;
+            }
+            case "passturn": {                                 // patch 43: Shift+Enter - pass everything for the rest of this turn
+                GameView gv = gui.getGameView();
+                PlayerView local = gui.me();
+                if (gv == null || local == null) break;
+                gui.passing.passTurn = gv.getTurn();
+                gc.sendYieldUpdate(new YieldUpdate.SetAutoPassUntilEndOfTurn(local, true));   // also passes the question open now
+                gui.markDirty();
+                break;
+            }
+            case "fullcontrol": {                              // patch 43: "on" / "off" (Ctrl+Shift), "turn" (Ctrl: this turn)
+                String mode = cmd.has("mode") ? cmd.get("mode").getAsString() : "on";
+                switch (mode) {
+                    case "off": gui.passing.fullControl = false; gui.passing.clearTurnControl(); break;
+                    case "turn": gui.passing.turnControl(gui.getGameView()); break;
+                    default: gui.passing.fullControl = true;
+                }
+                boolean full = gui.passing.fullControlNow(gui.getGameView());
+                gui.passing.syncAutoPass(gc.getYieldController(), full);
+                if (full && gc.getYieldController().isYieldActive()) {
+                    gc.getYieldController().clearActiveYieldAndDispatch();
+                }
+                gui.markDirty();
+                break;
+            }
+            case "alwaysstop": {                               // patch 43: {"names": [...], "on": true|false} - by card name
+                boolean on = !cmd.has("on") || cmd.get("on").getAsBoolean();
+                if (cmd.has("names")) {
+                    for (com.google.gson.JsonElement e : cmd.getAsJsonArray("names")) {
+                        if (on) gui.passing.alwaysStop.add(e.getAsString());
+                        else gui.passing.alwaysStop.remove(e.getAsString());
+                    }
+                }
+                if (cmd.has("clear") && cmd.get("clear").getAsBoolean()) gui.passing.alwaysStop.clear();
                 gui.markDirty();
                 break;
             }

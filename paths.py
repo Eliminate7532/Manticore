@@ -126,6 +126,15 @@ def saves_dir():
     return os.path.join(user_dir(), "saves")
 
 
+def stats_dir():
+    """Patch 44: your game stats (stats.py) - stats/ beside saves/. Backed up like your decks (the file is .ndjson, which the
+    backup keeps); never in the public source copy. MANTICORE_DATA_DIR wins, as for saves (a test run never touches yours)."""
+    override = os.environ.get("MANTICORE_DATA_DIR")
+    if override:
+        return os.path.join(override, "stats")
+    return os.path.join(user_dir(), "stats")
+
+
 def cache_dir():
     return os.path.join(local_dir(), "cache")
 
@@ -205,7 +214,7 @@ def ensure_dirs():
     """Create every folder the current mode needs. Call once, at program start - not at import time, and
     not from any other function in this module."""
     for d in (user_dir(), local_dir(), cache_dir(), library_dir(), my_art_dir(), mpc_art_dir(), deck_art_dir(), forge_decks_dir(), bug_reports_dir(),
-              log_dir(), saves_dir()):
+              log_dir(), saves_dir(), stats_dir()):
         try:
             os.makedirs(d, exist_ok=True)
         except OSError:
