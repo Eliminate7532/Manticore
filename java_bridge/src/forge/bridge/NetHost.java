@@ -98,7 +98,8 @@ public class NetHost {
     /** Commands a guest may send; everything else (quit, setup, anything unknown) is refused and answered with refused_cmd. */
     static final Set<String> REMOTE_ALLOWED = Set.of("ok", "cancel", "card", "player", "mana", "undo", "alpha", "concede", "flush",
             "stops", "yield", "autoyield", "trigger", "autopass", "yieldreset",
-            "hold", "passturn", "fullcontrol", "alwaysstop");                                  // patch 43
+            "hold", "passturn", "fullcontrol", "alwaysstop",                                   // patch 43
+            "speed");                                                                          // round PRI1
 
     static int blockSeconds = 60;
     static int graceSeconds = 60;                           // round MP2: how long a dropped guest's seat is held

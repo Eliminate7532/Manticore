@@ -481,6 +481,19 @@ def previous_engine_log(path=None):
     return root + ".prev" + ext
 
 
+REWIND_ENGINE_LOG = "forge_engine.rewind.log"
+
+
+def other_engine_log(path=None):
+    """Round UNDO1: a rewind starts a second engine while the first still runs - and holds its log file open (Windows can't
+    share it). The second writes the other of forge_engine.log / forge_engine.rewind.log in the same folder; crashlog.engine_log()
+    reads whichever was written last."""
+    path = path or os.path.join(DATA_DIR, "forge_engine.log")
+    folder, name = os.path.split(path)
+    other = "forge_engine.log" if name == REWIND_ENGINE_LOG else REWIND_ENGINE_LOG
+    return os.path.join(folder, other)
+
+
 def keep_previous_engine_log(path):
     """Round 28d: forge_engine.log is rewritten ("w") every time Forge starts, so the log of a game that crashed was gone as
     soon as the next game (or the next start of the program) began - exactly when a crash report is offered. Move it to
@@ -1076,8 +1089,15 @@ class ForgeSession:
         """Card names whose spells, triggers and abilities always stop me (when I can do something)."""
         return self.send(c="alwaysstop", names=list(names), on=bool(on))
 
+    def set_speed(self, mode):
+        """Round PRI1, Karl's Speed setting for my seat: "slow" = the stops from before patch 43 (my Main 1, attackers, Main 2 and
+        end step; each opponent's upkeep, attackers and end step; everything on the stack), nothing passed for me, auto-pass
+        off; "fast" = patch 43's. It is an ordinary command, so the journal keeps it and Resume / Undo's rebuild send it again."""
+        return self.send(c="speed", mode="slow" if mode == "slow" else "fast")
+
     def passing_state(self):
-        """{classic, fullControl, turnControl, passTurn, hold, passed, alwaysStop} from the newest snapshot ({} before patch 43)."""
+        """{classic, slow, fullControl, turnControl, passTurn, hold, passed, alwaysStop} from the newest snapshot ({} before patch 43;
+        "slow" from round PRI1 on)."""
         return ((self.state or {}).get("yield") or {}).get("passing") or {}
 
     def answer(self, request, value):

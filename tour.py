@@ -59,7 +59,7 @@ STEPS = (
     Step("actions", "What the game wants",
          "This bar always says what you are being asked, and its buttons answer it. The same answers are on the keyboard:",
          ("Space  OK / pass once", "Enter  pass until an opponent acts", "Esc  cancel", "A  attack with all", "S  skip ahead",
-          "U  undo a mana tap")),
+          "U  undo this turn")),
     Step("preview", "A closer look",
          "Hover any card to see it large here, and right-click to keep it. When an opponent casts something, it shows here too.",
          ()),

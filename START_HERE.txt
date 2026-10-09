@@ -63,11 +63,16 @@ Keys worth knowing
   Esc             Cancel
   E               End turn
   A               Full Send: attack with everything that can
-  U / Ctrl+Z      Take back a land you just tapped for mana
+  U / Ctrl+Z      Undo: go back to an earlier moment of your turn (the game is rebuilt, which takes a while)
   M               Sound on / off
   + / -           Bigger / smaller text
   H               Every key and control
   F8              Report a bug, or suggest an idea
+
+Speed (Cog > GAME > Speed)
+  Fast (the default) passes the stops that don't matter for you. Slow is the old way: you pass priority yourself
+  at your main phases, attacks and end step and at each opponent's upkeep, attacks and end step, even when you
+  can't do anything, and nothing is passed for you. Paying mana is the same in both.
 
 Formats
   The deck screen's Format buttons (top right) switch between Commander and Brawl (MTG Arena's 100-card

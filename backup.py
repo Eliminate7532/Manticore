@@ -44,7 +44,7 @@ SNAPSHOT_MAX_FILE = 50 * 1024 * 1024              # a file bigger than this is l
 TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_reports", "soak_runs",
                   "build", "dist", "installer_out", "net"}       # rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
 ANYWHERE_SKIP = {"__pycache__", ".git"}
-SKIP_FILES = {"forge_engine.log", "forge_engine.prev.log", "forge_engine.crashed.log", "session.json", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
+SKIP_FILES = {"forge_engine.log", "forge_engine.prev.log", "forge_engine.crashed.log", "forge_engine.rewind.log", "forge_engine.rewind.prev.log", "session.json", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
               "bug_report_config.json", "bug_report_config.bundled.json", STATUS_FILE}          # both hold the Discord webhook address: a secret
 SKIP_SUFFIXES = (".pyc", ".tmp", ".jsonl", ".partial")
 NO_PROMPTS = False                                # True for --auto: nobody is there to answer a question, so git must not wait for one

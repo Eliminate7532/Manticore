@@ -428,7 +428,7 @@ class SettingsControlTests(TempDecks):
 OLD_CLIPPED = {("1.0", "Report a bug   (F8)"), ("2.0", "Report a bug   (F8)")}
 SETTINGS_LABELS = ["Text size", "Table", "Full screen   (F11)", "Animations", "Compact: Off", "Sort hand: Off", "Log: Always", "Focus: Always",
                    "Sound", "Hover tick",
-                   "Volume", "New game...", "Concede...", "Controls   (H)", "Bug or idea   (F8)", "Licenses", "My data folder",
+                   "Volume", "Speed: Fast", "New game...", "Concede...", "Controls   (H)",     # round PRI1: Speed "Bug or idea   (F8)", "Licenses", "My data folder",
                    "Tour of the table"]
 STATES = ["main1_start", "main1_lands", "mulligan", "coin_toss", "declare_attackers", "declare_blockers", "paying_mana", "stack_one"]
 

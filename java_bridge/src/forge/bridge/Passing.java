@@ -58,6 +58,11 @@ final class Passing {
 
     enum Decision { PASS, STOP, DEFER }
 
+    /** Round PRI1 (Karl, 9 Oct 2026: "Slow"): this seat plays with the stops from before patch 43 - the old default stops
+     *  (BridgeGui.slowMine / slowTheirs), nothing passed for me, auto-pass off - what --classic-stops does for the whole engine,
+     *  but for one seat and switchable mid-game ({"c":"speed","mode":"slow"|"fast"}). "Fast" (false) is patch 43's rules. */
+    volatile boolean slow = false;
+
     /** The player's wish for Forge's auto-pass-when-nothing-to-do; full control turns it off while it lasts. */
     volatile boolean autoPass = true;
     /** Ctrl+Shift: every stop, nothing passed for me, until turned off. */
@@ -90,6 +95,10 @@ final class Passing {
         syncAutoPass(pc.getYieldController(), full);
         if (full) {
             return Decision.STOP;
+        }
+        if (slow) {
+            holdNext = false;
+            return Decision.DEFER;                          // round PRI1: Forge as before patch 43 (auto-pass is off: see syncAutoPass)
         }
         if (passTurn == turn) {
             holdNext = false;
@@ -128,6 +137,11 @@ final class Passing {
         return fullControl || turnControl == turn;
     }
 
+    /** Round PRI1: this seat plays the way it did before patch 43 (--classic-stops for the whole engine, or Slow for this seat). */
+    boolean classicNow() {
+        return classic || slow;
+    }
+
     boolean fullControlNow(GameView gv) {
         return fullControl || (gv != null && fullControlAt(gv.getTurn()));
     }
@@ -144,13 +158,14 @@ final class Passing {
     }
 
     /** Forge's per-controller preferences (they win over FModel's): auto-pass as the player wants it, off under full control,
-     *  and never paused by an opponent's spell I can't answer. */
+     *  and never paused by an opponent's spell I can't answer. Round PRI1: off in Slow too (the player's wish is kept, so Fast
+     *  gives it back), and an interrupt pauses a skip again, as before patch 43. */
     void syncAutoPass(YieldController yc, boolean full) {
         if (yc == null) {
             return;
         }
-        yc.setPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, String.valueOf(autoPass && !full && !classic));
-        yc.setPref(FPref.YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, String.valueOf(classic));
+        yc.setPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, String.valueOf(autoPass && !full && !classicNow()));
+        yc.setPref(FPref.YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, String.valueOf(classicNow()));
     }
 
     // ---- "do I hold an answer to this trigger / ability?" ----------------------------------------------------------------
@@ -276,7 +291,8 @@ final class Passing {
     /** For the snapshot's "yield" object: what these rules are doing for me. */
     JsonObject toJson(GameView gv) {
         JsonObject o = new JsonObject();
-        o.addProperty("classic", classic);
+        o.addProperty("classic", classicNow());          // round PRI1: true in Slow too - the table then plays the old way
+        o.addProperty("slow", slow);                     // round PRI1: Karl's Speed setting reached this seat
         o.addProperty("fullControl", fullControl);
         o.addProperty("turnControl", !fullControl && fullControlNow(gv));
         o.addProperty("passTurn", gv != null && passTurn == gv.getTurn());

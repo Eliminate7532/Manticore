@@ -34,6 +34,9 @@ LOG_TAIL = 40                                                   # how many of th
 SETTLE = 0.35          # seconds without a new snapshot before the next click is sent
 START_LIMIT = 120.0     # how long to wait for the engine's first board (start-up on a busy PC can take longer than WAIT_LIMIT; round-22 fix)
 WAIT_LIMIT = 25.0      # how long to wait for the engine (a button to enable, a question to appear) before saying the replay has diverged
+FAST_SETTLE = 0.05     # round UNDO1: the quiet before the FIRST click on a question when the journal says which clicks were dropped
+BUSY_RETRIES = 3       # round UNDO1: a click the bridge drops as "busy" (a mana ability still running) is sent again this often
+BUSY_WINDOW = 0.12     # round UNDO1: how long to watch for that "dropped" answer after a click (it comes within milliseconds)
 
 
 class ReportError(Exception):
@@ -112,20 +115,34 @@ def differences(want, got):
 class Replayer:
     """Drives one session through a report's clicks. `session` is a started ForgeSession (or a stand-in with the same methods)."""
 
-    def __init__(self, session, commands, settle=SETTLE, wait_limit=WAIT_LIMIT, progress=None, start_limit=START_LIMIT):
+    def __init__(self, session, commands, settle=SETTLE, wait_limit=WAIT_LIMIT, progress=None, start_limit=START_LIMIT,
+                 drops=None, fast_from=None, cancel=None):
+        """Round UNDO1 (all three optional; without them the replay is exactly what it was):
+        drops     - indexes of commands the bridge dropped in the original game (journal "drop" lines): left out.
+        fast_from - from this command on the journal recorded every drop, so a click is sent as soon as its question is asked
+                    (FAST_SETTLE) instead of after SETTLE of quiet: every click left is one the original game applied.
+        cancel    - a function; when it returns True the replay stops (KeyboardInterrupt), even while it waits."""
         self.s, self.commands, self.settle, self.wait_limit, self.progress = session, list(commands), settle, wait_limit, progress
         self.start_limit = start_limit
+        self.drops = set(drops or ())
+        self.fast_from = fast_from
+        self.cancel = cancel
         self.sent = 0
+        self.skipped = 0               # round UNDO1: dropped clicks left out
+        self.resent = 0                # round UNDO1: clicks sent again after a "busy" drop
         self.diverged = None           # (index, reason) once the replay could not follow the report
 
     def pump(self, seconds=0.03):
         end = time.time() + seconds
         while time.time() < end:
+            if self.cancel is not None and self.cancel():
+                raise KeyboardInterrupt("cancelled")
             self.s.poll()
             time.sleep(0.01)
 
-    def settled(self):
+    def settled(self, settle=None):
         """Wait until the engine has produced no new snapshot for `settle` seconds (or the wait limit passes)."""
+        settle = self.settle if settle is None else settle
         last, seen, t0 = time.time(), self.s.state_version, time.time()
         while time.time() - t0 < self.wait_limit:
             self.pump()
@@ -133,8 +150,56 @@ class Replayer:
                 return False
             if self.s.state_version != seen:
                 seen, last = self.s.state_version, time.time()
-            elif self.s.state is not None and time.time() - last >= self.settle:
+            elif self.s.state is not None and time.time() - last >= settle:
                 return True
+        return False
+
+    def question(self):
+        """(inputSeq, asking) of the newest snapshot. A bridge from before round 28bb has no "asking": then it counts as asking."""
+        st = self.s.state or {}
+        asking = st.get("asking")
+        return (st.get("inputSeq") or 0), (True if asking is None else bool(asking))
+
+    def at_question(self, at):
+        """Round UNDO1: True once Forge asks question `at` (or has gone past it)."""
+        seq, asking = self.question()
+        return seq > at or (seq == at and asking)
+
+    def _send_numbered_fast(self, i, cmd, prev_at):
+        """Round UNDO1: send a click the original game applied, as soon as its question is asked. Returns None, or why it can't."""
+        at, c = cmd["at"], cmd.get("c")
+        if not self.wait_for(lambda: self.at_question(at)):
+            return f"the engine never reached question {at} (click {i + 1}: {cmd})"
+        if self.question()[0] > at:
+            return f"the engine went past question {at} before click {i + 1} ({cmd}), which the original game applied"
+        self.settled(self.settle if at == prev_at else FAST_SETTLE)     # a second click on one question: the old careful wait
+        if c in ("ok", "cancel") and not self.wait_for(lambda: self.button_ready(c) or self.question()[0] != at):
+            return f"the {c} button never became available (click {i + 1}: {cmd})"
+        for attempt in range(BUSY_RETRIES + 1):
+            if self.question()[0] != at:
+                return f"the engine went past question {at} before click {i + 1} ({cmd}), which the original game applied"
+            seen = len(getattr(self.s, "dropped", []) or [])
+            self.s.send(**cmd)
+            busy = self._dropped_busy(c, at, seen)
+            if not busy:
+                return None
+            if attempt < BUSY_RETRIES:
+                self.resent += 1
+                self.settled()
+        return f"the engine stayed busy at question {at} (click {i + 1}: {cmd})"
+
+    def _dropped_busy(self, c, at, seen, window=BUSY_WINDOW):
+        """Round UNDO1: after a click, did the bridge drop it because a mana ability was still running? The bridge answers a
+        dropped click at once ({"t": "dropped"}), so this waits only until the click shows (the question moves on) or a short
+        window passes."""
+        end = time.time() + window
+        while time.time() < end:
+            self.pump(0.01)
+            for m in list(getattr(self.s, "dropped", []) or [])[seen:]:
+                if m.get("c") == c and m.get("at") == at:
+                    return m.get("reason") == "busy"
+            if self.question()[0] != at:
+                return False
         return False
 
     def wait_for(self, cond, limit=None):
@@ -156,13 +221,27 @@ class Replayer:
         if not self.wait_for(lambda: self.s.ready and self.s.state is not None, self.start_limit):
             self.diverged = (0, "the engine never started the game")
             return False
+        prev_at = None
         for i, cmd in enumerate(self.commands):
             if upto is not None and i >= upto:
                 break
             c = cmd.get("c")
             if c == "quit":                                             # the player closed the game: nothing more to repeat
                 break
-            if c == "reply":                                            # an answer to a question the engine asks: wait for that question
+            fast = self.fast_from is not None and i >= self.fast_from
+            if fast and i in self.drops:                                # round UNDO1: the original game never applied it
+                self.skipped += 1
+                self.sent += 1
+                if self.progress:
+                    self.progress(i + 1, len(self.commands))
+                continue
+            if fast and c != "reply" and cmd.get("at") is not None:
+                why = self._send_numbered_fast(i, cmd, prev_at)
+                prev_at = cmd["at"]
+                if why:
+                    self.diverged = (i, why)
+                    return False
+            elif c == "reply":                                            # an answer to a question the engine asks: wait for that question
                 req = None
 
                 def asked():
@@ -193,6 +272,24 @@ class Replayer:
                 self.progress(i + 1, len(self.commands))
             if self.s.exited or self.s.fatal:
                 self.diverged = (i, "the engine stopped: " + str(self.s.fatal or "exited"))
+                return False
+        self.settled()
+        return True
+
+    def reach(self, seq=None, req=None):
+        """Round UNDO1: after the clicks, wait for the moment a rewind goes back to - the question `seq` (Forge's question number)
+        or the request `req` - and stop there. Returns True when the engine is asking exactly that."""
+        if req is not None:
+            ok = self.wait_for(lambda: any(r.get("id") == req for r in self.s.requests))
+            if not ok:
+                self.diverged = (len(self.commands), f"the engine never asked question {req}")
+                return False
+        else:
+            if not self.wait_for(lambda: self.at_question(seq)):
+                self.diverged = (len(self.commands), f"the engine never reached question {seq}")
+                return False
+            if self.question()[0] != seq:
+                self.diverged = (len(self.commands), f"the engine went past question {seq} by itself")
                 return False
         self.settled()
         return True

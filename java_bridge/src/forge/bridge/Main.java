@@ -417,6 +417,12 @@ public class Main {
                 gui.markDirty();
                 break;
             }
+            case "speed": {                                    // round PRI1: {"mode": "slow" | "fast"} - Karl's Speed setting, this seat
+                gui.passing.slow = cmd.has("mode") && "slow".equals(cmd.get("mode").getAsString());
+                gui.passing.syncAutoPass(gc.getYieldController(), gui.passing.fullControlNow(gui.getGameView()));
+                gui.markDirty();                           // takes effect at this seat's next priority (Passing.decide)
+                break;
+            }
             case "alwaysstop": {                               // patch 43: {"names": [...], "on": true|false} - by card name
                 boolean on = !cmd.has("on") || cmd.get("on").getAsBoolean();
                 if (cmd.has("names")) {

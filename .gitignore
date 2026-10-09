@@ -15,6 +15,8 @@ deck_art/
 forge_engine.log
 forge_engine.prev.log
 forge_engine.crashed.log
+forge_engine.rewind.log
+forge_engine.rewind.prev.log
 session.json
 crash_log.txt
 crash_log.old.txt

@@ -86,6 +86,7 @@ class CogTests(Base):
                           "log_mode", "preview_mode",                                                           # patch UI6: Log | Focus
                           "sound", "hover_tick", "music_on", "ambience_on",        # round 24 (AD1: Sound | Hover tick share a row; AU1: Music | Ambience)
                           "vol_down", "vol_up",
+                          "speed",                                                                              # round PRI1: Speed | New game | Concede
                           "newgame", "concede", "help", "report", "licenses",
                           "data_folder",                                                                        # round 28
                           "tour", "updates"])                                                                   # round UX1, 30

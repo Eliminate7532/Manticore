@@ -171,9 +171,37 @@ def _context_lines():
     return [out] if isinstance(out, str) else [str(x) for x in out]
 
 
+ENGINE_LOG_REWIND = "forge_engine.rewind.log"     # round UNDO1: the second engine of a rewind writes this one (see forge_client)
+
+
+def set_engine_log(path):
+    """Round UNDO1: the running engine's log (the table says so whenever its engine changes). None: work it out."""
+    _cfg["engine_log"] = path
+
+
+def engine_log(folder=None):
+    """Round UNDO1: the running engine's log when the table said which (set_engine_log) and it is in this folder; otherwise the
+    one written last of forge_engine.log and forge_engine.rewind.log (a rewind's second engine writes the other one)."""
+    folder = folder or _cfg["folder"]
+    told = _cfg.get("engine_log")
+    if told and os.path.basename(told) in (ENGINE_LOG, ENGINE_LOG_REWIND) and \
+            os.path.normcase(os.path.abspath(os.path.dirname(told))) == os.path.normcase(os.path.abspath(folder)):
+        return told
+    paths = [os.path.join(folder, ENGINE_LOG), os.path.join(folder, ENGINE_LOG_REWIND)]
+    best, when = paths[0], -1.0
+    for p in paths:
+        try:
+            m = os.path.getmtime(p)
+        except OSError:
+            continue
+        if m > when:
+            best, when = p, m
+    return best
+
+
 def engine_tail(folder=None, lines=ENGINE_TAIL_LINES):
-    """The last lines of forge_engine.log (what Forge itself printed), or []."""
-    path = os.path.join(folder or _cfg["folder"], ENGINE_LOG)
+    """The last lines of the engine log (what Forge itself printed), or []."""
+    path = engine_log(folder)
     try:
         size = os.path.getsize(path)
         with open(path, "rb") as f:
@@ -377,7 +405,7 @@ def uninstall():
     # Round 28ba (the Round 27f fix): back to DATA_DIR, not BASE_DIR. With BASE_DIR, every crash-log note made after
     # test_crashlog.py ran went to the project's REAL crash_log.txt instead of the test run's temp folder
     # (tests/__init__.py) - Round 27d's deliberate-fault tests left four "Bridge self-check failed" entries in Karl's.
-    _cfg.update(folder=DATA_DIR, dialog=True, context=None)
+    _cfg.update(folder=DATA_DIR, dialog=True, context=None, engine_log=None)
 
 
 # ---- freeze detection --------------------------------------------------------------------------------------------------------

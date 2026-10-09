@@ -59,6 +59,9 @@ public class BridgeGui extends AbstractGuiGame {
     /** Phases where the human wants priority even with an empty stack (everything else is passed automatically). */
     final java.util.Set<PhaseType> stopsMine = java.util.concurrent.ConcurrentHashMap.newKeySet();
     final java.util.Set<PhaseType> stopsTheirs = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** Round PRI1: Slow's own stops (see Passing.slow and stopSet). */
+    final java.util.Set<PhaseType> slowMine = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    final java.util.Set<PhaseType> slowTheirs = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** Patch 43: which priority stops are passed for this seat (see Passing). */
     final Passing passing = new Passing();
 
@@ -71,10 +74,23 @@ public class BridgeGui extends AbstractGuiGame {
             java.util.Collections.addAll(stopsMine, PhaseType.MAIN1, PhaseType.MAIN2);
             java.util.Collections.addAll(stopsTheirs, PhaseType.END_OF_TURN);
         }
+        // Round PRI1: Slow (one seat, switchable mid-game) has the stops from before patch 43 - the same list as --classic-stops.
+        // A pair of its own, so switching Fast <-> Slow keeps what the turn bar's dots changed in each.
+        java.util.Collections.addAll(slowMine, PhaseType.MAIN1, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.MAIN2,
+                PhaseType.END_OF_TURN);
+        java.util.Collections.addAll(slowTheirs, PhaseType.UPKEEP, PhaseType.COMBAT_DECLARE_ATTACKERS, PhaseType.END_OF_TURN);
+    }
+
+    /** Round PRI1: the stops in use for my turn (mine) or the others' - Slow's or Fast's. */
+    java.util.Set<PhaseType> stopSet(boolean mine) {
+        if (passing.slow) {
+            return mine ? slowMine : slowTheirs;
+        }
+        return mine ? stopsMine : stopsTheirs;
     }
 
     void setStops(boolean mine, java.util.Collection<String> names) {
-        java.util.Set<PhaseType> target = mine ? stopsMine : stopsTheirs;
+        java.util.Set<PhaseType> target = stopSet(mine);
         target.clear();
         for (String n : names) {
             try {
@@ -555,7 +571,7 @@ public class BridgeGui extends AbstractGuiGame {
         }
         PlayerView m = me();
         boolean mine = m != null && m.equals(playerTurn);
-        return !(mine ? stopsMine : stopsTheirs).contains(phase);
+        return !stopSet(mine).contains(phase);                // round PRI1: Slow's stops or Fast's
     }
     @Override public GameState getGamestate() { return null; }
 

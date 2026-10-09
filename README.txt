@@ -156,7 +156,7 @@ that is what it does.
   A ........................... Full Send: attack with everything (when offered)
   Esc ......................... Cancel - but only when the button really says Cancel/Undo, so a
                                 slip can't end your turn
-  U or Ctrl+Z ................. undo - takes back a mana tap that is still unspent (see UNDO below)
+  U or Ctrl+Z ................. undo - back to an earlier moment of your turn, as far as its start (see UNDO below)
   M ............................ sound on/off (round 24) - same switch as the cog's SOUND group
   S ........................... Skip window: let the stack resolve, skip to your next turn, auto-pass, "always pass" (see SKIPPING AHEAD)
   F11 ......................... fullscreen     + / - .... bigger / smaller text (100%-200%)
@@ -518,10 +518,21 @@ one burden counter; by the card's own text you put the counter on first, then dr
 Two things made it look as if nothing happened: the draw is only visible as the Hand number changing, and Forge's stack text for
 the ability says "draws zero cards" (it works that number out BEFORE the counter is added; it is not what really happens). The
 "Into your hand" line above now shows the draw. Remember the ability sits on the stack until you press OK.
-UNDO: Forge's undo is narrow. Tested live: it takes back a land you tapped for mana while that mana is still unspent and it is
+UNDO: Forge's own undo is narrow. Tested live: it takes back a land you tapped for mana while that mana is still unspent and it is
 still the same phase. It does NOT take back a land drop, a spell you have cast (even with it still on the stack), or anything
-that already resolved - Forge has no rewind. Forge also says nothing when it can't undo, so the table now shows "Nothing to
-undo. Forge only lets you take back a mana tap that is still unspent." about a second after you press Undo if nothing changed.
+that already resolved - Forge has no rewind.
+UNDO, ROUND UNDO1 (8 Oct 2026): Undo now goes back to any moment of your turn, as far as its start. Press U, Ctrl+Z or Undo and a
+window lists the moments - "Main 1: before you cast Sol Ring", "Start of your turn 6 (Main 1): before you played Forest" -
+newest first (keys 1-9; the start of the turn is the last button). Pick one and the game is REBUILT: a second Forge engine starts
+the same game (same seed, same decks) and the journal's clicks are played into it up to that moment. Its board is then compared
+with the board you had at that moment; only when they match does it take over (the old engine closes, and the journal goes back
+to that moment). If anything doesn't match, or you press Esc, your game stays exactly as it was. This is exact - hidden cards,
+the library order, triggers waiting for your upkeep, everything - because it is the same game played again, not a copy of the
+board (Forge's own snapshot code can't copy everything; see rewind.py). The price is time: the rebuild plays the whole game again
+from turn 1, with the AI thinking again, so it takes longer the further into the game you are (measured in the sandbox: see
+ROADMAP, Round UNDO1). With mana floating, Undo first takes back that mana tap at once (Forge's own undo), as before; press it
+again for the window. Online games: Undo still only takes back a mana tap. While it is your turn the window offers this turn; during
+an opponent's turn, your last turn. The undone part of the game is kept in saves\rewound_last.jsonl for a bug report.
 The Controls window (H) now fits its whole list, and scrolls with the mouse wheel when the window is too small (before, its last lines could run under the Close button).
 The "Starting the Forge rules engine" screen was redone: the lines are spaced by their real height (the big title used to sit on top of the small text under it), the dots no longer make the title shake, a bar slides to and fro while it works, and long messages wrap instead of running off the window.
 Verified in the sandbox with the real engine: Court of Cunning made "The Monarch" appear in the command zone and its badge
@@ -558,6 +569,19 @@ ONLY THE STOPS THAT MATTER (patch 43, Karl's decisions of 5-6 Oct 2026; java_bri
     - The second time the same card's trigger stops you in a turn, the table offers Y = always pass on it.
   The soak summary has a PRIORITY STOPS section (questions the soak seat was asked a game). The card check keeps every stop
   (--classic-stops), because its scripted boards rely on them.
+
+SPEED: FAST OR SLOW (round PRI1, Karl's choices of 9 Oct 2026; Cog > GAME > Speed)
+  Fast (the default) is everything in ONLY THE STOPS THAT MATTER above. Slow is the way it was before patch 43, for your seat:
+    - you get priority at the old stops - your Main 1, declare-attackers step, Main 2 and end step; each opponent's upkeep,
+      declare-attackers step and end step - and whenever something is on the stack, even when you can't do anything;
+    - nothing is passed for you (an opponent's trigger stops you whether or not you hold an answer), and auto-pass is off while
+      Slow lasts (your own auto-pass choice is kept for when you go back to Fast);
+    - Enter is OK again (one pass), and the Ctrl keys and Ctrl+click do nothing; the Skip window offers "switch to Fast" instead
+      of the auto-pass switch. Its skips still work.
+    - Paying mana is the same in both speeds: casting opens the payment step (tap your sources, or Space / Auto).
+  Click Speed to switch, during a game too: it changes at your next priority. Remembered in settings.json ("speed"). The game
+  journal records the switch like any other command, so Resume and Undo's rebuild play a Slow game Slow; an online guest's
+  Speed is that guest's own seat only. The turn bar's dots add or remove stops in either speed (each speed keeps its own).
 
 SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its desktop window has)
   Skip... (the button left of Undo, or the S key) opens a window with:

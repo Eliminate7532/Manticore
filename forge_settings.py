@@ -22,7 +22,8 @@ from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, WHITE, clip_text, draw_text, rou
 
 class SettingsPopup(Dialog):
     """Hangs under the cog, in four groups. DISPLAY: text size, the table background (Round AD1), full screen and animations (the last two are on/off switches that stay
-    put while you flip them). GAME: New game... and Concede... (each opens a small window that asks what exactly). HELP: controls and
+    put while you flip them). GAME: Speed (round PRI1: Fast | Slow), New game... and Concede... (each of the last two opens a small
+    window that asks what exactly). HELP: controls and
     help, bug or idea (Round FR1: the report window has a Suggest a feature tab), licences, the data folder, and the tour of the
     table (Round UX1). Anything outside it (or Esc) closes it."""
 
@@ -123,8 +124,13 @@ class SettingsPopup(Dialog):
         self._small_button(gui, v_plus, "+", "vol_up")
         y += row_h + gap
         heading("GAME")                         # Round UX1: New game... and Concede... share one row, so HELP has room for the tour
-        self.button(gui, pygame.Rect(x, y, half, row_h), "New game...", "newgame", True, fkey="small")
-        concede = pygame.Rect(x + half + gap, y, inner - half - gap, row_h)
+        # Round PRI1: Speed (Fast | Slow) joins them, three to the row - a 13th row doesn't fit at the smallest window (round 28),
+        # and the three labels fit a third of the pop-up at every size the tests use (gold while Slow, like Log and Focus)
+        third = (inner - 2 * gap) // 3
+        self.button(gui, pygame.Rect(x, y, third, row_h), f"Speed: {gui.speed_label()}", "speed", True,
+                    primary=gui.speed == "slow", fkey="small")
+        self.button(gui, pygame.Rect(x + third + gap, y, third, row_h), "New game...", "newgame", True, fkey="small")
+        concede = pygame.Rect(x + 2 * (third + gap), y, inner - 2 * (third + gap), row_h)
         self.button(gui, concede, "Concede...", "concede", gui.game_in_progress(), fkey="small")
         if gui.game_in_progress():
             pygame.draw.rect(scr, gfx.RED, concede, 2, border_radius=10)      # the one button that gives something up
@@ -216,6 +222,8 @@ class SettingsPopup(Dialog):
             gui.toggle_stream(name)
         elif name == "updates":
             gui.toggle_check_updates()                       # Round 30
+        elif name == "speed":
+            gui.toggle_speed()                               # round PRI1
         else:
             self.done = True
             gui.overlay = None

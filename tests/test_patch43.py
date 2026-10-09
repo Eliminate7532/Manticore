@@ -64,7 +64,7 @@ class SourceTests(unittest.TestCase):
         self.assertIn("top.isTrigger() ? Decision.DEFER : Decision.PASS", decide)
         self.assertIn('"Triggered" : "Activated"', src)
         self.assertIn("canTargetSpellAbility", src)
-        self.assertIn("YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, String.valueOf(classic)", src)
+        self.assertIn("YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, String.valueOf(classicNow())", src)     # round PRI1: classic or Slow
         self.assertIn("return null;                                // Forge's PhaseHandler", src)
 
     def test_main_takes_the_new_commands_and_seats_use_the_rules(self):

@@ -54,6 +54,7 @@ import legality
 import events as gevents
 import java_crash
 import journal as gjournal
+import rewind as grewind
 import licenses_view
 import mana_hint as mh
 import motion as mot
@@ -257,12 +258,18 @@ BG_LABELS = {"rotate": "Rotate", "graveyard": "Graveyard", "cathedral": "Cathedr
 DISPLAY_KEYS = {"title", "btn"}                        # font keys drawn in the display face (Round AD1)
 PASSING_VERSION = 43                                   # patch 43: settings written by this version know about the passing rules
 REPEAT_STOP_OFFER = 2                                  # patch 43: the second stop by one card's trigger in a turn offers "Y = always pass"
+SPEEDS = ("fast", "slow")                              # round PRI1, Karl's Speed (cog > GAME): fast = patch 43's stops; slow = the stops from
+                                                       # before patch 43, nothing passed for me, auto-pass off (java_bridge Passing.slow)
+SPEED_LABELS = {"fast": "Fast", "slow": "Slow"}
+SPEED_RESEND = 3.0                                     # round PRI1: seconds before the same Speed is sent again if the seat hasn't taken it
 STATS_RESULT_WAIT = 4.0                                # patch 44: seconds to wait for Forge's result after the game-over snapshot
 FEED_MAX, FEED_SECONDS = 4, 7.0                        # how many opponent actions the board shows, and for how long
 QUIET_PING = 2.5           # seconds after a command with no word from Forge: ask it for a fresh snapshot (a harmless "flush")
 QUIET_BANNER = 5.0         # seconds after a command with no word from Forge, even after the ping: show "Forge has not answered"
 UNDO_WAIT = 1.0                                        # seconds to wait for Forge to change something after Undo before saying there was nothing to undo
 UNDO_NOTHING = "Nothing to undo. Forge only lets you take back a mana tap that is still unspent."
+UNDO_NOTHING_YET = "Nothing to undo yet. Undo goes back as far as the start of your turn."      # round UNDO1
+UNDO_ONLINE = "In an online game Undo only takes back a mana tap that is still unspent."         # round UNDO1
 LIFE_FLASH_SECONDS = 2.0                               # a life total flashes (and shows +3 / -3) for this long after it changes
 LIFE_GAIN, LIFE_LOSS = gfx.LIFE_GAIN_COLOUR, gfx.LIFE_LOSS_COLOUR
 HELP_LINES = [
@@ -273,7 +280,7 @@ HELP_LINES = [
     ("E", "Press End Turn (when that is what the second button says)."),
     ("A", "Press Full Send: attack with everything that can (shown while you declare attackers)."),
     ("S / Skip...", "Opens the Skip window: let the stack resolve, skip to your next turn, auto-pass and full control on or off, 'always pass' on the ability on the stack or 'always stop' on its card. An opponent's trigger passes unless you hold an answer to it."),
-    ("U / Ctrl+Z / Undo", "Take back a land you just tapped for mana, as long as that mana is still unspent and it is still the same phase. Forge can't take back a land drop or a spell that has been cast, and a note tells you when there was nothing to undo."),
+    ("U / Ctrl+Z / Undo", "Go back to an earlier moment of your turn, as far as its start: a list shows what you did (\"Main 1: before you cast Sol Ring\"), you pick one, and the game is rebuilt from the first turn with the same shuffle and your same clicks up to there - that takes a while in a long game, and your game stays as it is if the rebuilt one doesn't match. With mana floating, Undo first takes back that mana tap at once. Against AI opponents only; online it only takes back a mana tap."),
     ("M", "Sound on/off. Same switch as the cog's SOUND group; a toast confirms which."),
     ("Click a player", "Target that player, or attack them, when Forge is asking for one."),
     ("Turn bar (top)", "Shows whose turn it is and which phase you are in (the lit pill). Below each pill are two dots: click the blue one to stop there on YOUR turn, the orange one to stop there on an OPPONENT's turn. Clicking the pill itself toggles the blue one."),
@@ -283,7 +290,7 @@ HELP_LINES = [
     ("Command zone", "The gold frame beside your hand holds your commander; click the card to cast it (Forge adds the tax). Opponents' command zones are next to their panels."),
     ("Chips on a panel", "A gold crown chip means that player is the monarch; other chips show the initiative, the Ring and emblems. Hover one to read what it does. A life total flashes red or green with -3 / +2 when it changes."),
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
-    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
+    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
     ("F11 / + / -", "Fullscreen / bigger and smaller text. Both are remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
     ("F8 / Bug or idea", "Something wrong? The game packs a report (a picture of the table, the board, the log, the version) into one zip and sends it to Karl if his Discord is set up, even with a question on screen. The second tab, Suggest a feature, sends him an idea instead (F8 on the deck screen opens on it)."),
@@ -714,6 +721,8 @@ class ForgeTable:
         self.auto_pass = True               # Forge passes for me whenever I have nothing to do (Skip window); remembered between runs
                                             # (patch 43: on by default; a settings file from before patch 43 is switched on once)
         self.always_stop = []               # patch 43: card names whose stack items always stop me (Skip window); remembered
+        self.speed = "fast"                 # round PRI1: Karl's Speed - "fast" | "slow" (SPEEDS); cog > GAME; remembered
+        self._speed_sent = None             # round PRI1: ((session id, speed), when) of the last Speed command not yet seen taken
         self.passing_intro_due = False      # patch 43: say once, at the first game after the update, what passes for you now
         self._ctrl_tap = False              # patch 43: Ctrl (or Ctrl+Shift) pressed and released with nothing else in between
         self._ctrl_shift = False
@@ -776,7 +785,13 @@ class ForgeTable:
         self._last_draw_now = None       # time.monotonic() of the last stepped frame (round 23 motion)
         self.perf_log_path = PERF_LOG
         self.journal = gjournal.GameJournal(saves_dir) if saves_dir else None      # None: no journal (tests, and copies without a deck screen)
-        self.resuming = None                # a ResumeJob while an unfinished game is being played back
+        self.resuming = None                # a ResumeJob while an unfinished game is being played back (round UNDO1: or a RewindJob)
+        self.rewind_points = []             # round UNDO1: the moments of my turns Undo can go back to (rewind.py), this game
+        self.rewind_expect = {}             # round UNDO1: point index -> its board (replay.summary), to say what differs
+        self.rewind_tracker = grewind.Tracker()
+        self.rewind_prestart = None         # round UNDO1: (session, journal contents) started while the Undo window is open
+        self._drops_session, self._drops_seen = None, 0      # round UNDO1: the bridge's "dropped" answers already in the journal
+        self._points_version = None
         self.vs = None                      # Round AD2b: flow.VsShow - who plays whom, shown while the engine starts
         self.current_deck_labels = None     # Round AD2b: (my deck's name, [each AI deck's name]) of the game on screen, for Restart's VS
         self.current_printings = []         # round ALT1: the printings of the game on screen (Restart plays them again)
@@ -887,6 +902,8 @@ class ForgeTable:
                 self.passing_intro_due = True
             names = data.get("always_stop")
             self.always_stop = [str(n)[:120] for n in names][:60] if isinstance(names, list) else []
+            sp = data.get("speed")                                            # round PRI1: a missing or unknown value is Fast
+            self.speed = sp if sp in SPEEDS else "fast"
             bg = data.get("table_background")
             self.table_background = bg if bg in BG_CHOICES else "rotate"         # a missing or unknown value (even "alternate") is Rotate
             last = data.get("table_background_last")
@@ -925,7 +942,7 @@ class ForgeTable:
                      "table_background": self.table_background, "table_background_last": self.table_background_last,
                      "log_mode": self.log_mode, "preview_mode": self.preview_mode,
                      "art_picker_zoom": self.art_picker_zoom,
-                     "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop)})
+                     "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop), "speed": self.speed})
         key = screen_key(self.desktop)
         if key:                             # round 27e: each screen size keeps its own window and text size
             screens = data.get("screens") if isinstance(data.get("screens"), dict) else {}
@@ -1460,6 +1477,7 @@ class ForgeTable:
         """Every command sent to Forge: time it until its answer arrives (the F3 overlay's 'engine reply' figure) and write it into the game
         journal (round 21). journal=False while a resumed game is being played back: those commands are already in the journal."""
         jr = self.journal if journal else None
+        crashlog.set_engine_log(getattr(self.session, "stderr_path", None))     # round UNDO1: reports read this engine's log
 
         def on_send(cmd):
             if cmd.get("c") == "flush":                   # our own "are you there?" ping: not a move, not timed, not journaled
@@ -1490,9 +1508,10 @@ class ForgeTable:
             self.journal.start(getattr(s, "seed", None), getattr(s, "name", ""), decks, version.code_fingerprint(), time.time(),
                                replay=self.replay_key(),
                                printings=[{n: list(p) for n, p in m.items()} for m in getattr(self, "current_printings", None) or []],
-                               fmt=self.game_format(), stats=getattr(s, "stats_info", None))
+                               fmt=self.game_format(), stats=getattr(s, "stats_info", None), speed=self.speed)
         except OSError as e:
             print(f"[forge_table] Could not start the game journal: {e}")
+        self.load_rewind_points()                  # round UNDO1: a new game has none yet
 
     def end_journal(self, result):
         if self.journal is not None and self.journal.active():
@@ -2854,8 +2873,7 @@ class ForgeTable:
                 label = "Mulligan (free)"
             specs.append(("cancel", label, bool(cancel.get("enabled")), False, False))
         if self.skip_available():
-            label = "Full control" if self.full_control_on() else ("Skip (auto)" if self.auto_pass else "Skip...")   # patch 43
-            specs.append(("skip", label, True, False, False))
+            specs.append(("skip", self.skip_label(), True, False, False))
         specs.append(("undo", "Undo", not waiting, False, False))
         bh = bar.h - 12
         hf, sf = self.ui_font("body"), self.font("small")    # round 32: the headline in the display face; the hint stays readable body text
@@ -4547,7 +4565,11 @@ class ForgeTable:
         job = self.resuming
         if job is None or not job.finished:
             return
+        if getattr(job, "kind", "resume") == "rewind":   # round UNDO1
+            self.finish_rewind(job)
+            return
         self.resuming = None
+        self.load_rewind_points()                         # round UNDO1: the journal's points come back with the game
         self._hook_session()                              # from now on new commands go into the journal again
         if job.error == "cancelled":
             self.say("Resume cancelled.", DIM)
@@ -4570,7 +4592,9 @@ class ForgeTable:
             area = pygame.Rect(L.margin, L.margin + int(10 * L.fs), L.W - 2 * L.margin, int(L.H * 0.6))
             flow.draw_vs(self, self.vs, area)
             y = max(y, area.bottom + int(12 * L.fs))
-        draw_text(scr, "Resuming your last game", L.W // 2, y, big, WHITE, "midtop")
+        rewinding = getattr(job, "kind", "resume") == "rewind"           # round UNDO1: the same screen for a rewind
+        title = clip_text("Rewinding to " + job.label, big, L.W - 80) if rewinding else "Resuming your last game"
+        draw_text(scr, title, L.W // 2, y, big, WHITE, "midtop")
         y += big.get_height() + 16
         bar_w, bar_h = min(L.W - 80, int(520 * L.fs)), max(8, int(10 * L.fs))
         track = pygame.Rect(L.W // 2 - bar_w // 2, y, bar_w, bar_h)
@@ -4579,10 +4603,14 @@ class ForgeTable:
         if frac > 0:
             round_rect(scr, pygame.Rect(track.x, track.y, max(bar_h, int(bar_w * frac)), bar_h), GOLD, radius=bar_h // 2)
         y += bar_h + 14
-        draw_text(scr, f"Playing back action {job.done_count} of {job.total}", L.W // 2, y, body, TEXT, "midtop")
+        draw_text(scr, f"{'Rebuilding' if rewinding else 'Playing back'} action {job.done_count} of {job.total}", L.W // 2, y, body,
+                  TEXT, "midtop")
         y += body.get_height() + 10
-        for ln in wrap_text("The same shuffle and every click are sent again, one at a time, waiting for Forge each time, so a long game "
-                            "takes a few minutes. Esc cancels.", small, min(L.W - 80, int(640 * L.fs))):
+        foot = ("The game is played again from the first turn with the same shuffle and your same clicks, stopping at that moment, "
+                "so a long game takes a while. Esc cancels - your game stays as it is." if rewinding else
+                "The same shuffle and every click are sent again, one at a time, waiting for Forge each time, so a long game "
+                "takes a few minutes. Esc cancels.")
+        for ln in wrap_text(foot, small, min(L.W - 80, int(640 * L.fs))):
             draw_text(scr, ln, L.W // 2, y, small, DIM, "midtop")
             y += small.get_height()
 
@@ -5353,9 +5381,237 @@ class ForgeTable:
                 tuple(sorted((me.get("manaPool") or {}).items())), len(st.get("stack", [])), len(z.get("hand", [])))
 
     def press_undo(self):
-        """Ask Forge to undo, then watch: Forge answers nothing when it can't, so say so ourselves if the table did not change."""
+        """U / Ctrl+Z / the Undo button. Round UNDO1: with mana floating, Forge's own undo first (it takes back that mana tap at
+        once); otherwise - or when Forge's undo changes nothing - the Undo window with this turn's moments (open_rewind). Online
+        and in a game without a journal there is only Forge's undo, as before."""
+        if self.can_rewind() and not self.mana_floating():
+            self.open_rewind()
+            return
         self.session.undo()
         self.undo_check = (time.time() + UNDO_WAIT, self.undo_signature())
+
+    def mana_floating(self):
+        me = self.session.me() if self.state else None
+        pool = (me or {}).get("manaPool") or {}
+        try:
+            return sum(int(v or 0) for v in pool.values()) > 0
+        except (TypeError, ValueError, AttributeError):
+            return False
+
+    # ---- round UNDO1: rewinding to an earlier moment of my turn (rewind.py) -----------------------------------------------------
+
+    def rewind_unavailable(self):
+        """None when Undo can go back to an earlier moment now, else a sentence saying why not."""
+        s = self.session
+        if getattr(s, "online", None) or getattr(s, "spectator", False):
+            return UNDO_ONLINE
+        if self.journal is None or not self.journal.active() or self.launcher is None:
+            return UNDO_NOTHING
+        if not self.state or self.state.get("gameOver") or getattr(s, "game_over", False) or self.resuming is not None:
+            return UNDO_NOTHING
+        if not grewind.latest_turn_points(self.rewind_points, self.journal.count, self.my_turn_now()):
+            return UNDO_NOTHING_YET
+        return None
+
+    def my_turn_now(self):
+        """The turn number when it is my turn right now, else None (see rewind.latest_turn_points)."""
+        st = self.state or {}
+        return st.get("turn") if st.get("activePlayer") is not None and st.get("activePlayer") == st.get("me") else None
+
+    def can_rewind(self):
+        return self.rewind_unavailable() is None
+
+    def rewind_choices(self):
+        me = self.session.me() if self.state else None
+        try:
+            commands = gjournal.read_full(self.journal.path)["commands"] if self.journal else None
+        except (OSError, ValueError):
+            commands = None
+        cards = getattr(self.session, "_cards", None) or {}
+
+        def card_name(cid):
+            return strip_ids((cards.get(cid) or {}).get("name") or "") or None
+        return grewind.choices(self.rewind_points, self.journal.count if self.journal else 0, getattr(self.session, "log", []),
+                               getattr(self.session, "log_total", 0), (me or {}).get("name"), commands, card_name,
+                               self.my_turn_now())
+
+    def load_rewind_points(self):
+        """The points of the game in the journal (after a new start: none; after a resume or a rewind: the journal's)."""
+        self.rewind_points, self.rewind_expect = [], {}
+        if self.journal is not None and self.journal.active():
+            try:
+                self.rewind_points = gjournal.read_full(self.journal.path)["points"]
+            except (OSError, ValueError):
+                self.rewind_points = []
+        starts = [p.get("turn") for p in self.rewind_points if p.get("start")]
+        self.rewind_tracker.reset(turn_started=max(starts) if starts else None)
+
+    def track_points(self):
+        """Every new snapshot: is this a moment of my turn Undo should be able to go back to? Then it goes into the journal."""
+        s = self.session
+        jr = self.journal
+        if jr is None or not jr.active() or getattr(s, "online", None) or getattr(s, "spectator", False):
+            return
+        key = (id(s), s.state_version, len(s.requests))
+        if key == self._points_version:
+            return
+        self._points_version = key
+        p = self.rewind_tracker.see(s.state, s.requests, jr.count, getattr(s, "log_total", 0), grewind.board_hash)
+        if p is None:
+            return
+        if any(q.get("i") == p["i"] and q.get("seq") == p["seq"] and q.get("req") == p["req"] for q in self.rewind_points):
+            return                                        # a resumed game's current moment is in the journal already
+        self.rewind_points.append(p)
+        self.rewind_expect[p["i"]] = grewind.board_fingerprint(s.state)
+        try:
+            jr.point(p)
+        except OSError:
+            pass
+
+    def track_drops(self):
+        """The bridge said it dropped a click (too late for its question, busy, a greyed button): write which one into the journal,
+        so a rebuild leaves it out (journal.mark_drop)."""
+        s = self.session
+        if s is not self._drops_session:
+            self._drops_session, self._drops_seen = s, len(getattr(s, "dropped", []) or [])
+            return
+        dropped = getattr(s, "dropped", None) or []
+        if len(dropped) <= self._drops_seen:
+            return
+        new, self._drops_seen = dropped[self._drops_seen:], len(dropped)
+        if self.journal is None or not self.journal.active():
+            return
+        for m in new:
+            if m.get("at") is not None:
+                try:
+                    self.journal.mark_drop(m.get("c"), m.get("at"))
+                except OSError:
+                    pass
+
+    def open_rewind(self):
+        """The Undo window: this turn's moments, newest first. The rebuild engine starts at once, while you choose (Java takes a
+        while to start), and is closed again if you keep playing."""
+        why = self.rewind_unavailable()
+        options = self.rewind_choices() if why is None else []
+        if not options:
+            self.say(why or UNDO_NOTHING_YET, ORANGE, 5.0)
+            return
+        self.close_rewind_prestart()
+        try:
+            self.rewind_prestart = self.start_rebuild_session()
+        except Exception as e:                            # it starts again (and says why) when a moment is picked
+            self.rewind_prestart = None
+            crashlog.note(f"Undo: the rebuild engine could not start in advance: {e}")
+        self.modal = dlg.RewindDialog(options, self.rewind_to, self.close_rewind_prestart)
+
+    def close_rewind_prestart(self):
+        pre, self.rewind_prestart = self.rewind_prestart, None
+        if pre is not None:
+            try:
+                pre[0].close()
+            except Exception:
+                pass
+
+    def start_rebuild_session(self):
+        """(a started ForgeSession for the same game - same seed, decks, name and format - and the journal's contents). Its engine
+        log is the one the running engine isn't writing (Windows can't share it): forge_engine.log <-> forge_engine.rewind.log."""
+        full = gjournal.read_full(self.journal.path)
+        start = full.get("start") or {}
+        if not gjournal.replay_matches(start, self.replay_key()):
+            raise RuntimeError("this game was started by another version of the program")
+        decks = start.get("decks") or {}
+        if "player.dck" not in decks:
+            raise RuntimeError("the game's journal has no deck files")
+        os.makedirs(DECK_DIR, exist_ok=True)
+        paths = {}
+        for name, text in decks.items():
+            paths[name] = os.path.join(DECK_DIR, "rewind_" + os.path.basename(name))
+            with open(paths[name], "w", encoding="utf-8") as f:
+                f.write(text)
+        opps = [paths[n] for n in sorted((n for n in paths if re.fullmatch(r"opponent\d+\.dck", n)), key=lambda n: int(re.findall(r"\d+", n)[0]))]
+        session = fc.ForgeSession(paths["player.dck"], opps, name=start.get("name") or "Karl", seed=start.get("seed"),
+                                  runtime=self.launcher.runtime)
+        session.stderr_path = fc.other_engine_log(getattr(self.session, "stderr_path", None))
+        session.start()
+        return session, full
+
+    def rewind_to(self, point, label):
+        """The Undo window's choice: rebuild the game up to `point` in a second engine (RewindJob). The running engine stays as
+        it is until the rebuild has reached that moment and its board matches."""
+        pre, self.rewind_prestart = self.rewind_prestart, None
+        try:
+            if pre is None:
+                pre = self.start_rebuild_session()
+        except Exception as e:
+            self.say(f"Could not start the engine to rewind: {e}", RED, 8.0)
+            return
+        session, full = pre
+        cut = int(point["i"])
+        self.undo_check = None
+        self.resuming = grewind.RewindJob(session, full["commands"][:cut], point, label, drops=full["drops"],
+                                          fast_from=full["fast_from"], expected=self.rewind_expect.get(cut)).start()
+
+    def finish_rewind(self, job):
+        """A RewindJob ended: on success the rebuilt engine takes over (the journal is cut back to that moment); otherwise it is
+        closed and the game goes on exactly as it was."""
+        self.resuming = None
+        why = None
+        if job.error == "cancelled":
+            why = "cancelled"
+        elif job.error:
+            why = job.error
+        elif job.diverged:
+            why = job.diverged[1]
+        elif job.mismatch:
+            why = job.mismatch
+        elif not job.ok:
+            why = "the rebuild did not finish"
+        if why is not None:
+            try:
+                job.session.close()
+            except Exception:
+                pass
+            if why == "cancelled":
+                self.say("Rewind cancelled - your game is as it was.", DIM, 5.0)
+            else:
+                crashlog.note(f"Undo could not rewind to '{job.label}' (command {job.point.get('i')} of {len(job.commands)}): {why}")
+                self.say(f"Couldn't rewind exactly ({why}). Your game is as it was.", ORANGE, 12.0)
+            return
+        old, new = self.session, job.session
+        info = getattr(old, "stats_info", None)
+        new.stats_info = dict(info, resumed=True) if isinstance(info, dict) else None
+        self.session = new
+        try:
+            old.close()
+        except Exception:
+            pass
+        cut = int(job.point["i"])
+        try:
+            self.journal.cut(cut, time.time())
+        except OSError as e:
+            # The journal still holds the undone game: Resume would play THAT back. Give it up (kept as "not_resumable").
+            crashlog.note(f"Undo: the journal could not be cut back, so this game can't be resumed or rewound again: {e}")
+            try:
+                self.journal.discard(time.time())
+            except OSError:
+                pass
+        self._hook_session()
+        self.reset_game()
+        self.resumed_game = True                          # Round UX1: no tour
+        self.rewind_points = [p for p in self.rewind_points if p.get("i", 0) < cut]
+        self.rewind_expect = {k: v for k, v in self.rewind_expect.items() if k < cut}
+        starts = [p.get("turn") for p in self.rewind_points if p.get("start")]
+        self.rewind_tracker.reset(turn_started=max(starts) if starts else None)
+        self._drops_session, self._drops_seen = new, len(getattr(new, "dropped", []) or [])
+        self._stats_sync_session()                        # the old game's record is closed (unfinished), this one goes on
+        rec, events = self.stats_rec, getattr(new, "events", None)
+        while events:                                     # the rebuilt turns' events count for the stats, but make no sound
+            ev, _rx = events.popleft()
+            if rec is not None:
+                rec.note_event(ev)
+        self.play_cue("rewind")
+        took = f" in {job.seconds:.0f} s" if job.seconds else ""
+        self.say(f"Rewound to {job.label} ({len(job.commands)} actions rebuilt{took}).", GREEN, 6.0)
 
     # ---- passing for me: Skip window, auto-pass ---------------------------------------------------------
 
@@ -5374,16 +5630,69 @@ class ForgeTable:
 
     def smart_passing(self):
         """Patch 43: the bridge passes the meaningless priority stops for me (Passing.java). False for an older bridge, a classic-stops
-        session (the card check) and a spectator."""
+        session (the card check), a spectator, and (round PRI1) my seat in Slow: then the table plays the way it did before patch 43
+        (Enter is OK, no Ctrl keys, the old Skip window). The newest snapshot says how my seat plays now; before the first one (and
+        for a bridge whose snapshots don't say), the "ready" line does. An online guest's table never sees that line at all."""
         s = self.session
         if getattr(s, "spectator", False) or s.me() is None:
             return False
-        mode = getattr(s, "passing", None)
-        if mode is None:
-            # An online guest's table never sees the bridge's "ready" line; its seat's snapshots carry the passing state instead.
-            p = ((self.state or {}).get("yield") or {}).get("passing")
-            return isinstance(p, dict) and p.get("classic") is False
-        return mode == "smart"
+        p = ((self.state or {}).get("yield") or {}).get("passing")
+        if isinstance(p, dict) and "classic" in p:
+            return p.get("classic") is False
+        return getattr(s, "passing", None) == "smart"
+
+    # ---- round PRI1: Speed, Fast or Slow (Karl, 9 Oct) ----
+
+    def speed_label(self):
+        return SPEED_LABELS.get(self.speed, "Fast")
+
+    def skip_label(self):
+        """The Skip button's words (patch 43: "Full control" while it is on; round PRI1: never "(auto)" in Slow, where auto-pass is off)."""
+        if self.full_control_on():
+            return "Full control"
+        return "Skip (auto)" if self.auto_pass and not self.slow_now() else "Skip..."
+
+    def slow_now(self):
+        """My seat plays Slow right now (the bridge's own word for it, from the newest snapshot)."""
+        return bool(self.passing_state().get("slow"))
+
+    def speed_supported(self):
+        """The bridge takes the Speed command for my seat: its snapshots say "slow" (round PRI1 on), and the whole engine isn't
+        playing the old way anyway (--classic-stops, the card check)."""
+        p = self.passing_state()
+        return "slow" in p and not (p.get("classic") and not p.get("slow"))
+
+    def sync_speed(self):
+        """Every sync: make my seat play the Speed in the settings. It is sent at the first snapshot that says how the seat plays
+        (a new engine starts Fast; the mulligan comes before any priority), and again when the setting changes - again after
+        SPEED_RESEND if the seat still hasn't taken it (a command that reached the bridge before its game did is dropped). Nothing
+        is sent for Fast unless the seat is Slow, so a game in Fast sends exactly what it did before this round."""
+        st = self.state
+        if not st or self.session.me() is None or getattr(self.session, "spectator", False) or not self.speed_supported():
+            return False
+        want = self.speed == "slow"
+        if want == self.slow_now():
+            self._speed_sent = None
+            return False
+        key, now = (id(self.session), self.speed), time.monotonic()
+        if self._speed_sent is not None and self._speed_sent[0] == key and now - self._speed_sent[1] < SPEED_RESEND:
+            return False
+        self._speed_sent = (key, now)
+        self.session.set_speed(self.speed)
+        return True
+
+    def toggle_speed(self):
+        """Cog > GAME > Speed: Fast <-> Slow. Saved at once; a game on the table changes at my next priority."""
+        self.speed = "slow" if self.speed != "slow" else "fast"
+        self.save_settings()
+        sent = self.game_in_progress() and self.sync_speed()
+        now = " from your next priority" if sent else (" from the next game" if self.game_in_progress() and not self.speed_supported()
+                                                        else "")
+        if self.speed == "slow":
+            self.say(f"Slow{now}: you pass priority yourself at the old stops (your Main 1, attackers, Main 2 and end step; each "
+                     "opponent's upkeep, attackers and end step; anything on the stack), even when you can't act.", CYAN, 8.0)
+        else:
+            self.say(f"Fast{now}: Forge passes the stops that don't matter again (patch 43).", CYAN, 5.0)
 
     def at_priority(self):
         """Forge is asking me for priority right now (not a payment, a target, an attack...)."""
@@ -5634,7 +5943,10 @@ class ForgeTable:
         if stack:
             opts.append(("Let the stack resolve", s.yield_stack, "normal"))
         opts.append(("Skip to my next turn", s.yield_until, "normal"))
-        opts.append((f"Auto-pass when I can't do anything: {'ON' if self.auto_pass else 'OFF'}", self.toggle_auto_pass, "normal"))
+        if self.slow_now():                                # round PRI1: auto-pass is off while Slow lasts; this is the way back
+            opts.append(("Speed is Slow: switch to Fast", self.toggle_speed, "normal"))
+        else:
+            opts.append((f"Auto-pass when I can't do anything: {'ON' if self.auto_pass else 'OFF'}", self.toggle_auto_pass, "normal"))
         if smart:
             opts.append((f"Full control (Ctrl+Shift): {'ON' if self.passing_state().get('fullControl') else 'OFF'}",
                          self.toggle_full_control, "normal"))
@@ -5665,7 +5977,12 @@ class ForgeTable:
     def open_skip(self):
         if not self.skip_available():
             return
-        if self.smart_passing():
+        if self.slow_now():                                # round PRI1
+            text = ("Speed is Slow (Cog > GAME): you get priority at the stops from before patch 43 - your Main 1, attackers, Main 2 "
+                    "and end step; each opponent's upkeep, attackers and end step - and whenever something is on the stack, and "
+                    "nothing is passed for you. A skip below stops early if an opponent casts a spell or attacks you; Esc or Cancel "
+                    "ends it.")
+        elif self.smart_passing():
             text = ("Forge passes for you when you can't do anything, your own spells resolve without a stop (hold Ctrl as you cast "
                     "to keep priority), and an opponent's trigger or ability passes unless you hold an answer to it. Enter passes "
                     "until an opponent casts something or attacks you, Shift+Enter passes the rest of the turn, Ctrl gives full control "
@@ -5814,7 +6131,11 @@ class ForgeTable:
             self.play_cue("rewind")                     # patch 47: AU1 built this cue (a swish played backwards); nothing played it
         elif time.time() >= due:
             self.undo_check = None
-            self.say(UNDO_NOTHING, ORANGE, 5.0)
+            why = self.rewind_unavailable()               # round UNDO1: Forge had nothing to undo - offer this turn's moments
+            if why is None and not self.modal:
+                self.open_rewind()
+            else:
+                self.say(why or UNDO_NOTHING, ORANGE, 5.0)
 
     def track_life(self):
         """Remember each player's life so a change can flash on their panel (several hits in a row add up while it is showing)."""
@@ -5886,6 +6207,8 @@ class ForgeTable:
                 self.art.collect()
             return 1                                          # keep the progress screen moving
         n = s.poll() or 0
+        self.track_points()                        # round UNDO1: before anything of the table's own answers this snapshot
+        self.track_drops()
         self.track_events()
         self.track_quiet()
         self.track_life()
@@ -5893,6 +6216,7 @@ class ForgeTable:
         self.track_arrivals()
         self.track_undo()
         self.track_yield()
+        self.sync_speed()                          # round PRI1: my seat plays the Speed in the settings (Slow from the first snapshot)
         self.track_passing()                       # patch 43
         self.track_stats()                         # patch 44
         if self.art:
@@ -5908,6 +6232,8 @@ class ForgeTable:
             self.modal = None
             if closes:
                 self.running = False
+        if self.rewind_prestart is not None and not isinstance(self.modal, dlg.RewindDialog) and self.resuming is None:
+            self.close_rewind_prestart()                       # round UNDO1: the Undo window went away without a choice
         if self.track_online():                               # Round MP1: the other table left - before any other dialog
             return n
         if self.modal or self.menu:
@@ -6131,6 +6457,8 @@ class ForgeTable:
         online = getattr(self.session, "online", None)
         if online:                                         # Round MP1 (never the password or the address)
             lines.append(f"Online: {online}, with {getattr(self.session, 'peer_name', None) or 'nobody yet'}")
+        if self.speed == "slow" or self.slow_now():         # round PRI1 (Fast, the default, adds no line)
+            lines.append(f"Speed: {self.speed_label()} in the settings; my seat plays {'Slow' if self.slow_now() else 'Fast'}")
         return lines
 
     def write_perf_log(self):
@@ -6148,6 +6476,14 @@ class ForgeTable:
 
     def shutdown(self):
         self.write_perf_log()
+        self.close_rewind_prestart()               # round UNDO1: an engine started for a rewind never outlives the program
+        job = self.resuming
+        if getattr(job, "kind", None) == "rewind":
+            job.cancelled = True
+            try:
+                job.session.close()
+            except Exception:
+                pass
         self.stats_close()                         # patch 44: a game still going is written down as unfinished
         if self.journal is not None:
             self.journal.close()

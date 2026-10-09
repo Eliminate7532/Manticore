@@ -1236,6 +1236,27 @@ class OptionsDialog(Dialog):
             self.choose(ev.key - pygame.K_1)
 
 
+class RewindDialog(OptionsDialog):
+    """Round UNDO1: the Undo window. One button per moment of this turn (rewind.choices: newest first, the start of the turn
+    last; keys 1-9), and 'Keep playing'. A choice calls pick(point, label); closing it without one calls cancelled()."""
+
+    def __init__(self, choices, pick, cancelled=None):
+        self.choices, self.pick, self.cancelled = list(choices), pick, cancelled
+        super().__init__("Go back to which moment of your turn?",
+                         "The game is rebuilt from the first turn with the same shuffle and your same clicks, up to the moment you "
+                         "pick. A long game takes a while. If the rebuilt game doesn't match, your game stays as it is.",
+                         [(label, None, "normal") for _p, label in self.choices], "Keep playing")
+
+    def choose(self, index):
+        self.done = True
+        if index is None:
+            if self.cancelled is not None:
+                self.cancelled()
+            return
+        point, label = self.choices[index]
+        self.pick(point, label)
+
+
 class GameOverDialog(Dialog):
     """Victory / Defeat with the two things you want next: a new game (deck screen) or a look at the final board."""
 

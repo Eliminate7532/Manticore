@@ -390,9 +390,9 @@ public final class Snapshot {
             o.add("prompt", prompt);
             JsonObject stops = new JsonObject();
             JsonArray mine = new JsonArray();
-            for (forge.game.phase.PhaseType ph : gui.stopsMine) mine.add(ph.name());
+            for (forge.game.phase.PhaseType ph : gui.stopSet(true)) mine.add(ph.name());      // round PRI1: Slow's or Fast's
             JsonArray theirs = new JsonArray();
-            for (forge.game.phase.PhaseType ph : gui.stopsTheirs) theirs.add(ph.name());
+            for (forge.game.phase.PhaseType ph : gui.stopSet(false)) theirs.add(ph.name());
             stops.add("mine", mine);
             stops.add("theirs", theirs);
             o.add("stops", stops);

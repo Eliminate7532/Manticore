@@ -21,6 +21,7 @@ import paths
 MARKER_NAME = "session.json"
 ENGINE_LOG = "forge_engine.log"
 CRASHED_ENGINE_LOG = "forge_engine.crashed.log"
+ENGINE_LOG_REWIND = "forge_engine.rewind.log"     # round UNDO1 (forge_client.other_engine_log)
 JOURNAL_LINES = 400
 
 
@@ -55,6 +56,9 @@ def begin(version_text="", folder=None, now=None):
     if before is not None:
         try:
             src = os.path.join(log_dir, ENGINE_LOG)
+            alt = os.path.join(log_dir, ENGINE_LOG_REWIND)        # round UNDO1: after a rewind the engine wrote this one
+            if os.path.isfile(alt) and (not os.path.isfile(src) or os.path.getmtime(alt) > os.path.getmtime(src)):
+                src = alt
             if os.path.isfile(src):
                 with open(src, "rb") as f:
                     data = f.read()

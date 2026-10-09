@@ -728,6 +728,20 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     longer hold a real user name (the public source export refused the project on Karl's PC); tests/test_round_alt2.py's PickerTests.settle() no longer passes before the
     tiles are drawn (test_pick_an_mpc_picture and test_offline_says_so_and_try_again_searches_again failed 13 percent of runs in the sandbox, 60-75 percent under load).
     quick_tests' run time (about 428 s against the 180 s target) is not touched.
+[x] Round UNDO1 (2026-10-09, Claude (Opus), 0.28.53.2; the patch number is Karl's to assign): Undo goes back as far as the start of
+    your turn (Karl, 8 Oct; his choices: an exact rebuild, picked from a list). The journal records each moment of my turn (the
+    first question, then each priority) and which clicks the bridge dropped; Undo lists the moments ("Main 1: before you cast Sol
+    Ring", newest first, the start last); the pick starts a second engine with the same seed and decks, replays the journal up to
+    that moment (dropped clicks left out, each click sent as soon as its question is asked), compares the board with the one
+    recorded there, and only then takes over - otherwise nothing changes. Mana floating: Forge's own undo first, as before. Online:
+    unchanged. Sandbox: 15-30 s for rewinds at turns 6-12; the whole-game replay of a 33-turn 4-player game 68-71 s.
+    Later, if the wait is too long: a standby engine kept at the start of your turn (Karl's option 2), Resume on the faster replay.
+[x] Round PRI1 (2026-10-09, Claude (Opus), 0.28.53.3 - reserved by Karl; the patch number is Karl's to assign): Speed in Cog > GAME
+    (Karl's "fast/slow", note 1 of 8 Oct). Fast = patch 43's stops (the default). Slow = the stops from before patch 43 for my
+    seat - my Main 1, attackers, Main 2 and end step; each opponent's upkeep, attackers and end step; anything on the stack - with
+    nothing passed for me and auto-pass off (Karl's answer: the old stops, not every step). Payment is the same in both (Karl's
+    answer). Switchable mid-game (from the next priority), saved in settings.json, journalled like any command (Resume and Undo's
+    rebuild keep it), per seat online. Bridge jar rebuilt: games saved before it can't be resumed.
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
     commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
     and by commander-on-turn-N, missed land drops, colour screw.
