@@ -14,7 +14,7 @@ useful thing you can send.
   Surface Pro with a Snapdragon: it runs there through Windows' own translation, perhaps more slowly.
 - 8 GB of RAM. It runs with less, but more slowly: under 8 GB the deck screen shows an orange note and
   the rules engine gets a smaller memory limit.
-- About [500 MB] of free disk space, plus room for card pictures (they are kept once downloaded).
+- About 500 MB of free disk space, plus room for card pictures (they are kept once downloaded).
 - An internet connection the first time you open a deck, to download card pictures from Scryfall.
 - You do NOT need Python, Java or administrator rights. The installer brings everything it needs.
 
@@ -22,7 +22,7 @@ useful thing you can send.
 2. INSTALL, UPDATE, UNINSTALL
 -----------------------------
 Install
-  1. Run Manticore-[x.y.z]-setup.exe from the link Karl sends you.
+  1. Run the Manticore-...-setup.exe file from the link Karl sends you.
   2. The installer isn't signed yet, so Windows may say "Windows protected your PC". Click More info,
      then Run anyway.
   3. Accept the licence (GNU GPL v3), keep the suggested folder, and click Install. Leave "Run Manticore"
@@ -64,8 +64,10 @@ Keys worth knowing
   E               End turn
   A               Full Send: attack with everything that can
   U / Ctrl+Z      Undo: go back to an earlier moment of your turn (the game is rebuilt, which takes a while)
+  J               Judge?!: the card's Oracle text and official rulings (the card under the mouse, or the top of the stack)
   M               Sound on / off
   + / -           Bigger / smaller text
+  Ctrl and + / -  Bigger / smaller cards on the battlefield (when they fit in one row)
   H               Every key and control
   F8              Report a bug, or suggest an idea
 
@@ -75,9 +77,10 @@ Speed (Cog > GAME > Speed)
   can't do anything, and nothing is passed for you. Paying mana is the same in both.
 
 Formats
-  The deck screen's Format buttons (top right) switch between Commander and Brawl (MTG Arena's 100-card
-  Brawl: a creature or planeswalker commander, 25 life, 30 with 2-3 opponents, no commander damage). Import
-  an Arena deck with its Export button, then Ctrl+V on the deck screen. Online play is Commander only.
+  The deck screen's Format buttons (top right) switch between Commander, Brawl (MTG Arena's 100-card
+  Brawl: a creature or planeswalker commander, 25 life, 30 with 2-3 opponents, no commander damage) and
+  Standard (60 cards or more, up to 4 of a card, no commander, 20 life). Import an Arena deck with its
+  Export button, then Ctrl+V on the deck screen. Online play is Commander only.
 
 Deck screen tags
   NOT LEGAL means a deck breaks a rule of its format (a banned card, the wrong colours, too many or too few
@@ -154,7 +157,7 @@ On the deck screen F8 opens straight on that tab.
 - The newest sets may be missing: the alpha uses one fixed Forge version. A card it doesn't know is named on
   the deck screen ("not in this version of Forge yet") and left out of the game, never silently swapped.
 - At 200% text the screen is tight: some labels are shortened.
-- [Anything Karl's 20 test games turn up.]
+- A game saved before an update may not resume after it.
 
 
 7. LICENCE AND CREDITS

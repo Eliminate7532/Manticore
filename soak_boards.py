@@ -3,8 +3,8 @@
 soak_boards.py - a mid-game board for a soak game (Round 28c, SOAK_PLAN item 7).
 
 Half of the nightly soak games start from turn 4-6 instead of turn 1: every seat gets 5-6 lands and 1-2 creatures or
-artifacts in play, 5-7 cards in hand and 30-40 life (15-25 in Brawl), all taken from its OWN deck (so the colours are right and every card
-is one that deck really plays), the rest of the deck as its library, and its commander back in the command zone. The first
+artifacts in play, 5-7 cards in hand and 30-40 life (15-25 in Brawl, 8-20 in Standard), all taken from its OWN deck (so the colours are right and every card
+is one that deck really plays), the rest of the deck as its library, and its commander (if it has one) back in the command zone. The first
 turns of a normal soak game are mostly land drops; a board like this reaches real questions sooner.
 
 It is applied with Forge's own developer "Setup Game State" (the bridge's "setup" command, dev mode only), which clears
@@ -22,7 +22,8 @@ LANDS = (5, 6)
 PERMANENTS = (1, 2)
 HAND = (5, 7)
 LIFE = (30, 40)
-LIFE_BY_FORMAT = {"brawl": (15, 25)}     # round FMT1: Brawl starts at 25 (30 in a pod), so a mid-game board has less
+LIFE_BY_FORMAT = {"brawl": (15, 25),     # round FMT1: Brawl starts at 25 (30 in a pod), so a mid-game board has less
+                  "standard": (8, 20)}   # round CON1: Standard starts at 20, and has no commander (no command zone line)
 TURN = (4, 6)
 
 

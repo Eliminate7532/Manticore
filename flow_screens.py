@@ -109,6 +109,27 @@ def dck_commanders(text):
     return names
 
 
+def dck_faces(text):
+    """Round CON1: the card(s) that stand for a .dck deck on the VS screen: its [Commander] names, or - a deck with no commander
+    (Standard) - the one card it has the most copies of, basic lands left out (deck_library.face_card). [] when there's none."""
+    names = dck_commanders(text)
+    if names:
+        return names
+    cards, inside = [], False
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if line.startswith("["):
+            inside = line.lower() == "[main]"
+            continue
+        if inside and line:
+            m = re.match(r"^(\d+)\s+(.+?)(\|.*)?$", line)
+            if m:
+                cards += [m.group(2).strip()] * int(m.group(1))
+    import deck_library
+    face = deck_library.face_card(cards)
+    return [face] if face else []
+
+
 PARTNER_FAN = 0.6          # Round UI4: the second commander sits this fraction of a card to the right of the first
 PARTNER_DROP = 0.08        # ... and this fraction of a card lower
 FRAME_PAD = 0.03           # Round 32: gfx.card_in_frame's frame reaches this fraction of the card's width past each edge ...

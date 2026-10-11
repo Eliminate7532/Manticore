@@ -141,7 +141,7 @@ class BeatMappingTests(unittest.TestCase):
         g._play_beat(beat("zone", card=1, **{"from": "Hand", "to": "Graveyard"}), 99, "Karl")
         self.assertIn("card.discard", self.played)
         g._play_beat(beat("zone", card=1, **{"from": "Battlefield", "to": "Graveyard"}), 99, "Karl")
-        self.assertIn("destroy", self.played)
+        self.assertTrue(any(c == "destroy" or c.startswith("destroy.") for c in self.played), self.played)   # patch 49: by type
         g._play_beat(beat("zone", card=1, **{"from": "Battlefield", "to": "Exile"}), 99, "Karl")
         self.assertIn("exile", self.played)
 

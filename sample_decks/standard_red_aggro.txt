@@ -1,0 +1,15 @@
+# format: standard
+# Standard sample (Round CON1). Cheap red creatures that hit hard early, then burn to finish: point it at their face.
+
+Deck
+4 Fanatical Firebrand
+4 Reckless Lackey
+4 Searslicer Goblin
+4 Hexing Squelcher
+4 Razorkin Needlehead
+4 Hearthborn Battler
+4 Burst Lightning
+4 Shock
+4 Lightning Strike
+4 Boltwave
+20 Mountain

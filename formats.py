@@ -2,9 +2,18 @@
 """
 formats.py - the game formats (Round FMT1). No pygame, no I/O.
 
-Two formats today:
+Three formats today:
   commander   the default, and what every deck was before this round. 100 cards, 40 life, 21 commander damage.
   brawl       MTG Arena's 100-card Brawl (Karl, 2 Oct 2026: "Arena 100 card brawl"). Forge plays it as its Brawl variant.
+  standard    Round CON1: 60-card Standard (Karl, 2 Oct 2026: "60-card Standard"; and the first step of the RPG plan of 9 Oct, whose
+              duels are 60-card Constructed games). Forge plays it as a plain Constructed game: no commander, no variant.
+
+Standard, from the Comprehensive Rules effective 25 Sep 2026 (read at media.wizards.com, 9 Oct 2026):
+  100.2a  at least 60 cards; at most four cards with the same English name, basic lands excepted
+  100.4a  a sideboard of at most fifteen cards; the four-card limit counts the deck and the sideboard together
+  103.4   each player starts with 20 life
+  103.5c  the first mulligan is free in a multiplayer game (and in Brawl) - so not in a two-player Standard game
+  The card pool and the banned list: Scryfall's "standard" legality and banned:standard.
 
 Arena's Brawl, as the Comprehensive Rules' Brawl option (903.12, rules of 25 Sep 2026) with Arena's 100-card deck:
   903.12c  the commander is a legendary creature, planeswalker, Vehicle, or Spacecraft with a power/toughness box
@@ -21,24 +30,36 @@ Where a deck's format is written down:
   the .dck file Forge reads  "Deck Type=Brawl" in [metadata] (a key Forge itself writes and reads: DeckFileHeader.DECK_TYPE).
                           Only a Brawl deck gets it, so a Commander .dck is exactly what it was. A journal, a bug report and
                           replay.py carry the .dck texts, so a resumed or replayed game knows its format from them.
-  the engine            java_bridge Main --format brawl; its "ready" line says which format it started.
+  the engine            java_bridge Main --format brawl; its "ready" line says which format it started. Round CON1: the
+                          engine's name for a format is engine(key) - "constructed" for Standard (the bridge only knows how a
+                          game is played, not which cards a format allows; the deck screen checks those).
+  Round CON1: Standard's .dck says "Deck Type=Constructed" (Forge's own value for a 60-card deck).
 """
 from collections import namedtuple
 import re
 
-Format = namedtuple("Format", "key name deck_size life_two life_pod commander_damage planeswalker_commanders online dck_type")
+# Round CON1 added the last five fields:
+#   commander  the deck has a commander (False: every card is in the main deck, there is no command zone)
+#   copies     at most this many cards with one name (basic lands and "a deck can have any number" cards excepted)
+#   sideboard  at most this many sideboard cards (0: a sideboard isn't part of the format)
+#   exact      the deck has exactly deck_size cards (True) or at least deck_size (False)
+#   engine     the bridge's --format: how Forge plays it ("commander", "brawl", "constructed")
+Format = namedtuple("Format", "key name deck_size life_two life_pod commander_damage planeswalker_commanders online dck_type "
+                              "commander copies sideboard exact engine")
 
 FORMATS = {
-    "commander": Format("commander", "Commander", 100, 40, 40, True, False, True, None),
-    "brawl": Format("brawl", "Brawl", 100, 25, 30, False, True, False, "Brawl"),
+    "commander": Format("commander", "Commander", 100, 40, 40, True, False, True, None, True, 1, 0, True, "commander"),
+    "brawl": Format("brawl", "Brawl", 100, 25, 30, False, True, False, "Brawl", True, 1, 0, True, "brawl"),
+    "standard": Format("standard", "Standard", 60, 20, 20, False, False, False, "Constructed", False, 4, 15, False, "constructed"),
 }
-ORDER = ("commander", "brawl")          # the order of the deck screen's format buttons
+ORDER = ("commander", "brawl", "standard")          # the order of the deck screen's format buttons
 DEFAULT = "commander"
 
 BLURB = {
     "commander": "Commander: 100 cards, 40 life, 21 commander damage.",
     "brawl": "Brawl (MTG Arena): 100 cards, a legendary creature or planeswalker commander, 25 life (30 in a pod), "
              "no commander damage, Arena's cards and banned list.",
+    "standard": "Standard: 60 cards or more, up to 4 of a card, no commander, 20 life, Standard's cards and banned list.",
 }
 
 _TXT_LINE = re.compile(r"^\s*#\s*format\s*[:=]\s*([A-Za-z]+)\s*$", re.I | re.M)
@@ -62,6 +83,16 @@ def name(key):
 def starting_life(key, players):
     f = get(key)
     return f.life_two if players <= 2 else f.life_pod
+
+
+def has_commander(key):
+    """Round CON1: does a deck of this format have a commander (and a game a command zone)?"""
+    return get(key).commander
+
+
+def engine(key):
+    """Round CON1: the bridge's --format for this format: "commander", "brawl" or "constructed"."""
+    return get(key).engine
 
 
 def life_note(key, players):

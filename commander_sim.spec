@@ -38,6 +38,7 @@ a = Analysis(
         _data("START_HERE.txt", "."),              # the testers' first page, opened from the installer's last page
         _data("banned_commander.snapshot.json", "."),    # Round BAN1: the banned list for a copy that's never been online
         _data("banned_brawl.snapshot.json", "."),        # Round FMT1: the same for MTG Arena's Brawl
+        _data("banned_standard.snapshot.json", "."),     # Round CON1: the same for Standard
         _data("update_config.json", "."),          # Round 30: where an installed copy looks for updates
     ],
     # Modules only imported lazily or by name: --soak imports tools.soak, which imports the rest inside _load_modules().

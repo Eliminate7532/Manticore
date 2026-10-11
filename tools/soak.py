@@ -4,7 +4,7 @@ tools\\soak.py - whole games through the real bridge, with soak_bot.py in my sea
 bugs overnight without playing (Round 28b).
 
     python tools\\soak.py --hours 8 [--games N] [--players 2..4] [--decks sample|mine] [--seed N] [--fault NAME] [--out DIR]
-                           [--format commander|brawl]
+                           [--format commander|brawl|standard]
 
 Each game: soak_bot.SoakBot plays me, against 1 to 3 Forge AIs (the seat count rotates between 2, 3
 and 4 unless --players fixes it); decks come from sample_decks/ by default (--decks mine also uses
@@ -664,8 +664,10 @@ def main(argv=None):
     ap.add_argument("--game-timeout", type=float, default=GAME_TIMEOUT, dest="game_timeout", help="per-game time cap, in seconds")
     ap.add_argument("--boards", type=float, default=0.0,
                     help="share of games that start from a mid-game board, 0..1 (round 28c; tools\\nightly.py uses 0.5)")
-    ap.add_argument("--format", choices=("commander", "brawl"), default="commander",
-                    help="round FMT1: the games' format; decks are the sample (or my_decks) files of that format")
+    import formats
+    ap.add_argument("--format", choices=formats.ORDER, default="commander",
+                    help="round FMT1: the games' format; decks are the sample (or my_decks) files of that format "
+                         "(round CON1: standard too; the canary is always a Commander game)")
     ap.add_argument("--no-canary", action="store_false", dest="canary",
                     help="skip the canary game (a deliberate fault that must be reported; round 28ba)")
     args = ap.parse_args(argv)

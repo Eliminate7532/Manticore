@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygame
 import requests
 
+import formats
 import legality
 import deck_library as lib
 import forge_client as fc
@@ -698,7 +699,7 @@ class BundledDeckTests(unittest.TestCase):
         for e in entries:
             with self.subTest(deck=e.name):
                 self.assertTrue(e.ok and e.builtin, e.error)
-                self.assertEqual(e.total, 100)
+                self.assertEqual(e.total, formats.get(e.format).deck_size)       # round CON1: 60 for a Standard sample
                 self.assertEqual([p for p in e.problems(os.path.join(HERE, "no_forge_here"))
                                   if not legality.is_unchecked_line(p[0])], [])      # Round BAN1: no card data in a test run
 

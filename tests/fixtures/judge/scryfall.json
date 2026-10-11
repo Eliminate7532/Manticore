@@ -1,0 +1,152 @@
+{
+ "_comment": "Real Scryfall answers, fetched 2026-10-10 from api.scryfall.com (/cards/named?exact=... and each card's rulings_uri); the card objects trimmed to the fields the Judge reads. Round JDG1.",
+ "thassa": {
+  "card": {
+   "object": "card",
+   "id": "726e8b29-13e9-4138-b6a9-d2a0d8188d1c",
+   "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+   "name": "Thassa's Oracle",
+   "layout": "normal",
+   "mana_cost": "{U}{U}",
+   "type_line": "Creature — Merfolk Wizard",
+   "oracle_text": "When this creature enters, look at the top X cards of your library, where X is your devotion to blue. Put up to one of them on top of your library and the rest on the bottom of your library in a random order. If X is greater than or equal to the number of cards in your library, you win the game. (Each {U} in the mana costs of permanents you control counts toward your devotion to blue.)",
+   "power": "1",
+   "toughness": "3",
+   "rulings_uri": "https://api.scryfall.com/cards/726e8b29-13e9-4138-b6a9-d2a0d8188d1c/rulings"
+  },
+  "rulings": [
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "If your devotion to blue is zero at the time the triggered ability of Thassa's Oracle resolves, you don't look at or move any cards in your library. If you have no cards in your library, you win the game."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "Colorless and generic mana symbols ({C}, {0}, {1}, {2}, {X}, and so on) in mana costs of permanents you control don't count toward your devotion to any color."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "Mana symbols in the text boxes of permanents you control don't count toward your devotion to any color."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "Hybrid mana symbols, monocolored hybrid mana symbols, and Phyrexian mana symbols do count toward your devotion to their color(s)."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "If an activated ability or triggered ability has an effect that depends on your devotion to a color, you count the number of mana symbols of that color among the mana costs of permanents you control as the ability resolves. The permanent with that ability will be counted if it's still on the battlefield at that time."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
+    "source": "wotc",
+    "published_at": "2020-01-24",
+    "comment": "If you put an Aura on an opponent's permanent, you still control the Aura, and mana symbols in its mana cost count towards your devotion."
+   }
+  ]
+ },
+ "delver": {
+  "card": {
+   "object": "card",
+   "id": "6904ea20-e504-47da-95a0-08739fdde260",
+   "oracle_id": "edd531b9-f615-4399-8c8c-1c5e18c4acbf",
+   "name": "Delver of Secrets // Insectile Aberration",
+   "layout": "transform",
+   "type_line": "Creature — Human Wizard // Creature — Human Insect",
+   "rulings_uri": "https://api.scryfall.com/cards/6904ea20-e504-47da-95a0-08739fdde260/rulings",
+   "card_faces": [
+    {
+     "object": "card_face",
+     "name": "Delver of Secrets",
+     "mana_cost": "{U}",
+     "type_line": "Creature — Human Wizard",
+     "oracle_text": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform this creature.",
+     "power": "1",
+     "toughness": "1"
+    },
+    {
+     "object": "card_face",
+     "name": "Insectile Aberration",
+     "mana_cost": "",
+     "type_line": "Creature — Human Insect",
+     "oracle_text": "Flying",
+     "power": "3",
+     "toughness": "2"
+    }
+   ]
+  },
+  "rulings": [
+   {
+    "object": "ruling",
+    "oracle_id": "edd531b9-f615-4399-8c8c-1c5e18c4acbf",
+    "source": "wotc",
+    "published_at": "2011-09-22",
+    "comment": "You may reveal the card even if it's not an instant or sorcery. Whether or not you reveal it, the card stays on top of your library."
+   }
+  ]
+ },
+ "doubling": {
+  "card": {
+   "object": "card",
+   "id": "f2c4f80e-84a0-463b-82c3-5c6503809351",
+   "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+   "name": "Doubling Season",
+   "layout": "normal",
+   "mana_cost": "{4}{G}",
+   "type_line": "Enchantment",
+   "oracle_text": "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.\nIf an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.",
+   "rulings_uri": "https://api.scryfall.com/cards/f2c4f80e-84a0-463b-82c3-5c6503809351/rulings"
+  },
+  "rulings": [
+   {
+    "object": "ruling",
+    "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+    "source": "wotc",
+    "published_at": "2024-11-08",
+    "comment": "Planeswalkers will enter with double the normal number of loyalty counters. However, if you activate an ability whose cost has you put loyalty counters on a planeswalker, the number you put on isn't doubled. This is because those counters are put on as a cost, not as an effect."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+    "source": "wotc",
+    "published_at": "2024-11-08",
+    "comment": "Everything that is specified by the effect creating the original token or tokens will also be true about the additional token or tokens created by Doubling Season's replacement effect. For example, if an effect tells you to create a token \"tapped and attacking,\" the additional tokens will also be tapped and attacking."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+    "source": "wotc",
+    "published_at": "2024-11-08",
+    "comment": "Doubling Season affects permanents that enter with counters."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+    "source": "wotc",
+    "published_at": "2024-11-08",
+    "comment": "Battles will enter with double the normal number of defense counters."
+   },
+   {
+    "object": "ruling",
+    "oracle_id": "01546b7d-a233-4176-8843-d732074dc5b6",
+    "source": "wotc",
+    "published_at": "2024-11-08",
+    "comment": "If there are two Doubling Seasons on the battlefield, then the number of tokens or counters is four times the original number. If there are three on the battlefield, then the number of tokens or counters is eight times the original number, and so on."
+   }
+  ]
+ }
+}

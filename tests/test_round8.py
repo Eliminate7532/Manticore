@@ -397,8 +397,9 @@ class HelpWindowTests(unittest.TestCase):
     # Not "a normal window needs no scrolling": how tall the list is depends on the font (Karl's Windows font is taller than the
     # one on the machine these tests were first written on, so the list needed scrolling at 1360x840 and even at 1920x1080).
     # What must hold for any font: a window big enough has no scrolling, and in a smaller one the end of the list is reachable.
-    BIG = (3000, 2800)                    # text stops growing past fs 1.7, so a taller window only adds room (Windows Segoe UI needed it at round 20;
-                                          # 2600 -> 2800 for patch 43's "Enter / Ctrl / Y" line: the list filled 2600 exactly before it)
+    BIG = (3000, 3000)                    # text stops growing past fs 1.7, so a taller window only adds room (Windows Segoe UI needed it at round 20;
+                                          # 2600 -> 2800 for patch 43's "Enter / Ctrl / Y" line: the list filled 2600 exactly before it;
+                                          # 2800 -> 3000 for round JDG1's "J / Judge?!" line: 119 px over at 2800, 81 px spare at 3000)
 
     def test_a_very_big_window_shows_the_whole_list_without_scrolling(self):
         gui = self.open_help(self.BIG, 1.0)

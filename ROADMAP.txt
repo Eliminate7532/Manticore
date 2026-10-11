@@ -724,6 +724,7 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     (tests/fixtures/ui6/layout_baseline.json and layout_baseline_win32.json, 28 layouts each). Not done: no fade; the tour's wording is not adapted to the modes
     (its focus and log steps are left out when those are off); the Cog controls are click-to-cycle buttons, not arrow cyclers.
     Found, not fixed: Undo drops off the action bar at some bar widths even in Always/Always (see CLAUDE.md, Patch UI6).
+    -> Fixed in Lane A (10 Oct, 0.28.53.6): see "Lane A: the Undo bar" below.
 [x] Patch TFIX1 (2026-10-08, Claude (Sonnet 5.5), tests only, 0.28.53.1 unchanged): the two tests that kept quick_tests red. tests/test_patch41.py's sample paths no
     longer hold a real user name (the public source export refused the project on Karl's PC); tests/test_round_alt2.py's PickerTests.settle() no longer passes before the
     tiles are drawn (test_pick_an_mpc_picture and test_offline_says_so_and_try_again_searches_again failed 13 percent of runs in the sandbox, 60-75 percent under load).
@@ -742,6 +743,42 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     nothing passed for me and auto-pass off (Karl's answer: the old stops, not every step). Payment is the same in both (Karl's
     answer). Switchable mid-game (from the next priority), saved in settings.json, journalled like any command (Resume and Undo's
     rebuild keep it), per seat online. Bridge jar rebuilt: games saved before it can't be resumed.
+[x] Round CON1 (2026-10-09/10, Claude (Opus), 0.28.53.4 - proposed, Karl assigns; the patch number is Karl's to assign): 60-card
+    Standard on the deck screen - phase 1 of the RPG plan (Karl, 9 Oct, fourteen answers; then "lets get started"). The bridge's
+    --format constructed starts a game as Forge's own Constructed lobby does (no commander, no variant, 20 life); the first mulligan
+    is free only with more than two players (CR 103.5c; Commander and Brawl unchanged). The deck screen's third Format button,
+    Standard's deck rules (60+, four copies across deck and sideboard, 15-card sideboard) and banned list, no command zone at the
+    table, each deck's most-copied card on the VS screen and in its box, two sample decks, --format standard in the soak. Bridge
+    jar rebuilt: games saved before can't be resumed. Online stays Commander only.
+[x] Patch 49 (2026-10-08, Claude (Opus), 0.28.53; rebuilt on CON1 in Lane A as 0.28.53.5 on 10 Oct), AU2 - the sounds Karl picked
+    on the candidates page (7 Oct: 37 of 46 groups): magic for spells and triggers, horns and a far drum for the turns, horns and a
+    snare for VICTORY, a crow for DEFEAT, the potion for life gained, a punch and a grunt for player damage, sword clashes for
+    creatures, coins and clinks for counters, real card stock for draws and shuffles; arrivals by type, Forest and Swamp lands,
+    destruction by type (cue_types.py); the deck screen, settings and credits get their own music, Cold Silence joins the playlist,
+    Lament of the War on a big attack; four new rooms; the 17 Keeps byte for byte; sounds/SOUND_BIBLE.md.
+[ ] AU2 round 2 (the candidates page, picks2): card.discard, card.play, ui.dialog_open, destroy.land, Island / Mountain / Plains /
+    other lands, music.victory, and seven creature families (dragon, demon, undead, spirit, elemental, vermin, beast) - a patch
+    of its own.
+[ ] Patch 50 (AD3b): ambient motes per table picture, the title torch flicker, Vermis grain - bench-gated.
+[x] Round UI7 (2026-10-10, Claude (Opus), 0.28.53.8 proposed, after JDG1; spec of 8 Oct, section C): Card size, built like Text
+    size (Cog > DISPLAY > Cards beside Text, Ctrl and + / -, 100% to 200%, remembered). A battlefield whose cards fit in ONE row
+    shows them up to that much bigger (mine, a 1v1 opponent's, and a pod opponent's where its row has room); a fuller board keeps
+    today's two rows. At 100% the table is exactly as before (UI6's 28 recorded layouts).
+[ ] Card size, the hand and the command zone: Karl's choice (CLAUDE.md, Round UI7): (b) the hand strip grows and the
+    battlefield gives up the room, or (c) Arena-style - bigger hand cards rising from the bottom edge, partly hidden until
+    hovered, or (a) leave them.
+[x] Round JDG1 (2026-10-10, Claude (Opus), 0.28.53.7 proposed, after the Undo bar; spec of 8 Oct, section E): Judge?! v0 - J or the
+    Judge?! button (in the stack's heading, the log's when the stack is empty) opens a card's Oracle text, every face, and its
+    official rulings, newest first, from Scryfall (kept 30 days in cache/rulings: offline too once seen); for a stack item also
+    where it sits, who put it there and its targets. Only official text, no LLM.
+[ ] Judge?!, later: typed questions (Round 31, gated on the DeepSeek benchmark); keyword reminder text (a Comprehensive Rules
+    licence question for Karl); a token's own Scryfall token card (today: Forge's text).
+[x] Lane A: the Undo bar (2026-10-10, Claude (Opus), 0.28.53.6 proposed, after AU2): Undo no longer comes and goes with the
+    window's width (UI6's finding). At 100% text it is on the action bar at every width tested; a wider window never loses an
+    Undo a narrower one shows, except three font-step edges at 125-150% (CLAUDE.md). The hint line under the headline gives way
+    first; the headline still never does (UI2). Python only.
+[ ] The RPG plan, next phases (Karl's plan of 9 Oct, a Claude Doc): the RPG's own 60-card card lists (Vintage lists) on the same
+    engine format; then the RPG itself. Open from CON1: Karl may prefer a plain any-cards 60-card format beside Standard.
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
     commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
     and by commander-on-turn-N, missed land drops, colour screw.

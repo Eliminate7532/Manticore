@@ -230,10 +230,12 @@ class ClassPathTests(unittest.TestCase):
         self.assertIn("forge/game/mulligan/MulliganService.class", names)
 
     def test_the_patched_source_grants_every_player_a_free_first_mulligan(self):
+        # Round CON1: in every game with commander rules (Commander, Brawl) and every pod; a two-player Constructed game (Standard)
+        # takes its mulligans in full (CR 103.5c). tests/test_con1.py plays both live.
         src = os.path.join(os.path.dirname(fc.BRIDGE_SOURCE), "src", "forge", "game", "mulligan", "MulliganService.java")
         with open(src, encoding="utf-8") as f:
             text = f.read()
-        self.assertIn("boolean firstMullFree = true;", text)
+        self.assertIn("boolean firstMullFree = game.getRules().hasCommander() || game.getPlayers().size() > 2;", text)
 
 
 if __name__ == "__main__":

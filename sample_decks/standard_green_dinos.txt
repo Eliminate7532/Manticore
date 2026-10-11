@@ -1,0 +1,15 @@
+# format: standard
+# Standard sample (Round CON1). Big green creatures for little mana; the Dinosaurs make each other bigger. Bite Down clears blockers.
+
+Deck
+4 Frenzied Baloth
+4 Thornweald Archer
+4 Gnarlid Colony
+4 Thrashing Brontodon
+4 Regal Imperiosaur
+4 Pugnacious Hammerskull
+4 Hulking Raptor
+4 Bite Down
+4 Giant Growth
+2 Primal Might
+22 Forest

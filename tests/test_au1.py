@@ -74,7 +74,7 @@ class AssetTests(unittest.TestCase):
         """Every cue id any top-level module hands to play_cue(...) or music_sting_after(...), including the second literal of a
         ternary ('tap' if ... else 'untap'): the call's arguments are cut at the balanced closing bracket, not the first ')'."""
         lit = re.compile(r'["\']([a-z_]+(?:\.[a-z_]+)+|tap|untap|flurry|destroy|exile|rewind)["\']')
-        played = set()
+        played, typed = set(), set()
         for path in glob.glob(os.path.join(ROOT, "*.py")):
             with open(path, encoding="utf-8") as f:
                 src = f.read()
@@ -84,7 +84,15 @@ class AssetTests(unittest.TestCase):
                     while i < len(src) and depth:
                         depth += {"(": 1, ")": -1}.get(src[i], 0)
                         i += 1
-                    played |= set(lit.findall(src[m.end():i - 1]))
+                    args = src[m.end():i - 1]
+                    played |= set(lit.findall(args))
+                    # patch 49: a typed cue is chosen by cue_types (card.land.artifact, land.play.forest, destroy.enchantment...)
+                    if "cue_types.for_arrival(" in args:
+                        typed |= {"card.land", "land.play"}
+                    if "destroy_cue(" in args:
+                        typed |= {"destroy"}
+        import cue_types                                # a typed cue counts only where the table chooses it through cue_types
+        played |= typed | {f"{base}.{suffix}" for base, suffixes in cue_types.TYPED.items() if base in typed for suffix in suffixes}
         return played
 
     def test_every_one_shot_cue_is_played_by_some_module(self):
@@ -94,9 +102,9 @@ class AssetTests(unittest.TestCase):
         self.assertEqual(sorted(one_shots - self._played_by_code()), [], "cues in sounds/cues.json that no module plays")
 
     # Long files the 7 Oct review left in place: Karl marked these Redo (AU2 replaces them) or Keep (exile: long on purpose).
-    # Every entry must still be over the limit, so the list is pruned as AU2 replaces the files.
-    LONG_FOR_NOW = {"ability.trigger", "spell.cast", "spell.resolve", "destroy", "damage.player", "damage.creature", "land.play",
-                    "exile"}
+    # Every entry must still be over the limit, so the list is pruned as AU2 replaces the files. Patch 49 replaced six; land.play
+    # (the parent, AU1's sound) stays until round 2 of the candidates page gives "other" lands their sound.
+    LONG_FOR_NOW = {"land.play", "exile"}
     FREQUENT_MS = 100
     SHORT_S = 1.2
 
@@ -137,7 +145,8 @@ class AssetTests(unittest.TestCase):
             src = f.read()
         with open(os.path.join(ROOT, "tools", "sound_sources.json"), encoding="utf-8") as f:
             sources = json.load(f)["sources"]
-        refs = set(re.findall(r'L\(f?"([a-z0-9-]+)(?::[^"]*)?"\)', src)) | {m[0] for m in re.findall(r'"(mus-[a-z-]+)", (\d+)', src)}
+        refs = set(re.findall(r'L\(f?"([a-z0-9-]+)(?::[^"]*)?"(?:, raw=True)?\)', src)) | \
+            {m[0] for m in re.findall(r'"(mus2?-[a-z0-9-]+)", (\d+)', src)}
         self.assertTrue(refs)
         for key in refs:
             self.assertIn(key, sources, key)
@@ -456,8 +465,11 @@ class BuildToolTests(unittest.TestCase):
 
     def test_every_cue_has_settings(self):
         b = self.b
-        recipes = b.recipes(lambda ref: None)
+        recipes = b.recipes(lambda ref, raw=False: None)
+        au2 = b.recipes_au2(lambda ref, raw=False: None)
         self.assertEqual(set(recipes) - set(b.CUE_SETTINGS), set())
+        for cid in au2:                                       # patch 49: a typed cue plays by its parent's settings
+            self.assertTrue(b.settings_for(cid), cid)
         self.assertTrue(set(b.TIGHT) <= set(recipes))
 
 

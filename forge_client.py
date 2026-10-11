@@ -31,6 +31,7 @@ import threading
 import time
 from collections import deque
 
+import formats
 import forge_net
 import java_crash
 import paths
@@ -453,14 +454,19 @@ def unknown_cards(names, runtime=None, wait=True):
 
 def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None):
     """Write a Forge .dck file. `deck` is a list of card names (repeats allowed). Round FMT1: a Brawl deck's [metadata] says
-    "Deck Type=Brawl" (formats.dck_lines); a Commander deck's file is exactly what it was before."""
+    "Deck Type=Brawl" (formats.dck_lines); a Commander deck's file is exactly what it was before. Round CON1: a format without a
+    commander (Standard) says "Deck Type=Constructed" and has no [Commander] section (any `commanders` go into the main deck)."""
     import formats
+    if not formats.has_commander(fmt):
+        deck, commanders = list(commanders) + list(deck), []
     counts = {}
     for card in deck:
         n = forge_card_name(card, runtime)
         counts[n] = counts.get(n, 0) + 1
-    lines = ["[metadata]", f"Name={name}"] + formats.dck_lines(fmt) + ["[Commander]"]
-    lines += [f"1 {forge_card_name(c, runtime)}" for c in commanders]
+    lines = ["[metadata]", f"Name={name}"] + formats.dck_lines(fmt)
+    if formats.has_commander(fmt):
+        lines.append("[Commander]")
+        lines += [f"1 {forge_card_name(c, runtime)}" for c in commanders]
     lines.append("[Main]")
     lines += [f"{n} {c}" for c, n in counts.items()]
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -735,7 +741,7 @@ class ForgeSession:
         args += ["--seed", str(self.seed)]
         args += ["--parent-pid", str(os.getpid())]        # round 29a: the bridge exits the moment this process is gone (ParentWatch.java)
         if self.fmt != "commander":
-            args += ["--format", self.fmt]                # round FMT1 (a Commander game's command line is unchanged)
+            args += ["--format", formats.engine(self.fmt)]   # round FMT1 (a Commander game's command line is unchanged); CON1: "constructed"
         if self.classic_stops:
             args.append("--classic-stops")                # patch 43: every priority stop, as before
         if self.dev:
@@ -845,10 +851,11 @@ class ForgeSession:
             self.loop_cap_used = m.get("loopCap")
             self.format_used = m.get("format", "commander")
             self.passing = m.get("passing")         # patch 43: "smart" or "classic" (None: a bridge from before patch 43)
-            if self.format_used != self.fmt and not self.command:
-                # Round FMT1: a bridge from before the formats round ignores --format and would quietly play Commander
-                self.fatal = (f"The engine started a {self.format_used.title()} game instead of {self.fmt.title()}: its bridge "
-                              "(forge_bridge.jar) is older than this program. Run setup_forge.py again, or reinstall.")
+            if self.format_used != formats.engine(self.fmt) and not self.command:
+                # Round FMT1: a bridge from before the formats round ignores --format and would quietly play Commander.
+                # Round CON1: the bridge names how the game is played ("constructed" for Standard), so compare with engine().
+                self.fatal = (f"The engine started a {self.format_used.title()} game instead of {formats.name(self.fmt)}: its "
+                              "bridge (forge_bridge.jar) is older than this program. Run setup_forge.py again, or reinstall.")
         elif t == "game_over":
             self.game_over = True
             self.game_over_info = {k: v for k, v in m.items() if k != "t"}

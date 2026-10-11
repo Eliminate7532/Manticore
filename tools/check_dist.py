@@ -39,13 +39,14 @@ import java_crash                                  # patch 46: is_crash_file
 
 BUNDLED_CONFIG = "bug_report_config.bundled.json"
 EMPTY_HASH_CODE = "da39a3ee"                      # sha1 of nothing: what a frozen copy printed before build_info.json existed
-EXPECTED_SAMPLE_DECKS = 10                         # round FMT1: 6 Commander + 4 Brawl
+EXPECTED_SAMPLE_DECKS = 12                         # round FMT1: 6 Commander + 4 Brawl; round CON1: + 2 Standard
 WEBHOOK_BYTES = re.compile(rb"discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9_\-]{8,}")
 
 REQUIRED_FILES = ["Manticore{exe}", "Manticore-cli{exe}", "jre/bin/java{exe}", "forge_runtime/forge.jar",
                   "forge_runtime/forge_bridge.jar", "forge_runtime/VERSION.txt", "sounds/cues.json", "licenses/NOTICES.json",
                   "LICENSE", "THIRD_PARTY_NOTICES.txt", "build_info.json", "README_FIRST.txt", "START_HERE.txt",
                   "banned_commander.snapshot.json", "banned_brawl.snapshot.json",
+                  "banned_standard.snapshot.json",                  # round CON1
                   "forge_card_names.json"]                         # patch 38: Forge's card-name index, made by the build
 REQUIRED_DIRS = ["sample_decks", "assets/fonts", "forge_runtime/res/cardsfolder", "jre/legal"]
 FORBIDDEN_TOP = [".git", "portable.txt", "settings.json", "my_decks", "bug_report_config.json", "soak_runs", "cache"]

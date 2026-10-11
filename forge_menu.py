@@ -672,20 +672,26 @@ class DeckMenu:
             draw_text(scr, dln[0], m, L.H - m - tiny.get_height(), tiny, DIM)
 
     def draw_formats(self, gui, right, y, h, left_limit):
-        """Round FMT1: "Format  [Commander] [Brawl]" ending at x=right on the title row; the shown format's button is lit."""
+        """Round FMT1: "Format  [Commander] [Brawl] [Standard]" ending at x=right on the title row; the shown format's button is lit.
+        Round CON1: with a third button the row ran out of room at 200% text (1100 and 1360 wide: the title read "Choose your
+        de..."), so the group steps down until it fits beside the title: the button font, then the buttons' minimum width, then
+        the "Format" caption. The last step is used even when it doesn't fit (the title is then clipped, as before)."""
         fs = _fs(gui)
         labels = [(formats.name(k), "fmt_" + k, k == self.fmt) for k in formats.ORDER]
-        for fkey in ("btn", "small"):
-            widths = [max(gui.button_width(t, fkey), int((110 if fkey == "btn" else 80) * fs)) for t, _n, _on in labels]
+        cap = gui.font("small", True)
+        steps = (("btn", 110, True), ("small", 80, True), ("small", 0, True), ("small", 0, False))
+        for fkey, least, caption in steps:
+            widths = [max(gui.button_width(t, fkey), int(least * fs)) for t, _n, _on in labels]
             bh = int(min(h, max(30, 38 * fs))) if fkey == "btn" else int(min(h, max(26, 30 * fs)))
-            cap = gui.font("small", True)
-            total = sum(widths) + 6 * (len(widths) - 1) + cap.size("Format")[0] + int(12 * fs)
-            if right - total >= left_limit or fkey == "small":
+            cap_w = cap.size("Format")[0] + int(12 * fs) if caption else 0
+            total = sum(widths) + 6 * (len(widths) - 1) + cap_w
+            if right - total >= left_limit:
                 break
         x = right - sum(widths) - 6 * (len(widths) - 1)
         by = y + (h - bh) // 2
-        self.formats_left = x - int(12 * fs) - cap.size("Format")[0]          # patch 42: the title is clipped to end before it
-        draw_text(gui.screen, "Format", x - int(12 * fs), by + bh // 2, cap, DIM, "midright")
+        self.formats_left = x - cap_w                                       # patch 42: the title is clipped to end before it
+        if caption:
+            draw_text(gui.screen, "Format", x - int(12 * fs), by + bh // 2, cap, DIM, "midright")
         self.format_rects = {}
         for (label, name, on), w in zip(labels, widths):
             r = pygame.Rect(x, by, w, bh)
@@ -903,8 +909,8 @@ class DeckMenu:
         x = rect.x + pad
         if th < max(40, int(36 * fs)):                        # too small to recognise: leave the picture out
             tw = -pad
-        elif entry is not None and entry.commanders:
-            self.draw_thumb(gui, entry.commanders[0], x, top, tw, th)
+        elif entry is not None and entry.face():                  # round CON1: a Standard deck shows its face card
+            self.draw_thumb(gui, entry.face(), x, top, tw, th)
         else:
             box = pygame.Rect(x, top, tw, th)
             round_rect(scr, box, gfx.MENU_SEARCH_BG, 6, 1, gfx.MENU_EDGE)
@@ -948,8 +954,12 @@ class DeckMenu:
                 draw_text(scr, ln, tx, ty, small, RED)
                 ty += small.get_height()
             return
-        cm = " + ".join(entry.commanders) if entry.commanders else "no commander found"
-        for ln in wrap_text(f"Commander: {cm}", small, tw_text)[:2]:
+        if formats.has_commander(entry.format):
+            cm = " + ".join(entry.commanders) if entry.commanders else "no commander found"
+            about = f"Commander: {cm}"
+        else:                                                             # round CON1: "Standard - 15 in the sideboard"
+            about = formats.name(entry.format) + (f" - {len(entry.sideboard)} in the sideboard" if entry.sideboard else "")
+        for ln in wrap_text(about, small, tw_text)[:2]:
             if ty + small.get_height() > bottom:
                 return
             draw_text(scr, ln, tx, ty, small, gfx.BODY_TEXT)
@@ -982,6 +992,7 @@ class ImportDialog(dlg.Dialog):
         self.name = ""
         self.name_edited = False
         self.commanders = self.deck = None
+        self.sideboard = []                                        # round CON1: the pasted Sideboard section (legality only)
         self.error = "Nothing pasted yet."
         self.problems = []
         self.renames = {}
@@ -999,29 +1010,36 @@ class ImportDialog(dlg.Dialog):
         named = formats.declared(self.text)
         if named:
             self.fmt = named                                      # round FMT1: a "# format: brawl" line in the pasted text
-        self.commanders, self.deck, self.error = lib.analyse(self.text)
+        self.save_error = None
+        self.scroll = 0
+        self._read_list()
+
+    def _read_list(self):
+        """Read the pasted text as a deck of self.fmt. Round CON1: the format decides how the list is read (a Standard list has
+        no commander and may have a sideboard), so changing the format reads it again."""
+        self.sideboard = []
+        self.commanders, self.deck, self.error = lib.analyse(self.text, self.fmt, self.sideboard)
         self.renames = {}
         if not self.error:
             self.commanders, self.deck, self.renames = lib.resolve_flavor_names(self.commanders, self.deck, self.menu.runtime)
-        self.problems = (lib.describe_problems(self.commanders, self.deck, None, self.menu.runtime, self.fmt)
+        self.problems = (lib.describe_problems(self.commanders, self.deck, None, self.menu.runtime, self.fmt, self.sideboard)
                          if not self.error else [])
         self._lg_version = lg.version()
-        self.verdict = lib.legality(self.commanders, self.deck, self.fmt) if not self.error else None
+        self.verdict = lib.legality(self.commanders, self.deck, self.fmt, self.sideboard) if not self.error else None
         if not self.error:
-            lg.ensure_card_data(list(self.commanders or []) + list(self.deck or []))      # Round BAN1: in the background
+            lg.ensure_card_data(list(self.commanders or []) + list(self.deck or []) + self.sideboard)   # Round BAN1: background
         if self.renames:
             shown = ", ".join(f"{old} -> {new}" for old, new in list(self.renames.items())[:4])
             more = f" and {len(self.renames) - 4} more" if len(self.renames) > 4 else ""
             self.problems = [(f"Renamed to the card's real name (printed name Forge does not use): {shown}{more}.",
                               False)] + self.problems
-        self.save_error = None
-        self.scroll = 0
         if not self.name_edited:
-            self.name = lib.suggest_name(self.commanders) if self.commanders else ""
+            self.name = lib.suggest_name(self.commanders, self.text) if not self.error else ""
 
     @property
     def can_save(self):
-        return not self.error and bool(self.commanders) and bool(self.name.strip())
+        has_cmd = bool(self.commanders) or not formats.has_commander(self.fmt)          # round CON1: Standard has no commander
+        return not self.error and bool(self.deck) and has_cmd and bool(self.name.strip())
 
     def paste(self, gui):
         text = gui.read_clipboard()
@@ -1032,12 +1050,11 @@ class ImportDialog(dlg.Dialog):
         self.set_text(text)
 
     def set_format(self, fmt):
-        """Round FMT1: the format the deck is saved as (the buttons beside Paste); the checks below follow it."""
+        """Round FMT1: the format the deck is saved as (the buttons beside Paste); the checks below follow it. Round CON1: the
+        list is read again, because a format with a commander reads it differently from one without."""
         self.fmt = formats.normal(fmt)
-        if self.text and not self.error:
-            renamed = [p for p in self.problems if p[0].startswith("Renamed to the card's real name")]
-            self.problems = renamed + lib.describe_problems(self.commanders, self.deck, None, self.menu.runtime, self.fmt)
-            self.verdict = lib.legality(self.commanders, self.deck, self.fmt)
+        if self.text:
+            self._read_list()
 
     def save(self, gui):
         if not self.can_save:
@@ -1126,8 +1143,12 @@ class ImportDialog(dlg.Dialog):
         else:
             if getattr(self, "_lg_version", None) != lg.version():       # Round BAN1: card data or the banned list arrived
                 self._refresh_problems()
-            cm = " + ".join(self.commanders) if self.commanders else "none found"
-            out.append((f"Commander: {cm}  -  {len(self.deck)} more cards", GREEN if self.commanders else RED, smallb))
+            if formats.has_commander(self.fmt):
+                cm = " + ".join(self.commanders) if self.commanders else "none found"
+                out.append((f"Commander: {cm}  -  {len(self.deck)} more cards", GREEN if self.commanders else RED, smallb))
+            else:                                                       # round CON1: "Standard: 60 cards, 15 in the sideboard"
+                side = f", {len(self.sideboard)} in the sideboard" if getattr(self, "sideboard", None) else ""
+                out.append((f"{formats.name(self.fmt)}: {len(self.deck)} cards{side}", GREEN, smallb))
             tag = lg.label(getattr(self, "verdict", None))
             if tag:
                 blocked = lg.blocks_start(getattr(self, "verdict", None))
@@ -1141,8 +1162,9 @@ class ImportDialog(dlg.Dialog):
 
     def _refresh_problems(self):
         renamed = [p for p in self.problems if p[0].startswith("Renamed to the card's real name")]
-        self.problems = renamed + lib.describe_problems(self.commanders, self.deck, None, self.menu.runtime, self.fmt)
-        self.verdict = lib.legality(self.commanders, self.deck, self.fmt)
+        side = getattr(self, "sideboard", None)
+        self.problems = renamed + lib.describe_problems(self.commanders, self.deck, None, self.menu.runtime, self.fmt, side)
+        self.verdict = lib.legality(self.commanders, self.deck, self.fmt, side)
         self._lg_version = lg.version()
 
     def draw_preview(self, gui, small):
@@ -1170,7 +1192,7 @@ class ImportDialog(dlg.Dialog):
         if name == "paste":
             self.paste(gui)
         elif name == "clear":
-            self.text, self.commanders, self.deck, self.problems = "", None, None, []
+            self.text, self.commanders, self.deck, self.problems, self.sideboard = "", None, None, [], []
             self.error, self.flash, self.save_error = "Nothing pasted yet.", None, None
             if not self.name_edited:
                 self.name = ""

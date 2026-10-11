@@ -1,8 +1,10 @@
 /*
  * This file is a copy of forge-game's forge/game/mulligan/MulliganService.java (Forge, GNU GPL v3, see forge_bundle/FORGE_LICENSE.txt)
- * with ONE change: the first mulligan is always free (see initializeMulligans). It is packed into forge_bridge.jar, which
+ * with ONE change: the first mulligan is free in every game with commander rules, not only in pods and Brawl (see
+ * initializeMulligans). It is packed into forge_bridge.jar, which
  * comes before forge.jar on the class path, so this version is the one Forge loads.
  * Modified 2026-09-20 by Commander Sim: the first mulligan is always free.
+ * Modified 2026-10-09 by Manticore (round CON1): ... except in a two-player game without commander rules (Constructed).
  */
 package forge.game.mulligan;
 
@@ -42,7 +44,10 @@ public class MulliganService {
 
         // Commander: every player's first mulligan is free (a new seven, nothing put back). Forge only grants that with three or
         // more players or in Brawl, so a two-player game against one AI would not get it.
-        boolean firstMullFree = true;
+        // Round CON1 (Manticore, 2026-10-09): only in a game with commander rules (Commander, Brawl) or with more than two players.
+        // A two-player Constructed game (Standard) takes every mulligan in full, as the Comprehensive Rules say (103.5c: the
+        // first mulligan is free "in a multiplayer game and in any Brawl game").
+        boolean firstMullFree = game.getRules().hasCommander() || game.getPlayers().size() > 2;
 
         for (Player player : whoCanMulligan) {
             MulliganDefs.MulliganRule rule = StaticData.instance().getMulliganRule();

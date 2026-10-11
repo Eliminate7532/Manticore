@@ -1,6 +1,6 @@
 {
- "version": 2,
- "_comment": "Round AU1: every cue plays real recordings (CC0, built by tools/build_sounds.py from tools/sound_sources.json); 'synth' is only the fallback if a file is missing. 'stream' cues (ambience, music) are played by the director's ambience/music players, not as one-shots.",
+ "version": 3,
+ "_comment": "Every cue plays real recordings (CC0, built by tools/build_sounds.py from tools/sound_sources.json); 'synth' is only the fallback if a file is missing. 'stream' cues (ambience, music) are played by the director's ambience/music players, not as one-shots. AU2 (patch 49): the palette in sounds/SOUND_BIBLE.md; a typed cue (card.land.artifact, land.play.forest, destroy.enchantment...) is chosen by cue_types.py and falls back to its parent when the card's type isn't known or the typed cue doesn't exist. Levels (mean dB of the files): UI tick -45..-35, feedback -37..-30, state change -26..-22, combat and player damage -20..-17, stingers -24..-18.",
  "cues": {
   "ui.hover": {
    "bus": "ui",
@@ -116,8 +116,7 @@
    "files": [
     "sfx/card.land.1.ogg",
     "sfx/card.land.2.ogg",
-    "sfx/card.land.3.ogg",
-    "sfx/card.land.4.ogg"
+    "sfx/card.land.3.ogg"
    ],
    "cooldown_ms": 50,
    "max_voices": 3,
@@ -223,8 +222,7 @@
    "bus": "sfx",
    "gain_db": 0,
    "files": [
-    "sfx/flurry.1.ogg",
-    "sfx/flurry.2.ogg"
+    "sfx/flurry.1.ogg"
    ],
    "cooldown_ms": 500,
    "max_voices": 1,
@@ -557,8 +555,7 @@
    "bus": "ui",
    "gain_db": 0,
    "files": [
-    "sfx/ui.menu_hover.1.ogg",
-    "sfx/ui.menu_hover.2.ogg"
+    "sfx/ui.menu_hover.1.ogg"
    ],
    "cooldown_ms": 60,
    "max_voices": 1
@@ -709,6 +706,130 @@
    "stream": true,
    "files": [
     "music/defeat.ogg"
+   ]
+  },
+  "card.land.artifact": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.land.artifact.1.ogg",
+    "sfx/card.land.artifact.2.ogg",
+    "sfx/card.land.artifact.3.ogg"
+   ],
+   "cooldown_ms": 50,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud"
+   },
+   "haptic": "light"
+  },
+  "card.land.enchantment": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/card.land.enchantment.1.ogg",
+    "sfx/card.land.enchantment.2.ogg",
+    "sfx/card.land.enchantment.3.ogg"
+   ],
+   "cooldown_ms": 50,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud"
+   },
+   "haptic": "light"
+  },
+  "land.play.forest": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/land.play.forest.1.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 2,
+   "synth": {
+    "type": "thud",
+    "f0": 90,
+    "f1": 45,
+    "len": 0.25
+   }
+  },
+  "land.play.swamp": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/land.play.swamp.1.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 2,
+   "synth": {
+    "type": "thud",
+    "f0": 90,
+    "f1": 45,
+    "len": 0.25
+   }
+  },
+  "destroy.artifact": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/destroy.artifact.1.ogg",
+    "sfx/destroy.artifact.2.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud",
+    "f0": 160,
+    "f1": 60,
+    "len": 0.25
+   }
+  },
+  "destroy.enchantment": {
+   "bus": "sfx",
+   "gain_db": 0,
+   "files": [
+    "sfx/destroy.enchantment.1.ogg",
+    "sfx/destroy.enchantment.2.ogg"
+   ],
+   "cooldown_ms": 60,
+   "max_voices": 3,
+   "synth": {
+    "type": "thud",
+    "f0": 160,
+    "f1": 60,
+    "len": 0.25
+   }
+  },
+  "music.game6": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/game6.ogg"
+   ]
+  },
+  "music.deck": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/deck.ogg"
+   ]
+  },
+  "music.settings": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/settings.ogg"
+   ]
+  },
+  "music.attack": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/attack.ogg"
    ]
   }
  }

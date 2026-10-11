@@ -87,7 +87,8 @@ GUARDED = ("forge_table.py", "forge_dialogs.py", "forge_menu.py", "forge_setting
            "tour.py",                                                # Round UX1
            "online_screens.py",                                      # Round MP1
            "update_screens.py",                                      # Round 30
-           "stats_view.py")                                          # patch 44
+           "stats_view.py",                                          # patch 44
+           "judge_dialog.py")                                        # round JDG1
 # Colour-looking tuples that are allowed to stay outside gfx.py: value -> why it is not a colour anyone sees.
 ALLOWED_LITERALS = {
     (255, 120, 120): "BLEND_RGB_MULT tint",
@@ -426,7 +427,8 @@ class SettingsControlTests(TempDecks):
 # the same screens (the Settings pop-up, the deck screen with 1 and 3 AI seats, and the action bar in eight game states) at 1360x840.
 # The old run had only the sandbox's system font (Segoe UI is Windows-only), so treat this as "what the old layout already clipped".
 OLD_CLIPPED = {("1.0", "Report a bug   (F8)"), ("2.0", "Report a bug   (F8)")}
-SETTINGS_LABELS = ["Text size", "Table", "Full screen   (F11)", "Animations", "Compact: Off", "Sort hand: Off", "Log: Always", "Focus: Always",
+# round UI7: "Text size" became "Text" beside "Cards"
+SETTINGS_LABELS = ["Text", "Cards", "Table", "Full screen   (F11)", "Animations", "Compact: Off", "Sort hand: Off", "Log: Always", "Focus: Always",
                    "Sound", "Hover tick",
                    "Volume", "Speed: Fast", "New game...", "Concede...", "Controls   (H)",     # round PRI1: Speed "Bug or idea   (F8)", "Licenses", "My data folder",
                    "Tour of the table"]

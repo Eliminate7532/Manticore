@@ -59,11 +59,22 @@ public class Main {
      * game (HostedMatch.startMatch), so a Brawl deck plays as it is listed, like a Commander deck.
      * Only a name here: touching GameType before initForge() (a static initialiser) loads its labels before Forge's
      * Localizer exists, and the bridge dies at start-up. variant() turns it into the GameType once Forge is up.
+     * Round CON1: "constructed" - a 60-card game with no commander (the deck screen's Standard, and later the RPG's duels). It
+     * starts the way Forge's own Constructed lobby does (GameLobby.startGame): new RegisteredPlayer(deck), so 20 life (CR 103.4),
+     * GameType.Constructed and NO applied variant, so GameRules.hasCommander() is false and no Commander rule runs. The card pool
+     * and the banned list are checked on the deck screen (legality.py), not here: Forge doesn't check decks at the start either.
      */
     static String format = "commander";
 
-    /** The game's variant: GameType.Brawl for --format brawl, else GameType.Commander (also for NetHost, which never sets it). */
+    /** Round CON1: a game with no commander (--format constructed). */
+    static boolean constructed() {
+        return "constructed".equals(format);
+    }
+
+    /** The game's type: GameType.Brawl for --format brawl, GameType.Constructed for --format constructed (round CON1), else
+     *  GameType.Commander (also for NetHost, which never sets it). For Brawl and Commander it is also the applied variant. */
     static GameType variant() {
+        if (constructed()) return GameType.Constructed;
         return "brawl".equals(format) ? GameType.Brawl : GameType.Commander;
     }
 
@@ -89,8 +100,8 @@ public class Main {
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
                 case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
                 case "--format": {                                                          // round FMT1: commander (default) or brawl
-                    String f = args[++i].toLowerCase(java.util.Locale.ROOT);
-                    if (f.equals("commander") || f.equals("brawl")) format = f;
+                    String f = args[++i].toLowerCase(java.util.Locale.ROOT);            // round CON1: or constructed
+                    if (f.equals("commander") || f.equals("brawl") || f.equals("constructed")) format = f;
                     else badFormat = args[i];
                     break;
                 }
@@ -105,7 +116,7 @@ public class Main {
             }
         }
         if (deckPath == null || opponents.isEmpty()) {
-            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl]");
+            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl|constructed]");
             System.exit(2);
         }
 
@@ -115,7 +126,7 @@ public class Main {
         Wire wire = new Wire(proto);
         Checks.wire = wire;
         if (badFormat != null) {
-            fail(wire, "unknown format " + badFormat + " (this bridge knows commander and brawl)");
+            fail(wire, "unknown format " + badFormat + " (this bridge knows commander, brawl and constructed)");
             return;
         }
         if (!Checks.faults.isEmpty() && !dev) {
@@ -165,8 +176,9 @@ public class Main {
         // (Valgavoth exiled by Utter End, no question asked). Losing to 21 commander damage was NOT affected (checked live with the
         // old jar). Forge's own Commander lobby passes the same set.
         // Round FMT1: a Brawl game applies the Brawl variant instead (Forge's own Brawl lobby does the same).
+        // Round CON1: a Constructed game applies no variant at all, as Forge's own Constructed lobby does.
         GameType variant = variant();
-        java.util.Set<GameType> variants = Checks.fault(Checks.Fault.NO_COMMANDER_VARIANT)
+        java.util.Set<GameType> variants = Checks.fault(Checks.Fault.NO_COMMANDER_VARIANT) || constructed()
                 ? java.util.EnumSet.noneOf(GameType.class) : java.util.EnumSet.of(variant);
         match.startMatch(variant, variants, players, human, gui);
 
@@ -175,8 +187,12 @@ public class Main {
     }
 
     /** Round FMT1: one seat's RegisteredPlayer for the game's format. Commander is exactly what it was before (forCommander: 40
-     *  life). Brawl goes through forVariants, which sets 25 life for two players and 30 for more (CR 903.12f). */
+     *  life). Brawl goes through forVariants, which sets 25 life for two players and 30 for more (CR 903.12f). Round CON1:
+     *  Constructed is a plain RegisteredPlayer(deck): 20 life (CR 103.4), no commander. */
     static RegisteredPlayer register(Deck deck, int seats) {
+        if (constructed()) {
+            return new RegisteredPlayer(deck);                 // round CON1: Forge's Constructed lobby does exactly this (20 life)
+        }
         if (variant() == GameType.Brawl) {
             return RegisteredPlayer.forVariants(seats, java.util.EnumSet.of(GameType.Brawl), deck, null, false, null, null);
         }

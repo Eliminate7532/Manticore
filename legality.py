@@ -42,7 +42,7 @@ import time
 import formats
 import paths
 
-FORMATS = ("commander", "brawl")        # round FMT1: formats.FORMATS's keys, each with its own banned list
+FORMATS = ("commander", "brawl", "standard")   # round FMT1: formats.FORMATS's keys, each with its own banned list (CON1: Standard)
 MAX_AGE_DAYS = 7
 SEARCH_URL = "https://api.scryfall.com/cards/search"
 HEADERS = {"User-Agent": "CommanderSim/0.1 (personal hobby project)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
@@ -390,31 +390,41 @@ def pair_ok(a, b, name_a, name_b):
 
 
 # ---- the verdict ------------------------------------------------------------------------------------------------------------------
-def check(commanders, deck, store=None, fmt="commander"):
-    """Verdict(status, issues [(kind, text, cards)], unchecked [(what, detail)], as_of). Never touches the network."""
+def check(commanders, deck, store=None, fmt="commander", sideboard=None):
+    """Verdict(status, issues [(kind, text, cards)], unchecked [(what, detail)], as_of). Never touches the network.
+    sideboard (round CON1): the deck's sideboard, for a format that has one (Standard): it is checked for its own size and counts
+    toward the four-copy limit, and its cards are checked for banned and not legal like the deck's."""
     store = store or _store
+    fmt = formats.normal(fmt)
     commanders, deck = list(commanders or []), list(deck or [])
+    if not formats.has_commander(fmt):                     # round CON1: no commander in Standard - every card is a deck card
+        deck, commanders = commanders + deck, []
+    side = list(sideboard or []) if formats.get(fmt).sideboard else []
     everything = commanders + deck
     peek = store.peek_card if hasattr(store, "peek_card") else (lambda n: None)
-    data = {n: peek(n) for n in set(everything)}
+    data = {n: peek(n) for n in set(everything + side)}
     missing = sorted(n for n, c in data.items() if c is None)
     issues, unchecked = [], []
     bl = _BANNED[fmt]
+    cards_of = everything + side                          # round CON1: a sideboard card is checked like a deck card
 
     # card rules
     if bl.source == "none":
         unchecked.append(("banned list", None))
     else:
-        hit = [n for n in dict.fromkeys(everything)
+        hit = [n for n in dict.fromkeys(cards_of)
                if n.strip().lower() in bl.names or any(p.strip().lower() in bl.names for p in _FACE_SPLIT.split(n) if p.strip())
                or (data[n] is not None and data[n].get("name", "").lower() in bl.names)]
         if hit:
             issues.append(("banned", "", hit))
     else_banned = {i for k, _t, cards in issues if k == "banned" for i in cards}
-    nl = [n for n in dict.fromkeys(everything) if n not in else_banned and data[n] is not None
+    nl = [n for n in dict.fromkeys(cards_of) if n not in else_banned and data[n] is not None
           and (data[n].get("legalities") or {}).get(fmt) == "not_legal"]
     if nl:
         issues.append(("not_legal", "", nl))
+
+    if not formats.has_commander(fmt):
+        return _check_constructed(fmt, deck, side, data, issues, unchecked, missing, bl)
 
     # 903.5a size (Arena's Brawl: 100 too)
     total = len(everything)
@@ -480,6 +490,33 @@ def check(commanders, deck, store=None, fmt="commander"):
     return Verdict(status, issues, unchecked, bl.as_of)
 
 
+def _check_constructed(fmt, deck, side, data, issues, unchecked, missing, bl):
+    """Round CON1: the deck rules of a 60-card constructed format (Standard), CR 100.2a and 100.4a (effective 25 Sep 2026):
+    at least 60 cards; a sideboard of at most 15; at most four cards with one English name in the deck and the sideboard
+    together, except basic lands and cards that say a deck can have any number (or up to N) of them."""
+    f = formats.get(fmt)
+    if len(deck) < f.deck_size:
+        issues.append(("size", f"This deck has {len(deck)} cards; a {f.name} deck has at least {f.deck_size}.", []))
+    if len(side) > f.sideboard:
+        issues.append(("sideboard", f"The sideboard has {len(side)} cards; a {f.name} sideboard has at most {f.sideboard}.", []))
+    counts = {}
+    for n in deck + side:
+        counts[n] = counts.get(n, 0) + 1
+    extra = []
+    for n, k in counts.items():
+        if k <= f.copies or _is_basic(n, data.get(n)):
+            continue
+        limit = _copy_limit(data.get(n))
+        if limit is None or k > limit:
+            extra.append(f"{n} ×{k}")
+    if extra:
+        issues.append(("copies", "", extra))
+    if missing:
+        unchecked.append(("card data", len(missing)))
+    status = "not_legal" if issues else ("unchecked" if unchecked else "legal")
+    return Verdict(status, issues, unchecked, bl.as_of)
+
+
 def _basic_types(card):
     """The basic land types of a basic land card ("Basic Snow Land — Island" -> ["Island"]); [] for anything else."""
     tl = _type_line(card or {})
@@ -523,12 +560,16 @@ def problem_lines(verdict, fmt="commander"):
         if kind == "banned":
             out.append((f"Banned in {name} (list as of {_date(verdict.as_of)}): {_shown(cards)}.", False))
         elif kind == "not_legal":
-            why = " (not on MTG Arena)" if formats.normal(fmt) == "brawl" else " at all"      # round FMT1: Arena's card pool
+            why = {"brawl": " (not on MTG Arena)", "commander": " at all"}.get(formats.normal(fmt), "")   # round FMT1: Arena's pool
             out.append((f"Not legal in {name}{why}: {_shown(cards)}.", False))
         elif kind == "size":
             out.append((text, False))
         elif kind == "singleton":
             out.append((f"More than one copy: {_shown(cards)}.", False))
+        elif kind == "copies":                                           # round CON1: Standard's four-copy limit
+            out.append((f"More than four copies: {_shown(cards)}.", False))
+        elif kind == "sideboard":
+            out.append((text, False))
         elif kind == "identity":
             out.append((f"{text}: {_shown(cards)}.", False))
         elif kind == "commander":

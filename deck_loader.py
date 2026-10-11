@@ -25,11 +25,20 @@ def load_deck(source):
     return import_from_text(text)
 
 
-def describe_deck(label, commanders, deck):
-    """Print a one-line summary and warn if the size is not a legal Commander deck."""
+def describe_deck(label, commanders, deck, fmt=None):
+    """Print a one-line summary and warn if the size is not legal for the format (Commander unless `fmt` says otherwise).
+    Round CON1: a format without a commander (Standard) wants at least its deck size and never mentions a commander."""
+    import formats
+    f = formats.get(fmt)
+    total = len(deck) + len(commanders)
+    if not f.commander:
+        print(f"{label}: {f.name} | {total} cards")
+        if total < f.deck_size:
+            print(f"  Warning: a {f.name} deck has at least {f.deck_size} cards, this one has {total}.")
+        return
     names = " + ".join(commanders) if commanders else "(no commander found)"
     print(f"{label}: {names} | {len(deck)} cards in library")
     if not commanders:
         print(f"  Warning: no commander detected for {label}; the command zone will be empty.")
-    if len(deck) + len(commanders) != 100:
-        print(f"  Warning: expected 100 cards including the commander, got {len(deck) + len(commanders)}.")
+    if total != f.deck_size:
+        print(f"  Warning: expected {f.deck_size} cards including the commander, got {total}.")

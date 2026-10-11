@@ -1,5 +1,5 @@
 {
- "_comment": "Where every recording in sounds/ came from. All CC0-1.0 (public domain dedication). tools/build_sounds.py downloads these into a cache and builds sounds/*.ogg from them.",
+ "_comment": "Where every recording in sounds/ came from. All CC0-1.0 (public domain dedication; the few pages that also offer OGA-BY are used under CC0 and say so in 'note'). tools/build_sounds.py downloads these into a cache and builds sounds/*.ogg from them. AU1 (round AU1, 2 Oct 2026) and AU2 (patch 49: the 'oga2-' / 'mus2-' entries, each page's licence block read on 7 Oct 2026; 'prefer_lossless': the same recording in two formats is read from the lossless file).",
  "sources": {
   "kenney-casino": {
    "url": "https://kenney.nl/media/pages/assets/casino-audio/2472606a04-1721639069/kenney_casino-audio.zip",
@@ -550,6 +550,564 @@
    "licence": "CC0-1.0",
    "title": "Reverb Percussion.wav",
    "note": "Freesound's high-quality preview of the original"
+  },
+  "mus2-bittersweet": {
+   "url": "https://opengameart.org/sites/default/files/bittersweet_0.mp3",
+   "urls": [
+    "https://opengameart.org/sites/default/files/bittersweet_0.mp3"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/bittersweet",
+   "author": "Emma_MA",
+   "licence": "CC0-1.0",
+   "title": "Bittersweet",
+   "prefer_lossless": true
+  },
+  "mus2-war-horns": {
+   "url": "https://opengameart.org/sites/default/files/war_horns.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/war_horns.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/war-horns",
+   "author": "Eldritch Grim",
+   "licence": "CC0-1.0",
+   "title": "War Horns",
+   "prefer_lossless": true
+  },
+  "oga2-100-cc0-metal-and-wood-sfx": {
+   "url": "https://opengameart.org/sites/default/files/100-CC0-wood-metal-SFX.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/100-CC0-wood-metal-SFX.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/100-cc0-metal-and-wood-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0",
+   "title": "100 CC0 metal and wood SFX",
+   "prefer_lossless": true
+  },
+  "oga2-12-coin-sound-effects": {
+   "url": "https://opengameart.org/sites/default/files/coins_-_starninjas.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/coins_-_starninjas.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/12-coin-sound-effects",
+   "author": "StarNinjas",
+   "licence": "CC0-1.0",
+   "title": "12 Coin Sound Effects",
+   "prefer_lossless": true
+  },
+  "oga2-25-cc0-mud-sfx": {
+   "url": "https://opengameart.org/sites/default/files/25-CC0-mud-sfx.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/25-CC0-mud-sfx.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/25-cc0-mud-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0",
+   "title": "25 CC0 mud sfx",
+   "prefer_lossless": true
+  },
+  "oga2-27-metal-audio-samples-sfx": {
+   "url": "https://opengameart.org/sites/default/files/27-Metal-Audio-Samples-blacklodgegames.com_.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/27-Metal-Audio-Samples-blacklodgegames.com_.zip",
+    "https://opengameart.org/sites/default/files/ArenaCombatAnnouncerPack-blacklodgegames.com_.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/27-metal-audio-samples-sfx",
+   "author": "blacklodgegames",
+   "licence": "CC0-1.0",
+   "title": "27 Metal Audio Samples (SFX)",
+   "prefer_lossless": true
+  },
+  "oga2-35-wooden-cracks-hits-destructions": {
+   "url": "https://opengameart.org/sites/default/files/independent_nu_ljudbank-wood_crack_hit_destruction.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/independent_nu_ljudbank-wood_crack_hit_destruction.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/35-wooden-crackshitsdestructions",
+   "author": "Independent.nu",
+   "licence": "CC0-1.0",
+   "title": "35 wooden cracks/hits/destructions",
+   "prefer_lossless": true
+  },
+  "oga2-37-hits-punches": {
+   "url": "https://opengameart.org/sites/default/files/independent_nu_ljudbank-hits_and_punches.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/independent_nu_ljudbank-hits_and_punches.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/37-hitspunches",
+   "author": "Independent.nu",
+   "licence": "CC0-1.0",
+   "title": "37 hits/punches",
+   "prefer_lossless": true
+  },
+  "oga2-40-cc0-water-splash-slime-sfx": {
+   "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0",
+   "title": "40 CC0 water / splash / slime SFX",
+   "prefer_lossless": true
+  },
+  "oga2-58-random-sound-effects": {
+   "url": "https://opengameart.org/sites/default/files/Sound%20Effects.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/Sound%20Effects.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/58-random-sound-effects",
+   "author": "TokyoGeisha",
+   "licence": "CC0-1.0",
+   "title": "58 Random Sound Effects",
+   "prefer_lossless": true
+  },
+  "oga2-8-wet-squish-slurp-impacts": {
+   "url": "https://opengameart.org/sites/default/files/independent_nu_ljudbank-wet_squish_slurp_impacts.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/independent_nu_ljudbank-wet_squish_slurp_impacts.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/8-wet-squish-slurp-impacts",
+   "author": "Independent.nu",
+   "licence": "CC0-1.0",
+   "title": "8 wet squish, slurp impacts",
+   "prefer_lossless": true
+  },
+  "oga2-80-cc0-creature-sfx": {
+   "url": "https://opengameart.org/sites/default/files/80-CC0-creature-SFX_0.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/80-CC0-creature-SFX_0.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/80-cc0-creature-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0",
+   "title": "80 CC0 creature SFX",
+   "prefer_lossless": true
+  },
+  "oga2-an-interesting-snare-drum-sound": {
+   "url": "https://opengameart.org/sites/default/files/best_snare_0.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/best_snare_0.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/an-interesting-snare-drum-sound",
+   "author": "Spring Spring",
+   "licence": "CC0-1.0",
+   "title": "An Interesting Snare Drum Sound",
+   "prefer_lossless": true
+  },
+  "oga2-card-game-sounds": {
+   "url": "https://opengameart.org/sites/default/files/Cardsounds.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/Cardsounds.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/card-game-sounds",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "title": "Card Game sounds",
+   "prefer_lossless": true
+  },
+  "oga2-crow-caw": {
+   "url": "https://opengameart.org/sites/default/files/crow_caw.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/crow_caw.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/crow-caw",
+   "author": "zeroisnotnull",
+   "licence": "CC0-1.0",
+   "title": "Crow caw",
+   "prefer_lossless": true
+  },
+  "oga2-dark-ambiences": {
+   "url": "https://opengameart.org/sites/default/files/dark_ambiences.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/dark_ambiences.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/dark-ambiences",
+   "author": "Ogrebane",
+   "licence": "CC0-1.0",
+   "title": "Dark Ambiences",
+   "prefer_lossless": true
+  },
+  "oga2-different-steps-on-wood-stone-leaves-gra": {
+   "url": "https://opengameart.org/sites/default/files/%5Bkdd%5DDifferentSteps_0.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/%5Bkdd%5DDifferentSteps_0.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud",
+   "author": "TinyWorlds",
+   "licence": "CC0-1.0",
+   "title": "Different steps on wood, stone, leaves, gravel and mud",
+   "prefer_lossless": true
+  },
+  "oga2-energy-drain": {
+   "url": "https://opengameart.org/sites/default/files/qubodup-PowerDrain.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/qubodup-PowerDrain.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/energy-drain",
+   "author": "qubodup",
+   "licence": "CC0-1.0",
+   "title": "Energy Drain",
+   "prefer_lossless": true
+  },
+  "oga2-fantasy-sound-effects-tinysized-sfx": {
+   "url": "https://opengameart.org/sites/default/files/tinysized.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/tinysized.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/fantasy-sound-effects-tinysized-sfx",
+   "author": "Vehicle",
+   "licence": "CC0-1.0",
+   "title": "Fantasy Sound Effects (Tinysized SFX)",
+   "prefer_lossless": true
+  },
+  "oga2-fantasy-weapons-and-apparel-sfx-library": {
+   "url": "https://opengameart.org/sites/default/files/weapons-apparel.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/weapons-apparel.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library",
+   "author": "Vehicle",
+   "licence": "CC0-1.0",
+   "title": "Fantasy Weapons and Apparel SFX Library",
+   "prefer_lossless": true
+  },
+  "oga2-fire-crackling": {
+   "url": "https://opengameart.org/sites/default/files/fire-1.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/fire-1.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/fire-crackling",
+   "author": "AntumDeluge",
+   "licence": "CC0-1.0",
+   "title": "Fire Crackling",
+   "prefer_lossless": true
+  },
+  "oga2-flight-or-spell-sound": {
+   "url": "https://opengameart.org/sites/default/files/flight_sound.mp3",
+   "urls": [
+    "https://opengameart.org/sites/default/files/flight_sound.mp3"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/flight-or-spell-sound",
+   "author": "pauliuw",
+   "licence": "CC0-1.0",
+   "title": "Flight or spell sound",
+   "prefer_lossless": true
+  },
+  "oga2-footsteps-leather-cloth-armor": {
+   "url": "https://opengameart.org/sites/default/files/footsteps.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/footsteps.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/footsteps-leather-cloth-armor",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "title": "Footsteps Leather, Cloth, Armor",
+   "prefer_lossless": true,
+   "note": "its page offers OGA-BY 3.0 or CC0; used under CC0"
+  },
+  "oga2-forest-bird-sounds": {
+   "url": "https://opengameart.org/sites/default/files/forest_birds.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/forest_birds.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/forest-bird-sounds",
+   "author": "pauliuw",
+   "licence": "CC0-1.0",
+   "title": "Forest bird sounds",
+   "prefer_lossless": true
+  },
+  "oga2-glass-break": {
+   "url": "https://opengameart.org/sites/default/files/glass_breaking.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/glass_breaking.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/glass-break",
+   "author": "Till Behrend",
+   "licence": "CC0-1.0",
+   "title": "Glass Break",
+   "prefer_lossless": true
+  },
+  "oga2-gold-coin": {
+   "url": "https://opengameart.org/sites/default/files/coin.flac",
+   "urls": [
+    "https://opengameart.org/sites/default/files/coin.flac"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/gold-coin-6",
+   "author": "Aeva",
+   "licence": "CC0-1.0",
+   "title": "Gold Coin",
+   "prefer_lossless": true
+  },
+  "oga2-heartbeat-sounds": {
+   "url": "https://opengameart.org/sites/default/files/heartbeat_fast_0.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/heartbeat_fast_0.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/heartbeat-sounds",
+   "author": "bart",
+   "licence": "CC0-1.0",
+   "title": "Heartbeat sounds",
+   "prefer_lossless": true
+  },
+  "oga2-horde-war-drums-loop": {
+   "url": "https://opengameart.org/sites/default/files/horde_war_drums_by_william_hector.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/horde_war_drums_by_william_hector.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/horde-war-drums-loop",
+   "author": "William Hector",
+   "licence": "CC0-1.0",
+   "title": "Horde War Drums loop",
+   "prefer_lossless": true
+  },
+  "oga2-liquid-bottle-drink-set": {
+   "url": "https://opengameart.org/sites/default/files/qubodup-bottle-and-drink-sounds.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/qubodup-bottle-and-drink-sounds.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/liquid-bottle-drink-set",
+   "author": "qubodup",
+   "licence": "CC0-1.0",
+   "title": "Liquid Bottle Drink Set",
+   "prefer_lossless": true
+  },
+  "oga2-loopable-dungeon-ambience": {
+   "url": "https://opengameart.org/sites/default/files/dungeon_ambient_1_0.ogg",
+   "urls": [
+    "https://opengameart.org/sites/default/files/dungeon_ambient_1_0.ogg"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/loopable-dungeon-ambience",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0",
+   "title": "Loopable Dungeon Ambience",
+   "prefer_lossless": true
+  },
+  "oga2-magic-spell-sfx": {
+   "url": "https://opengameart.org/sites/default/files/magical_1_0.ogg",
+   "urls": [
+    "https://opengameart.org/sites/default/files/magical_1_0.ogg",
+    "https://opengameart.org/sites/default/files/magical_2.ogg",
+    "https://opengameart.org/sites/default/files/magical_3.ogg",
+    "https://opengameart.org/sites/default/files/magical_4.ogg",
+    "https://opengameart.org/sites/default/files/magical_5.ogg",
+    "https://opengameart.org/sites/default/files/magical_6_0.ogg",
+    "https://opengameart.org/sites/default/files/magical_7_0.ogg"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/magic-spell-sfx",
+   "author": "JaggedStone",
+   "licence": "CC0-1.0",
+   "title": "Magic Spell SFX",
+   "prefer_lossless": true
+  },
+  "oga2-metal-impact-sounds": {
+   "url": "https://opengameart.org/sites/default/files/clink1_0.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/clink1_0.wav",
+    "https://opengameart.org/sites/default/files/clink2.wav",
+    "https://opengameart.org/sites/default/files/clink3.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/metal-impact-sounds",
+   "author": "BMacZero",
+   "licence": "CC0-1.0",
+   "title": "Metal Impact Sounds",
+   "prefer_lossless": true
+  },
+  "oga2-mild-wind-background-noise": {
+   "url": "https://opengameart.org/sites/default/files/wind%20background%20noise%202.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/wind%20background%20noise%202.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/mild-wind-background-noise",
+   "author": "Bashar3A",
+   "licence": "CC0-1.0",
+   "title": "Mild Wind Background Noise",
+   "prefer_lossless": true
+  },
+  "oga2-pain-sounds-by-emopreben": {
+   "url": "https://opengameart.org/sites/default/files/painsounds.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/painsounds.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/pain-sounds-by-emopreben",
+   "author": "EmoPreben",
+   "licence": "CC0-1.0",
+   "title": "Pain sounds by EmoPreben",
+   "prefer_lossless": true
+  },
+  "oga2-playing-card-sounds": {
+   "url": "https://opengameart.org/sites/default/files/shuffle.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/shuffle.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/playing-card-sounds",
+   "author": "BMacZero",
+   "licence": "CC0-1.0",
+   "title": "Playing Card Sounds",
+   "prefer_lossless": true
+  },
+  "oga2-punch": {
+   "url": "https://opengameart.org/sites/default/files/qubodupPunch.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/qubodupPunch.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/punch",
+   "author": "qubodup",
+   "licence": "CC0-1.0",
+   "title": "Punch",
+   "prefer_lossless": true
+  },
+  "oga2-rpg-sound-pack": {
+   "url": "https://opengameart.org/sites/default/files/rpg_sound_pack.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/rpg_sound_pack.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/rpg-sound-pack",
+   "author": "artisticdude",
+   "licence": "CC0-1.0",
+   "title": "RPG Sound Pack",
+   "prefer_lossless": true
+  },
+  "oga2-rumbling-sound-effects": {
+   "url": "https://opengameart.org/sites/default/files/rumbling17.wav",
+   "urls": [
+    "https://opengameart.org/sites/default/files/rumbling17.wav"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/rumbling-sound-effects",
+   "author": "bretbernhoft",
+   "licence": "CC0-1.0",
+   "title": "Rumbling Sound Effects",
+   "prefer_lossless": true
+  },
+  "oga2-spell-sounds": {
+   "url": "https://opengameart.org/sites/default/files/electricspell2.ogg",
+   "urls": [
+    "https://opengameart.org/sites/default/files/electricspell2.ogg"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/spell-sounds",
+   "author": "HaelDB",
+   "licence": "CC0-1.0",
+   "title": "Spell sounds",
+   "prefer_lossless": true,
+   "note": "its page offers OGA-BY 3.0 or CC0; used under CC0"
+  },
+  "oga2-swish-bamboo-stick-weapon-swhoshes": {
+   "url": "https://opengameart.org/sites/default/files/swoshes.7z",
+   "urls": [
+    "https://opengameart.org/sites/default/files/swoshes.7z"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes",
+   "author": "qubodup",
+   "licence": "CC0-1.0",
+   "title": "Swish - bamboo stick weapon swhoshes",
+   "prefer_lossless": true
+  },
+  "oga2-tree-creaking": {
+   "url": "https://opengameart.org/sites/default/files/tree_creak.flac",
+   "urls": [
+    "https://opengameart.org/sites/default/files/tree_creak.flac"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/tree-creaking",
+   "author": "AntumDeluge",
+   "licence": "CC0-1.0",
+   "title": "Tree Creaking",
+   "prefer_lossless": true
+  },
+  "oga2-undead-moans": {
+   "url": "https://opengameart.org/sites/default/files/undead-moans.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/undead-moans.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/undead-moans",
+   "author": "AntumDeluge",
+   "licence": "CC0-1.0",
+   "title": "Undead Moans",
+   "prefer_lossless": true
+  },
+  "oga2-various-paper-sound-effects": {
+   "url": "https://opengameart.org/sites/default/files/sounds_6.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/sounds_6.zip",
+    "https://opengameart.org/sites/default/files/paper_crushed_-_1.mp3",
+    "https://opengameart.org/sites/default/files/paper_crushed_-_2.mp3",
+    "https://opengameart.org/sites/default/files/paper_ripped_-_1.mp3",
+    "https://opengameart.org/sites/default/files/paper_sound_-_1.mp3",
+    "https://opengameart.org/sites/default/files/paper_sound_-_2.mp3",
+    "https://opengameart.org/sites/default/files/paper_sound_-_3.mp3",
+    "https://opengameart.org/sites/default/files/paper_sound_-_4.mp3"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/various-paper-sound-effects",
+   "author": "Luckius",
+   "licence": "CC0-1.0",
+   "title": "Various Paper Sound Effects",
+   "prefer_lossless": true
+  },
+  "oga2-water-drops": {
+   "url": "https://opengameart.org/sites/default/files/water%20drops.mp3",
+   "urls": [
+    "https://opengameart.org/sites/default/files/water%20drops.mp3"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/water-drops",
+   "author": "CeoxBlackj",
+   "licence": "CC0-1.0",
+   "title": "Water Drops",
+   "prefer_lossless": true
+  },
+  "oga2-wind": {
+   "url": "https://opengameart.org/sites/default/files/wind.zip",
+   "urls": [
+    "https://opengameart.org/sites/default/files/wind.zip"
+   ],
+   "kind": "files",
+   "page": "https://opengameart.org/content/wind",
+   "author": "IgnasD",
+   "licence": "CC0-1.0",
+   "title": "Wind",
+   "prefer_lossless": true
   }
  }
 }

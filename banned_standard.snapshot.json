@@ -1,0 +1,20 @@
+{
+ "fetched_at": "2026-10-10T00:54:49+00:00",
+ "source": "scryfall",
+ "query": "banned:standard",
+ "cards": [
+  "Abuelo's Awakening",
+  "Badgermole Cub",
+  "Cori-Steel Cutter",
+  "Gran-Gran",
+  "Heartfire Hero",
+  "Hopeless Nightmare",
+  "Monstrous Rage",
+  "Proft's Eidetic Memory",
+  "Screaming Nemesis",
+  "Stormchaser's Talent",
+  "This Town Ain't Big Enough",
+  "Up the Beanstalk",
+  "Vivi Ornitier"
+ ]
+}

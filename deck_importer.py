@@ -193,15 +193,16 @@ def _strip_printing_info(name):
     return name.strip()
 
 
-def import_from_text_with_printings(text_block):
+def import_from_text_with_printings(text_block, sideboard=None, fmt=None):
     """Round ALT1: (commanders, deck, printings) - printings is {card name lower: (set code lower, collector number)} for the
-    lines that named one. The first printing of a name wins (two printings of one name - mixed-art basics - aren't supported)."""
+    lines that named one. The first printing of a name wins (two printings of one name - mixed-art basics - aren't supported).
+    sideboard / fmt (round CON1): as for import_from_text."""
     printings = {}
-    commanders, deck = import_from_text(text_block, printings=printings)
+    commanders, deck = import_from_text(text_block, printings=printings, sideboard=sideboard, fmt=fmt)
     return commanders, deck, printings
 
 
-def import_from_text(text_block, printings=None):
+def import_from_text(text_block, printings=None, sideboard=None, fmt=None):
     """
     Parse a plain pasted decklist, one card per line, formats like:
     '1 Sol Ring', '1x Sol Ring', or just 'Sol Ring'.
@@ -209,11 +210,17 @@ def import_from_text(text_block, printings=None):
     'Companion' sections are skipped. Trailing set/collector/foil/tag info is stripped.
     Round FMT1: a line starting with '#' is a comment (a saved deck's "# format: brawl" line, formats.py), and MTG Arena's
     'About' section ("About" / "Name My deck", at the top of an Arena export) is skipped like a sideboard.
+    Round CON1: `fmt` is the deck's format (None: the text's own "# format:" line, else Commander). In a format without a
+    commander (Standard) nothing is ever a commander: a "Commander" section, a tagged line, the last line set apart by a blank
+    line and the first line of a 100-card list all stay in the deck. `sideboard`, when given a list, gets the 'Sideboard' section's
+    cards (repeats expanded), for the deck screen's legality check; the game itself never plays a sideboard.
     Returns (commander_names: list[str], deck_list: list[str])
     """
+    import formats
+    no_commander = not formats.has_commander(fmt if fmt is not None else formats.from_text(text_block))
     commanders = []
     deck_list = []
-    section = "deck"   # "deck", "commander", or "excluded" (maybeboard / sideboard / companion)
+    section = "deck"   # "deck", "commander", "sideboard" (round CON1) or "excluded" (maybeboard / companion / about)
     buf = []           # (qty, name) lines seen so far in the CURRENT section, routed once the section ends
     first_line_qty = [0]  # quantity on the first card line that went into deck_list (list so the closure can set it)
 
@@ -232,7 +239,10 @@ def import_from_text(text_block, printings=None):
                 _route_to_deck(buf[1:])
         elif section == "deck":
             _route_to_deck(buf)
-        # "excluded" (maybeboard / sideboard / companion): just dropped
+        elif section == "sideboard" and sideboard is not None:        # round CON1
+            for qty, name in buf:
+                sideboard.extend([name] * qty)
+        # "excluded" (maybeboard / companion / about), and a sideboard nobody asked for: just dropped
         buf = []
 
     def _route_to_deck(entries):
@@ -263,7 +273,9 @@ def import_from_text(text_block, printings=None):
                 section = "commander"
             elif word in ("deck", "mainboard"):
                 section = "deck"
-            else:  # maybeboard, sideboard, companion, about (MTG Arena's "About / Name ..." lines; round FMT1)
+            elif word == "sideboard":                     # round CON1: kept apart (see `sideboard`), never in the deck
+                section = "sideboard"
+            else:  # maybeboard, companion, about (MTG Arena's "About / Name ..." lines; round FMT1)
                 section = "excluded"
             continue
 
@@ -284,7 +296,7 @@ def import_from_text(text_block, printings=None):
                 printings[stripped] = p
         name = _strip_printing_info(name)
 
-        if tagged_commander and section != "excluded":
+        if tagged_commander and section not in ("excluded", "sideboard") and not no_commander:
             commanders.append(name)          # an explicit per-line tag always wins, whatever section it is in
             continue
         buf.append((qty, name))
@@ -294,6 +306,9 @@ def import_from_text(text_block, printings=None):
 
     if not deck_list and not commanders:
         raise DeckImportError("Could not parse any cards from the pasted text.")
+
+    if no_commander:                                 # round CON1: a Standard deck - every card is a deck card, no guessing
+        return [], commanders + deck_list
 
     # A commander given with no header at all, set apart only by a blank line at the very end of the paste
     # (Karl: "Pasting in a decklist should detect the commander if its at the bottom like this" - 99 unlabeled

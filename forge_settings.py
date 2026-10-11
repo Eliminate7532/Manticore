@@ -21,7 +21,7 @@ from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, WHITE, clip_text, draw_text, rou
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 class SettingsPopup(Dialog):
-    """Hangs under the cog, in four groups. DISPLAY: text size, the table background (Round AD1), full screen and animations (the last two are on/off switches that stay
+    """Hangs under the cog, in four groups. DISPLAY: text size and card size (round UI7, one row), the table background (Round AD1), full screen and animations (the last two are on/off switches that stay
     put while you flip them). GAME: Speed (round PRI1: Fast | Slow), New game... and Concede... (each of the last two opens a small
     window that asks what exactly). HELP: controls and
     help, bug or idea (Round FR1: the report window has a Suggest a feature tab), licences, the data folder, and the tour of the
@@ -69,14 +69,24 @@ class SettingsPopup(Dialog):
 
         heading("DISPLAY")
         half = (inner - gap) // 2
-        # text size:  Text size  [A-]  100%  [A+]
-        bw = int(max(gui.button_width("A+", "small"), 46 * fs))
-        r_plus = pygame.Rect(rect.right - pad - bw, y, bw, row_h)
-        r_minus = pygame.Rect(r_plus.x - int(78 * fs) - bw, y, bw, row_h)
-        draw_text(scr, "Text size", x, y + row_h // 2, gui.ui_font("body"), WHITE, "midleft")
-        draw_text(scr, f"{round(gui.text_scale * 100)}%", (r_minus.right + r_plus.x) // 2, y + row_h // 2, gui.font("body", True), WHITE, "center")
-        self._small_button(gui, r_minus, "A-", "smaller")
-        self._small_button(gui, r_plus, "A+", "bigger")
+        # round UI7: Text size and Card size share the first row, each  Label  [-]  100%  [+]  in half the width (12 rows at most)
+        bw = int(max(gui.button_width("A+", "small"), 46 * fs))         # the Table row's buttons below keep their size
+
+        def stepper(x0, width, label, value, minus, plus, minus_label, plus_label):
+            sb = int(max(gui.button_width(minus_label, "small"), gui.button_width(plus_label, "small"), 30 * fs))
+            pf = gui.font("small", True)
+            pw = pf.size("200%")[0] + int(8 * fs)
+            r_plus = pygame.Rect(x0 + width - sb, y, sb, row_h)
+            r_minus = pygame.Rect(r_plus.x - pw - sb, y, sb, row_h)
+            lf = gui.ui_font("body")                                   # the display face, as the old "Text size" label (round 32)
+            if lf.size(label)[0] > r_minus.x - x0 - 4:
+                lf = gui.ui_font("small")
+            draw_text(scr, clip_text(label, lf, r_minus.x - x0 - 4), x0, y + row_h // 2, lf, WHITE, "midleft")
+            draw_text(scr, f"{round(value * 100)}%", (r_minus.right + r_plus.x) // 2, y + row_h // 2, pf, WHITE, "center")
+            self._small_button(gui, r_minus, minus_label, minus)
+            self._small_button(gui, r_plus, plus_label, plus)
+        stepper(x, half, "Text", gui.text_scale, "smaller", "bigger", "A-", "A+")
+        stepper(x + half + gap, inner - half - gap, "Cards", gui.card_scale, "cards_smaller", "cards_bigger", "-", "+")
         y += row_h + gap
         # table background:  Table  [<]  Rotate  [>]     (round AD1; the same shape as the Text size row)
         draw_text(scr, "Table", x, y + row_h // 2, gui.ui_font("body"), WHITE, "midleft")
@@ -194,6 +204,10 @@ class SettingsPopup(Dialog):
             gui.change_text_scale(-1)
         elif name == "bigger":
             gui.change_text_scale(1)
+        elif name == "cards_smaller":                    # round UI7
+            gui.change_card_scale(-1)
+        elif name == "cards_bigger":
+            gui.change_card_scale(1)
         elif name == "bg_prev":
             gui.change_background(-1)
         elif name == "bg_next":

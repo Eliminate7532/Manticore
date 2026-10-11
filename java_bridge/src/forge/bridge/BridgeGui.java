@@ -134,11 +134,19 @@ public class BridgeGui extends AbstractGuiGame {
     @Override
     public void setOriginalGameController(PlayerView player, forge.interfaces.IGameController gameController) {
         super.setOriginalGameController(player, gameController);
-        if (gameController instanceof forge.game.player.PlayerController pcc && pcc.getGame() != null
-                && !pcc.getGame().getRules().hasAppliedVariant(Main.variant())) {
-            // Round 27d: without the Commander variant, Forge silently skips Commander-only rules (round 27c's missing
-            // "move your commander to the command zone?" question). Round FMT1: a Brawl game needs the Brawl variant instead.
-            Checks.fail("start", "commander_variant_missing", "the game's rules do not have the " + Main.variant() + " variant applied");
+        if (gameController instanceof forge.game.player.PlayerController pcc && pcc.getGame() != null) {
+            forge.game.GameRules rules = pcc.getGame().getRules();
+            if (Main.constructed()) {
+                // Round CON1: a Constructed game must have NO commander rules (no variant), and be Forge's Constructed type.
+                if (rules.hasCommander() || rules.getGameType() != forge.game.GameType.Constructed) {
+                    Checks.fail("start", "constructed_has_variant", "a Constructed game started as " + rules.getGameType()
+                            + (rules.hasCommander() ? " with commander rules" : ""));
+                }
+            } else if (!rules.hasAppliedVariant(Main.variant())) {
+                // Round 27d: without the Commander variant, Forge silently skips Commander-only rules (round 27c's missing
+                // "move your commander to the command zone?" question). Round FMT1: a Brawl game needs the Brawl variant instead.
+                Checks.fail("start", "commander_variant_missing", "the game's rules do not have the " + Main.variant() + " variant applied");
+            }
         }
         if (events != null && gameController instanceof forge.game.player.PlayerController pc) {
             forge.game.Game g = pc.getGame();

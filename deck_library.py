@@ -46,6 +46,9 @@ SAMPLE_NAMES = {                                             # file name in samp
     "brawl_krenko": "Goblin Union Meeting (Goblins)",
     "brawl_elas": "Polite Murder Society (Aristocrats)",
     "brawl_tetsuko": "Nobody Saw That Coming (Unblockable)",
+    # Round CON1: 60-card Standard samples (their files start with "# format: standard")
+    "standard_red_aggro": "Point It at Their Face (Red Aggro)",
+    "standard_green_dinos": "Big Lizards, Small Price (Green Stompy)",
 }
 
 
@@ -89,12 +92,13 @@ def unknown_in(entry, runtime=None):
         return []
 
 
-def describe_problems(commanders, deck, error=None, runtime=None, fmt=None):
-    """Things worth telling the player about a deck before starting: [(text, is_blocking)]. fmt (round FMT1): the deck's format."""
+def describe_problems(commanders, deck, error=None, runtime=None, fmt=None, sideboard=None):
+    """Things worth telling the player about a deck before starting: [(text, is_blocking)]. fmt (round FMT1): the deck's format.
+    sideboard (round CON1): the deck's sideboard, for Standard's legality lines."""
     if error:
         return [(error, True)]
     out = []
-    if not commanders:
+    if not commanders and formats.has_commander(fmt):          # round CON1: a Standard deck has no commander to find
         out.append(("No commander found. Put the commander on the first line, or under a line that says Commander.", True))
     try:
         import forge_client as fc
@@ -106,7 +110,7 @@ def describe_problems(commanders, deck, error=None, runtime=None, fmt=None):
         # Round 28d (F2): say it plainly - Forge leaves a card it doesn't know out of the game. The usual reason once the alpha
         # is out: a card from a set newer than the Forge build this copy is pinned to (ROADMAP Phase F).
         out.append((f"Not in this version of Forge yet (or misspelt): {shown}. They will be left out of the game.", False))
-    out += legality_lines(commanders, deck, fmt)
+    out += legality_lines(commanders, deck, fmt, sideboard)
     return out
 
 
@@ -125,22 +129,25 @@ def deck_id(path, base_dir=BASE_DIR):
     return rel.replace("\\", "/")
 
 
-def legality(commanders, deck, fmt=None):
+def legality(commanders, deck, fmt=None, sideboard=None):
     """Round BAN1: legality.check() for a deck, or None when the check itself failed (it must never stop the menu)."""
     try:
         import legality as lg
-        return lg.check(commanders, deck, fmt=formats.normal(fmt))
+        return lg.check(commanders, deck, fmt=formats.normal(fmt), sideboard=sideboard)
     except Exception:
         return None
 
 
-def legality_lines(commanders, deck, fmt=None):
+def legality_lines(commanders, deck, fmt=None, sideboard=None):
     """Round BAN1: the format-legality lines (banned, not legal, 100 cards, singleton, colours, commander, pair). Every one is a
     warning: a not-legal deck still plays (Karl, 1 Oct). The 100-card line used to be here; it is legality's now."""
     fmt = formats.normal(fmt)
-    v = legality(commanders, deck, fmt)
+    v = legality(commanders, deck, fmt, sideboard)
     if v is None:
         total, size = len(deck or []) + len(commanders or []), formats.get(fmt).deck_size
+        if not formats.get(fmt).exact:                         # round CON1: Standard has a minimum, not an exact size
+            return ([(f"This deck has {total} cards; a {formats.name(fmt)} deck has at least {size}.", False)]
+                    if total < size else [])
         return ([(f"This deck has {total} cards; a {formats.name(fmt)} deck has {size} (commander included).", False)]
                 if total != size else [])
     import legality as lg
@@ -159,6 +166,7 @@ class DeckEntry:
         self.deck = None
         self.printings = {}          # round ALT1: {card name lower: (set code lower, collector number)} from the file's lines
         self.format = formats.DEFAULT    # round FMT1: the file's "# format:" line ("commander" when it has none)
+        self.sideboard = []          # round CON1: the file's Sideboard section (Standard's legality check; never played)
         self.error = None
         self._mtime = None
 
@@ -177,7 +185,8 @@ class DeckEntry:
             with open(self.path, "r", encoding="utf-8-sig") as f:      # utf-8-sig tolerates a Notepad byte-order mark
                 text = f.read()
             self.format = formats.from_text(text)
-            self.commanders, self.deck, self.printings = import_from_text_with_printings(text)
+            self.sideboard = []
+            self.commanders, self.deck, self.printings = import_from_text_with_printings(text, sideboard=self.sideboard)
             names = {n.lower() for n in list(self.commanders or []) + list(self.deck or [])}
             for name, (kind, pic) in art_lines(text).items():          # round ALT2 / patch 40: "# art: <card> = mpc:|image:<id>"
                 if kind == "image":                                     # patch 40: a back face's picture is kept by that face's
@@ -193,7 +202,7 @@ class DeckEntry:
 
     @property
     def ok(self):
-        return self.deck is not None and bool(self.commanders)
+        return self.deck is not None and (bool(self.commanders) or not formats.has_commander(self.format))     # round CON1
 
     @property
     def total(self):
@@ -203,15 +212,25 @@ class DeckEntry:
         """'Kinnan, Bonder Prodigy - 100 cards'"""
         if self.error:
             return self.error
+        if not formats.has_commander(self.format):             # round CON1: "Standard  -  60 cards (15 in the sideboard)"
+            side = f" ({len(self.sideboard)} in the sideboard)" if self.sideboard else ""
+            return f"{formats.name(self.format)}  -  {self.total} cards{side}"
         who = " + ".join(self.commanders) if self.commanders else "no commander found"
         return f"{who}  -  {self.total} cards"
+
+    def face(self):
+        """Round CON1: the card that stands for this deck where a commander would (the deck list's picture, the VS screen): its
+        first commander, else face_card() of its cards. None when the deck can't be read."""
+        if self.commanders:
+            return self.commanders[0]
+        return face_card(self.deck)
 
     def problems(self, runtime=None):
         """describe_problems() for this deck; remembered until the file changes (or, Round BAN1, the banned list or card data
         changes: legality.version()), because the deck screen asks every frame."""
         key = (self._mtime, runtime, _legality_version(), self.format, _card_index_ready(runtime))
         if getattr(self, "_problems_key", None) != key:
-            self._problems = describe_problems(self.commanders, self.deck, self.error, runtime, self.format)
+            self._problems = describe_problems(self.commanders, self.deck, self.error, runtime, self.format, self.sideboard)
             self._problems_key = key
         return self._problems
 
@@ -222,7 +241,7 @@ class DeckEntry:
             return None
         key = (self._mtime, _legality_version(), self.format)
         if getattr(self, "_legality_key", None) != key:
-            self._legality = legality(self.commanders, self.deck, self.format)
+            self._legality = legality(self.commanders, self.deck, self.format, self.sideboard)
             self._legality_key = key
         return self._legality
 
@@ -275,8 +294,10 @@ def looks_like_link(text):
     return bool(re.match(r"^https?://\S+$", t)) or (t.count("\n") == 0 and ("moxfield.com" in t or "archidekt.com" in t))
 
 
-def analyse(text):
-    """Read pasted text. Returns (commanders, deck, error). The error is written for the player."""
+def analyse(text, fmt=None, sideboard=None):
+    """Read pasted text. Returns (commanders, deck, error). The error is written for the player.
+    fmt (round CON1): the format chosen in the import window (None: the text's own "# format:" line). A Standard deck needs no
+    commander, and nothing in it is read as one. sideboard (round CON1): a list that gets the Sideboard section's cards."""
     text = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
     if not text:
         return None, None, "Nothing pasted yet."
@@ -284,9 +305,11 @@ def analyse(text):
         return None, None, ("That is a web link, and this box needs the deck's TEXT list instead. On Moxfield open the deck, "
                             "choose Export, and copy the text; on Archidekt use Export > Text.")
     try:
-        commanders, deck = import_from_text(text)
+        commanders, deck = import_from_text(text, fmt=fmt, sideboard=sideboard)
     except DeckImportError as e:
         return None, None, str(e)
+    if not formats.has_commander(fmt if fmt is not None else formats.from_text(text)):
+        return [], deck, None
     if not commanders:
         n = len(deck)
         return None, None, (f"I read {n} card{'s' if n != 1 else ''} but could not tell which one is the commander. "
@@ -294,8 +317,38 @@ def analyse(text):
     return commanders, deck, None
 
 
-def suggest_name(commanders):
-    return safe_file_name(commanders[0] if commanders else "New deck")
+_ARENA_NAME = re.compile(r"^\s*About\s*\n\s*Name\s+(.+?)\s*$", re.I | re.M)
+
+
+def suggest_name(commanders, text=None):
+    """A new deck's file name: its first commander. Round CON1: a deck without one (Standard) takes the name MTG Arena's export
+    gives it ("About" / "Name Boros Burn"), else "" - the import window then asks for a name."""
+    if commanders:
+        return safe_file_name(commanders[0])
+    m = _ARENA_NAME.search((text or "").replace("\r\n", "\n"))
+    if m:
+        return safe_file_name(m.group(1))
+    return "" if text is not None else safe_file_name("New deck")
+
+
+BASIC_LANDS = {"plains", "island", "swamp", "mountain", "forest", "wastes"}
+
+
+def face_card(deck):
+    """Round CON1: the card that stands for a deck with no commander - the one it has the most copies of, basic lands left
+    out (the first of those in list order on a tie). A choice made without card data: it can be a non-basic land (my estimate:
+    rarely, since decks list their creatures first). None for an empty deck."""
+    counts, order = {}, []
+    for n in deck or []:
+        if n.strip().lower() in BASIC_LANDS or n.lower().startswith("snow-covered "):
+            continue
+        if n not in counts:
+            order.append(n)
+        counts[n] = counts.get(n, 0) + 1
+    if not order:
+        return None
+    best = max(counts.values())
+    return next(n for n in order if counts[n] == best)
 
 
 def free_name(name, library_dir=LIBRARY_DIR):
@@ -312,11 +365,11 @@ def free_name(name, library_dir=LIBRARY_DIR):
 def save_text(name, text, library_dir=LIBRARY_DIR, base_dir=BASE_DIR, fmt=None):
     """Check the pasted text and save it as a new deck. Returns the DeckEntry; raises DeckImportError with a readable message.
     fmt (round FMT1): the deck's format, written as a "# format:" line (None keeps the text's own line, if it has one)."""
-    commanders, deck, error = analyse(text)
+    commanders, deck, error = analyse(text, fmt)
     if error:
         raise DeckImportError(error)
     os.makedirs(library_dir, exist_ok=True)
-    name = free_name(name or suggest_name(commanders), library_dir)
+    name = free_name(name or suggest_name(commanders, text) or "New deck", library_dir)
     path = os.path.join(library_dir, name + ".txt")
     tmp = path + ".tmp"
     text = text.replace("\r\n", "\n").replace("\r", "\n").strip()

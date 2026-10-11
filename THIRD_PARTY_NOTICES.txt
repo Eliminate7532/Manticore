@@ -1855,7 +1855,6 @@ express Statement of Purpose.
 Sounds and music in this folder are built by tools/build_sounds.py from these recordings. Every one is CC0 1.0
 (public domain dedication: no permission or credit needed). We credit them anyway, with thanks.
 
-fs-bodyfall: "BODY FALL - V HVY - DIRT" by leonelmail - https://freesound.org/s/504626/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-choir-men: "Myst Men Choir Dark Atmo Drone Thriller Mood Cinematic.wav" by szegvari - https://freesound.org/s/619558/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-crow: "Hooded Crow: Cawing" by Mish7913 - https://freesound.org/s/741366/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-crow2: "Crow Caw" by qubodup - https://freesound.org/s/813115/ - CC0 1.0 - Freesound's high-quality preview of the original
@@ -1863,39 +1862,76 @@ fs-distant-boom: "Muffled Distant Explosion" by NenadSimic - https://freesound.o
 fs-drone-low: "Textured Low Drone 02 - Loop" by kkenny101 - https://freesound.org/s/871510/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-drone-rumble: "Deep rumbling drone" by xkeril - https://freesound.org/s/632682/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-dungeon: "Dark Dungeon Ambience" by Kinoton - https://freesound.org/s/516566/ - CC0 1.0 - Freesound's high-quality preview of the original
-fs-gong: "deep gong.wav" by Rodrigo The Mad - https://freesound.org/s/133804/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-sword-draw: "Sword draw unsheathe" by SamsterBirdies - https://freesound.org/s/581594/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-toll: "TOLLING BELL" by SamuelGremaud - https://freesound.org/s/454855/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-toll-distant: "St Peters Church, Kinver - Distant Tolling Bell" by TicAshfield - https://freesound.org/s/824588/ - CC0 1.0 - Freesound's high-quality preview of the original
-fs-torch: "torch ambience loop" by LordStirling - https://freesound.org/s/483692/ - CC0 1.0 - Freesound's high-quality preview of the original
-fs-wind-door: "Wind howling in the door of a building" by felix.blume - https://freesound.org/s/234000/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-wind-howl: "Howling Wind.aif" by AbolGuga - https://freesound.org/s/620539/ - CC0 1.0 - Freesound's high-quality preview of the original
 kenney-casino: by Kenney (kenney.nl) - https://kenney.nl/assets/casino-audio - CC0 1.0
 kenney-impact: by Kenney (kenney.nl) - https://kenney.nl/assets/impact-sounds - CC0 1.0
 kenney-rpg: by Kenney (kenney.nl) - https://kenney.nl/assets/rpg-audio - CC0 1.0
+mus-bleeding-out: by HaelDB - https://opengameart.org/content/bleeding-out - CC0 1.0 - also offered as OGA-BY 3.0; used under CC0
 mus-cathedral-forest: by congusbongus - https://opengameart.org/content/cathedral-in-the-forest-ambient-loop - CC0 1.0
+mus-cold-silence: by Eponasoft - https://opengameart.org/content/cold-silence - CC0 1.0
+mus-echoes: by isaiah658 - https://opengameart.org/content/echoes-of-the-past - CC0 1.0
 mus-eternal: by The Oracle - https://opengameart.org/content/eternal-sleep - CC0 1.0
 mus-forest: by cynicmusic - https://opengameart.org/content/dark-forest-theme - CC0 1.0
-mus-gameoverdark: by Robin Lamb - https://opengameart.org/content/game-over-dark-short-music-clips - CC0 1.0
 mus-lament: by RandomMind - https://opengameart.org/content/fantasy-lament-for-a-warriors-soul - CC0 1.0
+mus-lament-war: by Cethiel - https://opengameart.org/content/laments-of-the-war - CC0 1.0
 mus-tragic: by HaelDB - https://opengameart.org/content/tragic-ambient-main-menu - CC0 1.0 - also offered as OGA-BY 3.0; used under CC0
 mus-victory: by RandomMind - https://opengameart.org/content/medieval-victory-theme - CC0 1.0
 mus-wastelands: by SubspaceAudio - https://opengameart.org/content/horror-atmosphere - CC0 1.0
+mus2-bittersweet: "Bittersweet" by Emma_MA - https://opengameart.org/content/bittersweet - CC0 1.0
+mus2-war-horns: "War Horns" by Eldritch Grim - https://opengameart.org/content/war-horns - CC0 1.0
 oga-boulder: by themightyglider - https://opengameart.org/content/moving-boulder - CC0 1.0
 oga-breaking: by rubberduck - https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx - CC0 1.0
-oga-darkmagic: by qubodup - https://opengameart.org/content/3-dark-magic-spells - CC0 1.0
-oga-dings: by StarNinjas - https://opengameart.org/content/4-metal-dingsrings - CC0 1.0
 oga-drain: by qubodup - https://opengameart.org/content/energy-drain - CC0 1.0
 oga-drips: by qubodup - https://opengameart.org/content/dripping-water-loop - CC0 1.0
-oga-ghostbreath: by qubodup - https://opengameart.org/content/ghost-breath - CC0 1.0
-oga-healing: by HaelDB - https://opengameart.org/content/spell-sounds - CC0 1.0 - also offered as OGA-BY 3.0; used under CC0
-oga-heartbeat-dry: by bart - https://opengameart.org/content/heartbeat-sounds - CC0 1.0
-oga-rain: by Ylmir - https://opengameart.org/content/rain-loopable - CC0 1.0
-oga-shield: by StarNinjas - https://opengameart.org/content/10-impactshield-blocks - CC0 1.0
 oga-swishes: by artisticdude - https://opengameart.org/content/swishes-sound-pack - CC0 1.0
 oga-swordclash: by StarNinjas - https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes - CC0 1.0
-oga-thunder: by WuxiaScrub - https://opengameart.org/content/rain-long-thunder - CC0 1.0
 oga-treecreak: by AntumDeluge - https://opengameart.org/content/tree-creaking - CC0 1.0
+oga2-100-cc0-metal-and-wood-sfx: "100 CC0 metal and wood SFX" by rubberduck - https://opengameart.org/content/100-cc0-metal-and-wood-sfx - CC0 1.0
+oga2-12-coin-sound-effects: "12 Coin Sound Effects" by StarNinjas - https://opengameart.org/content/12-coin-sound-effects - CC0 1.0
+oga2-25-cc0-mud-sfx: "25 CC0 mud sfx" by rubberduck - https://opengameart.org/content/25-cc0-mud-sfx - CC0 1.0
+oga2-27-metal-audio-samples-sfx: "27 Metal Audio Samples (SFX)" by blacklodgegames - https://opengameart.org/content/27-metal-audio-samples-sfx - CC0 1.0
+oga2-35-wooden-cracks-hits-destructions: "35 wooden cracks/hits/destructions" by Independent.nu - https://opengameart.org/content/35-wooden-crackshitsdestructions - CC0 1.0
+oga2-37-hits-punches: "37 hits/punches" by Independent.nu - https://opengameart.org/content/37-hitspunches - CC0 1.0
+oga2-40-cc0-water-splash-slime-sfx: "40 CC0 water / splash / slime SFX" by rubberduck - https://opengameart.org/content/40-cc0-water-splash-slime-sfx - CC0 1.0
+oga2-58-random-sound-effects: "58 Random Sound Effects" by TokyoGeisha - https://opengameart.org/content/58-random-sound-effects - CC0 1.0
+oga2-8-wet-squish-slurp-impacts: "8 wet squish, slurp impacts" by Independent.nu - https://opengameart.org/content/8-wet-squish-slurp-impacts - CC0 1.0
+oga2-80-cc0-creature-sfx: "80 CC0 creature SFX" by rubberduck - https://opengameart.org/content/80-cc0-creature-sfx - CC0 1.0
+oga2-an-interesting-snare-drum-sound: "An Interesting Snare Drum Sound" by Spring Spring - https://opengameart.org/content/an-interesting-snare-drum-sound - CC0 1.0
+oga2-card-game-sounds: "Card Game sounds" by HaelDB - https://opengameart.org/content/card-game-sounds - CC0 1.0
+oga2-crow-caw: "Crow caw" by zeroisnotnull - https://opengameart.org/content/crow-caw - CC0 1.0
+oga2-dark-ambiences: "Dark Ambiences" by Ogrebane - https://opengameart.org/content/dark-ambiences - CC0 1.0
+oga2-different-steps-on-wood-stone-leaves-gra: "Different steps on wood, stone, leaves, gravel and mud" by TinyWorlds - https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud - CC0 1.0
+oga2-energy-drain: "Energy Drain" by qubodup - https://opengameart.org/content/energy-drain - CC0 1.0
+oga2-fantasy-sound-effects-tinysized-sfx: "Fantasy Sound Effects (Tinysized SFX)" by Vehicle - https://opengameart.org/content/fantasy-sound-effects-tinysized-sfx - CC0 1.0
+oga2-fantasy-weapons-and-apparel-sfx-library: "Fantasy Weapons and Apparel SFX Library" by Vehicle - https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library - CC0 1.0
+oga2-fire-crackling: "Fire Crackling" by AntumDeluge - https://opengameart.org/content/fire-crackling - CC0 1.0
+oga2-flight-or-spell-sound: "Flight or spell sound" by pauliuw - https://opengameart.org/content/flight-or-spell-sound - CC0 1.0
+oga2-footsteps-leather-cloth-armor: "Footsteps Leather, Cloth, Armor" by HaelDB - https://opengameart.org/content/footsteps-leather-cloth-armor - CC0 1.0 - its page offers OGA-BY 3.0 or CC0; used under CC0
+oga2-forest-bird-sounds: "Forest bird sounds" by pauliuw - https://opengameart.org/content/forest-bird-sounds - CC0 1.0
+oga2-glass-break: "Glass Break" by Till Behrend - https://opengameart.org/content/glass-break - CC0 1.0
+oga2-gold-coin: "Gold Coin" by Aeva - https://opengameart.org/content/gold-coin-6 - CC0 1.0
+oga2-heartbeat-sounds: "Heartbeat sounds" by bart - https://opengameart.org/content/heartbeat-sounds - CC0 1.0
+oga2-horde-war-drums-loop: "Horde War Drums loop" by William Hector - https://opengameart.org/content/horde-war-drums-loop - CC0 1.0
+oga2-liquid-bottle-drink-set: "Liquid Bottle Drink Set" by qubodup - https://opengameart.org/content/liquid-bottle-drink-set - CC0 1.0
+oga2-loopable-dungeon-ambience: "Loopable Dungeon Ambience" by JaggedStone - https://opengameart.org/content/loopable-dungeon-ambience - CC0 1.0
+oga2-magic-spell-sfx: "Magic Spell SFX" by JaggedStone - https://opengameart.org/content/magic-spell-sfx - CC0 1.0
+oga2-metal-impact-sounds: "Metal Impact Sounds" by BMacZero - https://opengameart.org/content/metal-impact-sounds - CC0 1.0
+oga2-mild-wind-background-noise: "Mild Wind Background Noise" by Bashar3A - https://opengameart.org/content/mild-wind-background-noise - CC0 1.0
+oga2-pain-sounds-by-emopreben: "Pain sounds by EmoPreben" by EmoPreben - https://opengameart.org/content/pain-sounds-by-emopreben - CC0 1.0
+oga2-playing-card-sounds: "Playing Card Sounds" by BMacZero - https://opengameart.org/content/playing-card-sounds - CC0 1.0
+oga2-punch: "Punch" by qubodup - https://opengameart.org/content/punch - CC0 1.0
+oga2-rpg-sound-pack: "RPG Sound Pack" by artisticdude - https://opengameart.org/content/rpg-sound-pack - CC0 1.0
+oga2-rumbling-sound-effects: "Rumbling Sound Effects" by bretbernhoft - https://opengameart.org/content/rumbling-sound-effects - CC0 1.0
+oga2-spell-sounds: "Spell sounds" by HaelDB - https://opengameart.org/content/spell-sounds - CC0 1.0 - its page offers OGA-BY 3.0 or CC0; used under CC0
+oga2-swish-bamboo-stick-weapon-swhoshes: "Swish - bamboo stick weapon swhoshes" by qubodup - https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes - CC0 1.0
+oga2-tree-creaking: "Tree Creaking" by AntumDeluge - https://opengameart.org/content/tree-creaking - CC0 1.0
+oga2-undead-moans: "Undead Moans" by AntumDeluge - https://opengameart.org/content/undead-moans - CC0 1.0
+oga2-various-paper-sound-effects: "Various Paper Sound Effects" by Luckius - https://opengameart.org/content/various-paper-sound-effects - CC0 1.0
+oga2-water-drops: "Water Drops" by CeoxBlackj - https://opengameart.org/content/water-drops - CC0 1.0
+oga2-wind: "Wind" by IgnasD - https://opengameart.org/content/wind - CC0 1.0
 
 
 ------------------------------------------------------------------------------

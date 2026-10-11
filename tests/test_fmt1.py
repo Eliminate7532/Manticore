@@ -45,8 +45,8 @@ class FormatTableTests(unittest.TestCase):
     def test_known_formats_and_the_default(self):
         self.assertEqual(formats.normal(None), "commander")
         self.assertEqual(formats.normal("BRAWL"), "brawl")
-        self.assertEqual(formats.normal("standard"), "commander")          # not built yet: anything unknown is Commander
-        self.assertEqual(formats.ORDER, ("commander", "brawl"))
+        self.assertEqual(formats.normal("modern"), "commander")            # not built: anything unknown is Commander
+        self.assertEqual(formats.ORDER, ("commander", "brawl", "standard"))  # round CON1: Standard
 
     def test_brawl_is_arenas_100_card_brawl(self):
         b = formats.get("brawl")
@@ -175,8 +175,8 @@ class BrawlLegalityTests(unittest.TestCase):
     def test_start_loads_every_formats_list(self):
         with mock.patch.object(lg, "load") as load, mock.patch.object(lg, "refresh_in_background") as refresh:
             lg.start([])
-        self.assertEqual([c.args[0] for c in load.call_args_list], ["commander", "brawl"])
-        self.assertEqual([c.args[0] for c in refresh.call_args_list], ["commander", "brawl"])
+        self.assertEqual([c.args[0] for c in load.call_args_list], ["commander", "brawl", "standard"])          # CON1: + Standard
+        self.assertEqual([c.args[0] for c in refresh.call_args_list], ["commander", "brawl", "standard"])
 
 
 # ---- the deck library --------------------------------------------------------------------------------------------------------
@@ -442,10 +442,11 @@ class DeckScreenTests(tds.TempDecks):
                 frame(gui, 2)
                 window = pygame.Rect(0, 0, *size)
                 rects = gui.menu.format_rects
-                self.assertEqual(set(rects), {"fmt_commander", "fmt_brawl"})
+                self.assertEqual(set(rects), {"fmt_commander", "fmt_brawl", "fmt_standard"})          # round CON1: + Standard
                 for r in rects.values():
                     self.assertTrue(window.contains(r), (r, size, scale))
                 self.assertFalse(rects["fmt_commander"].colliderect(rects["fmt_brawl"]))
+                self.assertFalse(rects["fmt_brawl"].colliderect(rects["fmt_standard"]))
                 title_w = gui.font("big", True).size("Choose your decks")[0]
                 self.assertGreater(min(r.x for r in rects.values()), title_w, (size, scale))   # never over the title
                 gui.menu.open_import(gui, "")

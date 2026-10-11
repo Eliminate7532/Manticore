@@ -80,7 +80,8 @@ class CogTests(Base):
         gui = self.gui()
         open_cog(gui)
         self.assertEqual([n for _r, n in gui.overlay.buttons],
-                         ["smaller", "bigger", "bg_prev", "bg_next",                                            # round AD1: Table < Rotate >
+                         ["smaller", "bigger", "cards_smaller", "cards_bigger",                                 # round UI7: Text | Cards
+                          "bg_prev", "bg_next",                                                                 # round AD1: Table < Rotate >
                           "full", "motion", "frames",                                                           # round 26
                           "hand_sort",                                                                          # "Sort hand by type"
                           "log_mode", "preview_mode",                                                           # patch UI6: Log | Focus

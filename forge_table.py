@@ -33,6 +33,7 @@ import pygame
 pygame.mixer.pre_init(44100, -16, 2, 512)     # round 24: must happen before pygame.init() opens the mixer with default settings
 
 import audio
+import cue_types
 import crashlog
 import deck_library as lib
 import forge_client as fc
@@ -54,6 +55,7 @@ import legality
 import events as gevents
 import java_crash
 import journal as gjournal
+import judge_dialog as jdlg
 import rewind as grewind
 import licenses_view
 import mana_hint as mh
@@ -77,6 +79,8 @@ pygame.init()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_FILE = paths.settings_file()          # round 28: user_dir()/settings.json (the program folder in a portable copy)
 SOUNDS_DIR = paths.sounds_dir()               # unchanged: always ships with the program (Round 29: via paths, so a frozen build looks in _MEIPASS)
+BIG_ATTACK_POWER = 10                          # patch 49 (Karl, Q2 "Big attacks"): Lament of the War plays when the attackers' total power is
+ATTACK_MUSIC_COOLDOWN = 120.0                  #   at least this, or at least a defending player's life - at most once every 2 minutes
 CUES_FILE = os.path.join(SOUNDS_DIR, "cues.json")
 _AUDIO_SHARED = {"director": None, "building": False, "lock": threading.Lock(), "event": threading.Event()}  # round 24
 DEFAULT_DECK = os.path.join(paths.sample_dir(), "stompy_goreclaw.txt")      # patch 38 (was the Kinnan sample)
@@ -87,6 +91,7 @@ MAX_BAD_FRAMES = 60                       # this many frames in a row with an er
 PERF_LOG = paths.log_file("perf_log.txt")      # round 28: local_dir()/logs/perf_log.txt (MANTICORE_DATA_DIR still wins)
 SAVES_DIR = paths.saves_dir()                  # round 28: user_dir()/saves (MANTICORE_DATA_DIR still wins)
 MIN_WINDOW = (900, 600)
+JUDGE_LABEL = "Judge?!"                        # round JDG1
 CARD_ASPECT = 488 / 680
 
 
@@ -133,6 +138,8 @@ def hand_sort_key(card):
 
 
 TEXT_STEPS = (1.0, 1.25, 1.5, 1.75, 2.0)
+CARD_STEPS = TEXT_STEPS                         # round UI7: Card size steps like Text size, 100% (today's cards) to 200%
+ONE_ROW_GAIN = 1.1                              # round UI7: a board goes to one row of bigger cards only when they are 10%+ bigger
 
 # Round 27e: the window must fit the screen it opens on. Remote Desktop gives the same PC a different (often much smaller) screen
 # than its own monitor, and the window size remembered from the monitor (e.g. 4096x2019) opened far bigger than the desktop.
@@ -286,12 +293,16 @@ HELP_LINES = [
     ("Turn bar (top)", "Shows whose turn it is and which phase you are in (the lit pill). Below each pill are two dots: click the blue one to stop there on YOUR turn, the orange one to stop there on an OPPONENT's turn. Clicking the pill itself toggles the blue one."),
     ("Rings and numbers", "A pale blue-white ring: a permanent that just entered the battlefield (yours or theirs). A purple ring with a number: a trigger from that card is on the stack. A green ring: an ability someone activated. The number is the row in the stack panel (1 resolves first). Cog > Animations turns the flashing off and keeps the rings."),
     ("Hover / right-click", "Hover a card to see it large on the right. Right-click a card to keep it there."),
+    ("J / Judge?!", "A card's Oracle text and official rulings, newest first: the card under the mouse, else the pinned one, else the "
+                    "top of the stack (then also where it sits, who put it there, its targets). Kept on this computer once seen. "
+                    "The button is in the stack's heading (the log's when the stack is empty)."),
     ("Library / Graveyard / Exile", "The three piles on each player's panel (left). Click a graveyard or exile pile to look inside. Your library is the face-down pile: you can't browse it, but when an effect lets you search it (a fetchland, a tutor) a window opens listing its cards: click the one you want, then press the button at the bottom right."),
     ("Command zone", "The gold frame beside your hand holds your commander; click the card to cast it (Forge adds the tax). Opponents' command zones are next to their panels."),
     ("Chips on a panel", "A gold crown chip means that player is the monarch; other chips show the initiative, the Ring and emblems. Hover one to read what it does. A life total flashes red or green with -3 / +2 when it changes."),
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
     ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
-    ("F11 / + / -", "Fullscreen / bigger and smaller text. Both are remembered."),
+    ("F11 / + / -", "Fullscreen / bigger and smaller text. With Ctrl, + / - is the card size (round UI7): battlefield cards that "
+                    "fit in one row show bigger. All remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
     ("F8 / Bug or idea", "Something wrong? The game packs a report (a picture of the table, the board, the log, the version) into one zip and sends it to Karl if his Discord is set up, even with a question on screen. The second tab, Suggest a feature, sends him an idea instead (F8 on the deck screen opens on it)."),
     ("Licenses and credits", "Cog > Licenses and credits (or Shift+F1): the program's licence (GNU GPL v3), where to get the source, and the licences of everything it uses."),
@@ -315,6 +326,17 @@ def online_stats_id(folder):
 
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
+
+
+def card_scale_from(value):
+    """Round UI7: settings.json's card_scale - a missing or unknown value (not a number, or outside 100%-200%) is 100%."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    if v != v or not (CARD_STEPS[0] - 0.01 <= v <= CARD_STEPS[-1] + 0.01):
+        return 1.0
+    return min(CARD_STEPS, key=lambda st: abs(st - v))
 
 
 def round_number(turn, player_count):
@@ -711,6 +733,7 @@ class ForgeTable:
         self.current_format = formats.DEFAULT        # round FMT1: that game's format (Restart plays it again)
         self.settings_path = settings_path
         self.text_scale = 1.0
+        self.card_scale = 1.0                # round UI7: Card size (cog DISPLAY, Ctrl and + / -)
         self.fullscreen = False
         self.animations = True              # rings flash and pulse; off = the same rings, standing still (cog: "Animations")
         self.sound = {"on": True, "master": 0.8, "ui": 0.6, "sfx": 0.8, "stinger": 0.8, "music": 0.45, "ambience": 0.6, "hover_tick": True,
@@ -864,6 +887,7 @@ class ForgeTable:
         self._pinged_at = None
         self.not_responding_noted = False   # crash_log.txt got its one "Forge not answering" line for this game
         self._bad_action_seen = 0.0         # round 24: the last session.bad_action_at we already played ui.error for
+        self._attack_music_at = -1e9        # patch 49: when Lament of the War last started (big attacks, ATTACK_MUSIC_COOLDOWN)
         self._last_hover_cue_index = None   # round 24: the hand index ui.hover was last played for (never repeats on the same card)
         self.ghosts = []                     # round 25: fading pictures of cards that just left a zone
         self.panel_shakers = {}              # round 25: player id -> Shaker, for a jolt when that player is hit
@@ -908,6 +932,7 @@ class ForgeTable:
             self.table_background = bg if bg in BG_CHOICES else "rotate"         # a missing or unknown value (even "alternate") is Rotate
             last = data.get("table_background_last")
             self.table_background_last = last if last in BG_ORDER + ("plain",) else None
+            self.card_scale = card_scale_from(data.get("card_scale"))             # round UI7: a missing or unknown value is 100%
             lm, pm = data.get("log_mode"), data.get("preview_mode")                    # patch UI6: a missing or unknown value is Always
             self.log_mode = lm if lm in LOG_MODES else "always"
             self.preview_mode = pm if pm in PREVIEW_MODES else "always"
@@ -941,7 +966,7 @@ class ForgeTable:
                      "frames": self.frames, "hand_sort_by_type": self.hand_sort_by_type,
                      "table_background": self.table_background, "table_background_last": self.table_background_last,
                      "log_mode": self.log_mode, "preview_mode": self.preview_mode,
-                     "art_picker_zoom": self.art_picker_zoom,
+                     "art_picker_zoom": self.art_picker_zoom, "card_scale": self.card_scale,
                      "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop), "speed": self.speed})
         key = screen_key(self.desktop)
         if key:                             # round 27e: each screen size keeps its own window and text size
@@ -1091,18 +1116,27 @@ class ForgeTable:
 
     def soundscape(self):
         """(ambience cue, music mode) for what is on screen (round AU1). Music mode None = silence, "keep" = leave it alone (the
-        VICTORY / DEFEAT sting is playing out)."""
+        VICTORY / DEFEAT sting is playing out). Patch 49: the deck screen has its own track ("deck"), and the settings pop-up or the
+        credits window out of a game have theirs ("settings")."""
         boot = self.boot
         if boot is not None:
-            return (None, None) if boot.stage == "splash" else ("amb.title", "title")
+            if boot.stage == "splash":
+                return None, None
+            return "amb.title", ("settings" if self.settings_music() else "title")
         if self.game_showing():
             amb = f"amb.{self.current_bg}" if f"amb.{self.current_bg}" in getattr(self.audio, "cues", {}) else "amb.plain"
             if self.vs is not None and self.vs.holding(self):
                 return amb, None                                        # the VS screen: the commanders, a bell, quiet
             return amb, ("game" if self.game_in_progress() else "keep")
         if self.menu is not None or self.title_ok:
-            return "amb.title", "title"
+            if self.settings_music():
+                return "amb.title", "settings"
+            return "amb.title", ("deck" if self.menu is not None else "title")
         return None, None
+
+    def settings_music(self):
+        """Patch 49: the cog pop-up or the credits window is open (only asked when no game is on the table)."""
+        return isinstance(self.overlay, fset.SettingsPopup) or isinstance(self.modal, licenses_view.LicensesDialog)
 
     def toggle_sound(self):
         self.sound["on"] = not self.sound["on"]
@@ -1195,15 +1229,15 @@ class ForgeTable:
                 self.play_cue("card.play", self.pan_for(b.card))
             elif to == "Battlefield" and frm != "Battlefield":
                 card = self.session.card(b.card) if b.card is not None else None
-                self.play_cue("land.play" if card and card.get("isLand") else "card.land", self.pan_for(b.card))
+                self.play_cue(cue_types.for_arrival(card, self.audio_cues()), self.pan_for(b.card))   # patch 49: by type
             elif frm == "Hand" and to in ("Graveyard", "Library"):
                 self.play_cue("card.discard", self.pan_for(b.card))
             elif frm == "Battlefield" and to == "Graveyard":
-                self.play_cue("destroy", self.pan_for(b.card))
+                self.play_cue(self.destroy_cue(b.card), self.pan_for(b.card))
             elif to == "Exile":
                 self.play_cue("exile", self.pan_for(b.card))
         elif k == "sacrifice":
-            self.play_cue("destroy", self.pan_for(b.card))
+            self.play_cue(self.destroy_cue(b.card), self.pan_for(b.card))
         elif k == "shuffle":
             self.play_cue("deck.shuffle")
         elif k == "tap":
@@ -1234,6 +1268,7 @@ class ForgeTable:
         elif k == "attack":
             if d.get("attackers"):
                 self.play_cue("combat.attack")
+                self.attack_music(d.get("attackers"))
         elif k == "block":
             if d.get("pairs"):
                 self.play_cue("combat.block")
@@ -1246,6 +1281,44 @@ class ForgeTable:
                 self.audio.stop_bus("sfx")                       # cut the table's sounds - not the bell that says who won (round AU1)
                 self.audio.music_sting_after("music.victory" if won else "music.defeat", time.monotonic(), 2.5)
             self.play_cue("game.win" if won else "game.lose")
+
+    def audio_cues(self):
+        return getattr(self.audio, "cues", None) or {}
+
+    def destroy_cue(self, cid):
+        """destroy[.artifact|.enchantment|.land] for the card that broke (patch 49)."""
+        card = self.session.card(cid) if cid is not None else None
+        return cue_types.for_destroy(card, self.audio_cues())
+
+    def big_attack(self, attackers):
+        """Patch 49: the attackers' total power is at least BIG_ATTACK_POWER, or what attacks one player is at least that player's
+        life. Unknown cards count 0; an attack on a planeswalker counts toward the total only."""
+        state = self.session.state or {}
+        life = {p.get("id"): p.get("life") for p in state.get("players", [])}
+        total, at_player = 0, {}
+        for a in attackers or []:
+            card = self.session.card(a.get("card")) if isinstance(a, dict) else None
+            power = (card or {}).get("power")
+            power = power if isinstance(power, int) and power > 0 else 0
+            total += power
+            target = str(a.get("defender") or "") if isinstance(a, dict) else ""
+            if target.startswith("p") and target[1:].isdigit():
+                at_player[int(target[1:])] = at_player.get(int(target[1:]), 0) + power
+        if total >= BIG_ATTACK_POWER:
+            return True
+        return any(isinstance(life.get(pid), int) and power >= life[pid] > 0 for pid, power in at_player.items())
+
+    def attack_music(self, attackers):
+        """Lament of the War over the game music when a big attack is declared, at most once every ATTACK_MUSIC_COOLDOWN seconds."""
+        if not self.audio or not self.sound.get("on", True) or not self.big_attack(attackers):
+            return False
+        now = time.monotonic()
+        if now - self._attack_music_at < ATTACK_MUSIC_COOLDOWN:
+            return False
+        if self.audio.music_interlude("music.attack", now):
+            self._attack_music_at = now
+            return True
+        return False
 
     # ---- departure ghosts, particles and shakes (round 25) --------------------------------------------------------------
 
@@ -1469,6 +1542,18 @@ class ForgeTable:
         self.say(f"Text size {round(self.text_scale * 100)}%", DIM)
         self.save_settings()
 
+    def change_card_scale(self, direction):
+        """Round UI7: Card size, like Text size: 100% to 200% in its steps, a toast, saved. A wish, not a promise - see
+        battlefield_one_row_max."""
+        i = CARD_STEPS.index(self.card_scale)
+        j = clamp(i + direction, 0, len(CARD_STEPS) - 1)
+        if j == i:
+            self.say(f"Card size is already {'maximum' if direction > 0 else 'minimum'} ({round(self.card_scale * 100)}%).", DIM)
+            return
+        self.card_scale = CARD_STEPS[j]
+        self.say(f"Card size {round(self.card_scale * 100)}%  -  battlefield cards grow where the board fits one row", DIM)
+        self.save_settings()
+
     def say(self, text, colour=TEXT, seconds=3.0):
         self.toast = (text, colour, time.time() + seconds)
         self._force_draw = True
@@ -1521,8 +1606,13 @@ class ForgeTable:
                 pass
 
     def game_format(self):
-        """Round FMT1: the format of the game on screen ("commander" or "brawl")."""
+        """Round FMT1: the format of the game on screen ("commander", "brawl" or - round CON1 - "standard")."""
         return formats.normal(getattr(self.session, "fmt", None))
+
+    def has_command_zone(self):
+        """Round CON1: does the game on screen have a command zone? Not in Standard: no frame for mine or the opponents', and
+        that room goes to the hand, the action bar and the boards."""
+        return formats.has_commander(self.game_format())
 
     def format_line(self):
         """Round FMT1: one line about a non-Commander game's rules for the loading screen ("" for Commander)."""
@@ -1530,8 +1620,9 @@ class ForgeTable:
         if fmt == formats.DEFAULT:
             return ""
         players = 1 + len(getattr(self.session, "opponent_paths", None) or [])
-        damage = "" if formats.get(fmt).commander_damage else ", no commander damage"
-        return f"{formats.name(fmt)} - {formats.starting_life(fmt, players)} life each{damage}."
+        f = formats.get(fmt)
+        damage = "" if (f.commander_damage or not f.commander) else ", no commander damage"     # CON1: Standard has no commander
+        return f"{f.name} - {formats.starting_life(fmt, players)} life each{damage}."
 
     def replay_key(self):
         """Round 28d: what must match for a saved game to be played back (journal.replay_matches): the Forge build and the
@@ -1694,7 +1785,10 @@ class ForgeTable:
         ncmd = max(1, len((me or {}).get("commanders") or []))
         L.cmd_ch = L.hand_ch - 6                       # the commander card is a hair smaller than a hand card
         L.cmd_cw = int(L.cmd_ch * CARD_ASPECT)
-        cmd_w = 0 if (me and self.commanders_on_board(me)) else ncmd * (L.cmd_cw + 6) + 2 * pad
+        if not self.has_command_zone() or (me and self.commanders_on_board(me)):     # round CON1: none in Standard
+            cmd_w = 0
+        else:
+            cmd_w = ncmd * (L.cmd_cw + 6) + 2 * pad
         L.cmd_rect = pygame.Rect(L.my_info.right + m, y, cmd_w, L.bar_h + L.hand_ch + L.lift + m)
         left = L.cmd_rect.right + m if cmd_w else L.my_info.right + m
         L.bar = pygame.Rect(left, y, L.main.right - left, L.bar_h)
@@ -2119,13 +2213,13 @@ class ForgeTable:
             meta.append((base, extra, att))
         return widths, meta, gap
 
-    def one_row_height(self, slots, avail_w, ch_min, ch_max):
+    def one_row_height(self, slots, avail_w, ch_min, ch_max, gain=1.35):
         """Round UI5: the tallest card height (from ch_max down) at which all `slots` fit side by side in avail_w without
-        overlapping, or None when one row wouldn't be clearly bigger (a third or more) than two rows of ch_min: a crowded board
-        keeps its two rows, nonland permanents above the lands."""
+        overlapping, or None when one row wouldn't be clearly bigger (`gain`: a third or more for UI5's pods, 10% for round
+        UI7's Card size) than two rows of ch_min: a crowded board keeps its two rows, nonland permanents above the lands."""
         if not slots:
             return None
-        floor = int(ch_min * 1.35)
+        floor = int(ch_min * gain)
         for h in range(int(ch_max), floor - 1, -2):
             widths, _meta, gap = self.row_widths(slots, h)
             if sum(widths) + gap * (len(widths) - 1) <= avail_w:
@@ -2194,7 +2288,15 @@ class ForgeTable:
                     return c
         return card
 
-    def draw_battlefield(self, player, region, ch, one_row_max=None):
+    def battlefield_one_row_max(self, region, ch):
+        """Round UI7: with Card size over 100%, a board that fits in ONE row gets cards up to card_scale x its two-row height
+        (never taller than its region). Today's two rows already fill a battlefield's height, so a fuller board keeps them at
+        today's size: bigger cards would leave the region or cover the next one. None at 100% (exactly today's table)."""
+        if self.card_scale <= 1.0:
+            return None
+        return min(region.h - 2 * self.L.pad, int(ch * self.card_scale))
+
+    def draw_battlefield(self, player, region, ch, one_row_max=None, gain=1.35):
         """Two rows `ch` tall: nonland permanents, then lands. Round UI5: with one_row_max (an opponent in a pod), a board
         that fits in ONE row of bigger cards (up to one_row_max tall) is drawn that way instead; a fuller board keeps the
         two rows. In a 4-player game the two rows were about 50 px tall at 1080p, with most of the row's width empty."""
@@ -2202,7 +2304,7 @@ class ForgeTable:
         rows = self.build_slots(player)
         self.slots[player["id"]] = rows
         inner = pygame.Rect(region.x + pad, region.y, region.w - 2 * pad, region.h)
-        h = self.one_row_height(rows[0] + rows[1], inner.w, ch, one_row_max) if one_row_max else None
+        h = self.one_row_height(rows[0] + rows[1], inner.w, ch, one_row_max, gain) if one_row_max else None
         if h:
             self.place_row(rows[0] + rows[1], inner, h, region.y + (region.h - h) // 2)
         else:
@@ -2828,7 +2930,8 @@ class ForgeTable:
             full_ch = rect.h - 4 - self.cmd_head_h() - 8
             compact = full_ch < 40 or full_ch < 0.75 * (rect.h - 4 - self.cmd_head_h(True) - 8)
             ch = max(L.opp_row_h, min(rect.h - 4 - self.cmd_head_h(compact) - 8, L.my_row_h))
-        if not self.commanders_on_board(player):               # a commander on the battlefield: no frame, the room goes to the board
+        # a commander on the battlefield, or (round CON1) a Standard game: no frame, the room goes to the board
+        if self.has_command_zone() and not self.commanders_on_board(player):
             frame = self.cmd_frame_for(player, x, rect.y + 2, ch, compact)
             if frame.bottom > rect.bottom - 2:                 # very short rows: shrink the card to fit the frame
                 ch = max(30, ch - (frame.bottom - rect.bottom + 2))
@@ -2836,16 +2939,22 @@ class ForgeTable:
             self.draw_command_zone(player, frame, ch, compact)
             x = frame.right + L.pad
         region = pygame.Rect(x, rect.y, rect.right - x, rect.h)
-        # Round UI5: in a pod, a board that fits in one row gets cards up to the row's full height (never taller than mine)
-        self.draw_battlefield(player, region, L.opp_row_h,
-                              one_row_max=min(region.h - 2 * L.pad, L.my_row_h) if pod else None)
+        # Round UI5: in a pod, a board that fits in one row gets cards up to the row's full height (never taller than mine);
+        # round UI7: "mine" is my cards at the chosen Card size
+        if pod:
+            self.draw_battlefield(player, region, L.opp_row_h,
+                                  one_row_max=min(region.h - 2 * L.pad, int(L.my_row_h * self.card_scale)))
+        else:
+            self.draw_battlefield(player, region, L.opp_row_h, one_row_max=self.battlefield_one_row_max(region, L.opp_row_h),
+                                  gain=ONE_ROW_GAIN)
 
     def draw_my_side(self, me):
         L = self.L
         self.draw_player_panel(me, L.my_info, True)
         # my battlefield sits on a soft panel of its own
         round_rect(self.screen, L.my_bf, gfx.BF_MINE_BG, 12, 1, gfx.BF_MINE_EDGE, alpha=150)
-        self.draw_battlefield(me, L.my_bf, L.my_row_h)
+        self.draw_battlefield(me, L.my_bf, L.my_row_h, one_row_max=self.battlefield_one_row_max(L.my_bf, L.my_row_h),
+                              gain=ONE_ROW_GAIN)                 # round UI7
         if L.cmd_rect.w:
             self.draw_command_zone(me, L.cmd_rect, L.cmd_ch)
         self.draw_action_bar()
@@ -2893,13 +3002,10 @@ class ForgeTable:
             thumb_w = dlg.source_thumb(self, src, bar.x + 8, bar.y + 6, bh)
             text_x0 = bar.x + 8 + thumb_w + 14
 
-        def fit(button_specs, hf=hf, min_last=0):
-            fk = "btn"
-            for fk in ("btn", "small", "tiny"):
-                ws = [max(self.button_width(lab, fk), int(90 * L.fs)) if pr else self.button_width(lab, fk)
-                      for _n, lab, _e, pr, _f in button_specs]
-                if sum(ws) + 8 * len(ws) < bar.w * 0.5:
-                    break
+        def fit_with(fk, button_specs, hf, min_last):
+            ws = [max(self.button_width(lab, fk), int(90 * L.fs)) if pr else self.button_width(lab, fk)
+                  for _n, lab, _e, pr, _f in button_specs]
+            narrow_enough = sum(ws) + 8 * len(ws) < bar.w * 0.5      # judged before UI3's widening, as before
             if min_last and ws:
                 ws[-1] = max(ws[-1], min_last)            # Round UI3: the column that also holds Undo underneath
             x0 = bar.right - 8 - sum(ws) - 8 * len(ws)
@@ -2917,31 +3023,62 @@ class ForgeTable:
                 hints = hints[:fits]
                 if hints:
                     hints[-1] = clip_text(hints[-1] + " ...", sf, tw)
-            return fk, ws, x0, head, hints, cut, hf
+            return (fk, ws, x0, head, hints, cut, hf), narrow_enough, len(lines_all) > max_head
+
+        def fit(button_specs, hf=hf, min_last=0, hint_may_shorten=False):
+            """The button font for these buttons and words. Lane A fix (UI6's finding, 10 Oct): the biggest font whose buttons take
+            under half the bar AND leave the words whole; only when none does, the first whose buttons fit (as before). It used to
+            take the first font whose buttons fit even when the words then didn't, so a WIDER bar could pick the bigger font, cut the
+            words and lose Undo (1300-1340 and 1440-1460 px windows at 840 high, 100%), while a narrower one kept it."""
+            first = None
+            for fk in ("btn", "small", "tiny"):
+                lay, narrow_enough, head_cut = fit_with(fk, button_specs, hf, min_last)
+                if hint_may_shorten and not head_cut:
+                    lay = lay[:5] + (False,) + lay[6:]        # the headline is whole; a shortened hint is allowed here
+                if narrow_enough:
+                    if not lay[5]:
+                        return lay
+                    first = first or lay
+            return first or lay                               # no font under half the bar: the smallest (the 60% rule decides)
 
         # Round UI2: when the words don't fit (big text), the headline first steps down to the small size; only then does Undo
         # (the U key still works) give its room to the words. At 200% Undo and the hint line used to vanish together.
         small_f = self.ui_font("small")
-        cands = [(specs, hf), (specs, small_f)]
+        # Round UI3: a tall bar (big text) has room for Undo UNDER the last button on the left (End Turn / Cancel)
+        half = (bh - 6) // 2
+        stack_labels = [t for t in ((specs[-2][1] if len(specs) > 1 else ""), "Undo") if t]
+
+        def label_h(k):
+            """Lane A fix (10 Oct): the height of the two labels as drawn. Round 32 draws buttons in the display face, whose line
+            height (both faces on one baseline) is taller than its letters; UI3 measured the body face's line height, so at
+            16 px - where the display face starts - the stacked Undo went away in a wider window and came back in a wider one
+            still (1360 / 1400-1440 / 1480 px at 1080 high, 150%)."""
+            f = self.ui_font(k, True)
+            return max(f.size(t)[1] for t in stack_labels)
+        stack_key = next((k for k in ("small", "tiny") if half >= label_h(k) + 10), None)
+        cands = [(specs, hf, False), (specs, small_f, False)]
+        if len(specs) > 1 and not stack_key:
+            # Lane A fix (UI6's finding, 10 Oct): a bar too short to stack Undo keeps it, and the hint line under the headline
+            # shortens instead (clipped with "...") - as UI3 already chose at 200%. Before, Undo came and went with the window's
+            # width at 100% text (1100-1340 and 1440-1460 px at 840 high), as the font scale wrapped the headline.
+            cands += [(specs, hf, True), (specs, small_f, True)]
         if len(specs) > 1:
-            cands += [(specs[:-1], hf), (specs[:-1], small_f)]
+            cands += [(specs[:-1], hf, False), (specs[:-1], small_f, False)]
         chosen = None
-        for sp, f_ in cands:
-            lay = fit(sp, f_)
+        for sp, f_, shorten in cands:
+            lay = fit(sp, f_, hint_may_shorten=shorten)
             narrow = sum(lay[1]) + 8 * len(lay[1]) > bar.w * 0.6 and len(sp) > 1
             if not lay[5] and not narrow:
                 chosen = (sp, lay)
                 break
         if chosen is None:                                    # nothing fits whole: the fewest buttons, the smaller words
-            chosen = (cands[-1][0], fit(*cands[-1]))
+            chosen = (cands[-1][0], fit(cands[-1][0], cands[-1][1]))
         specs, layout = chosen
         fkey, widths, x, head_lines, hint_lines, _cut, hf = layout
         # Round UI3: Undo gave its room to the words, but a tall bar (big text) has room for it UNDER the last button on the
         # left (End Turn / Cancel): that column is split in two, each half in the small font
         undo_spec = ("undo", "Undo", not waiting, False, False)
         stack_undo = None
-        half = (bh - 6) // 2
-        stack_key = next((k for k in ("small", "tiny") if half >= self.font(k, True).get_height() + 10), None)
         if undo_spec not in specs and len(specs) >= 1 and stack_key:
             stack_undo = len(specs) - 1
             need = max(self.button_width(specs[-1][1], stack_key), self.button_width("Undo", stack_key))
@@ -2963,6 +3100,11 @@ class ForgeTable:
             bx -= w
             self.draw_button(pygame.Rect(bx, bar.y + 6, w, bh), label, name, enabled, primary, focus, fkey=fkey)
             bx -= 8
+        if self.judge_place() == "bar":                       # round JDG1: left of the buttons, only in room the words don't use
+            used = max([hf.size(ln)[0] for ln in head_lines] + [sf.size(ln)[0] for ln in hint_lines] + [0])
+            bw = self.button_width(JUDGE_LABEL, fkey)
+            if x - bw - 16 >= text_x0 + used:
+                self.draw_judge_button(x, bar.y + 6, bh, fkey)
         # message: a headline (what is being asked) and, under it, one line on what to do about it
         total = len(head_lines) * hf.get_height() + len(hint_lines) * sf.get_height()
         y = bar.centery - total // 2
@@ -3490,7 +3632,8 @@ class ForgeTable:
         self.stack_scroll = max(0, min(self.stack_scroll, max_scroll))
         head = (f"Stack ({len(stack)})  -  wheel: more" if max_scroll
                 else f"Stack ({len(stack)})" + ("  -  top resolves first" if len(stack) > 1 else ""))
-        draw_text(scr, clip_text(head, f, r.w - 20), r.x + 10, r.y + 6, f, GOLD)
+        jr = self.draw_judge_button(r.right - 8, r.y + 4, g.head - 8) if self.judge_place() == "stack" else None   # round JDG1
+        draw_text(scr, clip_text(head, f, r.w - 20 - (jr.w + 8 if jr else 0)), r.x + 10, r.y + 6, f, GOLD)
         saved_clip = scr.get_clip()
         scr.set_clip(content)
         y = content.y - self.stack_scroll
@@ -3599,16 +3742,17 @@ class ForgeTable:
         in (they also feed the opponent feed and the AI spotlight); the corner overlay draws later, over everything else."""
         self.update_log_cache()
         if self.L.log_col:
-            self._draw_log_panel(self.L.log, 235)
+            self._draw_log_panel(self.L.log, 235, judge=self.judge_place() == "log")
         else:
             self.log_rect = pygame.Rect(0, 0, 0, 0)
 
-    def _draw_log_panel(self, r, alpha):
+    def _draw_log_panel(self, r, alpha, judge=False):
         L, scr = self.L, self.screen
         round_rect(scr, r, gfx.PANEL_DEEP, 12, 1, gfx.OVERLAY_EDGE, alpha=alpha)
         self.log_rect = r
         f, fb = self.font("small"), self.font("small", True)
         draw_text(scr, "Game log", r.x + 10, r.y + 6, self.ui_font("small", True), DIM)      # round 32: a heading, in the display face
+        jr = self.draw_judge_button(r.right - 8, r.y + 4, fb.get_height() + 2) if judge and r.h > 3 * fb.get_height() else None
         lh = f.get_height() + 2
         top = r.y + 8 + fb.get_height() + 2
         rows = max(1, (r.bottom - top - 6) // lh)
@@ -3623,7 +3767,7 @@ class ForgeTable:
             y += lh
         scr.set_clip(None)
         if self.log_scroll:
-            draw_text(scr, "scroll down for newest", r.right - 8, r.y + 6, self.font("tiny"), GOLD, "topright")
+            draw_text(scr, "scroll down for newest", (jr.x - 8) if jr else (r.right - 8), r.y + 6, self.font("tiny"), GOLD, "topright")
 
     def draw_log_line(self, ln, x, y, w, lh, f, fb):
         scr = self.screen
@@ -4180,6 +4324,8 @@ class ForgeTable:
             self.press_undo()
         elif name == "skip":
             self.open_skip()
+        elif name == "judge":                       # round JDG1
+            self.open_judge(from_button=True)
         elif name == "settings":
             self.overlay = fset.SettingsPopup()
         elif name == "help":
@@ -4311,6 +4457,75 @@ class ForgeTable:
     def open_help(self):
         self.overlay = None
         self.modal = dlg.HelpDialog()
+
+    # ---- round JDG1: the Judge?! window (judge_dialog.py) -----------------------------------------------------------------------
+
+    def _stack_place(self, item):
+        """(index, count, item) for a stack item of the current snapshot (index 0 = the top, which resolves first)."""
+        stack = (self.state or {}).get("stack") or []
+        for i, it in enumerate(stack):
+            if it is item or (item is not None and it.get("key") is not None and it.get("key") == item.get("key")):
+                return i, len(stack), it
+        return None
+
+    def judge_subject(self):
+        """What the Judge?! window is about: (card, (index, count, item) or None), or None. A stack row under the mouse is that
+        stack item; otherwise what the focus panel would show (preview_card: the card under the mouse, the pinned one, the card a
+        question is about, the AI's spotlight); otherwise the top of the stack; otherwise the card the focus panel still shows.
+        A permanent on the battlefield never gets a stack line, even when one of its abilities is on the stack."""
+        kind, data = self.hit_at(self.mouse) if not self.modal else (None, None)
+        if kind == "stack" and data.get("card"):
+            return data["card"], self._stack_place(data.get("item"))
+        card = self.preview_card()
+        if card is not None:
+            place = None
+            if card.get("zone") == "Stack":
+                stack = (self.state or {}).get("stack") or []
+                item = next((it for it in stack if (it.get("card") or {}).get("id") == card.get("id")), None)
+                place = self._stack_place(item) if item is not None else None
+            return card, place
+        stack = (self.state or {}).get("stack") or []
+        if stack and stack[0].get("card"):
+            return stack[0]["card"], (0, len(stack), stack[0])
+        if self.preview_mode == "always" and self.last_preview is not None:
+            return self.last_preview, None
+        return None
+
+    def open_judge(self, from_button=False):
+        """J or the Judge?! button: a card's Oracle text and official rulings. Nothing is sent to Forge."""
+        if self.modal or self.menu or not self.state:
+            return
+        subject = self.judge_subject()
+        if subject is None:
+            self.say("Nothing to look up yet: hover a card (or wait for something on the stack), then press J.", DIM, 4.0)
+            return
+        card, place = subject
+        if card.get("hidden") or card.get("faceDown"):
+            self.say("That card is face down: the Judge only shows cards you can see.", ORANGE, 4.0)
+            return
+        who = self.player_label(place[2].get("activator")) if place else ""
+        targets = self.target_names(place[2]) if place else []
+        self.overlay = None
+        self.modal = jdlg.JudgeDialog(card, place, who, targets)
+
+    def judge_place(self):
+        """Where the Judge?! button goes this frame: the stack's heading, else the log's (both directly under the focus panel in
+        the right column), else - neither in the column (Log: Corner or Hidden, nothing on the stack) - the action bar, when its
+        words leave room. A deviation from the spec's "top of the focus panel": the panel is the card's picture itself, and a
+        button on it would cover the card's name or cost (Scryfall's picture rules keep its bottom line clear)."""
+        L = self.L
+        if (self.state or {}).get("stack") and L.stack.h > 0:
+            return "stack"
+        if getattr(L, "log_col", True) and L.log.h > 0:
+            return "log"
+        return "bar"
+
+    def draw_judge_button(self, right, y, h, fkey="tiny"):
+        """The Judge?! button, its right edge at `right`. Returns its rect."""
+        bw = self.button_width(JUDGE_LABEL, fkey)
+        rect = pygame.Rect(right - bw, y, bw, h)
+        self.draw_button(rect, JUDGE_LABEL, "judge", True, False, False, fkey=fkey)
+        return rect
 
     def open_licenses(self):
         self.overlay = None
@@ -4502,12 +4717,19 @@ class ForgeTable:
         return None
 
     def vs_seats(self, my_deck, opp_decks, labels=None):
-        """[(label, commanders, deck name)] for the VS screen: me first, then each AI in seat order."""
+        """[(label, commanders, deck name)] for the VS screen: me first, then each AI in seat order. Round CON1: a deck with no
+        commander (Standard) shows its face card (deck_library.face_card) where the commander would be."""
         mine_name, opp_names = labels if labels else ("", [])
         opp_names = list(opp_names or [])
-        seats = [("You", list(my_deck[0] or []), mine_name or "")]
+
+        def faces(deck):
+            if deck[0]:
+                return list(deck[0])
+            face = lib.face_card(deck[1])
+            return [face] if face else []
+        seats = [("You", faces(my_deck), mine_name or "")]
         for i, o in enumerate(opp_decks):
-            seats.append((f"AI {i + 1}" if len(opp_decks) > 1 else "AI", list(o[0] or []), opp_names[i] if i < len(opp_names) else ""))
+            seats.append((f"AI {i + 1}" if len(opp_decks) > 1 else "AI", faces(o), opp_names[i] if i < len(opp_names) else ""))
         return seats
 
     def resume_last_game(self):
@@ -4551,8 +4773,8 @@ class ForgeTable:
         self.reset_game()
         self.resumed_game = True                          # Round UX1: a resumed game never starts the tour by itself
         self.start_background()
-        self.vs = flow.VsShow(self.vs_seats((flow.dck_commanders(decks.get("player.dck")), []),
-                                            [(flow.dck_commanders(decks.get(os.path.basename(o)[len("resume_"):])), [])
+        self.vs = flow.VsShow(self.vs_seats((flow.dck_faces(decks.get("player.dck")), []),       # round CON1: faces
+                                            [(flow.dck_faces(decks.get(os.path.basename(o)[len("resume_"):])), [])
                                              for o in opps]))
         self.play_cue("vs.reveal")                     # round AU1
         self.menu = None
@@ -5328,6 +5550,10 @@ class ForgeTable:
             return
         if self.menu and self.menu.wants_key(ev):              # round 27b: typing into the deck search, "-" included
             self.menu.key(self, ev)
+        elif key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS) and mod & pygame.KMOD_CTRL:
+            self.change_card_scale(1)                   # round UI7 (Shift is how '+' is typed on many keyboards, so not Shift)
+        elif key in (pygame.K_MINUS, pygame.K_KP_MINUS) and mod & pygame.KMOD_CTRL:
+            self.change_card_scale(-1)
         elif key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS):
             self.change_text_scale(1)
         elif key in (pygame.K_MINUS, pygame.K_KP_MINUS):
@@ -5365,6 +5591,8 @@ class ForgeTable:
             self.press_undo()
         elif key == pygame.K_s and not mod & pygame.KMOD_CTRL:
             self.open_skip()
+        elif key == pygame.K_j and not mod & (pygame.KMOD_CTRL | pygame.KMOD_ALT):
+            self.open_judge()                           # round JDG1
         elif key == pygame.K_y and not mod & pygame.KMOD_CTRL and self.at_priority():
             self.always_pass_top()                      # patch 43 (Forge's own key for "always yes / auto-yield" is Y too)
 
@@ -6605,10 +6833,11 @@ def main(argv):
     except DeckImportError as e:
         print(f"Could not load deck: {e}")
         sys.exit(1)
-    describe_deck("You", *mine)
+    fmt = deck_file_format(deck)                        # round CON1: the deck file's "# format:" line decides (none = Commander)
+    describe_deck("You", *mine, fmt=fmt)
     for i, o in enumerate(opps, 1):
-        describe_deck(f"AI {i}", *o)
-    session = launcher.start(mine, opps)
+        describe_deck(f"AI {i}", *o, fmt=fmt)
+    session = launcher.start(mine, opps, fmt=fmt)
     names = set(mine[0]) | set(mine[1])
     for o in opps:
         names |= set(o[0]) | set(o[1])
@@ -6621,6 +6850,15 @@ def main(argv):
     table.last_run = last_run
     table.run()
     last_session.end()                                  # round 28d
+
+
+def deck_file_format(path):
+    """Round CON1: the format a deck .txt file names with its "# format:" line (formats.from_text); Commander when it can't be read."""
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            return formats.from_text(f.read())
+    except (OSError, UnicodeDecodeError, TypeError):
+        return formats.DEFAULT
 
 
 if __name__ == "__main__":

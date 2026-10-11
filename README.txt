@@ -63,10 +63,13 @@ THE DECK SCREEN (start screen, and the "New game" button)
 ---------------------------------------------------------
 Opens when you start with no deck on the command line, and any time you choose New game in the settings cog
 (top right; or Ctrl+N; the game-over window has a New game button too).
-  FORMAT (round FMT1), top right: Commander or Brawl (MTG Arena's 100-card Brawl). The screen shows that format's decks
-        only, remembers its own picks for each format, and Start plays that format. Brawl: a legendary creature or
-        planeswalker commander, 25 life (30 with 2 or 3 opponents), no commander damage, Arena's cards and banned list.
-        Online games are Commander only for now.
+  FORMAT (round FMT1), top right: Commander, Brawl (MTG Arena's 100-card Brawl) or Standard (round CON1). The screen
+        shows that format's decks only, remembers its own picks for each format, and Start plays that format. Brawl: a
+        legendary creature or planeswalker commander, 25 life (30 with 2 or 3 opponents), no commander damage, Arena's
+        cards and banned list. Standard: 60 cards or more, at most 4 of a card (basic lands excepted, deck and sideboard
+        together), a sideboard of at most 15 (checked, never played), no commander and no command zone, 20 life, the first
+        mulligan free only with 2 or 3 opponents, Standard's cards and banned list; a deck shows its most-copied card
+        where a commander would be. Online games are Commander only for now.
   Left: the DECK LIBRARY - your imported decks first (A-Z), then the bundled decks. Click a deck to
         choose it. Each row shows the commander and the card count; YOU / AI tags show what is picked
         (with 2 or 3 opponents the tag says which: "AI 1,3").
@@ -84,8 +87,10 @@ Opens when you start with no deck on the command line, and any time you choose N
         boxes, Left/Right change the number of opponents, Ctrl+V imports the deck on your clipboard.
 IMPORT A DECK: press "Import a deck" (or Ctrl+V on the deck screen). Copy the deck's TEXT list first -
   Moxfield: open the deck > Export > copy the text.  Archidekt: Export > Text.  MTG Arena: open the deck >
-  Export.  A web link is not enough; the window says so. Format (top right of the window): Commander or Brawl;
-  it starts on the deck screen's format, and the deck file gets a "# format: brawl" line (no line = Commander). Press "Paste from clipboard" (or Ctrl+V). The window shows the list, the commander it
+  Export.  A web link is not enough; the window says so. Format (top right of the window): Commander, Brawl or
+  Standard; it starts on the deck screen's format, and the deck file gets a "# format: brawl" (or standard) line (no line
+  = Commander). In Standard nothing is read as a commander, a Sideboard section is kept for the legality check, and
+  an MTG Arena export's name (About / Name ...) is suggested. Press "Paste from clipboard" (or Ctrl+V). The window shows the list, the commander it
   found, and warnings (not 100 cards; cards Forge does not know - they would be left out of the game).
   Type a name (it suggests the commander's name) and press "Save to library" (or Enter). The deck is
   saved as my_decks/<name>.txt and selected for you. If the clipboard cannot be read the window says so; you
@@ -159,10 +164,18 @@ that is what it does.
   U or Ctrl+Z ................. undo - back to an earlier moment of your turn, as far as its start (see UNDO below)
   M ............................ sound on/off (round 24) - same switch as the cog's SOUND group
   S ........................... Skip window: let the stack resolve, skip to your next turn, auto-pass, "always pass" (see SKIPPING AHEAD)
+  J or Judge?! ................ a card's Oracle text and its official rulings (round JDG1): the card under the mouse, else the
+                                pinned one, else the top of the stack; on a stack item also where it sits, who put it there and
+                                its targets. The Judge?! button is in the stack's heading (the log's when the stack is empty).
+                                Rulings come from Scryfall (Wizards' own, dated) and are kept in cache\rulings\ for 30 days,
+                                so a card you have looked at shows them offline too. Only official text: nothing is made up.
   F11 ......................... fullscreen     + / - .... bigger / smaller text (100%-200%)
+  Ctrl and + / - .............. bigger / smaller cards (round UI7, 100%-200%; Cog > DISPLAY > Cards): a battlefield whose
+                                cards fit in one row shows them bigger, up to that size; a fuller board keeps today's two
+                                rows. The hand and the command zone are not changed yet. Remembered like text size.
                                  Window and text size are remembered for each screen size (round 27e): your monitor and a
                                  Remote Desktop session each keep their own, and the window never opens bigger than the screen.
-  H ........................... help           Ctrl+0 ... text size back to 100%
+  H ........................... help
   F8 .......................... report a bug, or suggest an idea (see BUG REPORTS AND IDEAS)
   F3 .......................... speed figures: how fast the table draws, how quickly Forge answers, and (new bridge) event gaps and
                                 clicks Forge dropped. Press again to hide. Each session also adds one line to perf_log.txt.
@@ -946,7 +959,8 @@ FILES - new table and engine
 - ../commander_sim_backups/ - created next to the project (or wherever you chose): snapshots/ (dated zips), forge_bundle/ (one copy)
 - deck_library.py      - the decks you can pick from: reads my_decks/ and sample_decks/, saves imports, removes (no pygame)
 - my_decks/            - created when you import: your decks as <name>.txt; my_decks/_removed/ holds removed ones
-- sample_decks/        - the decks that come with the program: the 6 alpha Commander decks and 4 Brawl decks (patch 38: Goreclaw in,
+- sample_decks/        - the decks that come with the program: the 6 alpha Commander decks, 4 Brawl decks and 2 Standard decks
+                         (round CON1: standard_*.txt; patch 38: Goreclaw in,
                          Kinnan out - its list is a test deck now, tests/fixtures/decks/)
 - forge_log.py         - turns Forge's game log into readable rows (no pygame; tested on its own)
 - gfx.py               - colours, fonts, mana symbols, card rendering helpers

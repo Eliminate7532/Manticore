@@ -13,6 +13,9 @@ audio.py - sound for the table: a small "director" over pygame.mixer.
     decoded up front ("stream" cues): an AMBIENCE loop per table (two reserved channels, cross-faded; the file is decoded on a
     background thread so a change of table never stalls a frame) and MUSIC through pygame.mixer.music (streamed from disk): the
     title track looping, or in a game a shuffled playlist with a quiet gap between tracks, and a one-off sting at the end.
+  * Patch 49 (AU2): the deck screen and the settings / credits windows have their own looping tracks (LOOP_TRACKS), and a game can
+    have an interlude (music_interlude: Lament of the War when a big attack is declared) that fades the track, plays once, and lets
+    the playlist go on after its usual gap.
 """
 import array
 import json
@@ -32,6 +35,10 @@ AMBIENCE_FADE = 2.5                            # seconds to cross-fade one table
 AMBIENCE_KEEP = 2                              # decoded ambience loops kept in memory (about 10 MB each)
 MUSIC_FADE = 2.0                               # seconds to fade the music out when it changes
 MUSIC_GAP = (25.0, 80.0)                       # silence between two tracks in a game, seconds (Diablo let the room breathe)
+LOOP_TRACKS = {"title": "music.title",         # music modes that loop one track (patch 49 adds the deck screen and settings/credits;
+               "deck": "music.deck",           # a missing track falls back to the title's)
+               "settings": "music.settings"}
+INTERLUDE_FADE = 1.0                           # patch 49: seconds the game track takes to fade under an interlude (Lament on a big attack)
 
 
 def db(x):
@@ -150,7 +157,7 @@ class AudioDirector:
         self.amb_cache = {}                                        # cue id -> pygame Sound, most recent last
         self.amb_loading = set()
         self._amb_lock = threading.Lock()
-        self.music_mode = None                                     # None / "title" / "game"
+        self.music_mode = None                                     # None / "title" / "deck" / "settings" / "game" / "sting"
         self.music_cue = None                                      # the track playing now
         self.music_next_at = None                                  # in a game: when the next track starts (after the gap)
         self.music_sting = None                                    # (cue id, at time): a one-off to start at `at`
@@ -364,7 +371,8 @@ class AudioDirector:
         self.amb_out = keep
 
     def set_music(self, mode, now):
-        """'title' (its track, looping), 'game' (the game tracks, shuffled, with a gap between), or None. Safe every frame."""
+        """'title' / 'deck' / 'settings' (that screen's track, looping), 'game' (the game tracks, shuffled, with a gap between), or
+        None. Safe every frame."""
         if mode == self.music_mode:
             return
         self.music_mode = mode
@@ -374,7 +382,7 @@ class AudioDirector:
         if pygame.mixer.music.get_busy():
             pygame.mixer.music.fadeout(int(MUSIC_FADE * 1000))
         self.music_cue = None
-        if mode == "title":
+        if mode in LOOP_TRACKS:
             self.music_next_at = now + MUSIC_FADE * 0.5
         elif mode == "game":
             self.music_next_at = now + self.rnd.uniform(6.0, 14.0)    # let the table settle before the first track
@@ -388,6 +396,23 @@ class AudioDirector:
         if pygame.mixer.music.get_busy():
             pygame.mixer.music.fadeout(int(min(delay, MUSIC_FADE) * 1000) or 300)
         self.music_sting = (cid, now + delay)
+
+    def music_interlude(self, cid, now):
+        """Patch 49: a one-off over the game playlist (Lament of the War when a big attack is declared). The game track fades, this
+        plays once, then the playlist rests its usual gap and goes on. Only during a game's music; True when it was started."""
+        if not self.ready or self.music_mode != "game" or self.music_sting or self.music_cue == cid:
+            return False
+        if not getattr(self.cues.get(cid), "paths", None):
+            return False
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.fadeout(int(INTERLUDE_FADE * 1000))
+        self.music_sting = (cid, now + INTERLUDE_FADE)
+        self.music_next_at = None
+        return True
+
+    def _loop_track(self, mode):
+        cid = LOOP_TRACKS.get(mode)
+        return cid if getattr(self.cues.get(cid), "paths", None) else "music.title"
 
     def _game_tracks(self):
         return sorted(c for c, cue in self.cues.items() if c.startswith("music.game") and getattr(cue, "paths", None))
@@ -412,8 +437,9 @@ class AudioDirector:
             cid = self.music_sting[0]
             self.music_sting = None
             self._start_track(cid, now)
-        elif self.music_mode == "title" and not busy and self.music_next_at is not None and now >= self.music_next_at:
-            self._start_track("music.title", now, loops=-1)
+            self.music_next_at = None                                   # after an interlude the playlist rests its gap again
+        elif self.music_mode in LOOP_TRACKS and not busy and self.music_next_at is not None and now >= self.music_next_at:
+            self._start_track(self._loop_track(self.music_mode), now, loops=-1)
             self.music_next_at = None
         elif self.music_mode == "game" and not busy:
             if self.music_next_at is None:                              # a track just ended: rest a while
