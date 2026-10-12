@@ -42,7 +42,7 @@ KEEP_ALL_DAYS = 3                                 # every local zip from the las
 KEEP_DAILY_DAYS = 90                              # then the newest zip of each day, until 90 days, then they are removed
 SNAPSHOT_MAX_FILE = 50 * 1024 * 1024              # a file bigger than this is left out of the zip (and reported)
 TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_reports", "soak_runs",
-                  "build", "dist", "installer_out", "net"}       # rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
+                  "build", "dist", "installer_out", "net", ".worktrees"}       # .worktrees: the sessions' desks (Round PAR1, tools/desk.py) - each a whole copy of the project; their work reaches GitHub as their own branches; rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
 ANYWHERE_SKIP = {"__pycache__", ".git"}
 SKIP_FILES = {"forge_engine.log", "forge_engine.prev.log", "forge_engine.crashed.log", "forge_engine.rewind.log", "forge_engine.rewind.prev.log", "session.json", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
               "bug_report_config.json", "bug_report_config.bundled.json", STATUS_FILE}          # both hold the Discord webhook address: a secret
@@ -549,7 +549,42 @@ def backup(folder, message=None, auto=False, name=None, email=None):
         raise BackupError(explain_push_failure(out, url))
     head = git(["rev-parse", "--short", "HEAD"], folder)[1].strip()
     say(f"Backed up. Latest version {head} is on {url}")
+    push_desk_branches(folder)
     return 0
+
+
+def desk_branches(folder):
+    """Round PAR1: the branches checked out in the sessions' desks (git worktrees under .worktrees/, made by tools/desk.py),
+    from `git worktree list --porcelain`. The path is matched by its last two parts, so a desk made on the other side of the
+    device bridge (a Linux path in the list on Windows, or the other way round) still counts."""
+    code, out = git(["worktree", "list", "--porcelain"], folder, check=False)
+    if code != 0:
+        return []
+    found, path = [], None
+    for line in out.splitlines():
+        if line.startswith("worktree "):
+            path = line[len("worktree "):].strip()
+        elif line.startswith("branch refs/heads/") and path:
+            parts = [p for p in re.split(r"[\\/]", path) if p]
+            if len(parts) >= 2 and parts[-2] == ".worktrees":
+                found.append(line[len("branch refs/heads/"):].strip())
+            path = None
+    return sorted(set(found))
+
+
+def push_desk_branches(folder):
+    """Push every desk's branch too, so a session's commits reach GitHub even though the backup only commits this folder.
+    A desk's uncommitted edits are not backed up (WORKING_AGREEMENT: commit at least every 30 minutes). One branch failing
+    to push is said, not raised: the folder's own backup has already succeeded. Returns {branch: True/False}."""
+    results = {}
+    for branch in desk_branches(folder):
+        code, out = git(["push", "-u", "origin", f"refs/heads/{branch}:refs/heads/{branch}"], folder, check=False, timeout=300)
+        results[branch] = code == 0
+        if code == 0:
+            say(f"Desk branch {branch} pushed too.")
+        else:
+            say(f"Desk branch {branch} could NOT be pushed (the folder's own backup is fine):\n{out.strip()}")
+    return results
 
 
 def actions_page(url):

@@ -15,6 +15,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
 import threading
 import math
@@ -50,6 +51,7 @@ import flow_screens as flow
 import anim as fanim
 import boot_screens as fboot
 import gfx
+import last_good
 import last_session
 import legality
 import events as gevents
@@ -272,6 +274,7 @@ SPEED_RESEND = 3.0                                     # round PRI1: seconds bef
 STATS_RESULT_WAIT = 4.0                                # patch 44: seconds to wait for Forge's result after the game-over snapshot
 FEED_MAX, FEED_SECONDS = 4, 7.0                        # how many opponent actions the board shows, and for how long
 QUIET_PING = 2.5           # seconds after a command with no word from Forge: ask it for a fresh snapshot (a harmless "flush")
+THINK_SHOW = 10.0          # Round THINK1: seconds with nothing new on the table (and Forge asking me nothing) before "<seat> is still thinking" shows
 QUIET_BANNER = 5.0         # seconds after a command with no word from Forge, even after the ping: show "Forge has not answered"
 UNDO_WAIT = 1.0                                        # seconds to wait for Forge to change something after Undo before saying there was nothing to undo
 UNDO_NOTHING = "Nothing to undo. Forge only lets you take back a mana tap that is still unspent."
@@ -886,6 +889,11 @@ class ForgeTable:
         self._last_cmd_at = None            # time.monotonic() of the newest command sent (not counting pings)
         self._pinged_at = None
         self.not_responding_noted = False   # crash_log.txt got its one "Forge not answering" line for this game
+        self._think_sig = None              # Round THINK1: what the table looked like at the last look, and since when it has looked like that
+        self._think_since = None
+        self.last_good = None               # Round LAST1: this game's saves (last_good.LastGood), made at the first safe moment
+        self._offer_stall = None            # Round LAST1: which stall (its _think_since) the 180 s offer was last made for
+        self._offer_extra = 0.0             # Round LAST1: seconds added to the 180 after a "Keep waiting"
         self._bad_action_seen = 0.0         # round 24: the last session.bad_action_at we already played ui.error for
         self._attack_music_at = -1e9        # patch 49: when Lament of the War last started (big attacks, ATTACK_MUSIC_COOLDOWN)
         self._last_hover_cue_index = None   # round 24: the hand index ui.hover was last played for (never repeats on the same card)
@@ -1570,8 +1578,9 @@ class ForgeTable:
             now = time.monotonic()
             self.perf.command_sent(now)
             self._last_cmd_at, self._pinged_at = now, None
-            if jr is not None and jr.active() and cmd.get("c") != "quit":
-                jr.command(cmd, time.time())
+            if jr is not None and jr.active() and cmd.get("c") not in ("quit", "savestate"):
+                jr.command(cmd, time.time())              # round LAST1b: a last-good save changes nothing in the game, and
+                                                          # Resume or Undo's rebuild must not send it again
         self.session.on_send = on_send
 
     def start_journal(self):
@@ -4247,6 +4256,7 @@ class ForgeTable:
                 self.front_particles.draw(self.screen)
             self.draw_toast()
             self.draw_quiet_banner()
+            self.draw_think_banner()
             self.draw_online_banner()
             self.draw_tooltip()
         if self.show_perf:
@@ -4620,6 +4630,18 @@ class ForgeTable:
             if not gjournal.replay_matches(start, self.replay_key()):
                 self.menu.resume_info["stale"] = True       # round 28d: another Forge or bridge - replaying it would go wrong
 
+    def open_draft(self, from_title=False):
+        """Round CD2: the cube draft window (draft_screens.DraftFlow) over the deck screen. When it ends, the deck screen shows
+        the draft's four decks chosen (or, after Save and leave, the main menu when it was opened from there)."""
+        if self.launcher is None:
+            self.say("This copy was started without the deck screen.", DIM)
+            return
+        import draft_screens
+        if self.menu is None:
+            self.open_menu()
+        self.modal = draft_screens.DraftFlow(self, from_title=from_title)
+        self.play_cue("ui.dialog_open")
+
     def open_boot(self, splash=True):
         """Round AD2: the studio splash, then the title with the main menu. main() starts here."""
         self.title_ok = True
@@ -4660,8 +4682,8 @@ class ForgeTable:
         for who, e in checks:
             if not e.ok:
                 return f"Could not read {who}: {e.error or 'no commander found'}"
-        for who, e in checks:                                   # round FMT1: one format at the table
-            if formats.normal(getattr(e, "format", None)) != fmt:
+        for who, e in checks:                                   # round FMT1: one format at the table (round CD2: a Commander Draft
+            if formats.screen(getattr(e, "format", None)) != formats.screen(fmt):      # deck plays Commander games, 903.13g)
                 return (f"{who[0].upper() + who[1:]} is a {formats.name(getattr(e, 'format', None))} deck, and this is a "
                         f"{formats.name(fmt)} game.")
         self.stats_decks = (deck_meta(mine), [deck_meta(e) for e in seats])        # patch 44
@@ -6303,6 +6325,196 @@ class ForgeTable:
         round_rect(self.screen, r, gfx.BANNER_BG, 0, 1, ORANGE, alpha=235)
         draw_text(self.screen, text, r.centerx, r.y + 4, f, ORANGE, "midtop")
 
+    # ---- Round LAST1: the last good state -------------------------------------------------------------------------------------------------
+
+    RESTORE_APPLY_SECONDS = 60.0     # longest wait for the bridge to say the saved game is back (setup_done)
+
+    def last_good_ticks(self):
+        """Once per sync: take a save at a safe moment, make the 180 s offer, move a restore along. Never lets a mistake here stop the table."""
+        try:
+            now = time.monotonic()
+            self.last_good_tick(now)
+            self.watchdog_tick(now)
+            self.restore_tick(now)
+        except Exception as e:
+            if not getattr(self, "_last_good_noted", False):
+                self._last_good_noted = True
+                crashlog.note("Last good state failed", "%s: %s" % (type(e).__name__, e))
+
+    def last_good_ready(self):
+        s = self.session
+        return bool(getattr(s, "last_state_ok", False)) and not getattr(s, "online", None) and bool(self.state) and self.game_in_progress()
+
+    def last_good_tick(self, now):
+        """Ask the bridge for a save while Forge is asking ME something (its game thread is parked then, so the cards are not changing),
+        when the table has changed since the newest save and 20 s have passed. Answers are collected here too."""
+        if not self.last_good_ready():
+            return
+        s = self.session
+        if self.last_good is None:
+            root = os.path.join(fc.DATA_DIR, "last_good")
+            last_good.clean_old(root)
+            self.last_good = last_good.LastGood(os.path.join(root, time.strftime("%Y%m%d_%H%M%S")))
+        lg = self.last_good
+        while s.state_saves:
+            lg.reply(s.state_saves.pop(0), now)
+        if getattr(self, "pending_restore", None):
+            return                                             # a restore is putting a game back: nothing new to save yet
+        if not self.last_good_savable():
+            return
+        if self.state.get("asking") is True and not self.waiting():
+            sig = self.think_signature()
+            if lg.due(now, sig):
+                n, path = lg.next_path()
+                s.save_state(path, n)
+                lg.sent(now, n, path, sig)
+
+    def last_good_savable(self):
+        """Round LAST1b: a save now can be put back later. Not before the game's first phase (the mulligans: Forge's PhaseHandler has no
+        phase yet and the bridge's savestate fails with a NullPointerException - live, 12 Oct), and not once a player is out of the
+        game (Forge writes only the players still in it, and a new game with every deck refuses that file)."""
+        st = self.state or {}
+        if not st.get("turn") or not st.get("phase"):
+            return False
+        return not any(p.get("lost") for p in st.get("players") or [])
+
+    def restorable_save(self):
+        """Round LAST1b: the newest save that a new game with these decks can take back, or None. Once anybody is out of the game,
+        none: Forge's saved game holds only the players still in it, and loading it into a new game with every deck fails
+        ("Non-matching number of players, (4 vs. 2)" - live, 12 Oct) while the bridge still says setup_done."""
+        if not self.last_good:
+            return None
+        players = (self.state or {}).get("players") or []
+        if not players or any(p.get("lost") for p in players):
+            return None
+        return self.last_good.latest(players=len(players))
+
+    def watchdog_tick(self, now):
+        """After last_good.WATCHDOG_SECONDS of the table not changing on an OPPONENT's turn (never on mine - Karl), offer: restore the
+        last good state, end the game, or keep waiting (which asks again 180 s later)."""
+        st = self.state
+        if self.modal or getattr(self, "pending_restore", None) or not self.last_good_ready() or not self.can_restart():
+            return
+        waited = self.think_elapsed(now)
+        if waited is None or st.get("activePlayer") == st.get("me"):
+            return
+        if self._offer_stall != self._think_since:
+            self._offer_stall, self._offer_extra = self._think_since, 0.0
+        if waited < last_good.WATCHDOG_SECONDS + self._offer_extra:
+            return
+        self._offer_extra += last_good.WATCHDOG_SECONDS         # "Keep waiting" (or Esc) = ask again after another 180 s
+        self.open_stall_offer(waited, now)
+
+    def open_stall_offer(self, waited, now):
+        st = self.state
+        who = next((p.get("name") for p in st.get("players") or [] if p.get("id") == st.get("activePlayer")), None) or "An opponent"
+        lg = self.restorable_save()
+        text = "%s has been working for %d minutes and nothing on the table has changed. " % (who, int(waited // 60))
+        options = []
+        if lg:
+            ago = max(0, int((now - lg["at"]) // 60))
+            text += ("Your game was saved at turn %s, %d min ago. Restoring starts a new game with the same decks (keep your opening hand "
+                     "when asked) and puts the table back as it was." % (lg["turn"], ago))
+            options.append(("Restore the last good state (turn %s)" % lg["turn"], self.restore_last_good, "normal"))
+        elif any(p.get("lost") for p in st.get("players") or []):
+            text += "A player is already out of this game, so a saved state can't be put back (Forge restores a game only with every player still in it)."
+        else:
+            text += "No saved state yet (a save is made when the game asks you something)."
+        options.append(("End this game", self.concede, "danger"))
+        self.modal = dlg.OptionsDialog("The game seems stuck", text, options, "Keep waiting")
+
+    def restore_last_good(self):
+        """Start a new game with the same decks, and at its first priority stop put the saved game back (restore_tick does the second part)."""
+        lg = self.restorable_save()
+        if not lg:
+            self.say("There is no saved state that can be restored.", RED, 5.0)
+            return
+        keep = os.path.join(fc.DATA_DIR, "last_good", "restoring.state")      # a copy: the new game's own saves clean up beside the old ones
+        try:
+            os.makedirs(os.path.dirname(keep), exist_ok=True)
+            shutil.copy2(lg["path"], keep)
+        except OSError as e:
+            self.say("Could not read the saved state: %s" % e, RED, 6.0)
+            return
+        self.pending_restore = {"path": keep, "turn": lg["turn"], "stage": "wait", "t0": time.monotonic(), "expect": None, "t1": None}
+        self.restart_game()
+        if not self.current_decks:
+            self.pending_restore = None
+
+    def restore_tick(self, now):
+        pr = getattr(self, "pending_restore", None)
+        if not pr:
+            return
+        s = self.session
+        if getattr(s, "game_over", False) or getattr(s, "online", None):
+            self.pending_restore = None
+            return
+        if pr["stage"] == "wait":
+            msg = self.prompt().get("message", "")
+            if (self.state or {}).get("asking") is True and msg.startswith("Priority:") and not getattr(s, "requests", None):
+                pr["stage"], pr["t1"], pr["expect"] = "apply", now, getattr(s, "setups_done", 0) + 1
+                s.load_state(pr["path"])
+                self.modal = dlg.WorkingDialog("Putting your game back", "Restoring turn %s. Please wait - clicking now could break it." % pr["turn"])
+            return
+        done = getattr(s, "setups_done", 0) >= pr["expect"]
+        failed = getattr(s, "state_load_failed", None)
+        if done or failed or now - pr["t1"] > self.RESTORE_APPLY_SECONDS:
+            if isinstance(self.modal, dlg.WorkingDialog):
+                self.modal.done = True
+            self.pending_restore = None
+            if done:
+                self.say("Restored to turn %s." % pr["turn"], GREEN, 6.0)
+            else:
+                self.say("Could not put the saved game back (%s). You can keep playing this new game." % (failed or "no answer in 60 s"), RED, 10.0)
+
+    def think_signature(self):
+        """Round THINK1: a cheap fingerprint of 'something happened on the table': turn, phase, who is active, the stack, every
+        player's life and battlefield size, and what Forge is asking. A flush ping brings a fresh snapshot every few seconds, so
+        'a snapshot arrived' says nothing; 'the table changed' does."""
+        st = self.state
+        if not st:
+            return None
+        players = tuple((p.get("id"), p.get("life"), len(p.get("zones", {}).get("battlefield", [])), len(p.get("zones", {}).get("graveyard", [])))
+                        for p in st.get("players") or [])
+        return (st.get("turn"), st.get("phase"), st.get("activePlayer"), len(st.get("stack") or []), players, self.prompt().get("message", ""))
+
+    def think_elapsed(self, now=None):
+        """Seconds the table has stayed the same while Forge asks me nothing, else None. Call once a frame (it keeps the clock)."""
+        now = time.monotonic() if now is None else now
+        sig = self.think_signature()
+        if sig is None or not self.waiting():
+            self._think_sig, self._think_since = None, None
+            return None
+        if sig != self._think_sig or self._think_since is None:
+            self._think_sig, self._think_since = sig, now
+            return 0.0
+        return now - self._think_since
+
+    def think_text(self, now=None):
+        """Round THINK1: the line under the top bar when an AI (or Forge, resolving my own turn) has taken THINK_SHOW seconds or more
+        with nothing new on the table; None before that. Only says what is happening - it never acts (the 180 s watchdog is a later round)."""
+        waited = self.think_elapsed(now)
+        if waited is None or waited < THINK_SHOW or self.not_responding(now):
+            return None
+        st = self.state
+        n = sum(len(p.get("zones", {}).get("battlefield", [])) for p in st.get("players") or [])
+        board = "  -  %d permanents on the table" % n if n >= 200 else ""
+        if st.get("activePlayer") == st.get("me"):
+            who = "Forge is still resolving your turn"
+        else:
+            active = next((p.get("name") for p in st.get("players") or [] if p.get("id") == st.get("activePlayer")), None)
+            who = "%s is still thinking" % (active or "An opponent")
+        return "%s  -  %d s%s" % (who, int(waited), board)
+
+    def draw_think_banner(self):
+        text = self.think_text()
+        if not text:
+            return
+        f = self.font("small", True)
+        r = pygame.Rect(self.L.main.x, self.L.top_h, self.L.main.w, f.get_height() + 8)
+        round_rect(self.screen, r, gfx.BANNER_BG, 0, 1, DIM, alpha=225)
+        draw_text(self.screen, text, r.centerx, r.y + 4, f, WHITE, "midtop")
+
     def draw_quiet_banner(self):
         if not self.not_responding():
             return
@@ -6419,6 +6631,7 @@ class ForgeTable:
         before = (id(self.modal) if self.modal else 0, id(self.overlay) if self.overlay else 0, id(self.menu) if self.menu else 0)
         version = self.session.state_version
         n = self._sync()
+        self.last_good_ticks()
         if self.session.state_version != version:
             self.perf.snapshot_arrived(time.monotonic())
         after = (id(self.modal) if self.modal else 0, id(self.overlay) if self.overlay else 0, id(self.menu) if self.menu else 0)

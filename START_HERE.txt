@@ -82,6 +82,12 @@ Formats
   Standard (60 cards or more, up to 4 of a card, no commander, 20 life). Import an Arena deck with its
   Export button, then Ctrl+V on the deck screen. Online play is Commander only.
 
+Cube draft (main menu > Draft)
+  Draft a Commander cube against three AI drafters: take two cards a pick from packs of 20, three packs,
+  then each pool becomes a 60-card deck and you play them in one 4-player Commander game. The default cube
+  is Commander Cube by tritoch; paste a Cube Cobra link for another. The draft is saved after every pick.
+  The four decks go to My decks (tagged DRAFT).
+
 Deck screen tags
   NOT LEGAL means a deck breaks a rule of its format (a banned card, the wrong colours, too many or too few
   cards...). The deck screen lists the lines; you can still play it. The one exception: a commander that

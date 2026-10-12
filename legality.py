@@ -29,6 +29,10 @@ Round FMT1, Brawl (MTG Arena's 100-card Brawl; the Brawl option, 903.12, with Ar
   Arena's card pool and banned list: Scryfall's "brawl" legality and banned:brawl (cache/banned_brawl.json,
   banned_brawl.snapshot.json). 25/30 life and no commander damage are the engine's (Forge's Brawl variant), not a deck rule.
 
+Round CD2, Commander Draft (903.13f, a deck from a cube draft's pool): the commander, pair and colour-identity checks as for
+  Commander; at least 60 cards (no maximum); no one-copy rule (any number of copies the pool holds - draft_deck.check counts
+  them, this module can't see the pool); no banned list and no card-pool legality (the cube's owner chose its cards).
+
 A check that couldn't run makes the deck UNCHECKED, never silently legal.
 """
 from collections import namedtuple
@@ -405,11 +409,14 @@ def check(commanders, deck, store=None, fmt="commander", sideboard=None):
     data = {n: peek(n) for n in set(everything + side)}
     missing = sorted(n for n, c in data.items() if c is None)
     issues, unchecked = [], []
-    bl = _BANNED[fmt]
+    drafted = formats.drafted(fmt)                        # round CD2: Commander Draft - a cube's cards, no banned list, no pool
+    bl = _BANNED.get(fmt) or BanList(frozenset(), None, "none")
     cards_of = everything + side                          # round CON1: a sideboard card is checked like a deck card
 
     # card rules
-    if bl.source == "none":
+    if drafted:
+        pass                                              # round CD2: the cube's owner chose its cards (spec section 1)
+    elif bl.source == "none":
         unchecked.append(("banned list", None))
     else:
         hit = [n for n in dict.fromkeys(cards_of)
@@ -418,7 +425,7 @@ def check(commanders, deck, store=None, fmt="commander", sideboard=None):
         if hit:
             issues.append(("banned", "", hit))
     else_banned = {i for k, _t, cards in issues if k == "banned" for i in cards}
-    nl = [n for n in dict.fromkeys(cards_of) if n not in else_banned and data[n] is not None
+    nl = [n for n in dict.fromkeys(cards_of) if not drafted and n not in else_banned and data[n] is not None
           and (data[n].get("legalities") or {}).get(fmt) == "not_legal"]
     if nl:
         issues.append(("not_legal", "", nl))
@@ -426,19 +433,22 @@ def check(commanders, deck, store=None, fmt="commander", sideboard=None):
     if not formats.has_commander(fmt):
         return _check_constructed(fmt, deck, side, data, issues, unchecked, missing, bl)
 
-    # 903.5a size (Arena's Brawl: 100 too)
+    # 903.5a size (Arena's Brawl: 100 too); round CD2: 903.13f(1), Commander Draft has at least 60
     total = len(everything)
     size = formats.get(fmt).deck_size
-    if total != size:
+    if formats.get(fmt).exact and total != size:
         issues.append(("size", f"This deck has {total} cards; a {formats.name(fmt)} deck has {size} (commander included).", []))
+    elif not formats.get(fmt).exact and total < size:
+        issues.append(("size", f"This deck has {total} cards; a {formats.name(fmt)} deck has at least {size} (commander "
+                               "included).", []))
 
-    # 903.5b singleton
+    # 903.5b singleton (round CD2: not in Commander Draft - 903.13f(2), any number from the pool; draft_deck.check counts them)
     counts = {}
     for n in everything:
         counts[n] = counts.get(n, 0) + 1
     extra = []
     for n, k in counts.items():
-        if k < 2 or _is_basic(n, data[n]):
+        if k < 2 or _is_basic(n, data[n]) or formats.any_copies(fmt):
             continue
         limit = _copy_limit(data[n])
         if limit is None or k > limit:

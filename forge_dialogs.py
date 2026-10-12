@@ -1127,6 +1127,20 @@ class MessageDialog(Dialog):
             self.done = True
 
 
+class WorkingDialog(MessageDialog):
+    """Round LAST1: 'please wait' while the saved game is put back. Nothing closes it but the table itself (done = True): a click or a key
+    sent to the engine meanwhile could break the restore (Round 28c)."""
+
+    def __init__(self, title, text):
+        super().__init__(title, text, button="Please wait")
+
+    def click(self, gui, pos, button):
+        pass
+
+    def key(self, gui, ev):
+        pass
+
+
 class QuestionDialog(Dialog):
     """A plain yes / no question that runs `on_yes()` when confirmed."""
 

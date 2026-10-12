@@ -596,6 +596,26 @@ SPEED: FAST OR SLOW (round PRI1, Karl's choices of 9 Oct 2026; Cog > GAME > Spee
   journal records the switch like any other command, so Resume and Undo's rebuild play a Slow game Slow; an online guest's
   Speed is that guest's own seat only. The turn bar's dots add or remove stops in either speed (each speed keeps its own).
 
+CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md)
+  Main menu > Draft. You and three AI drafters draft a cube the official Commander Draft way (Comprehensive Rules 903.13): each
+  opens a pack of 20 cards, takes two, passes the rest - left, then right, then left - for three packs, 60 cards each.
+    - The cube: Commander Cube by tritoch (cubecobra.com/cube/overview/cm) by default, or paste any Cube Cobra link or id. It is
+      downloaded once (cubecobra.com/cube/api/cubeJSON/<id>) and kept in cache\cubes\. Cards this Forge has no script for are
+      left out of the packs and named. A cube needs 240 cards Manticore can use.
+    - Picking: click two cards (a third click swaps out the first), then Confirm or Enter. The AIs pick at once. You see only your
+      pack and your picks, and how many cards the others have (903.13d). The AI drafters pick like people: by Cube Cobra's Elo
+      (made from real players' picks), settling into colours, and making sure of a commander.
+    - The draft is saved after every pick (saves\drafts\<id>\): Save and leave (Esc) whenever you like; Draft continues it
+      ("Your draft isn't finished - Continue it / Discard it").
+    - After the last pick: a review of every seat's picks, each with the pack it came from. Then the decks: each pool's best deck
+      (a commander from the pool, the best cards of its colours, the pool's lands, basic lands to 60). "Save the decks and choose
+      them" writes all four to My decks and chooses them on the deck screen: yours, and the three AI drafters' as AI 1-3. Start.
+    - The decks are Commander Draft decks ("# format: commander_draft" in the file): at least 60 cards, any number of a card the
+      pool held (903.13f), no banned list. They are listed under Commander with a DRAFT tag and play Commander games (40 life, 21
+      commander damage - 903.13g). Basic lands are free (the rules' glossary and 100.2b; 903.13 itself doesn't say).
+    - Not yet (CD4): editing your drafted deck by hand. Online drafting is later (CD5).
+  tools\draft_sim.py measures the AI drafters over many drafts; tools\cd2_screens.py makes pictures of the screens.
+
 SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its desktop window has)
   Skip... (the button left of Undo, or the S key) opens a window with:
     Let the stack resolve ........ Forge passes priority for you until the stack is empty. An opponent casting something new stops it.
@@ -921,7 +941,14 @@ get large).
 FOR DEVELOPERS (round 27a)
 --------------------------
 Read docs\WORKING_AGREEMENT.md first - it has the full rules (branching, never pushing, the reserved
-names, one session at a time). Short version:
+names, desks and the board). Short version:
+- Several AI sessions can work at once (round PAR1): each at its own desk - a git worktree in
+  .worktrees\<round>, on its own branch - never in the main folder. The board says who is working
+  where and on which files, and where two sessions touch the same file:
+    python tools\desk.py list
+  A session makes its desk with  python tools\desk.py new <round> --who "<name>" --files <files>
+  and says it's finished with  python tools\desk.py done <round>. Remove a finished desk (its branch
+  stays) with  python tools\desk.py remove <round>. The backup pushes every desk's branch.
 - One git branch per round: round-<id> (e.g. round-27a). Merge into main only after a clean Windows
   test run; then an annotated tag, r<id> (git tag -a r27a -m "Round 27a").
 - version.py's VERSION follows the round (0.27.1 = round 27a); --version also shows the tag when HEAD

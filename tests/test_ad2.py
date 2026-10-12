@@ -87,7 +87,7 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "menu")
                 self.assertIsNone(gui.menu)                      # the key that left the title did not also press Play
                 frame(gui, 2)
-                self.assertEqual(len(gui.boot.buttons), 5)
+                self.assertEqual(len(gui.boot.buttons), 6)      # round CD2: Draft is the sixth
 
     def test_the_title_keeps_the_lettering_and_the_menu_dims_the_picture(self):
         fboot._PICS.clear()
@@ -113,9 +113,9 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "title")
                 self.assertTrue(gui.boot.moving(time.monotonic()))
 
-    def test_the_menu_has_the_five_items(self):
+    def test_the_menu_has_the_six_items(self):
         gui = self.boot_gui(splash=False)
-        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "continue", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "continue", "settings", "credits", "quit"])
 
     def test_play_opens_the_deck_screen_and_esc_comes_back(self):
         gui = self.boot_gui(splash=False)
@@ -157,7 +157,11 @@ class BootTests(TempDecks):
         gui = self.boot_gui(splash=False)
         self.assertEqual(gui.boot.focus, 0)
         key(gui, pygame.K_DOWN)
-        self.assertEqual(gui.boot.focus, 2)                  # Continue is grey: straight to Settings
+        self.assertEqual(gui.boot.focus, 1)                  # round CD2: Draft
+        key(gui, pygame.K_DOWN)
+        self.assertEqual(gui.boot.focus, 3)                  # Continue is grey: straight to Settings
+        key(gui, pygame.K_UP)
+        self.assertEqual(gui.boot.focus, 1)
         key(gui, pygame.K_UP)
         self.assertEqual(gui.boot.focus, 0)
         key(gui, pygame.K_RETURN)

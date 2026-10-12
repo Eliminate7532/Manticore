@@ -62,7 +62,9 @@ def is_portable():
     folder = program_dir()
     if os.path.isfile(os.path.join(folder, "portable.txt")):
         return True
-    return os.path.isdir(os.path.join(folder, ".git"))
+    # Round PAR1: a desk (a git worktree, tools/desk.py) has a .git FILE, not a folder; it is a working copy like Karl's own,
+    # so its data stays in its own folder - never in %APPDATA%\Manticore beside an installed copy's.
+    return os.path.exists(os.path.join(folder, ".git"))
 
 
 # ---- per-user folders (installed mode) ----------------------------------------------------------------

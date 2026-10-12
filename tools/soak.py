@@ -96,13 +96,14 @@ def default_out_dir():
 
 def deck_pool(which, fmt="commander"):
     """.txt deck files to build games from: sample_decks/ always; --decks mine adds my_decks/ too
-    (read-only: nothing here ever writes into it). Round FMT1: only decks of `fmt` (a file's "# format:" line, formats.py)."""
+    (read-only: nothing here ever writes into it). Round FMT1: only decks of `fmt` (a file's "# format:" line, formats.py).
+    Round CD2: Commander Draft decks (60 cards, from a cube draft) count as Commander decks - their games are Commander games."""
     import formats
     import paths                          # Round 29: through paths, so a frozen build finds its own sample_decks and the player's my_decks
     pool = sorted(glob.glob(os.path.join(paths.sample_dir(), "*.txt")))
     if which == "mine":
         pool += sorted(p for p in glob.glob(os.path.join(paths.library_dir(), "*.txt")) if os.path.isfile(p))
-    return [p for p in pool if _file_format(p) == formats.normal(fmt)]
+    return [p for p in pool if formats.screen(_file_format(p)) == formats.screen(fmt)]     # round CD2: draft decks play Commander
 
 
 def _file_format(path):

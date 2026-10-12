@@ -40,5 +40,5 @@ def describe_deck(label, commanders, deck, fmt=None):
     print(f"{label}: {names} | {len(deck)} cards in library")
     if not commanders:
         print(f"  Warning: no commander detected for {label}; the command zone will be empty.")
-    if total != f.deck_size:
-        print(f"  Warning: expected {f.deck_size} cards including the commander, got {total}.")
+    if (total != f.deck_size) if f.exact else (total < f.deck_size):          # round CD2: Commander Draft has at least 60
+        print(f"  Warning: expected {'' if f.exact else 'at least '}{f.deck_size} cards including the commander, got {total}.")

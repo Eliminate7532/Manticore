@@ -280,7 +280,8 @@ class BackupTests(BackupBase):
         copy = os.path.join(self.tmp, "real")
         shutil.copytree(HERE, copy, ignore=shutil.ignore_patterns("forge_runtime", "cache", "__pycache__", ".git", "shots*", "docs_work",
                                                                    "forge_decks", "forge_engine.log", "settings.json",
-                                                                   "soak_runs", "bug_reports", "saves"))   # round 28d fix 1: soak_runs was 42 GB and filled the disk
+                                                                   "soak_runs", "bug_reports", "saves",   # round 28d fix 1: soak_runs was 42 GB and filled the disk
+                                                                   ".worktrees", ".sessions"))   # Round PAR1: the desks are whole copies
         sh(["init", "-q"], copy)
         sh(["add", "-A"], copy)
         staged = backup.staged_files(copy)

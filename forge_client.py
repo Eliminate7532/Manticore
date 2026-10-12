@@ -631,6 +631,10 @@ class ForgeSession:
         self.loop_cap = loop_cap            # round 28e: the AI loop guard's limit for tests (needs dev=True; None = the bridge's own 10, 0 = off)
         self.loop_guards = []               # round 28e: {"t": "ai_loop_guard", ...} - the bridge stopped an AI repeating one ability
         self.loop_cap_used = None           # round 28e: the limit the bridge's "ready" line reports
+        self.last_state_ok = False          # round LAST1: the bridge's "ready" says it can save and load a game (an older forge_bridge.jar cannot)
+        self.state_saves = []               # round LAST1: the bridge's {"t":"state_saved"} answers, oldest first
+        self.state_load_failed = None       # round LAST1: why the bridge could not load a saved game, or None
+        self._save_n = 0
         # Patch 43: the bridge passes priority for me when nothing meaningful is happening (Passing.java). classic_stops=True asks for
         # every stop as before (the card check's scripted boards rely on them); "passing" is what the bridge's "ready" line says.
         self.classic_stops = bool(classic_stops)
@@ -849,6 +853,7 @@ class ForgeSession:
             self.protocol = m.get("protocol", 1)
             self.ai_timeout = m.get("aiTimeout")
             self.loop_cap_used = m.get("loopCap")
+            self.last_state_ok = bool(m.get("lastState"))
             self.format_used = m.get("format", "commander")
             self.passing = m.get("passing")         # patch 43: "smart" or "classic" (None: a bridge from before patch 43)
             if self.format_used != formats.engine(self.fmt) and not self.command:
@@ -865,6 +870,11 @@ class ForgeSession:
             self.setups_done += 1               # round 28c: a dev "setup" has finished applying (see SetupState.java)
         elif t == "ai_loop_guard":
             self._note_loop_guard(m)
+        elif t == "state_saved":
+            self.state_saves.append(m)           # round LAST1: see Main.saveState
+            del self.state_saves[:-20]
+        elif t == "state_load_failed":
+            self.state_load_failed = m.get("reason") or "unknown"
         elif t == "passed":
             self.passed.append(m)                   # patch 43: shown in the table's feed
             del self.passed[:-200]
@@ -1023,6 +1033,20 @@ class ForgeSession:
         """Put a board in place with Forge's own 'Setup Game State' lines, e.g. ["humanhand=Sol Ring", "aibattlefield=Forest;Forest", "humanlife=40"]
         (zones named are replaced, the rest is left alone). Needs a session started with dev=True; a normal game ignores it."""
         return self.send(c="setup", lines=list(lines))
+
+    def save_state(self, path, n=None):
+        """Round LAST1: ask the bridge to write the game as it is to this file (only while a person has a question open; otherwise it answers
+        ok:false, reason "busy"). The answer arrives in state_saves. Returns the number that comes back in the answer."""
+        if n is None:
+            self._save_n += 1
+            n = self._save_n
+        self.send(c="savestate", path=path, n=n)
+        return n
+
+    def load_state(self, path):
+        """Round LAST1: put a saved game on the table. Only in a NEW game at its first priority stop; setups_done goes up when it is done."""
+        self.state_load_failed = None
+        return self.send(c="loadstate", path=path)
 
     def ok(self):
         return self.send(c="ok")

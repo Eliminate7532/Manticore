@@ -33,6 +33,7 @@ ORANGE_TAG = gfx.TAG_ORANGE
 RANDOM = "*random*"                     # round 27b: an AI seat set to "a random deck from the library, picked at Start"
 SEAT_KEYS = ("opp", "opp2", "opp3")     # the slot/active names of AI seats 1-3 ("opp" is seat 1, as before round 27b)
 MAIN_MENU_LABEL = "Main menu"            # patch 42: the deck screen's button back to the title and main menu
+DRAFT_TAG_TEXT = "DRAFT"                 # round CD2: the tag on a Commander Draft deck's list row
 HINTS = ("Pick your deck, then one for each AI (or Random), then press Start.  Type to search the list.  "
          "Paste a new deck with Import (or Ctrl+V).  F8: a bug or an idea.",
          "Pick your deck and the AIs', then Start.  Type to search.  Ctrl+V pastes a deck.  F8: a bug or an idea.")   # Round FR1
@@ -191,8 +192,8 @@ class DeckMenu:
     # ---- what is chosen ----------------------------------------------------------------
     def in_format(self, entries=None):
         """Round FMT1: the decks of the format the screen shows."""
-        return [e for e in (self.entries if entries is None else entries)
-                if formats.normal(getattr(e, "format", None)) == getattr(self, "fmt", formats.DEFAULT)]
+        return [e for e in (self.entries if entries is None else entries)                 # round CD2: draft decks under Commander
+                if formats.screen(getattr(e, "format", None)) == getattr(self, "fmt", formats.DEFAULT)]
 
     def set_format(self, fmt):
         """Round FMT1: show another format's decks. Each format keeps its own choice of decks and opponents."""
@@ -377,8 +378,8 @@ class DeckMenu:
         gui.modal = ImportDialog(self, text)
 
     def imported(self, entry):
-        if formats.normal(getattr(entry, "format", None)) != self.fmt:
-            self.set_format(entry.format)                     # round FMT1: show the format the new deck was saved as
+        if formats.screen(getattr(entry, "format", None)) != self.fmt:
+            self.set_format(formats.screen(entry.format))     # round FMT1: show the format the new deck was saved as
         self.refresh()
         self.set_search("")                                   # the new deck must be in the list that is shown
         self.assign(entry)
@@ -788,7 +789,26 @@ class DeckMenu:
         legal = legal_tag(e)                                  # Round BAN1: NOT LEGAL / UNCHECKED
         if legal:
             tags.append(legal)
+        if formats.drafted(getattr(e, "format", None)):      # round CD2: a deck from a cube draft (Commander Draft)
+            tags.append((DRAFT_TAG_TEXT, gfx.DRAFT_TAG))
         return tags
+
+    def choose_draft(self, mine_id, opp_ids):
+        """Round CD2: the cube draft's four decks, chosen: mine in YOUR DECK, the AI drafters' in AI 1-3 (in seat order), on the
+        Commander screen (Commander Draft decks are listed there). Deck ids that aren't in the list are left as they were."""
+        self.set_format(formats.screen("commander_draft"))
+        self.set_search("")
+        if lib.find(self.in_format(), mine_id) is None:
+            return False
+        self.mine_id = self.focus_id = mine_id
+        opp_ids = [i for i in opp_ids if lib.find(self.in_format(), i) is not None][:MAX_OPPONENTS]
+        if opp_ids:
+            self.count = len(opp_ids)
+            self.opps = (list(opp_ids) + [None] * MAX_OPPONENTS)[:MAX_OPPONENTS]
+        self.active = "mine"
+        self.picked = {}
+        self.scroll_to(mine_id)
+        return True
 
     def draw_row(self, gui, r, e, body, small, tiny):
         scr, fs = gui.screen, _fs(gui)

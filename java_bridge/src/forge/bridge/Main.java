@@ -166,6 +166,7 @@ public class Main {
         ready.addProperty("protocol", 2);                    // 2 = "event" lines, snapshot fields eventSeq / input / inputSeq, "at" on clicks
         ready.addProperty("aiTimeout", aiTimeout);           // round 28d
         ready.addProperty("loopCap", LoopGuard.cap);         // round 28e
+        ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
         ready.addProperty("format", format);                 // round FMT1: the Python side checks it
         ready.addProperty("startingLife", human.getStartingLife());
         ready.addProperty("passing", Passing.classic ? "classic" : "smart");   // patch 43
@@ -355,6 +356,8 @@ public class Main {
             }
             case "flush": gui.markDirty(); break;
             case "setup": setupBoard(cmd); break;
+            case "savestate": saveState(cmd); break;           // round LAST1: write the game to a file, only while the game thread is parked
+            case "loadstate": loadState(cmd); break;           // round LAST1: put a saved game on the table (a new game, at its first priority stop)
             case "stops": {
                 List<String> names = new ArrayList<>();
                 for (com.google.gson.JsonElement e : cmd.getAsJsonArray("phases")) names.add(e.getAsString());
@@ -480,6 +483,65 @@ public class Main {
             st.applyThenSignal(match.getGame(), Checks.wire);
         } catch (Exception e) {
             System.err.println("bridge: setup failed: " + e);
+        }
+    }
+
+    /**
+     * Round LAST1: {"c":"savestate","path":"C:\\...\\turn7.state","n":5} - writes Forge's own GameState text (initFromGame + toString) for the
+     * game as it is now, and answers {"t":"state_saved","n":5,"ok":true|false,"turn":7,"reason":...}. Only while a person has a question open
+     * (humanWaiting: Forge's game thread is parked, so nothing is changing the cards); otherwise it answers ok:false, reason "busy" and
+     * touches nothing - reading a game that the game thread is busy rebuilding is the race that already killed games (Main.AI_TIMEOUT_SECONDS).
+     * Written to path + ".tmp" and renamed, so a half-written file never looks like a save.
+     */
+    static void saveState(JsonObject cmd) {
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "state_saved");
+        m.addProperty("n", cmd.has("n") ? cmd.get("n").getAsInt() : 0);
+        try {
+            forge.game.Game g = match == null ? null : match.getGame();
+            if (g == null || g.isGameOver()) {
+                m.addProperty("ok", false);
+                m.addProperty("reason", "no game");
+            } else if (!humanWaiting(g)) {
+                m.addProperty("ok", false);
+                m.addProperty("reason", "busy");
+            } else {
+                String path = cmd.get("path").getAsString();
+                forge.game.GameState gs = new forge.game.GameState();
+                gs.initFromGame(g);
+                java.nio.file.Path target = java.nio.file.Paths.get(path);
+                java.nio.file.Path tmp = java.nio.file.Paths.get(path + ".tmp");
+                java.nio.file.Files.write(tmp, gs.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                java.nio.file.Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                m.addProperty("ok", true);
+                m.addProperty("turn", g.getPhaseHandler().getTurn());
+            }
+        } catch (Throwable e) {
+            m.addProperty("ok", false);
+            m.addProperty("reason", String.valueOf(e));
+            System.err.println("bridge: savestate failed: " + e);
+        }
+        if (Checks.wire != null) Checks.wire.send(m);
+    }
+
+    /**
+     * Round LAST1: {"c":"loadstate","path":"..."} - the same as "setup" (Forge's "Setup Game State", SetupState, which says "setup_done"
+     * when it has finished) but from a saved file and allowed in a normal game: the table sends it once, in a NEW game, at its first
+     * priority stop (after the mulligans), to put the saved game back. Nothing else sends it.
+     */
+    static void loadState(JsonObject cmd) {
+        try {
+            List<String> lines = java.nio.file.Files.readAllLines(java.nio.file.Paths.get(cmd.get("path").getAsString()),
+                    java.nio.charset.StandardCharsets.UTF_8);
+            SetupState st = new SetupState();
+            st.parse(lines);
+            st.applyThenSignal(match.getGame(), Checks.wire);
+        } catch (Throwable e) {
+            System.err.println("bridge: loadstate failed: " + e);
+            JsonObject m = new JsonObject();                   // the table is waiting for setup_done: say it will not come
+            m.addProperty("t", "state_load_failed");
+            m.addProperty("reason", String.valueOf(e));
+            if (Checks.wire != null) Checks.wire.send(m);
         }
     }
 

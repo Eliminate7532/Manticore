@@ -309,7 +309,7 @@ class RestartConcedeTests(unittest.TestCase):
         self.assertEqual(gui.boot.stage, "menu")
         self.assertFalse(gui.game_showing())
         frame(gui, 2)
-        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "continue", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "continue", "settings", "credits", "quit"])
         click(gui, next(r.center for r, n in gui.boot.buttons if n == "play"))
         frame(gui, 1)
         self.assertIsNotNone(gui.menu)

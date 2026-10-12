@@ -4,8 +4,9 @@ boot_screens.py - Round AD2: what the program shows before the deck screen.
 
     the studio splash (assets/splash/studio.jpg, 2.2 s, a click or a key skips it)
       -> the title: the picture alone (assets/splash/title.png, the manticore on its plinth) and "Press any key"
-      -> the main menu over a dimmed copy of it: Play / Continue / Settings / Credits / Quit
-         Play = the deck screen; Continue = Resume last game (greyed when there is none, or it can't be resumed);
+      -> the main menu over a dimmed copy of it: Play / Draft / Continue / Settings / Credits / Quit
+         Play = the deck screen; Draft (round CD2) = the cube draft (draft_screens.py), over the deck screen;
+         Continue = Resume last game (greyed when there is none, or it can't be resumed);
          Settings = the cog pop-up; Credits = Licenses and credits; Quit closes the program.
 
 Only main() starts here (ForgeTable.open_boot); tests and the --deck command line go straight to their own screens. The deck
@@ -31,7 +32,8 @@ BACKDROP_DIM = 80                # that fill is multiplied by this (of 255): it 
 FEATHER = 0.07                   # the picture's edges fade into the fill over this share of its width (or height)
 MENU_DIM = 105                   # the title picture is multiplied by this (of 255) behind the menu
 PROMPT = "Press any key"
-ITEMS = (("play", "Play"), ("continue", "Continue"), ("settings", "Settings"), ("credits", "Credits"), ("quit", "Quit"))
+ITEMS = (("play", "Play"), ("draft", "Draft"), ("continue", "Continue"), ("settings", "Settings"), ("credits", "Credits"),
+         ("quit", "Quit"))                                # round CD2: Draft - the cube draft (draft_screens.py)
 _PICS = {}                       # (name, size) -> Surface (one size kept per picture)
 
 
@@ -171,6 +173,9 @@ class BootFlow:
         if name == "play":
             gui.boot = None
             gui.open_menu()
+        elif name == "draft":                           # round CD2: the cube draft, over the deck screen
+            gui.boot = None
+            gui.open_draft(from_title=True)
         elif name == "continue":
             gui.boot = None
             gui.resume_last_game()

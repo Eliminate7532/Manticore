@@ -74,3 +74,9 @@ backup_status.json
 
 # big one-off transfer files (2026-10-01): kept on disk, not committed or pushed
 docs/incoming/ad1_rebase/
+
+# Round PAR1: the sessions' desks (git worktrees made by tools/desk.py, one whole copy each - their work is on their own branches)
+# and the board that says who is working where (one file per session). Never committed: a desk inside the folder would otherwise
+# be added as an embedded repository.
+.worktrees/
+.sessions/

@@ -777,6 +777,21 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     window's width (UI6's finding). At 100% text it is on the action bar at every width tested; a wider window never loses an
     Undo a narrower one shows, except three font-step edges at 125-150% (CLAUDE.md). The hint line under the headline gives way
     first; the headline still never does (UI2). Python only.
+[x] Release 0.28.53.9 (2026-10-12, Claude (Opus); Karl, 12 Oct: "We need to get draft into the testers game today"; the version Karl
+    gave the cube draft on 10 Oct): Rounds CD1 + CD2, the cube draft (docs/rounds/CD1.md, CD2.md) - main menu > Draft, a Commander
+    cube (Commander Cube by default, or a Cube Cobra link) against three AI drafters, two cards a pick, the draft kept after every
+    pick, a review, the four pools built into 60-card Commander Draft decks, saved to My decks and played in one 4-player Commander
+    game; rebuilt on main 49a4822. Also everything merged since 0.28.53.8: THINK1, LAST1, PAR1, TFIX2, and LAST1b
+    (docs/rounds/LAST1b.md) - what LAST1's first live run found: no save before the first phase or after a knock-out, and no
+    Restore offered that Forge can't do.
+[ ] Cube draft, next (spec docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md): CD4 - edit your drafted deck by hand (Arena-style
+    builder, commander slot, basic land steppers, Suggest lands, Auto-build), Play again / Edit deck from the end screen, the short-deck
+    tuning (CD1: 107 of 800 AI decks had basics standing in for spells); CD5 - drafting with friends online; later the classic 40-card
+    cube. Open: the AI drafters' bar (spec section 10) is Karl's to accept; tritoch's permission before Commander Cube ships as a list;
+    whether drafts (saves/drafts/, about 100 KB each) should stay out of git.
+[ ] LAST1, the next bridge round: the bridge sends setup_done after a failed set-up (it should send state_load_failed); a restore
+    drops command-zone effects (The Monarch, City's Blessing, hideaway effects). Karl's call: after a knock-out, offer the last save
+    from before it (the knocked-out player comes back)? Today: no Restore after a knock-out.
 [ ] The RPG plan, next phases (Karl's plan of 9 Oct, a Claude Doc): the RPG's own 60-card card lists (Vintage lists) on the same
     engine format; then the RPG itself. Open from CON1: Karl may prefer a plain any-cards 60-card format beside Standard.
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;

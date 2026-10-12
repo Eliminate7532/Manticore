@@ -220,6 +220,7 @@ SWITCH_ON_BG = (52, 150, 96)
 SWITCH_ON_EDGE = (130, 220, 165)
 TAG_BLUE = (70, 130, 200)
 TAG_ORANGE = (214, 122, 50)
+DRAFT_TAG = (124, 86, 168)                  # round CD2: the deck list's DRAFT tag (a Commander Draft deck)
 TICK_INK = (20, 20, 20)
 TRAY_BG = (30, 22, 8)
 
