@@ -849,6 +849,11 @@
    "text": "The Card art picker's MPC Autofill tab shows community-made card renders indexed by MPC Autofill (mpcfill.com; its software is free under the GNU GPL v3). Nothing is fetched until you open that tab, and only the picture you pick is downloaded, to this computer's card cache; none are included with the program. Each picture belongs to the person who made it. MPC Autofill and its contributors are not affiliated with this program."
   },
   {
+   "id": "stock-cubes",
+   "title": "Stock cubes",
+   "text": "Manticore comes with the card lists of these cubes from Cube Cobra (cubecobra.com), each made and owned by the person named, for its cube draft: Commander Cube by tritoch - cubecobra.com/cube/list/cm; Entry-level Cubing by DeepSky8 - cubecobra.com/cube/list/2edc8e87-440c-4e63-8c93-1d2842de4909; MTGO Vintage Cube by Dekkaru - cubecobra.com/cube/list/modovintage; The Cube of Cthulhu by CavsFangelo - cubecobra.com/cube/list/cthulhu; Turbo Cube by anthonymattox - cubecobra.com/cube/list/turbo; Lord of the Rings (LotR) standalone 360 by zarocks - cubecobra.com/cube/list/e1a51d49-9a07-48b1-b2ba-c78b6e65d03b; The Devoid Cube by Isticle - cubecobra.com/cube/list/devoid; The Spooty Peasant Cube - 2026 3.0 Edition by Spootyone - cubecobra.com/cube/list/spooty. The lists are copies as they were when this version was built (tools/build_stock_cubes.py); their owners may have changed them since. The draft window says whose each cube is and where it lives. Turbo Cube's emblem rule is its owner's. Neither Cube Cobra nor these owners are affiliated with Manticore or endorse it."
+  },
+  {
    "id": "decksites",
    "title": "Deck import",
    "text": "Decks can be imported from text exports made on Moxfield and Archidekt. Manticore is not affiliated with either site."

@@ -87,7 +87,7 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "menu")
                 self.assertIsNone(gui.menu)                      # the key that left the title did not also press Play
                 frame(gui, 2)
-                self.assertEqual(len(gui.boot.buttons), 6)      # round CD2: Draft is the sixth
+                self.assertEqual(len(gui.boot.buttons), 5)      # Play, Draft, Settings, Credits, Quit
 
     def test_the_title_keeps_the_lettering_and_the_menu_dims_the_picture(self):
         fboot._PICS.clear()
@@ -113,9 +113,14 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "title")
                 self.assertTrue(gui.boot.moving(time.monotonic()))
 
-    def test_the_menu_has_the_six_items(self):
+    def test_the_menu_has_the_five_items(self):
         gui = self.boot_gui(splash=False)
-        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "continue", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "settings", "credits", "quit"])
+
+    def test_there_is_no_continue_item(self):
+        gui = self.boot_gui(splash=False)
+        self.assertNotIn("continue", [n for _r, n in gui.boot.buttons])
+        self.assertNotIn("continue", dict(fboot.ITEMS))
 
     def test_play_opens_the_deck_screen_and_esc_comes_back(self):
         gui = self.boot_gui(splash=False)
@@ -126,20 +131,6 @@ class BootTests(TempDecks):
         key(gui, pygame.K_ESCAPE)
         self.assertIsNone(gui.menu)
         self.assertEqual(gui.boot.stage, "menu")             # the menu, not the picture again
-
-    def test_continue_is_grey_without_a_saved_game(self):
-        gui = self.boot_gui(splash=False)
-        self.assertFalse(gui.can_continue())
-        gui.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=self.item(gui, "continue"), button=1))
-        self.assertIsNotNone(gui.boot)                       # nothing happened
-
-    def test_continue_resumes_when_there_is_a_game(self):
-        gui = self.boot_gui(splash=False)
-        with mock.patch.object(gui, "can_continue", return_value=True), mock.patch.object(gui, "resume_last_game") as resume:
-            frame(gui)
-            gui.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=self.item(gui, "continue"), button=1))
-        resume.assert_called_once_with()
-        self.assertIsNone(gui.boot)
 
     def test_settings_credits_and_quit(self):
         gui = self.boot_gui(splash=False)
@@ -153,13 +144,13 @@ class BootTests(TempDecks):
         gui.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=self.item(gui, "quit"), button=1))
         self.assertFalse(gui.running)
 
-    def test_the_keyboard_walks_the_menu_and_skips_grey_items(self):
+    def test_the_keyboard_walks_the_menu(self):
         gui = self.boot_gui(splash=False)
         self.assertEqual(gui.boot.focus, 0)
         key(gui, pygame.K_DOWN)
         self.assertEqual(gui.boot.focus, 1)                  # round CD2: Draft
         key(gui, pygame.K_DOWN)
-        self.assertEqual(gui.boot.focus, 3)                  # Continue is grey: straight to Settings
+        self.assertEqual(gui.boot.focus, 2)                  # Settings (Continue is gone)
         key(gui, pygame.K_UP)
         self.assertEqual(gui.boot.focus, 1)
         key(gui, pygame.K_UP)

@@ -19,6 +19,14 @@ One window over the deck screen (as the Card art window is), in four stages:
           writes the four to My decks as Commander Draft decks, chooses them on the deck screen - yours in YOUR DECK, AI 1-3 in
           seat order, three opponents - and closes the window: Start plays the 4-player game (Commander rules, 40 life - 903.13g).
 The draft is kept after every pick (draft_pod.py). "Save and leave" (Esc) goes back to where Draft was opened (the main menu).
+
+Round CD3 (Karl, 12 Oct 2026): the stock cubes - a row of buttons on the setup stage, one per cube_source.STOCK_CUBES entry, each
+loaded from its bundled list (no network), with its owner and Cube Cobra link said under it; the link box stays for any other cube.
+The classic draft for the classic cubes (style "classic"): one card a pick from packs of 15, then 40-card decks and a 1v1 game
+against the AI drafter you choose on the decks stage ("Play against: AI 1 / AI 2 / AI 3") - all four decks are still saved to My
+decks (Draft decks, listed under Standard with the DRAFT tag) and yours and the chosen AI's are chosen on the deck screen. A stock
+cube's style is its own; a pasted cube's is cube_source.guess_style's, which the "Draft style" buttons change. A cube with a house
+rule says so (Turbo Cube's emblem: house_rules.py) and its decks carry it into the game.
 """
 import threading
 import time
@@ -29,9 +37,11 @@ import art_loader
 import crashlog
 import cube_source as cs
 import draft_core as dc
+import draft_deck as dd
 import draft_pod as dp
 import forge_dialogs as dlg
 import gfx
+import house_rules
 from gfx import DIM, GOLD, GREEN, ORANGE, RED, WHITE, clip_text, draw_text, round_rect, wrap_text
 
 CARD_ASPECT = 488 / 680
@@ -43,17 +53,31 @@ TITLE = "Cube draft"
 INTRO = ("You and three AI drafters each open a pack of 20 cards, take two, and pass the rest - left, then right, then left. Three "
          "packs make 60 cards each. Then a deck is built from each pool (a commander and 59 or more cards) and you play one "
          "4-player Commander game against the three AI drafters: 40 life, 21 commander damage.")
-FIELD_HINT = "Commander Cube by tritoch (cm) - or paste a Cube Cobra link or id"
-REF_HELP = ("A Cube Cobra link (cubecobra.com/cube/overview/...) or a cube's id. Leave it empty for the default, Commander Cube "
-            "by tritoch. A cube is downloaded once, then kept on this computer.")
+INTRO_CLASSIC = ("You and three AI drafters each open a pack of 15 cards, take one, and pass the rest - left, then right, then left. "
+                 "Three packs make 45 cards each. Then a 40-card deck is built from each pool, and you play a game against the AI "
+                 "drafter you choose: 20 life.")                                   # round CD3
+INTROS = {"commander": INTRO, "classic": INTRO_CLASSIC}
+FIELD_HINT = "Or paste a Cube Cobra link or id"
+REF_HELP = ("Any other cube: a Cube Cobra link (cubecobra.com/cube/overview/...) or its id, then Load. It is downloaded once, "
+            "then kept on this computer. The stock cubes above come with Manticore.")
 STEPS = ("1. Pick: the pack in front of you fills the window. Click two cards, then Confirm (Enter). The AIs pick at once.",
          "2. Review: after the last pick, every seat's picks in order, with the pack each came from.",
          "3. Decks: a deck is built from each pool, yours too, and all four are saved to My decks (tagged DRAFT).",
          "4. Play: the deck screen shows the four chosen - press Start for the 4-player game.",
          "The draft is saved after every pick: Save and leave (Esc) any time, and Draft on the main menu continues it.")
+STEPS_CLASSIC = ("1. Pick: the pack in front of you fills the window. Click a card, then Confirm (Enter). The AIs pick at once.",
+                 "2. Review: after the last pick, every seat's picks in order, with the pack each came from.",
+                 "3. Decks: a 40-card deck is built from each pool, yours too; choose the AI you play, and all four are saved "
+                 "to My decks (Draft decks, tagged DRAFT).",
+                 "4. Play: the deck screen shows yours and that AI's - press Start for the game.",
+                 "The draft is saved after every pick: Save and leave (Esc) any time, and Draft on the main menu continues it.")
+STEPS_BY_STYLE = {"commander": STEPS, "classic": STEPS_CLASSIC}
+STYLE_NAMES = {"commander": "Commander Draft", "classic": "Classic draft"}
 LEAVE_SAID = "Your draft is saved: Draft on the main menu continues it."
 CHOSEN_SAID = ("Your draft's four decks are chosen: yours, and the three AI drafters' as AI 1-3. Press Start to play them "
                "(Commander rules, 40 life).")
+CHOSEN_SAID_CLASSIC = ("Your draft's decks are saved and chosen: yours, and {ai}'s as your opponent. Press Start to play "
+                       "(20 life).")                                               # round CD3
 
 
 def card_picture(gui, card, w, h):
@@ -150,6 +174,9 @@ class DraftFlow(dlg.Dialog):
         except Exception as e:                                # a broken saved draft must not stop the window
             crashlog.note(f"Cube draft: the unfinished draft couldn't be read: {type(e).__name__}: {e}")
             self.resume = None
+        self.stock = cs.DEFAULT_CUBE                          # round CD3: the stock cube chosen (None: the link box decides)
+        self.style_choice = None                              # round CD3: the player's draft style for a cube that isn't stock
+        self.opponent = 1                                     # round CD3: the AI seat you play after a classic draft
         self.selected = []                                    # the cards (ints) you have clicked in this pack, in order
         self.tiles = []                                       # (rect, card int) drawn this frame, for the mouse
         self.hover = None
@@ -163,7 +190,7 @@ class DraftFlow(dlg.Dialog):
 
     # ---- setup -------------------------------------------------------------------------------------------------------------------
     def ref(self):
-        return self.field.text.strip() or cs.DEFAULT_CUBE
+        return self.field.text.strip() or self.stock or cs.DEFAULT_CUBE
 
     def load_cube(self, refresh=False):
         try:
@@ -173,17 +200,46 @@ class DraftFlow(dlg.Dialog):
             return
         self.job = CubeJob(self.ref(), self.runtime, self.lookup, refresh, self.cube_folder)
         self.loaded_ref = self.ref()
+        self.style_choice = None
         self.message = None
+
+    def choose_stock(self, gui, i):
+        """Round CD3: a stock cube's button - its bundled list loads at once (the link box is cleared)."""
+        if self.resume is not None or not 0 <= i < len(cs.STOCK_CUBES):
+            return
+        self.stock = cs.STOCK_CUBES[i].key
+        self.field.text = ""
+        gui.play_cue("ui.click")
+        self.load_cube()
+
+    def style(self):
+        """Round CD3: the draft style of the cube loaded: a stock cube's own, else the player's choice or the guess."""
+        j = self.job
+        cube = j.cube if (j and j.done and not j.error) else None
+        if cube is None:
+            return "commander"
+        if getattr(cube, "stock", False) or cs.stock_entry(cube.id) is not None:
+            return cube.style or "commander"
+        return self.style_choice or cube.style or "commander"
+
+    def style_fixed(self):
+        j = self.job
+        return bool(j and j.done and not j.error and (getattr(j.cube, "stock", False) or cs.stock_entry(j.cube.id) is not None))
+
+    def set_style(self, gui, style):
+        if style in cs.STYLES and not self.style_fixed():
+            self.style_choice = style
+            gui.play_cue("ui.click")
 
     def ready(self):
         j = self.job
-        return bool(j and j.done and not j.error and j.playable >= dc.cards_needed())
+        return bool(j and j.done and not j.error and j.playable >= dc.needed_for(self.style()))
 
     def start_draft(self, gui):
         if not self.ready():
             return
         try:
-            self.pod = dp.Pod.new(self.job.cube, self.job.check, root=self.root)
+            self.pod = dp.Pod.new(self.job.cube, self.job.check, root=self.root, style=self.style())
         except (dc.DraftError, OSError) as e:
             self.message = (f"The draft couldn't start: {e}", RED)
             gui.play_cue("ui.error")
@@ -298,7 +354,11 @@ class DraftFlow(dlg.Dialog):
             menu = gui.menu
         else:
             menu.refresh()
-        if menu is not None:
+        if menu is not None and self.pod.classic:            # round CD3: 1v1 against the AI drafter you chose
+            ai = entries[self.opponent] if 0 < self.opponent < len(entries) else None
+            menu.choose_draft(entries[0].id, [ai.id] if ai is not None else [], fmt=self.pod.format)
+            menu.say(CHOSEN_SAID_CLASSIC.format(ai=dp.SEAT_NAMES[self.opponent]), GREEN)
+        elif menu is not None:
             menu.choose_draft(entries[0].id, [e.id for e in entries[1:] if e is not None])
             menu.say(CHOSEN_SAID, GREEN)
             gui.deck_choice = menu.choice()
@@ -335,6 +395,13 @@ class DraftFlow(dlg.Dialog):
             self.save_decks(gui)
         elif name.startswith("seat_"):
             self.review_seat, self.scroll = int(name[5:]), 0
+            gui.play_cue("ui.click")
+        elif name.startswith("stock_"):                       # round CD3
+            self.choose_stock(gui, int(name[6:]))
+        elif name.startswith("style_"):
+            self.set_style(gui, name[6:])
+        elif name.startswith("versus_"):
+            self.opponent = int(name[7:])
             gui.play_cue("ui.click")
 
     def click(self, gui, pos, button):
@@ -436,70 +503,113 @@ class DraftFlow(dlg.Dialog):
             draw_text(gui.screen, clip_text(text, small, w), x, y, small, colour)
 
     # setup
+    def stock_rows(self, gui, x0, wrap_w):
+        """Round CD3: [(rect, i)] for the stock cube buttons, wrapped to wrap_w, from (x0, 0)."""
+        gap, bh = int(8 * gui.L.fs), self.bh
+        out, x, y = [], x0, 0
+        for i, st in enumerate(cs.STOCK_CUBES):
+            w = gui.button_width(st.label)
+            if x + w > x0 + wrap_w and x > x0:
+                x, y = x0, y + bh + gap
+            out.append((pygame.Rect(x, y, w, bh), i))
+            x += w + gap
+        return out
+
     def draw_setup(self, gui, rect):
         scr, fs, pad = gui.screen, gui.L.fs, self.pad
         body, small, smallb = gui.font("body"), gui.font("small"), gui.font("small", True)
         y = self.header(gui, rect, TITLE)
         wrap_w = min(rect.w - 2 * pad, int(1100 * fs))
         foot_top = rect.bottom - pad - self.bh
-        lines = wrap_text(INTRO, body, wrap_w)
-        for ln in lines[:6]:
-            draw_text(scr, ln, rect.x + pad, y, body, WHITE)
-            y += body.get_height() + 2
-        y += int(12 * fs)
-        draw_text(scr, "Cube", rect.x + pad, y, smallb, GOLD)
-        y += smallb.get_height() + 4
+        room = foot_top - int(8 * fs)
+        style = self.style()
+        bh, gap = self.bh, int(8 * fs)
+        # round CD3: what must show (the stock cubes, the link box, the style, what the cube is) is measured first; the intro,
+        # the help line and "How it goes" take only the room left, so a small window never loses a house rule or a red line
+        stock = self.stock_rows(gui, rect.x + pad, wrap_w)
+        stock_h = (max(r.bottom for r, _i in stock) + int(10 * fs) + smallb.get_height() + 4) if stock else 0
+        fh = body.get_height() + 14
+        j = self.job
+        style_row = bool(j and j.done and not j.error and self.resume is None and not self.style_fixed())
+        status = [(ln, colour) for text, colour in self.status_lines() for ln in wrap_text(text, small, wrap_w)[:4]]
+        need = stock_h + fh + 6 + int(8 * fs) + (bh + int(8 * fs) if style_row else 0) + len(status) * (small.get_height() + 1)
+        if self.resume is not None:
+            need += smallb.get_height() + small.get_height() + bh + int(34 * fs)
+        intro = wrap_text(INTROS.get(style, INTRO), body, wrap_w)[:6]
+        intro_h = len(intro) * (body.get_height() + 2) + int(10 * fs)
+        if y + intro_h + need <= room:
+            for ln in intro:
+                draw_text(scr, ln, rect.x + pad, y, body, WHITE)
+                y += body.get_height() + 2
+            y += int(10 * fs)
+        if stock:
+            draw_text(scr, "Stock cubes", rect.x + pad, y, smallb, GOLD)
+            y += smallb.get_height() + 4
+            chosen = (self.loaded_ref or "").strip().lower()
+            for r, i in stock:
+                st = cs.STOCK_CUBES[i]
+                self.button(gui, r.move(0, y), st.label, f"stock_{i}", self.resume is None, st.key.lower() == chosen)
+            y += max(r.bottom for r, _i in stock) + int(10 * fs)
         load_w = gui.button_width("Load")
         fw = min(wrap_w, int(760 * fs)) - load_w - int(10 * fs)
-        fh = body.get_height() + 14
         fr = pygame.Rect(rect.x + pad, y, max(120, fw), fh)
         self.field.draw(gui, fr, self.resume is None)
-        if not self.field.text:                               # the default, said in the empty box (after the cursor)
+        if not self.field.text:                               # the hint, said in the empty box (after the cursor)
             draw_text(scr, clip_text(FIELD_HINT, body, fr.w - 30), fr.x + 18, fr.y + 6, body, gfx.HINT_TEXT)
-        loading = bool(self.job and not self.job.done)
-        self.button(gui, pygame.Rect(rect.x + pad + max(120, fw) + int(10 * fs), y + (fh - self.bh) // 2, load_w, self.bh),
-                    "Load", "load", not loading)
+        loading = bool(j and not j.done)
+        self.button(gui, pygame.Rect(rect.x + pad + max(120, fw) + int(10 * fs), y + (fh - bh) // 2, load_w, bh),
+                    "Load", "load", not loading and bool(self.field.text.strip()))
         y += fh + 6
-        for ln in wrap_text(REF_HELP, small, wrap_w)[:3]:
-            draw_text(scr, ln, rect.x + pad, y, small, DIM)
-            y += small.get_height() + 1
-        y += int(10 * fs)
-        for text, colour in self.status_lines():
-            for ln in wrap_text(text, small, wrap_w)[:4]:
-                if y + small.get_height() > foot_top - int(8 * fs):
-                    break
-                draw_text(scr, ln, rect.x + pad, y, small, colour)
+        help_lines = wrap_text(REF_HELP, small, wrap_w)[:2]
+        left = room - y - (need - stock_h - fh - 6)
+        if left >= len(help_lines) * (small.get_height() + 1) + int(4 * fs):
+            for ln in help_lines:
+                draw_text(scr, ln, rect.x + pad, y, small, DIM)
                 y += small.get_height() + 1
-            y += 4
+        y += int(8 * fs)
+        if style_row and y + bh < room:                     # round CD3: a pasted cube's style, chosen here
+            label = "Draft style:"
+            draw_text(scr, label, rect.x + pad, y + (bh - smallb.get_height()) // 2, smallb, GOLD)
+            x = rect.x + pad + smallb.size(label)[0] + int(12 * fs)
+            for st_key in cs.STYLES:
+                w = gui.button_width(STYLE_NAMES[st_key])
+                self.button(gui, pygame.Rect(x, y, w, bh), STYLE_NAMES[st_key], f"style_{st_key}", True, st_key == style)
+                x += w + gap
+            y += bh + int(8 * fs)
+        for ln, colour in status:
+            if y + small.get_height() > room:
+                break
+            draw_text(scr, ln, rect.x + pad, y, small, colour)
+            y += small.get_height() + 1
         if self.resume is not None:
             y += int(8 * fs)
-            box_h = smallb.get_height() + small.get_height() + self.bh + int(26 * fs)
+            box_h = smallb.get_height() + small.get_height() + bh + int(26 * fs)
             box = pygame.Rect(rect.x + pad, min(y, foot_top - box_h - int(8 * fs)), wrap_w, box_h)
             round_rect(scr, box, gfx.ROW_BG, 10, 2, GOLD)
             draw_text(scr, "Your draft isn't finished", box.x + int(12 * fs), box.y + int(8 * fs), smallb, GOLD)
             when = time.strftime("%d %b %H:%M", time.localtime(self.resume.created or 0)).lstrip("0")
             draw_text(scr, clip_text(f"{self.resume.progress_text()} (started {when})", small, box.w - int(24 * fs)),
                       box.x + int(12 * fs), box.y + int(10 * fs) + smallb.get_height(), small, WHITE)
-            by = box.bottom - self.bh - int(8 * fs)
+            by = box.bottom - bh - int(8 * fs)
             cw = gui.button_width("Continue it")
-            self.button(gui, pygame.Rect(box.x + int(12 * fs), by, cw, self.bh), "Continue it", "continue", True, True)
-            self.button(gui, pygame.Rect(box.x + int(22 * fs) + cw, by, gui.button_width("Discard it"), self.bh), "Discard it",
+            self.button(gui, pygame.Rect(box.x + int(12 * fs), by, cw, bh), "Continue it", "continue", True, True)
+            self.button(gui, pygame.Rect(box.x + int(22 * fs) + cw, by, gui.button_width("Discard it"), bh), "Discard it",
                         "discard", True)
             y = box.bottom
         y += int(14 * fs)
-        if y + smallb.get_height() < foot_top - int(8 * fs):
+        if y + smallb.get_height() < room:
             draw_text(scr, "How it goes", rect.x + pad, y, smallb, GOLD)
             y += smallb.get_height() + 3
-            for step in STEPS:
+            for step in STEPS_BY_STYLE.get(style, STEPS):
                 for ln in wrap_text(step, small, wrap_w)[:2]:
-                    if y + small.get_height() > foot_top - int(8 * fs):
+                    if y + small.get_height() > room:
                         break
                     draw_text(scr, ln, rect.x + pad, y, small, WHITE)
                     y += small.get_height() + 1
                 y += 3
         top = self.footer(gui, rect, [("Back", "back", True, False)],
                           [("Start the draft", "start", self.ready() and self.resume is None, self.resume is None)])
-        self.draw_message(gui, rect.x + pad + gui.button_width("Back") + int(16 * fs), top + (self.bh - smallb.get_height()) // 2,
+        self.draw_message(gui, rect.x + pad + gui.button_width("Back") + int(16 * fs), top + (bh - smallb.get_height()) // 2,
                           rect.w - 2 * pad - gui.button_width("Back") - gui.button_width("Start the draft") - int(40 * fs))
 
     def status_lines(self):
@@ -508,24 +618,36 @@ class DraftFlow(dlg.Dialog):
         if j is None:
             return []
         if not j.done:
-            return [(f"Loading the cube '{j.ref}' (Cube Cobra the first time, then the copy kept on this computer) and checking "
-                     "which of its cards this Forge can play...", DIM)]
+            return [(f"Loading the cube '{j.ref}' (the built-in list for a stock cube; else Cube Cobra the first time, then the "
+                     "copy kept on this computer) and checking which of its cards this Forge can play...", DIM)]
         if j.error:
             return [(j.error, RED)]
         cube, check = j.cube, j.check
+        style = self.style()
         owner = f" by {cube.owner}" if cube.owner else ""
         n_cmd = sum(1 for c in check.playable if c.commander)
-        out = [(f"{cube.name or cube.id}{owner}: {len(cube.cards)} cards; {len(check.playable)} of them this Forge can play, "
-                f"{n_cmd} can be commanders.", GREEN)]
+        tail = f", {n_cmd} can be commanders." if style == "commander" else "."
+        if self.style_fixed():                                # round CD3: a stock cube's style, said here (no style row)
+            tail += f" A {STYLE_NAMES[style].lower()}." if style == "classic" else f" A {STYLE_NAMES[style]}."
+        out = [(f"{cube.name or cube.id}{owner}: {len(cube.cards)} cards; {len(check.playable)} of them this Forge can play{tail}",
+                GREEN)]
+        # Round CD3: the lines that change the game first - a small window shows only the first few
+        for line in house_rules.describe(getattr(cube, "rules", ())):
+            out.append((f"House rule - {line} Every player starts with this emblem.", ORANGE))
+        need = dc.needed_for(style)
+        if len(check.playable) < need:
+            packs, size, _picks = dc.shape(style)
+            out.append((f"Too small for a draft: 4 players x {packs} packs x {size} cards needs {need} cards, and this cube has "
+                        f"{len(check.playable)} that this Forge can play.", RED))
         if check.missing:
             shown = ", ".join(check.missing[:8]) + (f" and {len(check.missing) - 8} more" if len(check.missing) > 8 else "")
             out.append((f"Left out (this Forge has no script for them): {shown}.", DIM))
         if j.note:
             out.append((j.note, ORANGE))
-        need = dc.cards_needed()
-        if len(check.playable) < need:
-            out.append((f"Too small for a draft: 4 players x 3 packs x 20 cards needs {need} cards, and this cube has "
-                        f"{len(check.playable)} that this Forge can play.", RED))
+        if getattr(cube, "stock", False):                     # round CD3: whose list it is, and where it came from
+            when = time.strftime("%d %b %Y", time.gmtime(cube.fetched)).lstrip("0") if cube.fetched else "?"
+            out.append((f"Built into Manticore: {cube.owner}'s list from Cube Cobra ({cs.CUBE_PAGE_URL.format(id=cube.id)}), "
+                        f"as it was on {when}.", DIM))
         return out
 
     # pick
@@ -559,7 +681,8 @@ class DraftFlow(dlg.Dialog):
                 pygame.draw.rect(scr, GOLD, dr.inflate(6, 6), 3, border_radius=max(3, int(dr.w * 0.05)) + 3)
             elif card == self.hover:
                 pygame.draw.rect(scr, gfx.HOVER_EDGE, dr.inflate(4, 4), 2, border_radius=max(3, int(dr.w * 0.05)) + 2)
-            words = ("Taking" if chosen else "") + (" - " if chosen and c.commander else "") + ("Commander" if c.commander else "")
+            cmd = c.commander and not pod.classic                     # round CD3: no commanders in a classic draft
+            words = ("Taking" if chosen else "") + (" - " if chosen and cmd else "") + ("Commander" if cmd else "")
             if words:
                 draw_text(scr, clip_text(words, tiny, r.w + 8), r.centerx, r.bottom + 2, tiny, GOLD if chosen else gfx.VS_TEXT,
                           "midtop")
@@ -609,7 +732,13 @@ class DraftFlow(dlg.Dialog):
         draw_text(scr, f"Your picks ({len(pool)})", r.x, y, smallb, GOLD)
         y += smallb.get_height() + 2
         cmds = [c.name for c in pool if c.commander]
-        if cmds:
+        if pod.classic:                                           # round CD3: what the cube's basics allow, not commanders
+            station = pod.station
+            cols = "".join(c for c in "WUBRG" if c in station)
+            text = (f"Basic lands: {', '.join(dict.fromkeys(station.values()))} - a 40-card deck, any colours you have basics for."
+                    if cols != "WUBRG" else "A 40-card deck: one or two colours, plus basic lands.")
+            colour = DIM
+        elif cmds:
             text, colour = "Commanders: " + ", ".join(dict.fromkeys(cmds)), WHITE
         else:
             text = "No commander yet - take a card marked Commander."
@@ -644,7 +773,7 @@ class DraftFlow(dlg.Dialog):
         for c in reversed(pool):                                   # the newest first
             if y + tiny.get_height() > r.bottom:
                 break
-            draw_text(scr, clip_text(c.name, tiny, r.w), r.x, y, tiny, gfx.VS_TEXT if c.commander else DIM)
+            draw_text(scr, clip_text(c.name, tiny, r.w), r.x, y, tiny, gfx.VS_TEXT if (c.commander and not pod.classic) else DIM)
             y += tiny.get_height()
         scr.set_clip(prev)
 
@@ -667,7 +796,8 @@ class DraftFlow(dlg.Dialog):
         side = pygame.Rect(area.right + pad, y, side_w, foot - y)
         label_w = small.size("Pack 3, pick 10")[0] + int(12 * fs)
         gap = max(2, int(4 * fs))
-        tile_w = max(16, min(int(110 * fs), (area.w - label_w - (dc.PACK_SIZE - 1) * gap) // dc.PACK_SIZE))
+        size = pod.draft.pack_size                                 # round CD3: 15 in a classic draft
+        tile_w = max(16, min(int(110 * fs), (area.w - label_w - (size - 1) * gap) // size))
         tile_h = int(tile_w / CARD_ASPECT)
         row_h = tile_h + int(10 * fs)
         picks = pod.draft.review(self.review_seat)
@@ -711,9 +841,14 @@ class DraftFlow(dlg.Dialog):
         scr, fs, pad = gui.screen, gui.L.fs, self.pad
         pod = self.pod
         small, smallb, body = gui.font("small"), gui.font("small", True), gui.font("body", True)
-        y = self.header(gui, rect, "The decks",
-                        "Each is the best deck its pool makes: a commander, the best cards of its colours by Cube Cobra's "
-                        "ratings, the pool's lands, then basic lands to 60. Editing your deck by hand comes in a later version.")
+        if pod.classic:                                           # round CD3
+            y = self.header(gui, rect, "The decks - choose the AI you play",
+                            "Each is the best 40-card deck its pool makes: one or two colours, their best cards by Cube Cobra's "
+                            "ratings, the pool's lands, then this cube's basic lands to 40. Click an AI's deck to play against it.")
+        else:
+            y = self.header(gui, rect, "The decks",
+                            "Each is the best deck its pool makes: a commander, the best cards of its colours by Cube Cobra's "
+                            "ratings, the pool's lands, then basic lands to 60. Editing your deck by hand comes in a later version.")
         foot = rect.bottom - pad - self.bh - int(10 * fs)
         n = len(self.decks or [])
         gap = int(14 * fs)
@@ -721,12 +856,18 @@ class DraftFlow(dlg.Dialog):
         self.hover = None
         for s, deck in enumerate(self.decks or []):
             col = pygame.Rect(rect.x + pad + s * (col_w + gap), y, col_w, foot - y)
-            round_rect(scr, col, gfx.ROW_BG, 10, 2 if s == 0 else 1, GOLD if s == 0 else gfx.ROW_EDGE)
+            versus = pod.classic and s == self.opponent           # round CD3: the AI you will play
+            round_rect(scr, col, gfx.ROW_BG, 10, 2 if (s == 0 or versus) else 1,
+                       GOLD if s == 0 else (gfx.VS_TEXT if versus else gfx.ROW_EDGE))
+            if pod.classic and s > 0:
+                self.buttons.append((pygame.Rect(col), f"versus_{s}"))      # a click on an AI's column chooses it
             inner = col.inflate(-2 * int(10 * fs), -2 * int(10 * fs))
             prev = scr.get_clip()
             scr.set_clip(col)
             cy = inner.y
-            draw_text(scr, dp.SEAT_NAMES[s] if s else "You", inner.x, cy, body, GOLD if s == 0 else WHITE)
+            title = (dp.SEAT_NAMES[s] if s else "You") + ("  -  you play this one" if versus else "")
+            draw_text(scr, clip_text(title, body, inner.w), inner.x, cy, body,
+                      GOLD if s == 0 else (gfx.VS_TEXT if versus else WHITE))
             cy += body.get_height() + 4
             if deck is None:
                 for ln in wrap_text("No card in this pool can be a commander, so there is no deck: a Commander Draft deck needs "
@@ -738,7 +879,7 @@ class DraftFlow(dlg.Dialog):
             pic_h = max(0, min(int(inner.w / CARD_ASPECT), int((inner.bottom - cy) * 0.42)))
             pic_w = int(pic_h * CARD_ASPECT)
             if pic_h >= 40:
-                cmds = list(deck.commanders)
+                cmds = list(deck.commanders) or self.face(deck)         # round CD3: a classic deck shows its best card
                 step = pic_w // 3 if len(cmds) > 1 else 0
                 w2 = pic_w - step if len(cmds) > 1 else pic_w
                 h2 = int(w2 / CARD_ASPECT)
@@ -765,10 +906,18 @@ class DraftFlow(dlg.Dialog):
                 cy += tiny.get_height()
             scr.set_clip(prev)
         mine_ok = bool(self.decks) and self.decks[0] is not None
+        save_label = (f"Save the decks and play {dp.SEAT_NAMES[self.opponent]}" if pod.classic
+                      else "Save the decks and choose them")
         top = self.footer(gui, rect, [("Back to the review", "to_review", True, False), ("Save and leave", "leave", True, False)],
-                          [("Save the decks and choose them", "save", mine_ok, True)])
+                          [(save_label, "save", mine_ok, True)])
         if self.message:
             self.draw_message(gui, rect.x + pad, top - smallb.get_height() - 6, rect.w - 2 * pad)
+
+    def face(self, deck):
+        """Round CD3: the card that stands for a classic deck - its strongest spell by Cube Cobra's rating (or a land)."""
+        z = self.pod.z
+        cards = list(deck.spells) or list(deck.lands)
+        return [max(cards, key=lambda i: z[i])] if cards else []
 
     def card_list(self, deck):
         """The deck's spells by mana value ("2  Arcane Signet"), then its lands, for the column under its commander."""
@@ -782,14 +931,15 @@ class DraftFlow(dlg.Dialog):
     def deck_lines(self, seat, deck, fonts):
         """[(text, colour, font)] under a deck's commander picture. fonts: {"small", "smallb"}."""
         pod = self.pod
-        names = [pod.cards[i].name for i in deck.commanders]
+        names = [pod.cards[i].name for i in deck.commanders] or [dd.colour_name(deck.identity)]     # round CD3: classic
         colours = "".join(c for c in "WUBRG" if c in deck.identity) or "colourless"
         basics = sum(deck.basics.values())
         total = len(deck.commanders) + len(deck.spells) + len(deck.lands) + basics
         f = fonts
         out = [(" + ".join(names), WHITE, f["smallb"]),
                ("Colours: " + ("".join("{%s}" % c for c in colours) if colours != "colourless" else colours), DIM, f["small"]),
-               (f"{total} cards: {len(deck.spells)} spells, {len(deck.lands)} lands from the pool, {basics} basic lands", DIM,
+               (f"{total} cards: {len(deck.spells)} spell{'s' if len(deck.spells) != 1 else ''}, {len(deck.lands)} "
+                f"land{'s' if len(deck.lands) != 1 else ''} from the pool, {basics} basic land{'s' if basics != 1 else ''}", DIM,
                 f["small"])]
         if deck.short:
             out.append((f"{deck.short} basic land{'s' if deck.short != 1 else ''} stand in for spells this pool didn't have.",

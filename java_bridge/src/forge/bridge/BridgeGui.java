@@ -128,6 +128,7 @@ public class BridgeGui extends AbstractGuiGame {
     // ---- game events (sounds / animations on the table) ------------------------------------
     EventForwarder events;                          // set by Main; null = no event lines (the table then falls back to comparing snapshots)
     private forge.game.Game subscribedTo;
+    private static forge.game.Game houseRulesFor;   // round CD3: the game whose house rules are subscribed (one game, however many seats)
 
     /** Forge calls this for the human seat in HostedMatch.startGame, BEFORE the game thread starts: the one moment to join the
      *  game's event bus without missing the opening shuffle and mulligans. */
@@ -153,6 +154,14 @@ public class BridgeGui extends AbstractGuiGame {
             if (g != null && g != subscribedTo) {
                 subscribedTo = g;
                 g.subscribeToEvents(events);
+            }
+        }
+        if (!HouseRules.active.isEmpty() && gameController instanceof forge.game.player.PlayerController hpc) {
+            // Round CD3: a cube's own rule (Turbo Cube's emblem), made on the game thread when the game starts (HouseRules).
+            forge.game.Game g = hpc.getGame();
+            if (g != null && g != houseRulesFor) {
+                houseRulesFor = g;
+                g.subscribeToEvents(new HouseRules(g));
             }
         }
         if (gameController instanceof forge.player.PlayerControllerHuman h && !h.hasCheated()) {

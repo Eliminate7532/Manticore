@@ -47,6 +47,7 @@ import forge_settings as fset
 import forge_status as fstat
 import forge_why
 import formats
+import house_rules
 import flow_screens as flow
 import anim as fanim
 import boot_screens as fboot
@@ -304,8 +305,8 @@ HELP_LINES = [
     ("Chips on a panel", "A gold crown chip means that player is the monarch; other chips show the initiative, the Ring and emblems. Hover one to read what it does. A life total flashes red or green with -3 / +2 when it changes."),
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
     ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
-    ("F11 / + / -", "Fullscreen / bigger and smaller text. With Ctrl, + / - is the card size (round UI7): battlefield cards that "
-                    "fit in one row show bigger. All remembered."),
+    ("F11 / + / -", "Fullscreen / bigger and smaller text; Ctrl+0 puts the text back to 100%. With Ctrl, + / - is the card size "
+                    "(round UI7): battlefield cards that fit in one row show bigger. All remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
     ("F8 / Bug or idea", "Something wrong? The game packs a report (a picture of the table, the board, the log, the version) into one zip and sends it to Karl if his Discord is set up, even with a question on screen. The second tab, Suggest a feature, sends him an idea instead (F8 on the deck screen opens on it)."),
     ("Licenses and credits", "Cog > Licenses and credits (or Shift+F1): the program's licence (GNU GPL v3), where to get the source, and the licences of everything it uses."),
@@ -604,13 +605,16 @@ class Launcher:
     def __init__(self, runtime=None, name="Karl", seed=None, record=None):
         self.runtime, self.name, self.seed, self.record = runtime, name, seed, record
 
-    def start(self, mine, opponents, fmt=None):
+    def start(self, mine, opponents, fmt=None, rules=()):
         """mine = (commanders, deck); opponents = [(commanders, deck), ...]; fmt (round FMT1) "commander" (None) or "brawl".
-        Returns a started ForgeSession."""
+        Round CD3: rules = house rules (house_rules.py keys - Turbo Cube's emblem), written into every .dck file, where the
+        session (and a resumed game) reads them. Returns a started ForgeSession."""
         fmt = formats.normal(fmt)
         os.makedirs(DECK_DIR, exist_ok=True)
-        my_path = fc.write_deck_file(os.path.join(DECK_DIR, "player.dck"), mine[0], mine[1], "Player", self.runtime, fmt)
-        opp_paths = [fc.write_deck_file(os.path.join(DECK_DIR, f"opponent{i}.dck"), o[0], o[1], f"Opponent {i}", self.runtime, fmt)
+        my_path = fc.write_deck_file(os.path.join(DECK_DIR, "player.dck"), mine[0], mine[1], "Player", self.runtime, fmt,
+                                     rules=rules)
+        opp_paths = [fc.write_deck_file(os.path.join(DECK_DIR, f"opponent{i}.dck"), o[0], o[1], f"Opponent {i}", self.runtime, fmt,
+                                        rules=rules)
                      for i, o in enumerate(opponents, 1)]
         return fc.ForgeSession(my_path, opp_paths, name=self.name, seed=self.seed, runtime=self.runtime,
                                record_path=self.record, fmt=fmt).start()
@@ -1624,14 +1628,16 @@ class ForgeTable:
         return formats.has_commander(self.game_format())
 
     def format_line(self):
-        """Round FMT1: one line about a non-Commander game's rules for the loading screen ("" for Commander)."""
+        """Round FMT1: one line about a non-Commander game's rules for the loading screen ("" for Commander). Round CD3: and the
+        game's house rules ("Draft - 20 life each. Turbo Cube emblem: all spells and activated abilities cost {2} less.")."""
         fmt = self.game_format()
+        extra = " ".join(house_rules.describe(getattr(self.session, "rules", ())))
         if fmt == formats.DEFAULT:
-            return ""
+            return extra
         players = 1 + len(getattr(self.session, "opponent_paths", None) or [])
         f = formats.get(fmt)
         damage = "" if (f.commander_damage or not f.commander) else ", no commander damage"     # CON1: Standard has no commander
-        return f"{f.name} - {formats.starting_life(fmt, players)} life each{damage}."
+        return f"{f.name} - {formats.starting_life(fmt, players)} life each{damage}." + (" " + extra if extra else "")
 
     def replay_key(self):
         """Round 28d: what must match for a saved game to be played back (journal.replay_matches): the Forge build and the
@@ -3074,14 +3080,27 @@ class ForgeTable:
         if len(specs) > 1:
             cands += [(specs[:-1], hf, False), (specs[:-1], small_f, False)]
         chosen = None
+        crowded = None                                        # round AWAY1: the first layout WITH Undo that only the 60% rule refused
         for sp, f_, shorten in cands:
             lay = fit(sp, f_, hint_may_shorten=shorten)
             narrow = sum(lay[1]) + 8 * len(lay[1]) > bar.w * 0.6 and len(sp) > 1
             if not lay[5] and not narrow:
                 chosen = (sp, lay)
                 break
+            if not lay[5] and narrow and crowded is None and sp is specs and len(specs) > 1:
+                crowded = (sp, lay)
         if chosen is None:                                    # nothing fits whole: the fewest buttons, the smaller words
             chosen = (cands[-1][0], fit(cands[-1][0], cands[-1][1]))
+
+        def shown(lay):
+            """How much of the words a layout draws: the characters of its headline and hint lines, the "..." left out."""
+            return sum(len(t.replace("...", "")) for t in lay[3] + lay[4])
+        if crowded is not None and chosen[0] is not specs and not stack_key and shown(chosen[1]) <= shown(crowded[1]):
+            # Round AWAY1 (the Undo-bar test fix's finding, 10 Oct): at 150% text the buttons' share of the bar sits on UI2's 60%
+            # line, so Undo came and went every 10 px of window width (1100-1320 x 840) while the bar showed the same two headline
+            # lines and no hint either way. Undo now gives way only when that gives the words more room; the headline is whole
+            # in both layouts (the 60% rule was the only thing against this one).
+            chosen = crowded
         specs, layout = chosen
         fkey, widths, x, head_lines, hint_lines, _cut, hf = layout
         # Round UI3: Undo gave its room to the words, but a tall bar (big text) has room for it UNDER the last button on the
@@ -4687,9 +4706,10 @@ class ForgeTable:
                 return (f"{who[0].upper() + who[1:]} is a {formats.name(getattr(e, 'format', None))} deck, and this is a "
                         f"{formats.name(fmt)} game.")
         self.stats_decks = (deck_meta(mine), [deck_meta(e) for e in seats])        # patch 44
+        rules = house_rules.of_entries([mine] + seats)                            # round CD3: e.g. Turbo Cube's emblem
         problem = self.begin((mine.commanders, mine.deck), [(e.commanders, e.deck) for e in seats],
                              labels=(getattr(mine, "name", ""), [getattr(e, "name", "") for e in seats]),
-                             printings=[getattr(e, "printings", None) or {} for e in [mine] + seats], fmt=fmt)
+                             printings=[getattr(e, "printings", None) or {} for e in [mine] + seats], fmt=fmt, rules=rules)
         if problem:
             return problem
         self.menu = None
@@ -4697,17 +4717,22 @@ class ForgeTable:
         self.save_settings()
         return None
 
-    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None):
+    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None, rules=()):
         """End the current game (if any) and start a new one with these decks ((commanders, cards) each).
         labels (Round AD2b): (my deck's name, [each AI deck's name]) for the VS screen; Restart passes the last game's.
         printings (Round ALT1): [my deck's, each AI deck's] {card name lower: (set, cn)}; Restart passes the last game's.
         fmt (Round FMT1): "commander" (None) or "brawl"; Restart passes the last game's.
+        rules (Round CD3): house rules (Turbo Cube's emblem); Restart passes the last game's. None: the launcher is called
+        exactly as before.
         Returns None when it worked, or a message saying why not."""
         old = self.session
         fmt = formats.normal(fmt)
+        rules = house_rules.normal(rules)
         try:
             old.close()                                       # first: the old engine still holds forge_engine.log
-            if fmt == formats.DEFAULT:
+            if rules:
+                session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt, rules=rules)
+            elif fmt == formats.DEFAULT:
                 session = self.launcher.start(my_deck, list(opp_decks))
             else:
                 session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt)
@@ -4731,6 +4756,7 @@ class ForgeTable:
             self.art.add_names(names | self.printing_keys())
         self.current_decks = (my_deck, list(opp_decks))
         self.current_format = fmt
+        self.current_rules = rules                    # round CD3: Restart plays them again
         self.current_deck_labels = labels or self.current_deck_labels
         self.reset_game()
         self.start_background()
@@ -5347,7 +5373,8 @@ class ForgeTable:
 
     def restart_game(self):
         problem = self.begin(*self.current_decks, labels=self.current_deck_labels,
-                             printings=getattr(self, "current_printings", None), fmt=getattr(self, "current_format", None))
+                             printings=getattr(self, "current_printings", None), fmt=getattr(self, "current_format", None),
+                             rules=getattr(self, "current_rules", ()))
         if problem:
             self.say(problem, RED, 8.0)
             self.open_menu()
@@ -5576,6 +5603,8 @@ class ForgeTable:
             self.change_card_scale(1)                   # round UI7 (Shift is how '+' is typed on many keyboards, so not Shift)
         elif key in (pygame.K_MINUS, pygame.K_KP_MINUS) and mod & pygame.KMOD_CTRL:
             self.change_card_scale(-1)
+        elif key in (pygame.K_0, pygame.K_KP0) and mod & pygame.KMOD_CTRL:
+            self.change_text_scale(0)                   # round AWAY1: Ctrl+0 = text size back to 100% (the old table's key)
         elif key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS):
             self.change_text_scale(1)
         elif key in (pygame.K_MINUS, pygame.K_KP_MINUS):
@@ -6328,6 +6357,7 @@ class ForgeTable:
     # ---- Round LAST1: the last good state -------------------------------------------------------------------------------------------------
 
     RESTORE_APPLY_SECONDS = 60.0     # longest wait for the bridge to say the saved game is back (setup_done)
+    RESTORE_CHECK_SECONDS = 5.0      # round LAST1c: then, the longest wait for the table to show the saved turn
 
     def last_good_ticks(self):
         """Once per sync: take a save at a safe moment, make the 180 s offer, move a restore along. Never lets a mistake here stop the table."""
@@ -6436,7 +6466,7 @@ class ForgeTable:
         except OSError as e:
             self.say("Could not read the saved state: %s" % e, RED, 6.0)
             return
-        self.pending_restore = {"path": keep, "turn": lg["turn"], "stage": "wait", "t0": time.monotonic(), "expect": None, "t1": None}
+        self.pending_restore = {"path": keep, "turn": lg["turn"], "stage": "wait", "t0": time.monotonic(), "expect": None, "t1": None, "t2": None}
         self.restart_game()
         if not self.current_decks:
             self.pending_restore = None
@@ -6456,16 +6486,33 @@ class ForgeTable:
                 s.load_state(pr["path"])
                 self.modal = dlg.WorkingDialog("Putting your game back", "Restoring turn %s. Please wait - clicking now could break it." % pr["turn"])
             return
-        done = getattr(s, "setups_done", 0) >= pr["expect"]
+        # Round LAST1c: a failure comes first - an older bridge said setup_done after a failed set-up too, so "done" alone was not proof.
         failed = getattr(s, "state_load_failed", None)
-        if done or failed or now - pr["t1"] > self.RESTORE_APPLY_SECONDS:
-            if isinstance(self.modal, dlg.WorkingDialog):
-                self.modal.done = True
-            self.pending_restore = None
-            if done:
-                self.say("Restored to turn %s." % pr["turn"], GREEN, 6.0)
+        done = not failed and getattr(s, "setups_done", 0) >= pr["expect"]
+        if pr["stage"] == "apply" and done:
+            pr["stage"], pr["t2"] = "check", now            # the bridge says it is back: wait for the table to show the saved turn
+        if pr["stage"] == "check":
+            turn = (self.state or {}).get("turn")
+            if turn == pr["turn"] or now - pr["t2"] > self.RESTORE_CHECK_SECONDS:
+                self.end_restore()
+                if turn == pr["turn"]:
+                    self.say("Restored to turn %s." % pr["turn"], GREEN, 6.0)
+                else:
+                    self.say("The saved game may not have been put back: the table shows turn %s, the save was turn %s. If it looks wrong, "
+                             "start a new game (Cog > New game)." % (turn, pr["turn"]), RED, 12.0)
+            return
+        if failed or now - pr["t1"] > self.RESTORE_APPLY_SECONDS:
+            self.end_restore()
+            if failed and getattr(s, "state_load_untouched", False):
+                self.say("Could not put the saved game back (%s). You can keep playing this new game." % failed, RED, 10.0)
             else:
-                self.say("Could not put the saved game back (%s). You can keep playing this new game." % (failed or "no answer in 60 s"), RED, 10.0)
+                self.say("Could not put the saved game back (%s). This new game may not be right - start a new one (Cog > New game)."
+                         % (failed or "no answer in 60 s"), RED, 12.0)
+
+    def end_restore(self):
+        if isinstance(self.modal, dlg.WorkingDialog):
+            self.modal.done = True
+        self.pending_restore = None
 
     def think_signature(self):
         """Round THINK1: a cheap fingerprint of 'something happened on the table': turn, phase, who is active, the stack, every
@@ -7050,7 +7097,8 @@ def main(argv):
     describe_deck("You", *mine, fmt=fmt)
     for i, o in enumerate(opps, 1):
         describe_deck(f"AI {i}", *o, fmt=fmt)
-    session = launcher.start(mine, opps, fmt=fmt)
+    rules = house_rules.from_file(deck)                 # round CD3: a drafted Turbo Cube deck plays with its emblem
+    session = launcher.start(mine, opps, fmt=fmt, rules=rules) if rules else launcher.start(mine, opps, fmt=fmt)
     names = set(mine[0]) | set(mine[1])
     for o in opps:
         names |= set(o[0]) | set(o[1])

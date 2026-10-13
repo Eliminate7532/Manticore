@@ -39,7 +39,7 @@ import java_crash                                  # patch 46: is_crash_file
 
 BUNDLED_CONFIG = "bug_report_config.bundled.json"
 EMPTY_HASH_CODE = "da39a3ee"                      # sha1 of nothing: what a frozen copy printed before build_info.json existed
-EXPECTED_SAMPLE_DECKS = 12                         # round FMT1: 6 Commander + 4 Brawl; round CON1: + 2 Standard
+EXPECTED_SAMPLE_DECKS = 13                         # round FMT1: 6 Commander + 4 Brawl; round CON1: + 2 Standard; CON2: + 1
 WEBHOOK_BYTES = re.compile(rb"discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9_\-]{8,}")
 
 REQUIRED_FILES = ["Manticore{exe}", "Manticore-cli{exe}", "jre/bin/java{exe}", "forge_runtime/forge.jar",
@@ -92,6 +92,12 @@ def scan_dirs(folder):
 
 # ---- 1. layout --------------------------------------------------------------------------------------------------------
 
+def stock_cube_files():
+    """Round CD3: every stock cube's bundled list (cube_source.STOCK_CUBES), as the build must hold them."""
+    import cube_source
+    return [f"{cube_source.STOCK_DIR_NAME}/{st.key}.json" for st in cube_source.STOCK_CUBES]
+
+
 def check_layout(folder, tree, dirs, exe=".exe", sample_decks=EXPECTED_SAMPLE_DECKS):
     """[problems]"""
     problems = []
@@ -104,6 +110,9 @@ def check_layout(folder, tree, dirs, exe=".exe", sample_decks=EXPECTED_SAMPLE_DE
     for rel in REQUIRED_DIRS:
         if rel.lower() not in dirset:
             problems.append(f"missing folder: {rel}")
+    for rel in stock_cube_files():                                                    # round CD3: the stock cubes' lists
+        if rel.lower() not in have:
+            problems.append(f"missing file: {rel}")
     decks = [rel for rel, _ in tree if rel.lower().startswith("sample_decks/") and rel.lower().endswith(".txt")]
     if sample_decks is not None and len(decks) != sample_decks:
         problems.append(f"sample_decks/ has {len(decks)} deck(s), expected {sample_decks}")

@@ -1,0 +1,21 @@
+# format: standard
+# Standard sample (Round CON2). Blue-black: look at the top of your library, pick what you keep, answer what they do.
+# Built to make Forge ask more kinds of question than the two creature decks: surveil and scry, "choose one" spells,
+# "you may sacrifice" attacks, a look at the opponent's hand, a planeswalker.
+
+Deck
+4 Faerie Dreamthief
+4 Deep-Cavern Bat
+4 Vampire Gourmand
+3 Twilight Diviner
+2 Starving Revenant
+2 Kaito, Bane of Nightmares
+4 Opt
+4 Heartless Act
+2 Get Out
+2 Spellgyre
+3 Risky Research
+2 Freeze in Place
+4 Undercity Sewers
+10 Island
+10 Swamp

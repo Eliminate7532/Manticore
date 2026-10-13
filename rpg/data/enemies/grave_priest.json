@@ -1,0 +1,542 @@
+{
+ "kind": "grave_priest",
+ "name": "Grave Priest",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Bw Pestilence Orzhov"
+  ]
+ },
+ "max_tier": 4,
+ "decks": [
+  {
+   "name": "Grave Priest 1",
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 67,
+   "main": [
+    [
+     "Radiant Fountain",
+     1
+    ],
+    [
+     "Spare Supplies",
+     3
+    ],
+    [
+     "Inspiring Overseer",
+     4
+    ],
+    [
+     "Swamp",
+     3
+    ],
+    [
+     "Kor Skyfisher",
+     4
+    ],
+    [
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Plains",
+     3
+    ],
+    [
+     "Omen of the Dead",
+     4
+    ],
+    [
+     "Thraben Inspector",
+     4
+    ],
+    [
+     "Pestilence",
+     4
+    ],
+    [
+     "Scoured Barrens",
+     3
+    ],
+    [
+     "Cast Down",
+     3
+    ],
+    [
+     "Guardian of the Guildpact",
+     3
+    ],
+    [
+     "Dawnbringer Cleric",
+     2
+    ],
+    [
+     "Orzhov Basilica",
+     4
+    ],
+    [
+     "Silverquill Campus",
+     4
+    ],
+    [
+     "Bojuka Bog",
+     3
+    ],
+    [
+     "Kabira Crossroads",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Swamp",
+     4
+    ],
+    [
+     "Obscura Storefront",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 6,
+    "2": 21,
+    "3": 26,
+    "4": 7
+   }
+  },
+  {
+   "name": "Grave Priest 2",
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 67,
+   "main": [
+    [
+     "Swamp",
+     7
+    ],
+    [
+     "Plains",
+     6
+    ],
+    [
+     "Spare Supplies",
+     2
+    ],
+    [
+     "Bojuka Bog",
+     4
+    ],
+    [
+     "Kor Skyfisher",
+     4
+    ],
+    [
+     "Scoured Barrens",
+     4
+    ],
+    [
+     "Pestilence",
+     4
+    ],
+    [
+     "Suffocating Fumes",
+     3
+    ],
+    [
+     "Guardian of the Guildpact",
+     3
+    ],
+    [
+     "Orzhov Basilica",
+     3
+    ],
+    [
+     "Custodi Squire",
+     3
+    ],
+    [
+     "Cast Down",
+     4
+    ],
+    [
+     "Inspiring Overseer",
+     4
+    ],
+    [
+     "Omen of the Dead",
+     4
+    ],
+    [
+     "Thraben Inspector",
+     4
+    ],
+    [
+     "Kabira Crossroads",
+     1
+    ]
+   ],
+   "sideboard": [
+    [
+     "Radiant Fountain",
+     4
+    ],
+    [
+     "Swamp",
+     4
+    ],
+    [
+     "Silverquill Campus",
+     4
+    ],
+    [
+     "Obscura Storefront",
+     3
+    ]
+   ],
+   "tiers": {
+    "0": 13,
+    "1": 3,
+    "2": 11,
+    "3": 25,
+    "4": 8
+   }
+  },
+  {
+   "name": "Grave Priest 3",
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 67,
+   "main": [
+    [
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Swamp",
+     3
+    ],
+    [
+     "Cast Down",
+     3
+    ],
+    [
+     "Spare Supplies",
+     3
+    ],
+    [
+     "Orzhov Basilica",
+     4
+    ],
+    [
+     "Bojuka Bog",
+     4
+    ],
+    [
+     "Kor Skyfisher",
+     4
+    ],
+    [
+     "Thraben Inspector",
+     2
+    ],
+    [
+     "Inspiring Overseer",
+     3
+    ],
+    [
+     "Kabira Crossroads",
+     4
+    ],
+    [
+     "Omen of the Dead",
+     4
+    ],
+    [
+     "Plains",
+     3
+    ],
+    [
+     "Castigate",
+     2
+    ],
+    [
+     "Silverquill Campus",
+     4
+    ],
+    [
+     "Dawnbringer Cleric",
+     3
+    ],
+    [
+     "Suffocating Fumes",
+     4
+    ],
+    [
+     "Guardian of the Guildpact",
+     3
+    ],
+    [
+     "Scoured Barrens",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mortuary Mire",
+     4
+    ],
+    [
+     "Radiant Fountain",
+     2
+    ],
+    [
+     "Obscura Storefront",
+     4
+    ],
+    [
+     "Swamp",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 6,
+    "2": 20,
+    "3": 28,
+    "4": 6
+   }
+  },
+  {
+   "name": "Grave Priest 4",
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 67,
+   "main": [
+    [
+     "Orzhov Basilica",
+     3
+    ],
+    [
+     "Cast Down",
+     4
+    ],
+    [
+     "Spare Supplies",
+     4
+    ],
+    [
+     "Plains",
+     4
+    ],
+    [
+     "Castigate",
+     2
+    ],
+    [
+     "Pestilence",
+     3
+    ],
+    [
+     "Radiant Fountain",
+     3
+    ],
+    [
+     "Kor Skyfisher",
+     4
+    ],
+    [
+     "Swamp",
+     4
+    ],
+    [
+     "Scoured Barrens",
+     4
+    ],
+    [
+     "Bojuka Bog",
+     3
+    ],
+    [
+     "Thraben Inspector",
+     4
+    ],
+    [
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Silverquill Campus",
+     4
+    ],
+    [
+     "Suffocating Fumes",
+     4
+    ],
+    [
+     "Guardian of the Guildpact",
+     3
+    ],
+    [
+     "Lone Missionary",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mortuary Mire",
+     4
+    ],
+    [
+     "Swamp",
+     4
+    ],
+    [
+     "Obscura Storefront",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 8,
+    "2": 16,
+    "3": 29,
+    "4": 7
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Bw Pestilence Orzhov",
+   "index": 91,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies3",
+  "when": "2026-10-12 14:09",
+  "decks": {
+   "Grave Priest 3": {
+    "games": 17,
+    "game_over": 17,
+    "as_ai": 11,
+    "failed": []
+   },
+   "Grave Priest 1": {
+    "games": 8,
+    "game_over": 8,
+    "as_ai": 1,
+    "failed": []
+   },
+   "Grave Priest 4": {
+    "games": 8,
+    "game_over": 8,
+    "as_ai": 5,
+    "failed": []
+   },
+   "Grave Priest 2": {
+    "games": 7,
+    "game_over": 7,
+    "as_ai": 2,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}

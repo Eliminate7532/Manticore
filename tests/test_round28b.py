@@ -121,16 +121,21 @@ class RedTwinTests(unittest.TestCase):
         msgs = load_fixture("surveil_ok") + [{"t": "_sent", "time": 0, "cmd": {"c": "quit"}}, {"t": "_exit"}]
         self.assertEqual(fail_rules(br.check_stream(msgs)), set())
 
-    def test_six_dropped_commands_trip_dropped_clicks(self):
-        msgs = load_fixture("surveil_ok") + [{"t": "dropped"} for _ in range(6)]
+    # Round DROP1: the count rule ("more than 5 dropped") became a rule by cause (tests/test_drop1.py has the rest).
+    def test_a_dropped_click_with_no_other_answer_trips_dropped_lost(self):
+        msgs = load_fixture("surveil_ok") + [{"t": "dropped"}]
         findings = br.check_stream(msgs)
         self.assertEqual(fail_rules(findings), set())
-        self.assertIn("dropped_clicks", {f["rule"] for f in findings})
+        self.assertIn("dropped_lost", {f["rule"] for f in findings})
 
-    def test_five_dropped_commands_do_not(self):
-        msgs = load_fixture("surveil_ok") + [{"t": "dropped"} for _ in range(5)]
-        findings = br.check_stream(msgs)
-        self.assertNotIn("dropped_clicks", {f["rule"] for f in findings})
+    def test_dropped_repeats_do_not_warn(self):
+        extra = []
+        for at in (901, 903, 905, 907, 909, 911):
+            extra += [{"t": "_sent", "time": 0, "cmd": {"c": "ok", "at": at}},
+                      {"t": "_sent", "time": 0, "cmd": {"c": "ok", "at": at}},
+                      {"t": "dropped", "c": "ok", "at": at, "now": at + 1}]
+        findings = br.check_stream(load_fixture("surveil_ok") + extra)
+        self.assertEqual({f["rule"] for f in findings} & {"dropped_lost", "dropped_busy", "dropped_clicks"}, set())
 
     def test_an_exception_line_in_the_engine_log_trips_engine_error(self):
         msgs = load_fixture("surveil_ok")

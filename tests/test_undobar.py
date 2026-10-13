@@ -11,6 +11,9 @@ test here:
      chose at 200%; the headline still never shortens to keep Undo (UI2: the words first);
   3. UI3's "is the bar tall enough to stack Undo" measured the body face's line height, but round 32 draws buttons in the
      display face, whose line height jumps at 16 px (where it starts) while its letters get smaller.
+Round AWAY1 (12 Oct) fixed a fourth, found by the test fix of 10 Oct:
+  4. at 150% text the buttons' share of the bar sits on UI2's 60% line, so Undo still came and went every few pixels of
+     width while the words on the bar stayed the same; it now gives way only when that shows more of the words.
 """
 import os
 import sys
@@ -106,15 +109,14 @@ class WordsFirstTests(unittest.TestCase):
                 self.assertFalse(head[-1].endswith("..."), head)
                 self.assertEqual(" ".join(head).split(), words(gui)[0].split())
 
-    def test_at_150_percent_undo_may_go_but_the_headline_is_always_whole(self):
-        # Replaces test_undo_still_gives_way_to_the_headline_when_both_cannot_fit (10 Oct), which pinned 1200 x 840 at 150%:
-        # Undo off in the sandbox, on with Windows' fonts (Karl's quick_tests; the sandbox gives the same three buttons, to the
-        # pixel, with every text measured 1% narrower). At this size it is not the headline that sends Undo away but UI2's
-        # other rule: the buttons may take at most 60% of the bar - 278 px of a 463 px bar here (60.04%), one pixel less on
-        # Windows. That edge comes and goes every few window widths, so this checks every width from 1100 to 1320: the headline
-        # whole each time, Undo on the bar or not, and Undo gone at some of them. UI2's words-first rule (Undo never kept at the
-        # headline's cost) is pinned by test_a_headline_too_long_for_the_bar_keeps_undo_off below.
-        gone = []
+    def test_at_150_percent_undo_goes_only_when_that_shows_more_of_the_words(self):
+        # Round AWAY1: replaces test_at_150_percent_undo_may_go_but_the_headline_is_always_whole (10 Oct). At 840 high and 150%
+        # the three buttons' share of the bar sits on UI2's 60% line (278 px of a 463 px bar at 1200 wide), so Undo came and
+        # went every few window widths - off 1100-1180, on 1190, off 1200, on 1210, off 1220-1230, on 1240-1290, off 1300-1310,
+        # on 1320 - while the bar showed the same two headline lines and no hint with it or without it. Now Undo gives way only
+        # when that shows more of the words; here that means the hint line comes back. No width is pinned: which widths keep
+        # Undo depends on the fonts (Windows' measure about 1% narrower than the sandbox's).
+        kept = 0
         for w in range(1100, 1321, 10):
             with self.subTest(width=w):
                 gui = table("main1_lands", (w, 840), 1.5)
@@ -123,9 +125,12 @@ class WordsFirstTests(unittest.TestCase):
                 buttons = bar_buttons(gui)
                 for name, r in buttons.items():
                     self.assertTrue(gui.L.bar.contains(r), (name, r))
-                if "undo" not in buttons:
-                    gone.append(w)
-        self.assertTrue(gone, "Undo was on the bar at every width from 1100 to 1320 x 840, 150% text")
+                hint = [t for t, c in gui.bar_lines if c == gfx.HINT_LINE_TEXT]
+                if "undo" in buttons:
+                    kept += 1
+                else:
+                    self.assertTrue(hint, "Undo went and the words got nothing for it (no hint line)")
+        self.assertGreater(kept, 11, "Undo was on the bar at fewer than half of the widths")
 
     def test_a_headline_too_long_for_the_bar_keeps_undo_off(self):
         # Forge's own sentence, too long for the bar even at 1920 x 1080: Undo gives its room to the words (UI2), and the

@@ -789,14 +789,15 @@ class DeckMenu:
         legal = legal_tag(e)                                  # Round BAN1: NOT LEGAL / UNCHECKED
         if legal:
             tags.append(legal)
-        if formats.drafted(getattr(e, "format", None)):      # round CD2: a deck from a cube draft (Commander Draft)
+        if formats.drafted(getattr(e, "format", None)):      # round CD2: a deck from a cube draft (CD3: or a classic draft)
             tags.append((DRAFT_TAG_TEXT, gfx.DRAFT_TAG))
         return tags
 
-    def choose_draft(self, mine_id, opp_ids):
+    def choose_draft(self, mine_id, opp_ids, fmt="commander_draft"):
         """Round CD2: the cube draft's four decks, chosen: mine in YOUR DECK, the AI drafters' in AI 1-3 (in seat order), on the
-        Commander screen (Commander Draft decks are listed there). Deck ids that aren't in the list are left as they were."""
-        self.set_format(formats.screen("commander_draft"))
+        Commander screen (Commander Draft decks are listed there). Deck ids that aren't in the list are left as they were.
+        Round CD3: fmt "draft" - a classic draft's decks, on the Standard screen (where Draft decks are listed), one opponent."""
+        self.set_format(formats.screen(fmt))
         self.set_search("")
         if lib.find(self.in_format(), mine_id) is None:
             return False

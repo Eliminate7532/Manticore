@@ -88,6 +88,7 @@ public class Main {
         Long seed = null;
         Long parentPid = null;
         String badFormat = null;
+        String badRule = null;                           // round CD3
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--deck": deckPath = args[++i]; break;
@@ -99,6 +100,12 @@ public class Main {
                 case "--loop-cap": LoopGuard.cap = Integer.parseInt(args[++i]); break;      // round 28e, see LoopGuard (0 = off)
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
                 case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
+                case "--house-rule": {                                                      // round CD3: a cube's own rule (HouseRules)
+                    String r = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (HouseRules.KNOWN.contains(r)) HouseRules.active.add(r);
+                    else badRule = args[i];
+                    break;
+                }
                 case "--format": {                                                          // round FMT1: commander (default) or brawl
                     String f = args[++i].toLowerCase(java.util.Locale.ROOT);            // round CON1: or constructed
                     if (f.equals("commander") || f.equals("brawl") || f.equals("constructed")) format = f;
@@ -116,7 +123,7 @@ public class Main {
             }
         }
         if (deckPath == null || opponents.isEmpty()) {
-            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl|constructed]");
+            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl|constructed] [--house-rule turbo]");
             System.exit(2);
         }
 
@@ -127,6 +134,10 @@ public class Main {
         Checks.wire = wire;
         if (badFormat != null) {
             fail(wire, "unknown format " + badFormat + " (this bridge knows commander, brawl and constructed)");
+            return;
+        }
+        if (badRule != null) {
+            fail(wire, "unknown house rule " + badRule + " (this bridge knows " + String.join(", ", HouseRules.KNOWN) + ")");
             return;
         }
         if (!Checks.faults.isEmpty() && !dev) {
@@ -167,9 +178,13 @@ public class Main {
         ready.addProperty("aiTimeout", aiTimeout);           // round 28d
         ready.addProperty("loopCap", LoopGuard.cap);         // round 28e
         ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
+        ready.addProperty("lastStateMarks", true);           // round LAST1c: saves keep the Monarch, Initiative and City's Blessing; a failed load says so
         ready.addProperty("format", format);                 // round FMT1: the Python side checks it
         ready.addProperty("startingLife", human.getStartingLife());
         ready.addProperty("passing", Passing.classic ? "classic" : "smart");   // patch 43
+        com.google.gson.JsonArray rules = new com.google.gson.JsonArray();       // round CD3: the house rules this game plays with
+        for (String r : HouseRules.active) rules.add(r);
+        ready.add("houseRules", rules);
         wire.send(ready);
         // The applied-variant set must include Commander. With null (as before round 27c) Forge's GameRules had no applied variant,
         // so GameAction.stateBasedAction_Commander, which checks GameRules.hasAppliedVariant(Commander), never ran: nobody was asked
@@ -357,7 +372,7 @@ public class Main {
             case "flush": gui.markDirty(); break;
             case "setup": setupBoard(cmd); break;
             case "savestate": saveState(cmd); break;           // round LAST1: write the game to a file, only while the game thread is parked
-            case "loadstate": loadState(cmd); break;           // round LAST1: put a saved game on the table (a new game, at its first priority stop)
+            case "loadstate": loadState(gui, cmd); break;           // round LAST1: put a saved game on the table (a new game, at its first priority stop)
             case "stops": {
                 List<String> names = new ArrayList<>();
                 for (com.google.gson.JsonElement e : cmd.getAsJsonArray("phases")) names.add(e.getAsString());
@@ -511,7 +526,9 @@ public class Main {
                 gs.initFromGame(g);
                 java.nio.file.Path target = java.nio.file.Paths.get(path);
                 java.nio.file.Path tmp = java.nio.file.Paths.get(path + ".tmp");
-                java.nio.file.Files.write(tmp, gs.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                // round LAST1c: the Monarch, the Initiative and the City's Blessing as "#manticore" lines (GameState leaves them out)
+                String text = gs.toString() + SetupState.marks(g);
+                java.nio.file.Files.write(tmp, text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 java.nio.file.Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 m.addProperty("ok", true);
                 m.addProperty("turn", g.getPhaseHandler().getTurn());
@@ -529,18 +546,20 @@ public class Main {
      * when it has finished) but from a saved file and allowed in a normal game: the table sends it once, in a NEW game, at its first
      * priority stop (after the mulligans), to put the saved game back. Nothing else sends it.
      */
-    static void loadState(JsonObject cmd) {
+    static void loadState(BridgeGui gui, JsonObject cmd) {
         try {
             List<String> lines = java.nio.file.Files.readAllLines(java.nio.file.Paths.get(cmd.get("path").getAsString()),
                     java.nio.charset.StandardCharsets.UTF_8);
             SetupState st = new SetupState();
             st.parse(lines);
-            st.applyThenSignal(match.getGame(), Checks.wire);
+            // round LAST1c: a failure says state_load_failed, not setup_done; then a fresh snapshot (the restored turn, the marks)
+            st.applyThenSignal(match.getGame(), Checks.wire, true, gui::markDirty);
         } catch (Throwable e) {
             System.err.println("bridge: loadstate failed: " + e);
             JsonObject m = new JsonObject();                   // the table is waiting for setup_done: say it will not come
             m.addProperty("t", "state_load_failed");
             m.addProperty("reason", String.valueOf(e));
+            m.addProperty("untouched", true);                  // round LAST1c: nothing was applied (the file could not be read)
             if (Checks.wire != null) Checks.wire.send(m);
         }
     }

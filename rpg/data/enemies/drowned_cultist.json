@@ -1,0 +1,390 @@
+{
+ "kind": "drowned_cultist",
+ "name": "Drowned Cultist",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Blue Faeries Mono",
+   "Faeries Fadas Ub",
+   "Fadas Faeries Ub"
+  ]
+ },
+ "max_tier": 5,
+ "decks": [
+  {
+   "name": "Drowned Cultist 1",
+   "archetype": "Blue Faeries Mono",
+   "index": 22,
+   "main": [
+    [
+     "Island",
+     18
+    ],
+    [
+     "Brinebarrow Intruder",
+     4
+    ],
+    [
+     "Forest",
+     3
+    ],
+    [
+     "Echoing Truth",
+     3
+    ],
+    [
+     "Snap",
+     2
+    ],
+    [
+     "Moon-Circuit Hacker",
+     4
+    ],
+    [
+     "Spellstutter Sprite",
+     3
+    ],
+    [
+     "Of One Mind",
+     3
+    ],
+    [
+     "Ninja of the Deep Hours",
+     2
+    ],
+    [
+     "Faerie Miscreant",
+     3
+    ],
+    [
+     "Smoke Shroud",
+     1
+    ],
+    [
+     "Mutagenic Growth",
+     4
+    ],
+    [
+     "Counterspell",
+     2
+    ],
+    [
+     "Faerie Seer",
+     3
+    ],
+    [
+     "Spell Pierce",
+     1
+    ],
+    [
+     "Force Spike",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 21,
+    "1": 1,
+    "2": 8,
+    "3": 24,
+    "4": 3,
+    "5": 3
+   }
+  },
+  {
+   "name": "Drowned Cultist 2",
+   "archetype": "Blue Faeries Mono",
+   "index": 22,
+   "main": [
+    [
+     "Spellstutter Sprite",
+     2
+    ],
+    [
+     "Faerie Seer",
+     2
+    ],
+    [
+     "Sunken City",
+     3
+    ],
+    [
+     "Island",
+     20
+    ],
+    [
+     "Of One Mind",
+     4
+    ],
+    [
+     "Spell Pierce",
+     3
+    ],
+    [
+     "Ninja of the Deep Hours",
+     3
+    ],
+    [
+     "Faerie Miscreant",
+     4
+    ],
+    [
+     "Mutagenic Growth",
+     3
+    ],
+    [
+     "Counterspell",
+     2
+    ],
+    [
+     "Faerie Duelist",
+     1
+    ],
+    [
+     "Forest",
+     2
+    ],
+    [
+     "Saiba Cryptomancer",
+     3
+    ],
+    [
+     "Snap",
+     4
+    ],
+    [
+     "Moon-Circuit Hacker",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 22,
+    "1": 4,
+    "2": 3,
+    "3": 24,
+    "4": 2,
+    "5": 5
+   }
+  },
+  {
+   "name": "Drowned Cultist 3",
+   "archetype": "Blue Faeries Mono",
+   "index": 22,
+   "main": [
+    [
+     "Island",
+     19
+    ],
+    [
+     "Spell Pierce",
+     2
+    ],
+    [
+     "Brinebarrow Intruder",
+     1
+    ],
+    [
+     "Spellstutter Sprite",
+     3
+    ],
+    [
+     "Faerie Seer",
+     2
+    ],
+    [
+     "Moon-Circuit Hacker",
+     4
+    ],
+    [
+     "Force Spike",
+     3
+    ],
+    [
+     "Echoing Truth",
+     4
+    ],
+    [
+     "Of One Mind",
+     4
+    ],
+    [
+     "Ninja of the Deep Hours",
+     4
+    ],
+    [
+     "Mutagenic Growth",
+     4
+    ],
+    [
+     "Forest",
+     3
+    ],
+    [
+     "Faerie Miscreant",
+     3
+    ],
+    [
+     "Snap",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 22,
+    "2": 4,
+    "3": 29,
+    "4": 3,
+    "5": 2
+   }
+  },
+  {
+   "name": "Drowned Cultist 4",
+   "archetype": "Blue Faeries Mono",
+   "index": 22,
+   "main": [
+    [
+     "Counterspell",
+     4
+    ],
+    [
+     "Island",
+     22
+    ],
+    [
+     "Snap",
+     4
+    ],
+    [
+     "Of One Mind",
+     3
+    ],
+    [
+     "Brinebarrow Intruder",
+     3
+    ],
+    [
+     "Faerie Miscreant",
+     3
+    ],
+    [
+     "Ninja of the Deep Hours",
+     4
+    ],
+    [
+     "Echoing Truth",
+     3
+    ],
+    [
+     "Spellstutter Sprite",
+     3
+    ],
+    [
+     "Moon-Circuit Hacker",
+     4
+    ],
+    [
+     "Faerie Seer",
+     4
+    ],
+    [
+     "Spell Pierce",
+     3
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 22,
+    "2": 3,
+    "3": 25,
+    "4": 3,
+    "5": 7
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Blue Faeries Mono",
+   "index": 56,
+   "reasons": [
+    "Forge built another archetype instead ('Jeskai Ephemerate Midrange Generated Deck', not 'Blue Faeries Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Faeries Fadas Ub",
+   "index": 15,
+   "reasons": [
+    "Restricted to one copy (Vintage's list): Brainstorm x4."
+   ]
+  },
+  {
+   "archetype": "Faeries Fadas Ub",
+   "index": 15,
+   "reasons": [
+    "Restricted to one copy (Vintage's list): Brainstorm x3."
+   ]
+  },
+  {
+   "archetype": "Fadas Faeries Ub",
+   "index": 20,
+   "reasons": [
+    "Forge built another archetype instead ('Auras (5-0) Gw Generated Deck', not 'Fadas Faeries Ub Generated Deck')",
+    "Forge's AI is told to leave these out: Ancestral Mask (Random)"
+   ]
+  },
+  {
+   "archetype": "Fadas Faeries Ub",
+   "index": 20,
+   "reasons": [
+    "Restricted to one copy (Vintage's list): Brainstorm x3."
+   ]
+  },
+  {
+   "archetype": "Fadas Faeries Ub",
+   "index": 20,
+   "reasons": [
+    "Forge built another archetype instead ('Delver Mono U Generated Deck', not 'Fadas Faeries Ub Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Fadas Faeries Ub",
+   "index": 20,
+   "reasons": [
+    "Restricted to one copy (Vintage's list): Brainstorm x4."
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies2",
+  "when": "2026-10-12 10:44",
+  "decks": {
+   "Drowned Cultist 4": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 1,
+    "failed": []
+   },
+   "Drowned Cultist 1": {
+    "games": 7,
+    "game_over": 7,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Drowned Cultist 2": {
+    "games": 9,
+    "game_over": 9,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Drowned Cultist 3": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 2,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}

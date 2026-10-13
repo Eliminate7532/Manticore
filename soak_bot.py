@@ -204,6 +204,11 @@ class SoakBot:
         mem["soak_pick_want"] = None
         mem["soak_players_picked"] = set()
         mem["soak_player_want"] = None
+        # Round AWAY1: the attackers the bot meant to declare are this question's plan, not the game's. Kept across
+        # questions, a plan made from an out-of-date snapshot after the OK (the click was dropped) was carried two turns
+        # on and clicked a token that had died since (soak night 11-12 Oct, game 271: card 307 at question 155).
+        mem["soak_attackers_chosen"] = None
+        mem["soak_attackers_clicked"] = set()
 
     def _pick_cards_move(self, state, prompt, mem):
         """Round 28bc: "choose N cards" (discard, sacrifice, Sylvan Library...). Click a selectable card that isn't picked
@@ -459,7 +464,9 @@ class SoakBot:
             mem["soak_attackers_chosen"] = chosen
             mem["soak_attackers_clicked"] = set()
         clicked = mem.setdefault("soak_attackers_clicked", set())
-        remaining = [cid for cid in chosen if cid not in clicked]
+        # Round AWAY1: only a creature that is on the board and can attack now (a declared one loses Forge's highlight).
+        can_attack = {c["id"] for c in creatures}
+        remaining = [cid for cid in chosen if cid not in clicked and cid in can_attack]
         if remaining:
             clicked.add(remaining[0])
             return ("click", remaining[0])

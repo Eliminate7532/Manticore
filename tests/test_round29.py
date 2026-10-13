@@ -293,6 +293,7 @@ def make_tree(root, natives=True):
              "forge_card_names.json"]                                                # patch 38
     for i in range(cd.EXPECTED_SAMPLE_DECKS):
         files.append(f"sample_decks/d{i}.txt")
+    files += cd.stock_cube_files()                                                   # round CD3
     for rel in files:
         if rel == "forge_runtime/forge.jar":
             os.makedirs(os.path.join(root, "forge_runtime"), exist_ok=True)

@@ -33,7 +33,7 @@ import reporting
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLES = os.path.join(BASE, "sample_decks")
-STANDARD_SAMPLES = ("standard_red_aggro", "standard_green_dinos")
+STANDARD_SAMPLES = ("standard_red_aggro", "standard_green_dinos", "standard_dimir_surveil")    # round CON2: a third one
 JAVA = os.path.join(BASE, "java_bridge", "src")
 
 
@@ -548,10 +548,10 @@ class SampleDeckTests(unittest.TestCase):
         with open(os.path.join(BASE, "commander_sim.spec"), encoding="utf-8") as f:
             self.assertIn('_data("banned_standard.snapshot.json", ".")', f.read())
 
-    def test_the_build_expects_twelve_sample_decks(self):
+    def test_the_build_expects_thirteen_sample_decks(self):
         import tools.check_dist as cd
-        self.assertEqual(cd.EXPECTED_SAMPLE_DECKS, 12)                          # 6 Commander + 4 Brawl + 2 Standard
-        self.assertEqual(len([n for n in os.listdir(SAMPLES) if n.endswith(".txt")]), 12)
+        self.assertEqual(cd.EXPECTED_SAMPLE_DECKS, 13)                          # 6 Commander + 4 Brawl + 3 Standard (CON2)
+        self.assertEqual(len([n for n in os.listdir(SAMPLES) if n.endswith(".txt")]), 13)
 
 
 # ---- live: the real engine -----------------------------------------------------------------------------------------------------

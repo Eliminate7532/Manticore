@@ -1,0 +1,12 @@
+{
+ "about": "Round RPG4: the region and its towns. PLACEHOLDERS: the names, colours and set lists are Claude's, for the game logic to run on; Karl names them when the region's content is written. A town's shop sells singles from its region's tier band (tiers, inclusive) leaning to its colours, and booster packs of its sets (only sets with a pack pool in rpg/data/packs/). An enemy's reward cards come from the same band.",
+ "start_town": "town_1",
+ "regions": {
+  "1": {"name": "Region 1", "tiers": [1, 3]}
+ },
+ "towns": [
+  {"id": "town_1", "name": "Town 1", "region": 1, "colours": "WG", "sets": ["M10", "M11", "M12"]},
+  {"id": "town_2", "name": "Town 2", "region": 1, "colours": "UB", "sets": ["M13", "M14", "M15"]},
+  {"id": "town_3", "name": "Town 3", "region": 1, "colours": "BR", "sets": ["ORI", "M19", "M20", "M21"]}
+ ]
+}

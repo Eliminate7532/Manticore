@@ -330,7 +330,8 @@ class ScreenTests(unittest.TestCase):
         self.enterContext(mock.patch.object(cs, "cache_path", lambda cid, folder=None: os.path.join(folder or cubes, f"{cid}.json")))
         self.enterContext(mock.patch.object(cs, "forge_script_lookup", lambda runtime=None: every_card_known))
         self.enterContext(mock.patch.object(dp, "pods_dir", lambda: self.pods))
-        cs.save_cache(cs.DEFAULT_CUBE, made_up_cube())
+        self.enterContext(mock.patch.object(cs, "STOCK_CUBES", ()))   # round CD3: "cm" is a stock cube now (its bundled list);
+        cs.save_cache(cs.DEFAULT_CUBE, made_up_cube())                  # these tests draft the made-up cube kept under its name
 
     def gui(self, size=(1360, 840), scale=None, title=True):
         g = ft.ForgeTable(fc.ForgeSession("", []), StubStore(), settings_path=None, window_size=size, launcher=DraftLauncher(),
@@ -380,9 +381,9 @@ class ScreenTests(unittest.TestCase):
         return flow.tiles[k][0].center, flow.tiles[k][1]
 
     # ---- the main menu ---------------------------------------------------------------------------------------------------------
-    def test_draft_is_on_the_main_menu_between_play_and_continue(self):
+    def test_draft_is_on_the_main_menu_right_after_play(self):
         g = self.gui()
-        self.assertEqual([n for _r, n in g.boot.buttons], ["play", "draft", "continue", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in g.boot.buttons], ["play", "draft", "settings", "credits", "quit"])
         self.assertEqual(dict(fboot.ITEMS)["draft"], "Draft")
 
     def test_the_main_menu_row_still_fits_at_every_size(self):

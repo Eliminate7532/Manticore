@@ -46,6 +46,7 @@ AI_STALL_SECONDS = 300          # round 28bc: while Forge asks me nothing (an AI
 POLL_SLEEP = 0.02
 MOVE_RESEND_SECONDS = 0.5        # unused since round 28bb (the bot is asked once per state; see run_game()); kept for old imports
 MOVE_WAIT_SECONDS = 3.0          # round 28ba: after a click/ok, wait this long for Forge's new state before any other click
+CLICK_MOVES = ("click", "player", "ok", "cancel")   # round DROP1: the bot's moves that answer Forge's question (carry "at")
 WATCHDOG_GRACE_SECONDS = 90      # last resort for a game that never even reaches its own timeout check - see run()
 
 # forge_client (and crashlog, which reporting and card_check pull in) read MANTICORE_DATA_DIR exactly once, at import
@@ -195,6 +196,7 @@ def run_game(index, args, rng, out_root, watchdog_holder=None):
             return result
         t0 = time.time()
         last_ask_key, last_ask_at = None, 0.0     # round 28bb: see "ask the bot at most ONCE per state" below
+        clicked_key, clicked_at = None, 0.0       # round DROP1: the question as it stood when the bot last clicked (see below)
         last_progress_at = time.monotonic()
         last_state_version = session.state_version
         try:
@@ -315,12 +317,27 @@ def run_game(index, args, rng, out_root, watchdog_holder=None):
                 if ask_key == last_ask_key and time.monotonic() - last_ask_at < MOVE_WAIT_SECONDS:
                     time.sleep(POLL_SLEEP)
                     continue
+                # Round DROP1 (night of 11-12 Oct: 676 of 770 dropped clicks): a click that makes Forge ask a pop-up
+                # question (kicker, a library search, the order of triggers) is answered, and then the question key is
+                # back to what it was before the pop-up - but last_ask_key holds the pop-up's key, so the bot was asked
+                # again with the same, not yet updated snapshot and clicked again with the old question number (the same
+                # card, or the next card of the old screen); Forge had moved on, so the bridge dropped it. Now no second
+                # click is sent until the question as it stands (the key without the pop-ups) has changed, or until
+                # MOVE_WAIT_SECONDS (the 28bb fallback for a click Forge ignored). A pop-up is still answered at once.
+                if not session.requests and clicked_key is not None \
+                        and _question_key(session.state, ()) == clicked_key \
+                        and time.monotonic() - clicked_at < MOVE_WAIT_SECONDS:
+                    time.sleep(POLL_SLEEP)
+                    continue
                 last_ask_key, last_ask_at = ask_key, time.monotonic()
+                asked_key = _question_key(session.state, ())
                 move = bot.next_action(session.state, list(session.requests), mem)
                 if move is None:
                     time.sleep(POLL_SLEEP)
                     continue
                 _do(session, move)
+                if move[0] in CLICK_MOVES:
+                    clicked_key, clicked_at = asked_key, time.monotonic()
         finally:
             result.shapes = dict(session.shapes)
             session.close()

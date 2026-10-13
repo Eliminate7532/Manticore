@@ -2,7 +2,7 @@
 """
 formats.py - the game formats (Round FMT1). No pygame, no I/O.
 
-Four formats today (round CD2: Commander Draft):
+Five formats today (round CD2: Commander Draft; round CD3: Draft):
   commander   the default, and what every deck was before this round. 100 cards, 40 life, 21 commander damage.
   brawl       MTG Arena's 100-card Brawl (Karl, 2 Oct 2026: "Arena 100 card brawl"). Forge plays it as its Brawl variant.
   standard    Round CON1: 60-card Standard (Karl, 2 Oct 2026: "60-card Standard"; and the first step of the RPG plan of 9 Oct, whose
@@ -10,6 +10,10 @@ Four formats today (round CD2: Commander Draft):
   commander_draft  Round CD2: a deck built from a cube draft's pool (Karl, 9 Oct 2026: "the official Commander Draft (CR 903.13)").
               Forge plays it as Commander (903.13g). It has no button of its own on the deck screen: its decks are listed under
               Commander with a DRAFT tag (screen()), and the cube draft (draft_screens.py) is the only thing that makes them.
+  draft       Round CD3: a 40-card deck from a classic cube draft's pool (Karl, 12 Oct 2026: "Add classic draft" for the stock
+              cubes - 3 packs of 15, one pick at a time, 40-card decks, 20 life, then 1v1 against the AI drafter you choose).
+              Forge plays it as a plain Constructed game (no commander, 20 life). Its decks are listed under Standard with a DRAFT
+              tag (both play Forge's Constructed game), and the cube draft is the only thing that makes them.
 
 Commander Draft, from the Comprehensive Rules effective 25 Sep 2026 (CD1's spec, docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md):
   903.13f  deck construction follows 903.5 except: (1) at least 60 cards, no maximum; (2) any number of cards with the same name
@@ -24,6 +28,17 @@ Standard, from the Comprehensive Rules effective 25 Sep 2026 (read at media.wiza
   103.4   each player starts with 20 life
   103.5c  the first mulligan is free in a multiplayer game (and in Brawl) - so not in a two-player Standard game
   The card pool and the banned list: Scryfall's "standard" legality and banned:standard.
+
+Draft (round CD3), from the Comprehensive Rules effective 25 Sep 2026:
+  100.2b  "In limited play ... each deck has a minimum deck size of 40 cards. A limited deck may contain as many duplicates of a
+          card as are included with the product" - as many as the player drafted (draft_deck.check_classic counts the pool;
+          legality.py can't see the pool, so it skips the copy rule)
+  103.4   20 life (a two-player game - the classic draft's game is 1v1)
+  The glossary: "Draft - A Limited format in which players choose cards one at a time from booster packs, then construct a deck
+  solely from the chosen cards and basic land cards." So basics are free (the cube's own basics -
+  Wastes only in the Devoid Cube, snow basics in the Spooty Peasant Cube - cube_source.basic_station).
+  No banned list: the cube's owner chose its cards. ".dck" says "Deck Type=Limited" (Forge's own DeckFormat.Limited), so a
+  resumed game knows it is a Draft game and not a Standard one.
 
 Arena's Brawl, as the Comprehensive Rules' Brawl option (903.12, rules of 25 Sep 2026) with Arena's 100-card deck:
   903.12c  the commander is a legendary creature, planeswalker, Vehicle, or Spacecraft with a power/toughness box
@@ -65,11 +80,14 @@ FORMATS = {
     # Round CD2: online off until CD5 (drafting with friends); no Deck Type line (Forge's .dck is a Commander one).
     "commander_draft": Format("commander_draft", "Commander Draft", 60, 40, 40, True, False, False, None, True, None, 0, False,
                               "commander"),
+    # Round CD3: the classic draft's 40-card deck - any number from the pool, no sideboard section, Forge's Constructed game.
+    "draft": Format("draft", "Draft", 40, 20, 20, False, False, False, "Limited", False, None, 0, False, "constructed"),
 }
 ORDER = ("commander", "brawl", "standard")          # the order of the deck screen's format buttons
 DEFAULT = "commander"
-SCREEN = {"commander_draft": "commander"}           # round CD2: a format listed under another one's deck-screen button
-DRAFTED = frozenset({"commander_draft"})             # round CD2: formats whose decks come from a draft's pool (no banned list)
+SCREEN = {"commander_draft": "commander",           # round CD2: a format listed under another one's deck-screen button
+          "draft": "standard"}                       # round CD3: 40-card draft decks play Forge's Constructed game, as Standard
+DRAFTED = frozenset({"commander_draft", "draft"})    # round CD2/CD3: formats whose decks come from a draft's pool (no banned list)
 
 BLURB = {
     "commander": "Commander: 100 cards, 40 life, 21 commander damage.",
@@ -77,6 +95,7 @@ BLURB = {
              "no commander damage, Arena's cards and banned list.",
     "standard": "Standard: 60 cards or more, up to 4 of a card, no commander, 20 life, Standard's cards and banned list.",
     "commander_draft": "Commander Draft: a commander and 59 or more cards from your draft's pool, 40 life, 21 commander damage.",
+    "draft": "Draft: 40 or more cards from your draft's pool plus basic lands, no commander, 20 life.",
 }
 
 _TXT_LINE = re.compile(r"^\s*#\s*format\s*[:=]\s*([A-Za-z_]+)\s*$", re.I | re.M)      # round CD2: "commander_draft"
@@ -119,12 +138,13 @@ def screen(key):
 
 
 def drafted(key):
-    """Round CD2: True for a format whose decks come from a draft's pool (Commander Draft)."""
+    """Round CD2: True for a format whose decks come from a draft's pool (Commander Draft; round CD3: Draft)."""
     return normal(key) in DRAFTED
 
 
 def any_copies(key):
-    """Round CD2: True when the format allows any number of cards with one name (Commander Draft, from the pool)."""
+    """Round CD2: True when the format allows any number of cards with one name (Commander Draft and - round CD3 - Draft,
+    from the pool)."""
     return get(key).copies is None
 
 

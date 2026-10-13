@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="32" height="22" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="6">
+ <properties>
+  <property name="name" value="The Cave (placeholder)"/>
+  <property name="region" type="int" value="1"/>
+  <property name="light" type="float" value="4.5"/>
+ </properties>
+ <tileset firstgid="1" source="placeholder_tiles.tsx"/>
+ <layer id="1" name="ground" width="32" height="22">
+  <data encoding="csv">
+10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,15,15,15,15,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,15,15,15,15,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,15,15,15,15,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,10,10,10,10,10,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,11,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,10,10,
+10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
+</data>
+ </layer>
+ <objectgroup id="2" name="objects">
+  <object id="1" name="entrance" class="spawn" x="72" y="280">
+   <point/>
+  </object>
+  <object id="2" name="Back up" class="exit" x="32" y="304" width="16" height="16">
+   <properties>
+    <property name="map" value="sample_region"/>
+    <property name="spawn" value="dungeon_door"/>
+   </properties>
+  </object>
+  <object id="3" name="Plague rat" class="encounter" x="384" y="256" width="16" height="16">
+   <properties>
+    <property name="kind" value="plague_rat"/>
+    <property name="encounter" value="dungeon"/>
+   </properties>
+  </object>
+  <object id="4" name="Plague rat" class="encounter" x="128" y="80" width="16" height="16">
+   <properties>
+    <property name="kind" value="plague_rat"/>
+    <property name="encounter" value="dungeon"/>
+   </properties>
+  </object>
+  <object id="5" name="The Grave Priest" class="encounter" x="368" y="64" width="16" height="16">
+   <properties>
+    <property name="kind" value="grave_priest"/>
+    <property name="encounter" value="boss"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

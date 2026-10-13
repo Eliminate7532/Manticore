@@ -49,6 +49,8 @@ SAMPLE_NAMES = {                                             # file name in samp
     # Round CON1: 60-card Standard samples (their files start with "# format: standard")
     "standard_red_aggro": "Point It at Their Face (Red Aggro)",
     "standard_green_dinos": "Big Lizards, Small Price (Green Stompy)",
+    # Round CON2: a third Standard sample that makes Forge ask more kinds of question (gate 1 of the RPG plan)
+    "standard_dimir_surveil": "Look Before You Leap (Dimir Surveil)",
 }
 
 

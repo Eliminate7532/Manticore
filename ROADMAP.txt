@@ -784,16 +784,35 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     game; rebuilt on main 49a4822. Also everything merged since 0.28.53.8: THINK1, LAST1, PAR1, TFIX2, and LAST1b
     (docs/rounds/LAST1b.md) - what LAST1's first live run found: no save before the first phase or after a knock-out, and no
     Restore offered that Forge can't do.
+[x] Release 0.28.53.10 (2026-10-12, Claude (Opus); Karl, 12 Oct 18:07: "CD3 + other finished rounds"): Round CD3 (docs/rounds/CD3.md)
+    - eight stock cubes built into Draft (Commander Cube and seven classic cubes from Cube Cobra, bundled in stock_cubes/ with
+    credit), the classic draft (three packs of 15, one card a pick, 40-card Draft decks, 20 life, 1v1 against the AI drafter you
+    pick) and Turbo Cube's emblem in the bridge; CON2 (a third Standard sample deck: the Standard soak is valid); LAST1c (a restore
+    Forge refuses says so; the restored turn shows; saves keep The Monarch, The Initiative and the City's Blessing); AWAY1 (Ctrl+0;
+    Undo at 150% gives way only for more words; the soak bot's stale attack plan); DROP1 (the soak's dropped clicks, by cause);
+    RPG2-RPG6 (the RPG's data, logic and map engine - no screen yet). The bridge jar rebuilt from CD3's and LAST1c's sources
+    (tests/test_rel10.py checks where they meet). One git am series: docs/incoming/rel_0.28.53.10/.
 [ ] Cube draft, next (spec docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md): CD4 - edit your drafted deck by hand (Arena-style
-    builder, commander slot, basic land steppers, Suggest lands, Auto-build), Play again / Edit deck from the end screen, the short-deck
-    tuning (CD1: 107 of 800 AI decks had basics standing in for spells); CD5 - drafting with friends online; later the classic 40-card
-    cube. Open: the AI drafters' bar (spec section 10) is Karl's to accept; tritoch's permission before Commander Cube ships as a list;
-    whether drafts (saves/drafts/, about 100 KB each) should stay out of git.
-[ ] LAST1, the next bridge round: the bridge sends setup_done after a failed set-up (it should send state_load_failed); a restore
-    drops command-zone effects (The Monarch, City's Blessing, hideaway effects). Karl's call: after a knock-out, offer the last save
-    from before it (the knocked-out player comes back)? Today: no Restore after a knock-out.
-[ ] The RPG plan, next phases (Karl's plan of 9 Oct, a Claude Doc): the RPG's own 60-card card lists (Vintage lists) on the same
-    engine format; then the RPG itself. Open from CON1: Karl may prefer a plain any-cards 60-card format beside Standard.
+    builder, commander slot, basic land steppers, Suggest lands, Auto-build; for a classic deck too, with a splash), Play again /
+    Edit deck from the end screen, the short-deck tuning (CD1: 107 of 800 AI decks had basics standing in for spells); CD5 - drafting
+    with friends online (Draft decks online). From CD3: the Turbo emblem drawn on the table (a Draft game has no command-zone frame);
+    the classic AI's settings and the 17 lands are first settings, not measured (tools/draft_sim.py can); a 4-player or resumed Turbo
+    game not run. Open: the AI drafters' bar (spec section 10) is Karl's to accept; asking the cube owners (Karl chose to bundle with
+    credit); whether drafts (saves/drafts/, about 100 KB each) should stay out of git.
+[x] LAST1c (in 0.28.53.10): the bridge says state_load_failed for a restore Forge refuses (untouched when nothing changed); a
+    restore keeps The Monarch, The Initiative and the City's Blessing. NOT kept (no format for them): hideaway and other cards' own
+    effects, emblems (a house rule's emblem comes back from the game's own rule), a dungeon and its room.
+[ ] LAST1, still Karl's call: after a knock-out, offer the last save from before it (the knocked-out player comes back)? Today: no
+    Restore after a knock-out.
+[ ] The soak, Karl's calls: DROP1 waits 3 s after a pop-up answered with "nothing" (12 waits, about 36 s in 15 minutes; 1 s would
+    win most of it back and risk a few repeats); AWAY1's six turn-capped 4-player games - leave the cap at 60 turns, cap by rounds
+    (e.g. 20 each), or a more aggressive soak bot. round-soak-cap (Claude (Sonnet), 11 Oct, on 0.28.53.8, not on the board: the soak
+    report at a time cap) is not merged; it edits CLAUDE.md and touches tools/soak.py and soak_report.py, which DROP1 also changes.
+[ ] The RPG plan, next phases (Karl's plan of 9 Oct, a Claude Doc): RPG2-RPG6 built the data (card pool, tiers, Jumpstart starting
+    decks, booster pools, ten enemy kinds), the logic (saves, collection, shop, rewards) and the map engine (Tiled maps, Zelda-style
+    rooms, a developer's window). Gate 2 is Karl's: the top of the tier list and the two tier caps (RPG3: lands_max, common_max, both
+    off). Next: the RPG's screens, then rpg/ in the installer. Open from CON1: Karl may prefer a plain any-cards 60-card format
+    beside Standard.
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
     commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
     and by commander-on-turn-N, missed land drops, colour screw.

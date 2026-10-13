@@ -26,7 +26,7 @@ every game. Keep the assets/ folder next to the program; if it is missing, the p
 dark gradient. Credits and licences: cog menu > Licences (the display font and the pictures are marked "not established" until
 their licences are confirmed).
 The program opens on a short studio splash (a click skips it) and the title screen with the main menu: Play (the deck screen),
-Continue (your unfinished game), Settings, Credits and Quit. Starting a game shows the commanders face to face while the rules
+Draft, Settings, Credits and Quit. An unfinished game is resumed from the deck screen ("Resume last game"). Starting a game shows the commanders face to face while the rules
 engine starts, then your opening hand full-screen (keep, or mulligan and choose the cards to put on the bottom). The end of a game
 shows VICTORY or DEFEAT before the usual window. During play, short animations show what the AI just did (its card large in the
 top-right panel), damage and life changes, whose turn it is, and attacks. Cog > Animations turns the animations off.
@@ -169,7 +169,7 @@ that is what it does.
                                 its targets. The Judge?! button is in the stack's heading (the log's when the stack is empty).
                                 Rulings come from Scryfall (Wizards' own, dated) and are kept in cache\rulings\ for 30 days,
                                 so a card you have looked at shows them offline too. Only official text: nothing is made up.
-  F11 ......................... fullscreen     + / - .... bigger / smaller text (100%-200%)
+  F11 ......................... fullscreen     + / - .... bigger / smaller text (100%-200%); Ctrl+0 text back to 100%
   Ctrl and + / - .............. bigger / smaller cards (round UI7, 100%-200%; Cog > DISPLAY > Cards): a battlefield whose
                                 cards fit in one row shows them bigger, up to that size; a fuller board keeps today's two
                                 rows. The hand and the command zone are not changed yet. Remembered like text size.
@@ -599,9 +599,9 @@ SPEED: FAST OR SLOW (round PRI1, Karl's choices of 9 Oct 2026; Cog > GAME > Spee
 CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md)
   Main menu > Draft. You and three AI drafters draft a cube the official Commander Draft way (Comprehensive Rules 903.13): each
   opens a pack of 20 cards, takes two, passes the rest - left, then right, then left - for three packs, 60 cards each.
-    - The cube: Commander Cube by tritoch (cubecobra.com/cube/overview/cm) by default, or paste any Cube Cobra link or id. It is
-      downloaded once (cubecobra.com/cube/api/cubeJSON/<id>) and kept in cache\cubes\. Cards this Forge has no script for are
-      left out of the packs and named. A cube needs 240 cards Manticore can use.
+    - The cube: one of the stock cubes (round CD3, below; Commander Cube by tritoch is the default), or paste any Cube Cobra link
+      or id. A pasted cube is downloaded once (cubecobra.com/cube/api/cubeJSON/<id>) and kept in cache\cubes\. Cards this Forge
+      has no script for are left out of the packs and named. A Commander Draft needs 240 cards Manticore can use.
     - Picking: click two cards (a third click swaps out the first), then Confirm or Enter. The AIs pick at once. You see only your
       pack and your picks, and how many cards the others have (903.13d). The AI drafters pick like people: by Cube Cobra's Elo
       (made from real players' picks), settling into colours, and making sure of a commander.
@@ -614,7 +614,22 @@ CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/inc
       pool held (903.13f), no banned list. They are listed under Commander with a DRAFT tag and play Commander games (40 life, 21
       commander damage - 903.13g). Basic lands are free (the rules' glossary and 100.2b; 903.13 itself doesn't say).
     - Not yet (CD4): editing your drafted deck by hand. Online drafting is later (CD5).
-  tools\draft_sim.py measures the AI drafters over many drafts; tools\cd2_screens.py makes pictures of the screens.
+  STOCK CUBES AND THE CLASSIC DRAFT (round CD3, Karl, 12 Oct 2026): the draft window's "Stock cubes" buttons - Commander Cube
+  (tritoch), Entry-level Cubing (DeepSky8), MTGO Vintage Cube (Dekkaru), The Cube of Cthulhu (CavsFangelo), Turbo Cube
+  (anthonymattox), Lord of the Rings standalone 360 (zarocks), The Devoid Cube (Isticle) and The Spooty Peasant Cube (Spootyone).
+  Their lists come with Manticore (stock_cubes\, made by tools\build_stock_cubes.py from Cube Cobra on the day the version was
+  built), so they need no internet; the window says whose each one is and where it lives on Cube Cobra.
+    - Commander Cube is a Commander Draft (above). The other seven are classic cubes: a classic draft - packs of 15, ONE card a
+      pick, three packs, 45 cards each - then a 40-card deck from each pool (100.2b; the cube's own basic lands: Wastes only in
+      the Devoid Cube, snow basics in the Spooty Peasant Cube) and a game at 20 life against the AI drafter you choose on the
+      decks stage (click its deck). All four decks are saved to My decks as Draft decks ("# format: draft"), listed under
+      Standard with the DRAFT tag.
+    - A pasted cube gets the style Cube Cobra suggests (Commander when its name, tags or category say Commander or EDH, or many
+      of its cards can be commanders), and the "Draft style" buttons change it.
+    - Turbo Cube's house rule: every player starts with an emblem, "All spells and activated abilities cost {2} less." Its
+      decks carry it ("# rules: turbo"), so every game with them has it, Resume and Undo too.
+  tools\draft_sim.py measures the AI drafters over many drafts; tools\cd2_screens.py and tools\cd3_screens.py make pictures of
+  the screens.
 
 SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its desktop window has)
   Skip... (the button left of Undo, or the S key) opens a window with:

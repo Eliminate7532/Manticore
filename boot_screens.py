@@ -4,9 +4,9 @@ boot_screens.py - Round AD2: what the program shows before the deck screen.
 
     the studio splash (assets/splash/studio.jpg, 2.2 s, a click or a key skips it)
       -> the title: the picture alone (assets/splash/title.png, the manticore on its plinth) and "Press any key"
-      -> the main menu over a dimmed copy of it: Play / Draft / Continue / Settings / Credits / Quit
+      -> the main menu over a dimmed copy of it: Play / Draft / Settings / Credits / Quit
          Play = the deck screen; Draft (round CD2) = the cube draft (draft_screens.py), over the deck screen;
-         Continue = Resume last game (greyed when there is none, or it can't be resumed);
+         (Continue left the menu on 13 Oct 2026 - "Resume last game" is on the deck screen; its slot is for Adventure.)
          Settings = the cog pop-up; Credits = Licenses and credits; Quit closes the program.
 
 Only main() starts here (ForgeTable.open_boot); tests and the --deck command line go straight to their own screens. The deck
@@ -32,7 +32,7 @@ BACKDROP_DIM = 80                # that fill is multiplied by this (of 255): it 
 FEATHER = 0.07                   # the picture's edges fade into the fill over this share of its width (or height)
 MENU_DIM = 105                   # the title picture is multiplied by this (of 255) behind the menu
 PROMPT = "Press any key"
-ITEMS = (("play", "Play"), ("draft", "Draft"), ("continue", "Continue"), ("settings", "Settings"), ("credits", "Credits"),
+ITEMS = (("play", "Play"), ("draft", "Draft"), ("settings", "Settings"), ("credits", "Credits"),
          ("quit", "Quit"))                                # round CD2: Draft - the cube draft (draft_screens.py)
 _PICS = {}                       # (name, size) -> Surface (one size kept per picture)
 
@@ -162,8 +162,6 @@ class BootFlow:
 
     # ---- what each item does --------------------------------------------------------------------------------------------
     def enabled(self, gui, name):
-        if name == "continue":
-            return gui.can_continue()
         return True
 
     def choose(self, gui, name):
@@ -176,9 +174,6 @@ class BootFlow:
         elif name == "draft":                           # round CD2: the cube draft, over the deck screen
             gui.boot = None
             gui.open_draft(from_title=True)
-        elif name == "continue":
-            gui.boot = None
-            gui.resume_last_game()
         elif name == "settings":
             import forge_settings as fset
             gui.overlay = fset.SettingsPopup()
@@ -308,9 +303,6 @@ class BootFlow:
         if self.focus != self.heard_focus:
             self.heard_focus = self.focus
             gui.play_cue("ui.menu_hover")
-        why = gui.continue_note()
-        if why:
-            draw_text(scr, why, L.W // 2, row_y - small.get_height() - int(8 * L.fs), small, gfx.DIM, "midtop")
         draw_text(scr, f"v{self.version}  -  a Commander playtester", L.margin, L.H - L.margin, gui.font("small"), gfx.DIM,
                   "bottomleft")
         self.update.draw(gui)                                            # Round 30: "a new version is ready", top right

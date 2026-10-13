@@ -40,6 +40,7 @@ a = Analysis(
         _data("banned_brawl.snapshot.json", "."),        # Round FMT1: the same for MTG Arena's Brawl
         _data("banned_standard.snapshot.json", "."),     # Round CON1: the same for Standard
         _data("update_config.json", "."),          # Round 30: where an installed copy looks for updates
+        _data("stock_cubes"),                       # Round CD3: the stock cubes' bundled lists
     ],
     # Modules only imported lazily or by name: --soak imports tools.soak, which imports the rest inside _load_modules().
     # Opus's Linux probe needed exactly these (SONNET_SPEC_R29 section 1.3); add whatever the first Windows build's warnings

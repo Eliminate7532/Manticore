@@ -1,0 +1,401 @@
+{
+ "kind": "grave_robber",
+ "name": "Grave Robber",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Mono Control Monoblack",
+   "Monoblack Mono Monoblack02",
+   "Black Control Mono"
+  ]
+ },
+ "max_tier": 4,
+ "decks": [
+  {
+   "name": "Grave Robber 1",
+   "archetype": "Mono Control Monoblack",
+   "index": 8,
+   "main": [
+    [
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Desert of the Glorified",
+     2
+    ],
+    [
+     "Unearth",
+     4
+    ],
+    [
+     "Barren Moor",
+     3
+    ],
+    [
+     "Swamp",
+     17
+    ],
+    [
+     "Disfigure",
+     2
+    ],
+    [
+     "Victim of Night",
+     4
+    ],
+    [
+     "Tendrils of Corruption",
+     4
+    ],
+    [
+     "Gray Merchant of Asphodel",
+     4
+    ],
+    [
+     "Gurmag Angler",
+     2
+    ],
+    [
+     "Phyrexian Rager",
+     4
+    ],
+    [
+     "Polluted Mire",
+     3
+    ],
+    [
+     "Sign in Blood",
+     3
+    ],
+    [
+     "Chittering Rats",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Swamp",
+     4
+    ],
+    [
+     "Cradle of the Accursed",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 17,
+    "1": 2,
+    "2": 11,
+    "3": 21,
+    "4": 9
+   }
+  },
+  {
+   "name": "Grave Robber 2",
+   "archetype": "Mono Control Monoblack",
+   "index": 8,
+   "main": [
+    [
+     "Swamp",
+     15
+    ],
+    [
+     "Disfigure",
+     3
+    ],
+    [
+     "Polluted Mire",
+     2
+    ],
+    [
+     "Victim of Night",
+     3
+    ],
+    [
+     "Barren Moor",
+     4
+    ],
+    [
+     "Tendrils of Corruption",
+     4
+    ],
+    [
+     "Gray Merchant of Asphodel",
+     4
+    ],
+    [
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Phyrexian Rager",
+     4
+    ],
+    [
+     "Sign in Blood",
+     4
+    ],
+    [
+     "Gurmag Angler",
+     3
+    ],
+    [
+     "Corrupt",
+     3
+    ],
+    [
+     "Bojuka Bog",
+     4
+    ],
+    [
+     "Chittering Rats",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Desert of the Glorified",
+     2
+    ],
+    [
+     "Cradle of the Accursed",
+     3
+    ],
+    [
+     "Swamp",
+     3
+    ]
+   ],
+   "tiers": {
+    "0": 15,
+    "2": 12,
+    "3": 22,
+    "4": 11
+   }
+  },
+  {
+   "name": "Grave Robber 3",
+   "archetype": "Mono Control Monoblack",
+   "index": 8,
+   "main": [
+    [
+     "Chainer's Edict",
+     3
+    ],
+    [
+     "Unearth",
+     2
+    ],
+    [
+     "Swamp",
+     21
+    ],
+    [
+     "Chittering Rats",
+     4
+    ],
+    [
+     "Geth's Verdict",
+     4
+    ],
+    [
+     "Victim of Night",
+     2
+    ],
+    [
+     "Barren Moor",
+     3
+    ],
+    [
+     "Bojuka Bog",
+     1
+    ],
+    [
+     "Tendrils of Corruption",
+     3
+    ],
+    [
+     "Gray Merchant of Asphodel",
+     4
+    ],
+    [
+     "Phyrexian Rager",
+     4
+    ],
+    [
+     "Disfigure",
+     4
+    ],
+    [
+     "Gurmag Angler",
+     1
+    ],
+    [
+     "Sign in Blood",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Desert of the Glorified",
+     4
+    ],
+    [
+     "Cradle of the Accursed",
+     3
+    ],
+    [
+     "Swamp",
+     2
+    ],
+    [
+     "Polluted Mire",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 21,
+    "2": 5,
+    "3": 26,
+    "4": 8
+   }
+  },
+  {
+   "name": "Grave Robber 4",
+   "archetype": "Mono Control Monoblack",
+   "index": 8,
+   "main": [
+    [
+     "Swamp",
+     20
+    ],
+    [
+     "Chainer's Edict",
+     3
+    ],
+    [
+     "Gurmag Angler",
+     2
+    ],
+    [
+     "Disfigure",
+     3
+    ],
+    [
+     "Gray Merchant of Asphodel",
+     4
+    ],
+    [
+     "Unearth",
+     4
+    ],
+    [
+     "Geth's Verdict",
+     4
+    ],
+    [
+     "Victim of Night",
+     2
+    ],
+    [
+     "Barren Moor",
+     4
+    ],
+    [
+     "Phyrexian Rager",
+     2
+    ],
+    [
+     "Chittering Rats",
+     3
+    ],
+    [
+     "Sign in Blood",
+     4
+    ],
+    [
+     "Bojuka Bog",
+     1
+    ],
+    [
+     "Tendrils of Corruption",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Swamp",
+     3
+    ],
+    [
+     "Polluted Mire",
+     4
+    ],
+    [
+     "Desert of the Glorified",
+     4
+    ],
+    [
+     "Cradle of the Accursed",
+     4
+    ]
+   ],
+   "tiers": {
+    "0": 20,
+    "2": 6,
+    "3": 23,
+    "4": 11
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies2",
+  "when": "2026-10-12 10:44",
+  "decks": {
+   "Grave Robber 3": {
+    "games": 8,
+    "game_over": 8,
+    "as_ai": 3,
+    "failed": []
+   },
+   "Grave Robber 2": {
+    "games": 7,
+    "game_over": 7,
+    "as_ai": 3,
+    "failed": []
+   },
+   "Grave Robber 1": {
+    "games": 9,
+    "game_over": 9,
+    "as_ai": 2,
+    "failed": []
+   },
+   "Grave Robber 4": {
+    "games": 6,
+    "game_over": 6,
+    "as_ai": 3,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}

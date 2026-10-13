@@ -503,7 +503,8 @@ def check(commanders, deck, store=None, fmt="commander", sideboard=None):
 def _check_constructed(fmt, deck, side, data, issues, unchecked, missing, bl):
     """Round CON1: the deck rules of a 60-card constructed format (Standard), CR 100.2a and 100.4a (effective 25 Sep 2026):
     at least 60 cards; a sideboard of at most 15; at most four cards with one English name in the deck and the sideboard
-    together, except basic lands and cards that say a deck can have any number (or up to N) of them."""
+    together, except basic lands and cards that say a deck can have any number (or up to N) of them. Round CD3: Draft (100.2b)
+    uses the size rule only - at least 40, any number of copies (the pool decides; draft_deck.check_classic counts it)."""
     f = formats.get(fmt)
     if len(deck) < f.deck_size:
         issues.append(("size", f"This deck has {len(deck)} cards; a {f.name} deck has at least {f.deck_size}.", []))
@@ -514,7 +515,7 @@ def _check_constructed(fmt, deck, side, data, issues, unchecked, missing, bl):
         counts[n] = counts.get(n, 0) + 1
     extra = []
     for n, k in counts.items():
-        if k <= f.copies or _is_basic(n, data.get(n)):
+        if f.copies is None or k <= f.copies or _is_basic(n, data.get(n)):     # round CD3: Draft - any number from the pool
             continue
         limit = _copy_limit(data.get(n))
         if limit is None or k > limit:

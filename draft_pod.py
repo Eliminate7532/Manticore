@@ -21,6 +21,12 @@ The decks: draft_deck.build for every seat - the AIs avoiding the cards Forge's 
 (those flags are about Forge's AI piloting them, not about you). Each is saved to My decks as a Commander Draft deck
 ("# format: commander_draft", formats.py) with a "# draft: <pod id>" line naming this pod (the deck builder, CD4, will need the
 pool back).
+
+Round CD3: a pod has a style - "commander" (above) or "classic" (Karl, 12 Oct 2026: the classic stock cubes; 3 packs of 15, one card
+a pick - draft_core.SHAPES). A classic pod's decks are draft_deck.build_classic's 40-card decks with the cube's own basic lands
+(the pod keeps the cube's basics board), saved as Draft decks ("# format: draft"); a cube with a house rule (Turbo Cube's emblem)
+writes "# rules: turbo" on each (house_rules.py), so every game with them plays with the rule. A pod saved before CD3 has no style
+and is a Commander Draft, as it was.
 """
 import datetime
 import gzip
@@ -35,6 +41,7 @@ import draft_ai as da
 import draft_core as dc
 import draft_deck as dd
 import formats
+import house_rules
 import paths
 
 POD_VERSION = 1
@@ -43,6 +50,7 @@ STATE_FILE = "draft.json"
 CARDS_FILE = "cards.json.gz"
 STAGES = ("drafting", "built", "saved", "discarded")     # "drafting" until the decks are saved; "discarded" = Discard was pressed
 FORMAT = "commander_draft"
+CLASSIC_FORMAT = "draft"                                 # round CD3: the classic draft's decks (formats.py)
 _DRAFT_LINE = re.compile(r"^\s*#\s*draft\s*[:=]\s*([A-Za-z0-9_.-]+)\s*$", re.I | re.M)
 
 
@@ -83,10 +91,14 @@ def draft_id_of(text):
 class Pod:
     """One draft: its cards, its Draft, and where it is kept. Make one with Pod.new or Pod.load."""
 
-    def __init__(self, folder, cube_meta, cards, flagged, missing, draft, created, stage="drafting", deck_ids=None):
+    def __init__(self, folder, cube_meta, cards, flagged, missing, draft, created, stage="drafting", deck_ids=None,
+                 style="commander", basics=(), rules=()):
         self.folder = folder
         self.id = os.path.basename(folder)
         self.cube = dict(cube_meta)                  # {"id", "name", "owner"}
+        self.style = style if style in cs.STYLES else "commander"      # round CD3
+        self.basics = tuple(basics or ())            # round CD3: the cube's basics board (names)
+        self.rules = house_rules.normal(rules)       # round CD3: the cube's house rules (Turbo Cube's emblem)
         self.cards = list(cards)
         self.flagged = frozenset(flagged or ())
         self.missing = tuple(missing or ())
@@ -99,13 +111,18 @@ class Pod:
 
     # ---- making and keeping ---------------------------------------------------------------------------------------------
     @classmethod
-    def new(cls, cube, check, seed=None, root=None, now=None):
+    def new(cls, cube, check, seed=None, root=None, now=None, style=None):
         """A new draft of this cube (cube_source.Cube) with these playable cards (cube_source.ForgeCheck). The AIs make their
-        first picks at once. Raises draft_core.DraftError when the cube is too small (its message says so in numbers)."""
+        first picks at once. Raises draft_core.DraftError when the cube is too small (its message says so in numbers).
+        Round CD3: style "commander" or "classic" (default: the cube's own - a stock cube's, or guess_style's)."""
         cards = list(check.playable)
+        style = style or getattr(cube, "style", None) or "commander"
+        if style not in cs.STYLES:
+            raise dc.DraftError(f"There is no draft style called {style!r}.")
         seed = seed if seed is not None else random.SystemRandom().randrange(1, 2 ** 31)
         seats = [dc.Seat(n, "human" if i == 0 else "ai") for i, n in enumerate(SEAT_NAMES)]
-        draft = dc.Draft(len(cards), seats, seed)
+        packs, pack_size, picks = dc.shape(style)
+        draft = dc.Draft(len(cards), seats, seed, packs, pack_size, picks)
         now = time.time() if now is None else now
         root = root or pods_dir()
         base = time.strftime("%Y%m%d_%H%M%S", time.localtime(now)) + "_" + _safe_id(cube.id)
@@ -114,7 +131,7 @@ class Pod:
             folder, n = os.path.join(root, f"{base}_{n}"), n + 1
         os.makedirs(folder)
         pod = cls(folder, {"id": cube.id, "name": cube.name or cube.id, "owner": cube.owner or ""}, cards, check.ai_flagged,
-                  check.missing, draft, now)
+                  check.missing, draft, now, style=style, basics=getattr(cube, "basics", ()), rules=getattr(cube, "rules", ()))
         _write_json(os.path.join(folder, CARDS_FILE), {"v": POD_VERSION, "fields": list(cs.CubeCard._fields),
                                                        "cards": [list(c) for c in cards]}, gz=True)
         pod.run_ai()
@@ -125,6 +142,7 @@ class Pod:
         _write_json(os.path.join(self.folder, STATE_FILE),
                     {"v": POD_VERSION, "cube": self.cube, "flagged": sorted(self.flagged), "missing": list(self.missing),
                      "created": self.created, "stage": self.stage, "deck_ids": self.deck_ids,
+                     "style": self.style, "basics": list(self.basics), "rules": list(self.rules),      # round CD3
                      "draft": self.draft.to_dict()})
 
     @classmethod
@@ -147,7 +165,8 @@ class Pod:
         if draft.n_cards != len(cards):
             raise PodError("The saved draft's cards don't match its picks.")
         return cls(folder, state.get("cube") or {}, cards, state.get("flagged"), state.get("missing"), draft,
-                   state.get("created") or 0, state.get("stage") or "drafting", state.get("deck_ids"))
+                   state.get("created") or 0, state.get("stage") or "drafting", state.get("deck_ids"),
+                   style=state.get("style") or "commander", basics=state.get("basics") or (), rules=state.get("rules") or ())
 
     # ---- the draft --------------------------------------------------------------------------------------------------------
     @property
@@ -157,9 +176,25 @@ class Pod:
         return self._z
 
     @property
+    def classic(self):
+        """Round CD3: a classic draft (one card a pick, 40-card decks, 20 life, 1v1)."""
+        return self.style == "classic"
+
+    @property
+    def format(self):
+        """The format its decks are saved as: "commander_draft", or (round CD3) "draft"."""
+        return CLASSIC_FORMAT if self.classic else FORMAT
+
+    @property
+    def station(self):
+        """Round CD3: {colour: basic land name} - the cube's own basics (cube_source.basic_station)."""
+        return cs.basic_station(list(self.basics))
+
+    @property
     def chooser(self):
         if self._chooser is None:
-            self._chooser = da.chooser(self.cards, self.draft.seed, self.z)
+            colours = "".join(c for c in self.station if c) if self.classic else "WUBRG"
+            self._chooser = da.chooser(self.cards, self.draft.seed, self.z, self.style, colours)
         return self._chooser
 
     def run_ai(self):
@@ -205,8 +240,11 @@ class Pod:
 
     # ---- the decks ----------------------------------------------------------------------------------------------------------
     def build(self, seat):
-        """draft_deck.build for one seat (a Deck), or None when that seat drafted no card that can be a commander."""
+        """draft_deck.build for one seat (a Deck), or None when that seat drafted no card that can be a commander. Round CD3: a
+        classic pod's deck is draft_deck.build_classic's (never None)."""
         avoid = self.flagged if seat else frozenset()
+        if self.classic:
+            return dd.build_classic(self.cards, self.pool(seat), self.z, avoid=avoid, station=self.station)
         return dd.build(self.cards, self.pool(seat), self.z, avoid=avoid)
 
     def build_all(self):
@@ -215,11 +253,15 @@ class Pod:
     def problems(self, seat, deck):
         """draft_deck.check's sentences for a built deck (an empty list = a legal Commander Draft deck)."""
         main = list(deck.spells + deck.lands) + [n for n, c in deck.basics.items() for _ in range(c)]
+        if self.classic:
+            return dd.check_classic(self.cards, self.pool(seat), main, self.station)
         return dd.check(self.cards, self.pool(seat), list(deck.commanders), main)
 
     def deck_name(self, seat, deck):
         """"2026-10-10 draft - You - The Scarab God" / "2026-10-10 draft - AI 1 - Urza"."""
         day = datetime.date.fromtimestamp(self.created or time.time()).isoformat()
+        if self.classic:                                  # round CD3: "2026-10-12 draft - AI 2 - Blue-Red"
+            return f"{day} draft - {SEAT_NAMES[seat]} - {dd.colour_name(deck.identity)}"
         names = [self.cards[i].name.split(",")[0].split(" // ")[0] for i in deck.commanders]
         return f"{day} draft - {SEAT_NAMES[seat]} - {' + '.join(names) or 'no commander'}"
 
@@ -232,6 +274,14 @@ class Pod:
         day = datetime.date.fromtimestamp(self.created or time.time()).strftime("%d %b %Y").lstrip("0")
         cube = self.cube.get("name") or self.cube.get("id")
         who = "you" if seat == 0 else SEAT_NAMES[seat]
+        if self.classic:                                  # round CD3: a 40-card Draft deck, no Commander section
+            lines = [formats.text_line(CLASSIC_FORMAT), f"# draft: {self.id}"]
+            if self.rules:
+                lines.append(house_rules.text_line(self.rules))
+            lines += [f"# Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by Manticore's Auto-build.",
+                      "", "Deck"]
+            lines += [f"{k} {n}" for n, k in counts.items()]
+            return "\n".join(lines) + "\n"
         lines = [formats.text_line(FORMAT), f"# draft: {self.id}",
                  f"# Commander Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by Manticore's Auto-build.",
                  "", "Commander"] + [f"1 {c}" for c in commanders] + ["", "Deck"]

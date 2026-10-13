@@ -67,6 +67,7 @@ Keys worth knowing
   J               Judge?!: the card's Oracle text and official rulings (the card under the mouse, or the top of the stack)
   M               Sound on / off
   + / -           Bigger / smaller text
+  Ctrl+0          Text back to normal size (100%)
   Ctrl and + / -  Bigger / smaller cards on the battlefield (when they fit in one row)
   H               Every key and control
   F8              Report a bug, or suggest an idea
@@ -83,10 +84,12 @@ Formats
   Export button, then Ctrl+V on the deck screen. Online play is Commander only.
 
 Cube draft (main menu > Draft)
-  Draft a Commander cube against three AI drafters: take two cards a pick from packs of 20, three packs,
-  then each pool becomes a 60-card deck and you play them in one 4-player Commander game. The default cube
-  is Commander Cube by tritoch; paste a Cube Cobra link for another. The draft is saved after every pick.
-  The four decks go to My decks (tagged DRAFT).
+  Pick one of the eight stock cubes, or paste a Cube Cobra link. Commander Cube is a Commander draft:
+  take two cards a pick from packs of 20, then each pool becomes a 60-card deck and you play one
+  4-player Commander game. The other stock cubes are classic drafts: take one card a pick from packs
+  of 15, then each pool becomes a 40-card deck and you play one game against the AI drafter you choose.
+  Turbo Cube has a house rule: all spells and activated abilities cost {2} less. The draft is saved
+  after every pick. The four decks go to My decks (tagged DRAFT).
 
 Deck screen tags
   NOT LEGAL means a deck breaks a rule of its format (a banned card, the wrong colours, too many or too few
@@ -107,7 +110,7 @@ Stats
   end-of-game screen says how the game ended and the deck's record so far.
 
 Resume
-  If the program closes mid-game, the next start offers Continue (title screen) or Resume last game (deck
+  If the program closes mid-game, the next start offers Resume last game (deck
   screen). A game saved by an older version can't be resumed; you'll be offered Discard instead.
 
 

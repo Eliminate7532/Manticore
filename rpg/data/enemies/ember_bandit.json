@@ -1,0 +1,421 @@
+{
+ "kind": "ember_bandit",
+ "name": "Ember Bandit",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Kuldotha Red Mono",
+   "Goblins Goblins! Red",
+   "Deck Red Wins",
+   "Burn Red Deck"
+  ]
+ },
+ "max_tier": 4,
+ "decks": [
+  {
+   "name": "Ember Bandit 1",
+   "archetype": "Deck Red Wins",
+   "index": 30,
+   "main": [
+    [
+     "Staggershock",
+     3
+    ],
+    [
+     "Mountain",
+     21
+    ],
+    [
+     "Keldon Marauders",
+     4
+    ],
+    [
+     "Incinerate",
+     3
+    ],
+    [
+     "Lightning Strike",
+     2
+    ],
+    [
+     "Rift Bolt",
+     3
+    ],
+    [
+     "Fireblast",
+     4
+    ],
+    [
+     "Curse of the Pierced Heart",
+     3
+    ],
+    [
+     "Flame Rift",
+     3
+    ],
+    [
+     "Forgotten Cave",
+     4
+    ],
+    [
+     "Lava Spike",
+     4
+    ],
+    [
+     "Searing Blaze",
+     3
+    ],
+    [
+     "Chain Lightning",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mountain",
+     2
+    ]
+   ],
+   "tiers": {
+    "0": 21,
+    "2": 10,
+    "3": 10,
+    "4": 19
+   }
+  },
+  {
+   "name": "Ember Bandit 2",
+   "archetype": "Deck Red Wins",
+   "index": 30,
+   "main": [
+    [
+     "Mountain",
+     21
+    ],
+    [
+     "Forgotten Cave",
+     4
+    ],
+    [
+     "Flame Rift",
+     2
+    ],
+    [
+     "Incinerate",
+     4
+    ],
+    [
+     "Rift Bolt",
+     4
+    ],
+    [
+     "Needle Drop",
+     4
+    ],
+    [
+     "Keldon Marauders",
+     3
+    ],
+    [
+     "Fireblast",
+     4
+    ],
+    [
+     "Chain Lightning",
+     4
+    ],
+    [
+     "Curse of the Pierced Heart",
+     4
+    ],
+    [
+     "Shard Volley",
+     2
+    ],
+    [
+     "Lava Spike",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mountain",
+     1
+    ]
+   ],
+   "tiers": {
+    "0": 21,
+    "2": 7,
+    "3": 16,
+    "4": 16
+   }
+  },
+  {
+   "name": "Ember Bandit 3",
+   "archetype": "Deck Red Wins",
+   "index": 30,
+   "main": [
+    [
+     "Fireblast",
+     4
+    ],
+    [
+     "Mountain",
+     23
+    ],
+    [
+     "Chain Lightning",
+     3
+    ],
+    [
+     "Incinerate",
+     4
+    ],
+    [
+     "Forgotten Cave",
+     2
+    ],
+    [
+     "Keldon Marauders",
+     4
+    ],
+    [
+     "Rift Bolt",
+     2
+    ],
+    [
+     "Curse of the Pierced Heart",
+     4
+    ],
+    [
+     "Needle Drop",
+     4
+    ],
+    [
+     "Flame Rift",
+     4
+    ],
+    [
+     "Goblin Fireslinger",
+     2
+    ],
+    [
+     "Lava Spike",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mountain",
+     1
+    ]
+   ],
+   "tiers": {
+    "0": 23,
+    "1": 2,
+    "2": 8,
+    "3": 14,
+    "4": 13
+   }
+  },
+  {
+   "name": "Ember Bandit 4",
+   "archetype": "Deck Red Wins",
+   "index": 30,
+   "main": [
+    [
+     "Forgotten Cave",
+     4
+    ],
+    [
+     "Fireblast",
+     4
+    ],
+    [
+     "Mountain",
+     21
+    ],
+    [
+     "Rift Bolt",
+     3
+    ],
+    [
+     "Needle Drop",
+     3
+    ],
+    [
+     "Arc Lightning",
+     3
+    ],
+    [
+     "Searing Blaze",
+     2
+    ],
+    [
+     "Curse of the Pierced Heart",
+     4
+    ],
+    [
+     "Chain Lightning",
+     4
+    ],
+    [
+     "Shard Volley",
+     1
+    ],
+    [
+     "Staggershock",
+     4
+    ],
+    [
+     "Lava Spike",
+     4
+    ],
+    [
+     "Keldon Marauders",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mountain",
+     1
+    ]
+   ],
+   "tiers": {
+    "0": 21,
+    "1": 3,
+    "2": 8,
+    "3": 11,
+    "4": 17
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "above tier 4: Counterspell (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Faeries Ub Ur Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Relic of Progenitus (Random)",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Burn Red Deck Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Bant Control Ephemerate Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "above tier 4: Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "above tier 4: Counterspell (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Rakdos Metalcraft Jund Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Zoo Domain Naya Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Matca Rioters (Random), Meria's Outrider (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random), Kuldotha Rebirth (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Goblin Grenade (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge built another archetype instead ('Aggro Mono Red Generated Deck', not 'Goblins Goblins! Red Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies2",
+  "when": "2026-10-12 10:44",
+  "decks": {
+   "Ember Bandit 3": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 2,
+    "failed": []
+   },
+   "Ember Bandit 1": {
+    "games": 10,
+    "game_over": 10,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Ember Bandit 4": {
+    "games": 5,
+    "game_over": 5,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Ember Bandit 2": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 3,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}

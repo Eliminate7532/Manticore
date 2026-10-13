@@ -137,6 +137,16 @@ def stats_dir():
     return os.path.join(user_dir(), "stats")
 
 
+def rpg_saves_dir():
+    """Round RPG4: the RPG mode's save files (rpg/save.py) - rpg_saves/ beside saves/ and stats/ (not inside the rpg/ package
+    folder, which in a portable copy is the program's own source). Backed up like your decks; never in the public source copy.
+    MANTICORE_DATA_DIR wins, as for saves (a test run never touches yours). Made when the first save is written."""
+    override = os.environ.get("MANTICORE_DATA_DIR")
+    if override:
+        return os.path.join(override, "rpg_saves")
+    return os.path.join(user_dir(), "rpg_saves")
+
+
 def cache_dir():
     return os.path.join(local_dir(), "cache")
 

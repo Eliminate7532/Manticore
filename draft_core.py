@@ -9,6 +9,9 @@ The rules (Comprehensive Rules effective 25 Sep 2026, 903.13, Commander Draft - 
   903.13d  a player sees only the pack in front of them and their own picks
 Manticore's standard (Karl's answers 5 and 6): 4 seats, 3 packs of 20 cards drawn at random from the cube - every card of the 240 is
 drafted, so each seat ends with 60. The cube must hold at least seats x packs x pack size cards.
+Round CD3, the classic draft (Karl, 12 Oct 2026: "Add classic draft" for the classic stock cubes): 4 seats, 3 packs of 15, ONE card
+a pick, the same left-right-left passing - the glossary's Draft: "players choose cards one at a time from booster packs" (CR 25 Sep
+2026). 180 cards; each seat ends with 45. Entry-level Cubing has exactly 180 (4 x 3 x 15). SHAPES holds both.
 
 A card here is an int: its index in the list of draftable cards the caller gives (cube_source's playable cards). Packs are made from
 `seed` alone, and a draft is rebuilt by playing its log of picks back on the same seed (save / load / resume), like journal.py's games.
@@ -26,6 +29,8 @@ PACK_SIZE = 20
 PICKS = 2                                # 903.13b
 DIRECTIONS = (+1, -1, +1)                # 903.13c: left, right, left. "Left" = the next seat number.
 SAVE_VERSION = 1
+# Round CD3: (packs, pack size, cards a pick) for each draft style (cube_source.STYLES).
+SHAPES = {"commander": (PACKS, PACK_SIZE, PICKS), "classic": (3, 15, 1)}
 
 Seat = namedtuple("Seat", "name kind")   # kind: "human" | "ai" (later: "remote")
 Pick = namedtuple("Pick", "seat round turn cards pack_before")   # turn: 1-based, within the round, for this seat
@@ -44,6 +49,17 @@ class Pack:
 
 def cards_needed(seats=SEATS, packs=PACKS, pack_size=PACK_SIZE):
     return seats * packs * pack_size
+
+
+def shape(style):
+    """Round CD3: (packs, pack size, cards a pick) of a draft style; Commander Draft's for anything unknown."""
+    return SHAPES.get(style or "commander", SHAPES["commander"])
+
+
+def needed_for(style, seats=SEATS):
+    """Round CD3: the cards a draft of this style needs: 240 for Commander Draft, 180 for the classic draft (4 seats)."""
+    packs, size, _picks = shape(style)
+    return cards_needed(seats, packs, size)
 
 
 class Draft:
@@ -106,7 +122,7 @@ class Draft:
         return (seat + self.direction(rnd)) % self.n
 
     def label(self, seat):
-        """"Pack 2, pick 3 of 10" - pick = this seat's turn in the round (two cards each)."""
+        """"Pack 2, pick 3 of 10" - pick = this seat's turn in the round (two cards each; round CD3: one each, "of 15")."""
         if self.done:
             return "Draft complete"
         turns = -(-self.pack_size // self.picks)

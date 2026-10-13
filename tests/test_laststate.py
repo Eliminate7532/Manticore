@@ -142,6 +142,7 @@ class LastGoodTableTests(unittest.TestCase):
         gui.restore_tick(31.0)
         self.assertEqual(len(gui.session.commands("loadstate")), 1)           # only once
         gui.session.handle({"t": "setup_done"})
+        st["turn"] = 4                                                        # round LAST1c: done AND the table shows the saved turn
         gui.restore_tick(35.0)
         self.assertIsNone(gui.pending_restore)
         self.assertTrue(gui.modal.done)

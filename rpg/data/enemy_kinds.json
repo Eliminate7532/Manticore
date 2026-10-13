@@ -1,0 +1,15 @@
+{
+  "about": "Kinds of regular enemy and where their decks come from (rpg/enemies.py). Names and colours are placeholders until the first region's content is written; Karl's to change. format/archetypes: Forge's archetype data (res/deckgendecks/<format>.raw.dat). decks: how many decks each kind ships. max_tier: no card above it (rpg/tiers.py; null = no cap).",
+  "kinds": [
+    {"id": "grave_robber", "name": "Grave Robber", "colour": "B", "format": "Pauper", "archetypes": ["Mono Control Monoblack", "Monoblack Mono Monoblack02", "Black Control Mono"], "decks": 4, "max_tier": 4},
+    {"id": "ember_bandit", "name": "Ember Bandit", "colour": "R", "format": "Pauper", "archetypes": ["Kuldotha Red Mono", "Goblins Goblins! Red", "Deck Red Wins", "Burn Red Deck"], "decks": 4, "max_tier": 4},
+    {"id": "thornback", "name": "Thornback", "colour": "G", "format": "Pauper", "archetypes": ["Stompy Green Mono", "Mono Green Stompy"], "decks": 4, "max_tier": 4},
+    {"id": "drowned_cultist", "name": "Drowned Cultist", "colour": "U", "format": "Pauper", "archetypes": ["Blue Faeries Mono", "Faeries Fadas Ub", "Fadas Faeries Ub"], "decks": 4, "max_tier": 5, "note": "Every Pauper faerie list Forge built holds Counterspell, Spell Pierce or Preordain, which the archetype data puts in tier 5; with a cap of 4 none passed (12 of 12 turned down, 12 Oct)."},
+    {"id": "zealot", "name": "Zealot", "colour": "W", "format": "Pauper", "archetypes": ["Heroic Mono White"], "decks": 4, "max_tier": 4},
+    {"id": "wild_elf", "name": "Wild Elf", "colour": "GU", "format": "Pauper", "archetypes": ["Elves Elfos Ug", "(5-0) Elves Ug"], "decks": 4, "max_tier": 5, "tries": 8, "note": "Every Pauper elf list holds Llanowar Elves or Elvish Mystic, tier 5 in the archetype data; with a cap of 4 none of 12 passed (12 Oct). Under the 'once-common at most 4' tier option they would be tier 4."},
+    {"id": "hive_spawn", "name": "Hive Spawn", "colour": "GW", "format": "Pauper", "archetypes": ["Slivers Sliver Fractius"], "decks": 4, "max_tier": 4, "tries": 16, "note": "Forge's builder often makes another archetype for this one (3 of 4 builds on 12 Oct), so it gets more tries."},
+    {"id": "clockwork_golem", "name": "Clockwork Golem", "colour": "RW", "format": "Pauper", "archetypes": ["Affinity Grixis Afinity", "Boros Metalcraft Synthesizer", "Boros Synthesizer Metalcraft"], "decks": 4, "max_tier": 4, "tries": 8},
+    {"id": "grave_priest", "name": "Grave Priest", "colour": "WB", "format": "Pauper", "archetypes": ["Bw Pestilence Orzhov"], "decks": 4, "max_tier": 4, "tries": 8, "note": "Replaces a blue-black kind: every Pauper blue-black list Forge built held Brainstorm 2-4 times (restricted) and tier-5 Counterspell (12 of 12 turned down, 12 Oct)."},
+    {"id": "plague_rat", "name": "Plague Rat", "colour": "BR", "format": "Pauper", "archetypes": ["Burn Madness Rakdos", "Black Sacrifice Mono"], "decks": 4, "max_tier": 4}
+  ]
+}

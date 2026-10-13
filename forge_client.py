@@ -452,18 +452,20 @@ def unknown_cards(names, runtime=None, wait=True):
     return missing
 
 
-def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None):
+def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None, rules=None):
     """Write a Forge .dck file. `deck` is a list of card names (repeats allowed). Round FMT1: a Brawl deck's [metadata] says
     "Deck Type=Brawl" (formats.dck_lines); a Commander deck's file is exactly what it was before. Round CON1: a format without a
-    commander (Standard) says "Deck Type=Constructed" and has no [Commander] section (any `commanders` go into the main deck)."""
+    commander (Standard) says "Deck Type=Constructed" and has no [Commander] section (any `commanders` go into the main deck).
+    Round CD3: `rules` (house_rules keys, e.g. ("turbo",)) add "Manticore Rules=turbo" to [metadata]; none = the file as before."""
     import formats
+    import house_rules
     if not formats.has_commander(fmt):
         deck, commanders = list(commanders) + list(deck), []
     counts = {}
     for card in deck:
         n = forge_card_name(card, runtime)
         counts[n] = counts.get(n, 0) + 1
-    lines = ["[metadata]", f"Name={name}"] + formats.dck_lines(fmt)
+    lines = ["[metadata]", f"Name={name}"] + formats.dck_lines(fmt) + house_rules.dck_lines(rules)
     if formats.has_commander(fmt):
         lines.append("[Commander]")
         lines += [f"1 {forge_card_name(c, runtime)}" for c in commanders]
@@ -580,12 +582,18 @@ class ForgeSession:
 
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
                  java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
-                 classic_stops=False):
+                 classic_stops=False, rules=None):
         import formats
+        import house_rules
         self.deck_path = deck_path
         # Round FMT1: the game's format. None = what the player's .dck says ("Deck Type=Brawl"), so a resumed game, a bug report
         # replay and anything else that starts from saved .dck files plays the format it was started in.
         self.fmt = formats.normal(fmt) if fmt else (formats.from_dck_file(deck_path) if deck_path else formats.DEFAULT)
+        # Round CD3: a cube's house rules (Turbo Cube's emblem). None = what the player's .dck says ("Manticore Rules=turbo"), for
+        # the same reason as the format.
+        self.rules = (house_rules.normal(rules) if rules is not None
+                      else (house_rules.from_dck_file(deck_path) if deck_path else ()))
+        self.rules_used = None              # round CD3: the house rules the bridge's "ready" line reports
         self.format_used = None             # round FMT1: the format the bridge's "ready" line reports
         self.opponent_paths = list(opponent_paths)
         self.name = name
@@ -634,6 +642,9 @@ class ForgeSession:
         self.last_state_ok = False          # round LAST1: the bridge's "ready" says it can save and load a game (an older forge_bridge.jar cannot)
         self.state_saves = []               # round LAST1: the bridge's {"t":"state_saved"} answers, oldest first
         self.state_load_failed = None       # round LAST1: why the bridge could not load a saved game, or None
+        self.state_load_untouched = False   # round LAST1c: that failure came before anything on the table was changed
+        self.last_state_marks = False       # round LAST1c: the bridge keeps the Monarch, Initiative and City's Blessing in a save
+        self.setup_failures = []            # round LAST1c: why a dev set-up failed (the bridge still says setup_done, with ok:false)
         self._save_n = 0
         # Patch 43: the bridge passes priority for me when nothing meaningful is happening (Passing.java). classic_stops=True asks for
         # every stop as before (the card check's scripted boards rely on them); "passing" is what the bridge's "ready" line says.
@@ -746,6 +757,9 @@ class ForgeSession:
         args += ["--parent-pid", str(os.getpid())]        # round 29a: the bridge exits the moment this process is gone (ParentWatch.java)
         if self.fmt != "commander":
             args += ["--format", formats.engine(self.fmt)]   # round FMT1 (a Commander game's command line is unchanged); CON1: "constructed"
+        if self.rules:
+            import house_rules
+            args += house_rules.engine_args(self.rules)   # round CD3: Turbo Cube's emblem (no rules: the command line as before)
         if self.classic_stops:
             args.append("--classic-stops")                # patch 43: every priority stop, as before
         if self.dev:
@@ -854,6 +868,7 @@ class ForgeSession:
             self.ai_timeout = m.get("aiTimeout")
             self.loop_cap_used = m.get("loopCap")
             self.last_state_ok = bool(m.get("lastState"))
+            self.last_state_marks = bool(m.get("lastStateMarks"))
             self.format_used = m.get("format", "commander")
             self.passing = m.get("passing")         # patch 43: "smart" or "classic" (None: a bridge from before patch 43)
             if self.format_used != formats.engine(self.fmt) and not self.command:
@@ -861,6 +876,11 @@ class ForgeSession:
                 # Round CON1: the bridge names how the game is played ("constructed" for Standard), so compare with engine().
                 self.fatal = (f"The engine started a {self.format_used.title()} game instead of {formats.name(self.fmt)}: its "
                               "bridge (forge_bridge.jar) is older than this program. Run setup_forge.py again, or reinstall.")
+            self.rules_used = tuple(m.get("houseRules") or ())     # round CD3: a bridge from before CD3 says nothing
+            if self.rules and tuple(sorted(self.rules_used)) != tuple(self.rules) and not self.command and not self.fatal:
+                # Round CD3: an older bridge doesn't know --house-rule; never let a Turbo Cube game start without its emblem.
+                self.fatal = ("The engine started without this cube's house rule (" + ", ".join(self.rules) + "): its bridge "
+                              "(forge_bridge.jar) is older than this program. Run setup_forge.py again, or reinstall.")
         elif t == "game_over":
             self.game_over = True
             self.game_over_info = {k: v for k, v in m.items() if k != "t"}
@@ -868,6 +888,9 @@ class ForgeSession:
             self._note_online(t, m)
         elif t == "setup_done":
             self.setups_done += 1               # round 28c: a dev "setup" has finished applying (see SetupState.java)
+            if m.get("ok") is False:            # round LAST1c: it finished because it failed
+                self.setup_failures.append(m.get("reason") or "unknown")
+                del self.setup_failures[:-20]
         elif t == "ai_loop_guard":
             self._note_loop_guard(m)
         elif t == "state_saved":
@@ -875,6 +898,7 @@ class ForgeSession:
             del self.state_saves[:-20]
         elif t == "state_load_failed":
             self.state_load_failed = m.get("reason") or "unknown"
+            self.state_load_untouched = bool(m.get("untouched"))
         elif t == "passed":
             self.passed.append(m)                   # patch 43: shown in the table's feed
             del self.passed[:-200]
@@ -1044,8 +1068,10 @@ class ForgeSession:
         return n
 
     def load_state(self, path):
-        """Round LAST1: put a saved game on the table. Only in a NEW game at its first priority stop; setups_done goes up when it is done."""
+        """Round LAST1: put a saved game on the table. Only in a NEW game at its first priority stop; setups_done goes up when it is done.
+        Round LAST1c: a failure comes back as state_load_failed (and state_load_untouched when nothing on the table was changed)."""
         self.state_load_failed = None
+        self.state_load_untouched = False
         return self.send(c="loadstate", path=path)
 
     def ok(self):

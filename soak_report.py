@@ -58,8 +58,35 @@ def game_health(messages):
             kinds.add("%s|%s" % (m.get("q"), m.get("shape")))
         elif t == "dropped":
             dropped += 1
+    import bridge_rules                                       # round DROP1: why each click was dropped
+    drops = bridge_rules.drop_counts(messages)
     return {"seats": seats, "lands": lands, "spells": spells, "answered": answered,
-            "kinds": sorted(kinds), "dropped": dropped, "memory": memory, "stops": len(stops), "passed": passed}
+            "kinds": sorted(kinds), "dropped": dropped, "memory": memory, "stops": len(stops), "passed": passed,
+            "drops": drops}
+
+
+def drop_lines(healths):
+    """Round DROP1: dropped clicks over the run, by cause (bridge_rules.classify_drops). A "repeat" is a second click on a
+    question already answered (dropped by design); "lost" is a question whose only answer was dropped."""
+    import bridge_rules
+    total = {c: 0 for c in bridge_rules.DROP_CAUSES}
+    clicks = games = 0
+    for h in healths:
+        d = h.get("drops")
+        if not d:
+            continue
+        games += 1
+        clicks += d.get("clicks", 0)
+        for c in bridge_rules.DROP_CAUSES:
+            total[c] += d.get(c, 0)
+    if not games:
+        return []
+    n = sum(total.values())
+    rate = (" (%.1f%%)" % (100.0 * n / clicks)) if clicks else ""
+    return ["DROPPED CLICKS (the bridge refused a click; by cause)",
+            "  %d of %d numbered clicks dropped%s over %d game(s)" % (n, clicks, rate, games),
+            "  " + ", ".join("%s %d" % (c, total[c]) for c in bridge_rules.DROP_CAUSES),
+            "  repeat = a second click on a question already answered (harmless); lost = a question whose only answer was dropped"]
 
 
 def stop_lines(healths):
@@ -214,6 +241,10 @@ def summary_text(header, results, healths, verdict, canary, groups, new_signatur
     stops = stop_lines(healths)                         # patch 43
     if stops:
         lines += stops
+        lines.append("")
+    drops = drop_lines(healths)                         # round DROP1
+    if drops:
+        lines += drops
         lines.append("")
     lines.append("GAMES")
     for r, h in zip(results, healths):

@@ -19,8 +19,19 @@ lands of those colours, and basics split by the colours' mana symbols until the 
 "AI:RemoveDeck:All" go in only when nothing else of those colours is left (Claude's default, 9 Oct). LANDS = 25: the middle of
 "Recommended land count is between 24 to 26 lands" on EsMag's Commander Cube page (cubecobra.com/cube/overview/Command, read 9 Oct) -
 Commander Cube (cm), the default, says nothing about lands.
+
+Round CD3, the classic draft's 40-card deck (style "classic"; Comprehensive Rules effective 25 Sep 2026):
+  100.2b   "In limited play ... each deck has a minimum deck size of 40 cards. A limited deck may contain as many duplicates of a
+           card as are included with the product."
+  Draft    (glossary) "construct a deck solely from the chosen cards and basic land cards" - the basics are the cube's own
+           (cube_source.basic_station: Wastes only in the Devoid Cube, snow basics in the Spooty Peasant Cube).
+build_classic tries every one- and two-colour pair the cube has basics for (and colourless) and keeps the deck whose spells are
+best by the same value as above: CLASSIC_SPELLS spells, the pool's lands of those colours, basics to CLASSIC_SIZE. 17 lands in 40
+cards is the usual limited count (Claude's default, 12 Oct, general knowledge - not from a cube's page; most of the stock cubes say
+nothing about land counts). No splash: a third colour is left for the player to add by hand.
 """
 from collections import namedtuple
+from itertools import combinations
 import statistics
 
 import cube_source as cs
@@ -32,6 +43,9 @@ TOP_END_COST = 0.25                      # per point of mana value over TOP_END_
 AVOID_COST = 5.0                         # an AI-flagged card is used only after every other card of the colours
 SHORT_COST = 1.5                         # per basic land that only stands in for a missing spell (choosing the commander)
 COMMANDER_WEIGHT = 1.5                   # the commander's own strength, when choosing between commanders
+CLASSIC_SIZE = 40                        # round CD3: 100.2b
+CLASSIC_LANDS = 17                       # round CD3: the usual limited land count (Claude's default)
+COLOUR_WORDS = {"W": "White", "U": "Blue", "B": "Black", "R": "Red", "G": "Green"}
 
 Deck = namedtuple("Deck", "commanders spells lands basics identity score short")
 
@@ -110,14 +124,16 @@ def pips(card):
     return out
 
 
-def split_basics(cards, spells, ident, count):
+def split_basics(cards, spells, ident, count, names=None):
     """{"Forest": n, ...} - `count` basics split by the spells' mana symbols (largest remainder), at least one of each colour of
-    the identity when there is room. A colourless identity gets Wastes."""
+    the identity when there is room. A colourless identity gets Wastes. Round CD3: `names` = {colour: basic land name} (the cube's
+    own basics, cube_source.basic_station); the ordinary ones when None."""
+    names = names or cs.BASIC_NAME
     if count <= 0:
         return {}
     cols = [c for c in "WUBRG" if c in ident]
     if not cols:
-        return {cs.BASIC_NAME[""]: count}
+        return {names.get("", cs.BASIC_NAME[""]): count}
     weight = {c: 0.0 for c in cols}
     for i in spells:
         for col, n in pips(cards[i]).items():
@@ -133,7 +149,7 @@ def split_basics(cards, spells, ident, count):
     rest = left - sum(floor.values())
     for c in sorted(cols, key=lambda c: (-(raw[c] - floor[c]), cols.index(c)))[:rest]:
         floor[c] += 1
-    return {cs.BASIC_NAME[c]: base[c] + floor[c] for c in cols if base[c] + floor[c] > 0}
+    return {names.get(c, cs.BASIC_NAME[c]): base[c] + floor[c] for c in cols if base[c] + floor[c] > 0}
 
 
 def build_for(cards, pool, commanders, z=None, avoid=frozenset(), size=DECK_MIN, lands=LANDS):
@@ -171,6 +187,81 @@ def build(cards, pool, z=None, avoid=frozenset(), size=DECK_MIN, lands=LANDS, co
         if best is None or deck.score > best.score:
             best = deck
     return best
+
+
+# ---- round CD3: the classic draft's 40-card deck ----------------------------------------------------------------------------
+def colour_options(station):
+    """Every colour choice a classic deck can make with this cube's basics: colourless, each colour, each pair of colours."""
+    cols = [c for c in "WUBRG" if c in (station or cs.BASIC_NAME)]
+    return [frozenset()] + [frozenset(c) for c in cols] + [frozenset(p) for p in combinations(cols, 2)]
+
+
+def build_colours(cards, pool, colours, z=None, avoid=frozenset(), station=None, size=CLASSIC_SIZE, lands=CLASSIC_LANDS):
+    """The classic deck in these colours from this pool (a Deck with no commanders; identity = the colours). Never fewer than
+    `size` cards: missing spells become basics (short), as in build_for."""
+    z = z if z is not None else zscores(cards)
+    station = station or cs.BASIC_NAME
+    ident = frozenset(colours)
+    spells_avail, lands_avail = [], []
+    for i in pool:
+        c = cards[i]
+        if not fits(c, ident):
+            continue
+        (lands_avail if cs.is_land(c) else spells_avail).append(i)
+    need_spells = size - lands
+    spells_avail.sort(key=lambda i: -spell_value(cards[i], z[i], cards[i].name in avoid))
+    spells = spells_avail[:need_spells]
+    short = max(0, need_spells - len(spells))
+    # the pool's lands: those that make one of the deck's colours first, then colourless ones; at least 3 basics a colour stay
+    lands_avail = [i for i in lands_avail if not cs.is_basic(cards[i])]
+    lands_avail.sort(key=lambda i: (-bool(set(cards[i].identity) & ident), -(z[i] - (AVOID_COST if cards[i].name in avoid else 0))))
+    land_cards = lands_avail[:max(0, lands - 3 * len(ident))]
+    basics = split_basics(cards, spells, ident, size - len(spells) - len(land_cards), station)
+    score = sum(spell_value(cards[i], z[i], cards[i].name in avoid) for i in spells) - SHORT_COST * short
+    return Deck((), tuple(spells), tuple(land_cards), basics, ident, score, short)
+
+
+def build_classic(cards, pool, z=None, avoid=frozenset(), station=None, size=CLASSIC_SIZE, lands=CLASSIC_LANDS, colours=None):
+    """The best classic deck this pool makes: every colour choice the cube's basics allow (colour_options), unless `colours` is
+    given. Never None - a pool with nothing playable still gets basics to 40."""
+    z = z if z is not None else zscores(cards)
+    options = [frozenset(colours)] if colours is not None else colour_options(station)
+    best = None
+    for opt in options:
+        deck = build_colours(cards, pool, opt, z, avoid, station, size, lands)
+        if best is None or deck.score > best.score:
+            best = deck
+    return best
+
+
+def check_classic(cards, pool, main, station=None, size=CLASSIC_SIZE):
+    """Problems (plain sentences) with a classic draft deck: `main` holds card ints from the pool or basic land names (str). An
+    empty list = legal (100.2b: at least 40, as many of a card as were drafted; the cube's own basic lands)."""
+    station = station or cs.BASIC_NAME
+    basics = {n.lower() for n in station.values()}
+    problems = []
+    pool_count = {}
+    for i in pool:
+        pool_count[i] = pool_count.get(i, 0) + 1
+    used = {}
+    for x in main:
+        if isinstance(x, str):
+            if x.strip().lower() not in basics:
+                problems.append(f"{x} isn't one of this cube's basic lands.")
+            continue
+        used[x] = used.get(x, 0) + 1
+    for i, n in used.items():
+        if n > pool_count.get(i, 0):
+            problems.append(f"{cards[i].name}: {n} in the deck, {pool_count.get(i, 0)} drafted.")
+    if len(main) < size:
+        problems.append(f"The deck has {len(main)} cards; it needs at least {size}.")
+    return list(dict.fromkeys(problems))
+
+
+def colour_name(ident):
+    """'Blue-Red', 'Green', 'Colourless' - a classic deck's colours in words (its name in My decks)."""
+    cols = [c for c in "WUBRG" if c in (ident or ())]
+    return "-".join(COLOUR_WORDS[c] for c in cols) or "Colourless"
 
 
 def deck_size(deck):

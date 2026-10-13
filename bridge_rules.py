@@ -328,11 +328,80 @@ def _rule_fatal(messages):
     return out
 
 
+# Round DROP1: why each click was dropped. Before this round a game with more than 5 drops was a "dropped_clicks" warning,
+# whatever the reason, and 30 games a night had it (night of 11-12 Oct: 770 drops in 319 games). Measured that night, 676
+# of them were the soak bot clicking a second time on a question it had already answered (a pop-up came in between) -
+# the bridge drops those by design (Round 22: otherwise they land on the next question), so they are not a problem in
+# the game. What matters is a question whose only answer was dropped (nothing reached Forge for it), and a burst of
+# "busy" drops (a person tapping during a mana ability sees nothing happen).
+NUMBERED_CLICKS = ("ok", "cancel", "card", "player", "mana")     # the commands that carry a question number (forge_client)
+DROP_CAUSES = ("repeat", "lost", "busy", "disabled", "out")
+BUSY_DROP_LIMIT = 5
+
+
+def classify_drops(messages):
+    """[(index of the "dropped" message, cause, the dropped command or None)], in order. Causes:
+    repeat   - the question number is out of date, and an earlier click for that same question was not dropped: the
+               question was already answered (a second click on it - harmless, and the reason question numbers exist);
+    lost     - the number is out of date and no click for that question reached Forge (or no click matches at all);
+    busy / disabled / out - the bridge's own reasons (a mana ability running, a greyed button, a player who has lost)."""
+    sends = []                      # [index, cmd, dropped?] for every numbered click sent
+    out = []
+    for i, m in enumerate(messages):
+        t = m.get("t")
+        if t == "_sent":
+            cmd = m.get("cmd") or {}
+            if cmd.get("c") in NUMBERED_CLICKS:
+                sends.append([i, cmd, False])
+            continue
+        if t != "dropped":
+            continue
+        reason = m.get("reason")
+        at = m.get("at")
+        match = None
+        for rec in reversed(sends):             # the newest click of this kind (and number) not yet matched to a drop
+            if rec[2] or rec[1].get("c") != m.get("c"):
+                continue
+            if at is not None and rec[1].get("at") != at:
+                continue
+            match = rec
+            break
+        if match is not None:
+            match[2] = True
+        if reason in ("busy", "disabled", "out"):
+            out.append((i, reason, match[1] if match else None))
+            continue
+        cause = "lost"
+        if match is not None and at is not None:
+            if any(not rec[2] and rec[1].get("at") == at and rec[0] < match[0] for rec in sends):
+                cause = "repeat"
+        out.append((i, cause, match[1] if match else None))
+    return out
+
+
+def drop_counts(messages):
+    """{cause: n} over DROP_CAUSES, plus "clicks": how many numbered clicks were sent."""
+    counts = {c: 0 for c in DROP_CAUSES}
+    for _i, cause, _cmd in classify_drops(messages):
+        counts[cause] = counts.get(cause, 0) + 1
+    counts["clicks"] = sum(1 for m in messages if m.get("t") == "_sent" and (m.get("cmd") or {}).get("c") in NUMBERED_CLICKS)
+    return counts
+
+
 def _rule_dropped_clicks(messages):
-    idxs = [i for i, m in enumerate(messages) if m.get("t") == "dropped"]
-    if len(idxs) > 5:
-        return [_finding("dropped_clicks", WARN, idxs[5], "%d dropped commands in this game" % len(idxs))]
-    return []
+    drops = classify_drops(messages)
+    out = []
+    lost = [(i, cmd) for i, cause, cmd in drops if cause == "lost"]
+    if lost:
+        i, cmd = lost[0]
+        first = ("%s at question %s" % (cmd.get("c"), cmd.get("at"))) if cmd else "no matching click"
+        out.append(_finding("dropped_lost", WARN, i, "%d click(s) dropped with no other answer to that question (first: %s)"
+                            % (len(lost), first)))
+    busy = [i for i, cause, _cmd in drops if cause == "busy"]
+    if len(busy) > BUSY_DROP_LIMIT:
+        out.append(_finding("dropped_busy", WARN, busy[BUSY_DROP_LIMIT],
+                            "%d clicks dropped while a mana ability was being activated" % len(busy)))
+    return out
 
 
 # Round 28e: the same ability used over and over in one turn. Soak nights 7 and 9: the Kinnan AI untapped two Grim Monoliths

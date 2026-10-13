@@ -1,0 +1,364 @@
+{
+ "kind": "thornback",
+ "name": "Thornback",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Stompy Green Mono",
+   "Mono Green Stompy"
+  ]
+ },
+ "max_tier": 4,
+ "decks": [
+  {
+   "name": "Thornback 1",
+   "archetype": "Stompy Green Mono",
+   "index": 3,
+   "main": [
+    [
+     "Rancor",
+     4
+    ],
+    [
+     "Mountain",
+     4
+    ],
+    [
+     "River Boa",
+     3
+    ],
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Hunger of the Howlpack",
+     4
+    ],
+    [
+     "Nettle Sentinel",
+     3
+    ],
+    [
+     "Silhana Ledgewalker",
+     4
+    ],
+    [
+     "Nest Invader",
+     4
+    ],
+    [
+     "Burning-Tree Emissary",
+     4
+    ],
+    [
+     "Savage Swipe",
+     3
+    ],
+    [
+     "Vines of Vastwood",
+     1
+    ],
+    [
+     "Elephant Guide",
+     4
+    ],
+    [
+     "Bayou Groff",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 25,
+    "2": 5,
+    "3": 23,
+    "4": 7
+   }
+  },
+  {
+   "name": "Thornback 2",
+   "archetype": "Stompy Green Mono",
+   "index": 3,
+   "main": [
+    [
+     "Rancor",
+     3
+    ],
+    [
+     "Vines of Vastwood",
+     3
+    ],
+    [
+     "Mountain",
+     4
+    ],
+    [
+     "Hunger of the Howlpack",
+     2
+    ],
+    [
+     "Burning-Tree Emissary",
+     4
+    ],
+    [
+     "Nettle Sentinel",
+     4
+    ],
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Nest Invader",
+     4
+    ],
+    [
+     "River Boa",
+     3
+    ],
+    [
+     "Savage Swipe",
+     4
+    ],
+    [
+     "Elephant Guide",
+     4
+    ],
+    [
+     "Skarrgan Pit-Skulk",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 25,
+    "2": 4,
+    "3": 24,
+    "4": 7
+   }
+  },
+  {
+   "name": "Thornback 3",
+   "archetype": "Stompy Green Mono",
+   "index": 3,
+   "main": [
+    [
+     "Vines of Vastwood",
+     4
+    ],
+    [
+     "Elephant Guide",
+     4
+    ],
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Mountain",
+     4
+    ],
+    [
+     "Hunger of the Howlpack",
+     4
+    ],
+    [
+     "Nettle Sentinel",
+     4
+    ],
+    [
+     "Nest Invader",
+     4
+    ],
+    [
+     "River Boa",
+     3
+    ],
+    [
+     "Savage Swipe",
+     4
+    ],
+    [
+     "Burning-Tree Emissary",
+     4
+    ],
+    [
+     "Treetop Ambusher",
+     3
+    ],
+    [
+     "Bayou Groff",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 25,
+    "1": 3,
+    "2": 5,
+    "3": 23,
+    "4": 4
+   }
+  },
+  {
+   "name": "Thornback 4",
+   "archetype": "Stompy Green Mono",
+   "index": 3,
+   "main": [
+    [
+     "Elephant Guide",
+     4
+    ],
+    [
+     "Forest",
+     22
+    ],
+    [
+     "Vines of Vastwood",
+     4
+    ],
+    [
+     "Mountain",
+     3
+    ],
+    [
+     "Hunger of the Howlpack",
+     3
+    ],
+    [
+     "Nettle Sentinel",
+     4
+    ],
+    [
+     "Silhana Ledgewalker",
+     3
+    ],
+    [
+     "Nest Invader",
+     4
+    ],
+    [
+     "Savage Swipe",
+     4
+    ],
+    [
+     "Treetop Ambusher",
+     4
+    ],
+    [
+     "River Boa",
+     2
+    ],
+    [
+     "Burning-Tree Emissary",
+     2
+    ],
+    [
+     "Rancor",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 25,
+    "1": 4,
+    "2": 4,
+    "3": 22,
+    "4": 5
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Stompy Green Mono",
+   "index": 59,
+   "reasons": [
+    "Forge built another archetype instead ('Sadistic The Golgari Generated Deck', not 'Stompy Green Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Boros Metalcraft Synthesizer Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Tortex Tortured Existence Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Fadas Faeries Ub Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x2.",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Fadas Orig Rebe Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x3.",
+    "Forge's AI is told to leave these out: Court Hussar (Random)",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Ephemerate (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Jeskai Ephemerate Midrange Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Ephemerate (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Poison Infect Sultai Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge's AI is told to leave these out: Hickory Woodlot (Random)"
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies2",
+  "when": "2026-10-12 10:44",
+  "decks": {
+   "Thornback 1": {
+    "games": 7,
+    "game_over": 7,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Thornback 2": {
+    "games": 6,
+    "game_over": 6,
+    "as_ai": 2,
+    "failed": []
+   },
+   "Thornback 3": {
+    "games": 8,
+    "game_over": 8,
+    "as_ai": 4,
+    "failed": []
+   },
+   "Thornback 4": {
+    "games": 6,
+    "game_over": 6,
+    "as_ai": 4,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}

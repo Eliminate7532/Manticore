@@ -1,0 +1,6 @@
+{
+  "about": "Karl's own tiers. A card named in \"cards\" gets this tier whatever Forge's archetype data, the restricted list or its rarity say (rpg/tiers.py). Tiers: 0 Basic, 1 Common, 2 Solid, 3 Strong, 4 Elite, 5 Power. Example: \"Lightning Bolt\": 3. \"rules\" (round RPG3): lands_max caps every non-basic land, common_max caps every card ever printed at common or uncommon; null = off. Neither touches the restricted list or a card named in \"cards\". tools/rpg_build_data.py compare shows what each would change.",
+  "rules": {"lands_max": null, "common_max": null},
+  "cards": {
+  }
+}

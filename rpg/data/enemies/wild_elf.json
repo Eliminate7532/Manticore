@@ -1,0 +1,585 @@
+{
+ "kind": "wild_elf",
+ "name": "Wild Elf",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "seed": 20261012,
+ "source": {
+  "format": "Pauper",
+  "archetypes": [
+   "Elves Elfos Ug",
+   "(5-0) Elves Ug"
+  ]
+ },
+ "max_tier": 5,
+ "decks": [
+  {
+   "name": "Wild Elf 1",
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "main": [
+    [
+     "Forest",
+     22
+    ],
+    [
+     "Jaspera Sentinel",
+     4
+    ],
+    [
+     "Wellwisher",
+     4
+    ],
+    [
+     "Elvish Vanguard",
+     4
+    ],
+    [
+     "Ivy Lane Denizen",
+     2
+    ],
+    [
+     "Timberwatch Elf",
+     3
+    ],
+    [
+     "Fyndhorn Elves",
+     3
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Llanowar Elves",
+     3
+    ],
+    [
+     "Lys Alana Huntmaster",
+     4
+    ],
+    [
+     "Survivors' Encampment",
+     3
+    ],
+    [
+     "Priest of Titania",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 22,
+    "2": 5,
+    "3": 26,
+    "4": 4,
+    "5": 3
+   }
+  },
+  {
+   "name": "Wild Elf 2",
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "main": [
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Lys Alana Huntmaster",
+     4
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Timberwatch Elf",
+     4
+    ],
+    [
+     "Essence Warden",
+     2
+    ],
+    [
+     "Survivors' Encampment",
+     4
+    ],
+    [
+     "Llanowar Elves",
+     4
+    ],
+    [
+     "Elvish Vanguard",
+     2
+    ],
+    [
+     "Wellwisher",
+     4
+    ],
+    [
+     "Fyndhorn Elves",
+     3
+    ],
+    [
+     "Elvish Mystic",
+     4
+    ],
+    [
+     "Priest of Titania",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 21,
+    "2": 6,
+    "3": 25,
+    "5": 8
+   }
+  },
+  {
+   "name": "Wild Elf 3",
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "main": [
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Survivors' Encampment",
+     4
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Timberwatch Elf",
+     4
+    ],
+    [
+     "Jaspera Sentinel",
+     3
+    ],
+    [
+     "Essence Warden",
+     3
+    ],
+    [
+     "Wellwisher",
+     3
+    ],
+    [
+     "Priest of Titania",
+     3
+    ],
+    [
+     "Fyndhorn Elves",
+     4
+    ],
+    [
+     "Lys Alana Huntmaster",
+     3
+    ],
+    [
+     "Elvish Vanguard",
+     4
+    ],
+    [
+     "Elvish Mystic",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 21,
+    "2": 7,
+    "3": 25,
+    "4": 3,
+    "5": 4
+   }
+  },
+  {
+   "name": "Wild Elf 4",
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "main": [
+    [
+     "Forest",
+     22
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Timberwatch Elf",
+     4
+    ],
+    [
+     "Jaspera Sentinel",
+     2
+    ],
+    [
+     "Llanowar Elves",
+     4
+    ],
+    [
+     "Lys Alana Huntmaster",
+     4
+    ],
+    [
+     "Survivors' Encampment",
+     3
+    ],
+    [
+     "Elvish Vanguard",
+     3
+    ],
+    [
+     "Fyndhorn Elves",
+     4
+    ],
+    [
+     "Priest of Titania",
+     4
+    ],
+    [
+     "Elvish Mystic",
+     3
+    ],
+    [
+     "Essence Warden",
+     3
+    ]
+   ],
+   "sideboard": [
+    [
+     "Survivors' Encampment",
+     1
+    ]
+   ],
+   "tiers": {
+    "0": 22,
+    "2": 6,
+    "3": 23,
+    "4": 2,
+    "5": 7
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 9,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  }
+ ],
+ "soak": {
+  "run": "rpg_enemies3",
+  "when": "2026-10-12 14:09",
+  "decks": {
+   "Wild Elf 2": {
+    "games": 10,
+    "game_over": 10,
+    "as_ai": 5,
+    "failed": []
+   },
+   "Wild Elf 3": {
+    "games": 11,
+    "game_over": 11,
+    "as_ai": 6,
+    "failed": []
+   },
+   "Wild Elf 4": {
+    "games": 11,
+    "game_over": 11,
+    "as_ai": 5,
+    "failed": []
+   },
+   "Wild Elf 1": {
+    "games": 7,
+    "game_over": 7,
+    "as_ai": 4,
+    "failed": []
+   }
+  },
+  "soak_failed": []
+ }
+}
