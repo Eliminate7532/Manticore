@@ -13,6 +13,12 @@ won or lost and the duel can be fought again). Reward cards come from the beaten
 tier band, never basic lands or banned cards, a card the deck plays more copies of more likely - and, when the deck has too few of
 those, from the region's band at large. My choice (the plan says only "cards"): Shandalar gave the opponent's cards.
 
+Round RPG9: which of the kind's deck lists a fight uses is the region's choice by kind of encounter (towns.json "enemy_decks",
+economy.World.deck_source): on region 1 a regular foe plays one of its Jumpstart decks, a dungeon foe or the boss one of its archetype
+decks. pending_duel says which ("source"; a duel marked before RPG9 has none and means the archetype list), so finish() takes the
+reward cards from the deck that was actually played - for a Jumpstart foe, its three half-decks' cards, the ones its handicap
+swapped for basic lands included (my choice: the best cards of a beaten foe can still be won).
+
 settle_pending() is for loading a save that still has a duel going on: it doesn't count (my choice - a crash shouldn't cost gold;
 quitting to dodge a loss is possible, and Karl may want it to count as a loss instead).
 """
@@ -32,12 +38,13 @@ class DuelError(Exception):
 
 
 class Duel:
-    __slots__ = ("kind", "enemy_name", "encounter", "deck_index", "enemy_deck", "player_deck", "format", "life")
+    __slots__ = ("kind", "enemy_name", "encounter", "deck_index", "enemy_deck", "player_deck", "format", "life", "source")
 
-    def __init__(self, kind, enemy_name, encounter, deck_index, enemy_deck, player_deck):
+    def __init__(self, kind, enemy_name, encounter, deck_index, enemy_deck, player_deck, source=enemies.ARCHETYPE):
         self.kind, self.enemy_name, self.encounter = kind, enemy_name, encounter
         self.deck_index, self.enemy_deck, self.player_deck = deck_index, enemy_deck, player_deck
         self.format, self.life = FORMAT, LIFE
+        self.source = source                       # Round RPG9: which of the kind's deck lists (rpg.enemies.deck_list)
 
     def player_main(self):
         return [(n, k) for n, k in self.player_deck["main"]]
@@ -46,7 +53,7 @@ class Duel:
         return [(n, k) for n, k in self.enemy_deck["main"]]
 
 
-def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None, now=None, spot=None, once=False):
+def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None, now=None, spot=None, once=False, source=None):
     if encounter not in ENCOUNTERS:
         raise DuelError(f"Unknown kind of fight: {encounter!r}.")
     if save.pending_duel is not None:
@@ -63,15 +70,29 @@ def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None
         data = enemies.read_kind(kind_id, folder)
     except FileNotFoundError:
         raise DuelError(f"No enemy decks for {kind_id!r}.")
-    if not data.get("decks"):
+    if source is None:                 # Round RPG9: the region says which deck list this kind of fight uses (towns.json)
+        source = region_source(save, encounter)
+    source, decks = enemies.deck_list(data, source)
+    if not decks:
         raise DuelError(f"No enemy decks for {kind_id!r}.")
-    index = save.rng("duel:" + kind_id).randrange(len(data["decks"]))
+    index = save.rng("duel:" + kind_id).randrange(len(decks))
     w = save.world
-    save.pending_duel = {"kind": kind_id, "encounter": encounter, "deck": index, "map": w.get("map"), "x": w.get("x"),
-                         "y": w.get("y"), "started": time.time() if now is None else now}
+    save.pending_duel = {"kind": kind_id, "encounter": encounter, "deck": index, "source": source, "map": w.get("map"),
+                         "x": w.get("x"), "y": w.get("y"), "started": time.time() if now is None else now}
     if spot:                        # Round RPG5: the map spot this fight is at (rpg.explore), gone once it is won
         save.pending_duel.update(spot=spot, once=bool(once))
-    return Duel(kind_id, data.get("name", kind_id), encounter, index, data["decks"][index], deck)
+    return Duel(kind_id, data.get("name", kind_id), encounter, index, decks[index], deck, source)
+
+
+def region_source(save, encounter, world=None):
+    """Round RPG9: "jumpstart" or "archetype" for a fight of this kind of encounter in the save's region (towns.json
+    "enemy_decks"); "archetype" when the region file can't be read - the enemies as they were before RPG9."""
+    try:
+        from rpg import economy
+        world = world or economy.read_world()
+        return world.deck_source(save.world.get("region"), encounter)
+    except (OSError, ValueError, KeyError, TypeError):
+        return enemies.ARCHETYPE
 
 
 def _band_ok(name, pool, tier_table, lists, band, skip):
@@ -138,9 +159,11 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
         gold = numbers.reward_gold(pd["encounter"], save.rng("gold"))
         save.gold += gold
         try:
-            deck = enemies.read_kind(pd["kind"], folder)["decks"][pd["deck"]]
+            deck = enemies.deck_list(enemies.read_kind(pd["kind"], folder), pd.get("source", enemies.ARCHETYPE))[1][pd["deck"]]
         except (OSError, KeyError, IndexError):
             deck = {"main": []}
+        if deck.get("swapped"):        # Round RPG9: the cards a Jumpstart foe's handicap took out of its half-decks can be won too
+            deck = dict(deck, main=[list(x) for x in deck["main"]] + [list(x) for x in deck["swapped"]])
         cards = reward_cards(save, deck, numbers.reward_cards(pd["encounter"]), world.band(save.world["region"]), pool,
                              tier_table, lists, numbers)
         for name, _src in cards:

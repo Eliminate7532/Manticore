@@ -1,0 +1,216 @@
+{
+ "about": "Round RPG9 (Karl, 14 Oct 2026: the first map was \"way too hard\"; \"About 65%\"): how often a starting deck (three Jumpstart half-decks, at most two colours, picked at random from the new-game offers) beats the first map's regular foes, Forge's AI playing both sides (tools/rpg_balance.py; 60 cards, 20 life, Forge's Constructed rules). share = the starting decks' wins / decided games; low-high = the 95% interval (Wilson). handicap = how many of each foe deck's strongest spells are swapped for basic lands (rpg.enemies.handicap). decks_sha = rpg.enemies.jumpstart_digest of the decks measured; a test checks it against the shipped decks.",
+ "target": 0.65,
+ "handicap": 9,
+ "decks_sha": "cac8e1f7418a71bafb312809ea361933ca1be68d5fb3f19161cd9717243018d8",
+ "measured": {
+  "all": {
+   "games": 512,
+   "starter": 304,
+   "enemy": 208,
+   "draws": 0,
+   "share": 0.5938,
+   "low": 0.5507,
+   "high": 0.6354,
+   "turns": 20.1
+  },
+  "kinds": {
+   "ember_bandit": {
+    "games": 128,
+    "starter": 69,
+    "enemy": 59,
+    "draws": 0,
+    "share": 0.5391,
+    "low": 0.4528,
+    "high": 0.623,
+    "turns": 18.5
+   },
+   "grave_robber": {
+    "games": 128,
+    "starter": 77,
+    "enemy": 51,
+    "draws": 0,
+    "share": 0.6016,
+    "low": 0.515,
+    "high": 0.6822,
+    "turns": 20.4
+   },
+   "thornback": {
+    "games": 128,
+    "starter": 77,
+    "enemy": 51,
+    "draws": 0,
+    "share": 0.6016,
+    "low": 0.515,
+    "high": 0.6822,
+    "turns": 19.2
+   },
+   "zealot": {
+    "games": 128,
+    "starter": 81,
+    "enemy": 47,
+    "draws": 0,
+    "share": 0.6328,
+    "low": 0.5466,
+    "high": 0.7113,
+    "turns": 22.3
+   }
+  },
+  "source": "jumpstart",
+  "rule": "two",
+  "starters": 16,
+  "games_per_pair": 2,
+  "seed": 505,
+  "when": "2026-10-14 11:51",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "handicap": [
+   9
+  ]
+ },
+ "before": {
+  "all": {
+   "games": 384,
+   "starter": 124,
+   "enemy": 257,
+   "draws": 3,
+   "share": 0.3255,
+   "low": 0.2804,
+   "high": 0.374,
+   "turns": 17.2
+  },
+  "kinds": {
+   "ember_bandit": {
+    "games": 96,
+    "starter": 43,
+    "enemy": 50,
+    "draws": 3,
+    "share": 0.4624,
+    "low": 0.3645,
+    "high": 0.5632,
+    "turns": 16.8
+   },
+   "grave_robber": {
+    "games": 96,
+    "starter": 14,
+    "enemy": 82,
+    "draws": 0,
+    "share": 0.1458,
+    "low": 0.0889,
+    "high": 0.23,
+    "turns": 22.2
+   },
+   "thornback": {
+    "games": 96,
+    "starter": 21,
+    "enemy": 75,
+    "draws": 0,
+    "share": 0.2188,
+    "low": 0.1478,
+    "high": 0.3114,
+    "turns": 14.2
+   },
+   "zealot": {
+    "games": 96,
+    "starter": 46,
+    "enemy": 50,
+    "draws": 0,
+    "share": 0.4792,
+    "low": 0.382,
+    "high": 0.578,
+    "turns": 15.8
+   }
+  },
+  "starters": 12,
+  "source": "archetype",
+  "rule": "any",
+  "games_per_pair": 2,
+  "seed": 101,
+  "when": "2026-10-14 10:23",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)"
+ },
+ "jumpstart_without_handicap": {
+  "note": "partial: stopped at 266 of 800 games, 14 Oct 10:38",
+  "all": {
+   "games": 266,
+   "starter": 124,
+   "enemy": 142,
+   "draws": 0,
+   "share": 0.4662,
+   "low": 0.4071,
+   "high": 0.5262,
+   "turns": 19.0
+  },
+  "kinds": {
+   "ember_bandit": {
+    "games": 200,
+    "starter": 99,
+    "enemy": 101,
+    "draws": 0,
+    "share": 0.495,
+    "low": 0.4265,
+    "high": 0.5637,
+    "turns": 18.8
+   },
+   "grave_robber": {
+    "games": 66,
+    "starter": 25,
+    "enemy": 41,
+    "draws": 0,
+    "share": 0.3788,
+    "low": 0.2715,
+    "high": 0.4994,
+    "turns": 19.8
+   }
+  }
+ },
+ "tuning": [
+  {
+   "handicap": 6,
+   "seed": 303,
+   "starters": 10,
+   "games_per_pair": 1,
+   "all": {
+    "games": 160,
+    "starter": 91,
+    "enemy": 69,
+    "draws": 0,
+    "share": 0.5687,
+    "low": 0.4913,
+    "high": 0.643,
+    "turns": 20.7
+   }
+  },
+  {
+   "handicap": 10,
+   "seed": 404,
+   "starters": 16,
+   "games_per_pair": 2,
+   "all": {
+    "games": 512,
+    "starter": 357,
+    "enemy": 155,
+    "draws": 0,
+    "share": 0.6973,
+    "low": 0.6561,
+    "high": 0.7355,
+    "turns": 19.2
+   }
+  },
+  {
+   "handicap": 12,
+   "seed": 303,
+   "starters": 10,
+   "games_per_pair": 1,
+   "all": {
+    "games": 160,
+    "starter": 113,
+    "enemy": 47,
+    "draws": 0,
+    "share": 0.7063,
+    "low": 0.6315,
+    "high": 0.7713,
+    "turns": 18.9
+   }
+  }
+ ]
+}

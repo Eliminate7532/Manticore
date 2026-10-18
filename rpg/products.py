@@ -14,6 +14,7 @@ import json
 import os
 import random
 import re
+import weakref
 
 from rpg import cardpool, data_path, rules
 
@@ -127,6 +128,44 @@ def starter_deck(halves, pool=None, lists=None):
             fill = max(sorted(basics), key=lambda n: basics[n])
             total[fill] += rules.MIN_DECK - size
     return [(n, total[n]) for n in order]
+
+
+COLOURS = "WUBRG"
+COLOUR_NAMES = {"W": "White", "U": "Blue", "B": "Black", "R": "Red", "G": "Green"}
+_COLOURS = weakref.WeakKeyDictionary()      # pool -> {half-deck code: colours}
+
+
+def colours(half, pool=None):
+    """Round RPG9: the colours a half-deck's spells are ("G"; "" for a colourless one; "WUBRG" for JMP Rainbow and J25 Chaos), in
+    WUBRG order - the colours of its cards that aren't lands (Forge's colour of each card, cardpool.Card.colours). Of Forge's 363
+    half-decks 360 are one colour, 2 are five and 1 is colourless (counted 14 Oct 2026, Forge fb4d809)."""
+    pool = pool or cardpool.load()
+    known = _COLOURS.setdefault(pool, {})
+    if half.code not in known:
+        seen = set()
+        for n, _k in half.cards:
+            card = pool.get(n)
+            if card is None or card.is_land:
+                continue
+            seen.update(ch for ch in card.colours if ch in COLOURS)
+        known[half.code] = "".join(ch for ch in COLOURS if ch in seen)
+    return known[half.code]
+
+
+def colours_of(halves, pool=None):
+    """The colours of several half-decks together, in WUBRG order."""
+    seen = set()
+    for h in halves:
+        seen.update(colours(h, pool))
+    return "".join(ch for ch in COLOURS if ch in seen)
+
+
+def colour_words(cols):
+    """"G" -> "Green", "UG" -> "Blue and Green", "" -> "colourless"."""
+    words = [COLOUR_NAMES[c] for c in cols if c in COLOUR_NAMES]
+    if not words:
+        return "colourless"
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
 
 
 def offer(rng, decks=None, n=3, exclude=()):

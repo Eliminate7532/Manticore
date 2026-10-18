@@ -13,6 +13,16 @@ Reads one or more shapes files:
 
 Prints every shape seen with its count, then the REQUIRED shapes (FORGE_REPEAT_BEHAVIOURS.md section
 D) that were never seen among them. Exit code 1 when one is missing, 0 when the whole list was hit.
+
+Round COV1 (15 Oct 2026):
+  * soak.py writes soak_shapes.json with json.dump(..., indent=1) - one object over many lines. The
+    reader took any multi-line file for one-object-per-line, every line failed to parse, and every
+    report since 27 Sep said "Shapes seen: (none)". The whole file is now read as JSON first.
+  * "confirm card" / "confirm no_card" are no longer required: on desktop Forge (the bridge's GUI is
+    GuiDesktop) every yes/no question comes as a prompt (InputConfirm), and Forge calls the GUI's
+    confirm() only when isLibgdxPort() is true (the mobile port), from InputConfirmMulligan (Serum
+    Powder at a mulligan) and from the dev-mode cheats. Checked in Forge fb4d809's bytecode (javap) -
+    see docs/rounds/COV1.md. They are still counted when they come.
 """
 import argparse
 import glob
@@ -31,9 +41,15 @@ REQUIRED_SHAPES = [
     ("choose", "max=2+"),
     ("choose_one", "optional"),
     ("choose_one", "required"),
-    ("confirm", "card"),
-    ("confirm", "no_card"),
 ]
+
+# Round COV1: shapes the bridge can report but desktop Forge (almost) never asks for. Counted when seen, never required.
+NOT_REQUIRED = [
+    ("confirm", "card", "only Serum Powder clicked during a mulligan asks this way"),
+    ("confirm", "no_card", "besides that, only Forge's dev-mode cheats call confirm()"),
+]
+YES_NO_NOTE = ("Yes/no questions: desktop Forge asks them in the prompt bar (InputConfirm), not as a bridge "
+               "'confirm' question, so they don't show as shapes.")
 
 
 def _add(totals, q, shape, n=1):
@@ -48,12 +64,15 @@ def load_shapes(path):
     totals = {}
     with open(path, "r", encoding="utf-8") as f:
         text = f.read()
+    # Round COV1: the whole file first. One JSON object - soak_shapes.json, which soak.py writes with indent=1 over
+    # many lines, or a shapes log of a single line - is read as one record. Only a file that is NOT one JSON value
+    # (two or more objects, one per line) is read line by line.
     try:
         data = json.loads(text)
     except ValueError:
         data = None
-    if isinstance(data, dict) and not _looks_like_jsonl_only(text):
-        _merge_shapes_obj(totals, data)
+    if isinstance(data, dict):
+        _merge_record(totals, data)
         return totals
     for line in text.splitlines():
         line = line.strip()
@@ -64,21 +83,18 @@ def load_shapes(path):
         except ValueError:
             continue
         if isinstance(obj, dict):
-            if "shapes" in obj and isinstance(obj["shapes"], dict):
-                _merge_shapes_obj(totals, obj["shapes"])
-            elif "q" in obj and "shape" in obj:
-                _add(totals, obj["q"], obj["shape"], obj.get("n", 1))
-            else:
-                _merge_shapes_obj(totals, obj)
+            _merge_record(totals, obj)
     return totals
 
 
-def _looks_like_jsonl_only(text):
-    """True when the file is one JSON object per line (more than one line of it), so a dict parse
-    of the WHOLE file (which json.loads would only succeed on for a single-object file) is not
-    what was meant."""
-    lines = [ln for ln in text.splitlines() if ln.strip()]
-    return len(lines) > 1
+def _merge_record(totals, obj):
+    """One JSON object: a session's {"shapes": {...}} line, a check-style {"q", "shape"[, "n"]} line, or a shapes map."""
+    if "shapes" in obj and isinstance(obj["shapes"], dict):
+        _merge_shapes_obj(totals, obj["shapes"])
+    elif "q" in obj and "shape" in obj:
+        _add(totals, obj["q"], obj["shape"], obj.get("n", 1))
+    else:
+        _merge_shapes_obj(totals, obj)
 
 
 def _merge_shapes_obj(totals, obj):
@@ -119,6 +135,18 @@ def format_report(totals):
             lines.append("  %-12s %s" % (q, needle))
     else:
         lines.append("Every required shape was seen.")
+    seen_by_q = {}
+    for (q, shape) in totals:
+        seen_by_q.setdefault(q, []).append(shape)
+    unseen = [(q, needle, why) for q, needle, why in NOT_REQUIRED
+              if not any(needle == shape.split(":")[0] for shape in seen_by_q.get(q, []))]
+    if unseen:
+        lines.append("")
+        lines.append("Not required, and not seen (round COV1):")
+        for q, needle, why in unseen:
+            lines.append("  %-12s %-28s %s" % (q, needle, why))
+    lines.append("")
+    lines.append(YES_NO_NOTE)
     return "\n".join(lines), missing
 
 

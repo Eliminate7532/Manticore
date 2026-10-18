@@ -68,7 +68,7 @@ Keys worth knowing
   M               Sound on / off
   + / -           Bigger / smaller text
   Ctrl+0          Text back to normal size (100%)
-  Ctrl and + / -  Bigger / smaller cards on the battlefield (when they fit in one row)
+  Ctrl and + / -  Bigger / smaller cards in your hand and command zone, and on the battlefield when they fit in one row
   H               Every key and control
   F8              Report a bug, or suggest an idea
 
@@ -90,6 +90,14 @@ Cube draft (main menu > Draft)
   of 15, then each pool becomes a 40-card deck and you play one game against the AI drafter you choose.
   Turbo Cube has a house rule: all spells and activated abilities cost {2} less. The draft is saved
   after every pick. The four decks go to My decks (tagged DRAFT).
+
+Adventure (main menu > Adventure) - new, the first playable version
+  Start a game in one of three slots: your name, then three Jumpstart half-decks make your first 60
+  cards, in at most two colours. The foes on the map play Jumpstart decks too; the cave is harder.
+  Walk the map with the arrows or WASD; walking into a foe asks before a duel starts. Every duel
+  is a 60-card game at 20 life on the normal table: a win gives gold and a card, a loss costs a fifth
+  of your gold and sends you back to town. In town you buy single cards, packs and basic lands, sell
+  cards, and edit your deck. The game saves itself as you go. Maps, towns and art are placeholders.
 
 Deck screen tags
   NOT LEGAL means a deck breaks a rule of its format (a banned card, the wrong colours, too many or too few

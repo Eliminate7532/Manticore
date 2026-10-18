@@ -1274,9 +1274,10 @@ class RewindDialog(OptionsDialog):
 class GameOverDialog(Dialog):
     """Victory / Defeat with the two things you want next: a new game (deck screen) or a look at the final board."""
 
-    def __init__(self, heading, text, colour, on_new):
+    def __init__(self, heading, text, colour, on_new, extra=()):
         super().__init__()
         self.heading, self.text, self.colour, self.on_new = heading, text, colour, on_new
+        self.extra = list(extra or ())          # round CD4: [(label, callback)] - Play again / Edit deck after a draft game
 
     def draw(self, gui):
         L = gui.L
@@ -1286,6 +1287,8 @@ class GameOverDialog(Dialog):
         blines = wrap_text(self.text, bf, pw - 60)
         bh = int(max(42, 46 * L.fs))
         need = 18 + hf.get_height() + 12 + len(blines) * (bf.get_height() + 2) + 30 + bh + 22
+        if self.extra:                                   # round CD4: room for a second row of buttons
+            need += bh + 10
         rect = self.panel(gui, pw, min(need, L.H - 40), real=True)
         y = rect.y + 18
         draw_text(gui.screen, self.heading, rect.centerx, y, hf, self.colour, "midtop")
@@ -1296,6 +1299,26 @@ class GameOverDialog(Dialog):
         by = rect.bottom - bh - 22
         nw = max(gui.button_width("New game"), int(200 * L.fs))
         cw = max(gui.button_width("Look at the board"), int(230 * L.fs))
+        if self.extra:                                   # round CD4: one row when it fits, else the extra buttons above
+            ew = [gui.button_width(label) for label, _cb in self.extra]
+            row = sum(ew) + 14 * len(ew) + nw + 14 + cw
+            if row <= rect.w - 40:
+                x = rect.centerx - row // 2
+                for k, (label, _cb) in enumerate(self.extra):
+                    self.button(gui, pygame.Rect(x, by, ew[k], bh), label, f"extra_{k}", True, k == 0)
+                    x += ew[k] + 14
+                self.button(gui, pygame.Rect(x, by, nw, bh), "New game", "new")
+                self.button(gui, pygame.Rect(x + nw + 14, by, cw, bh), "Look at the board", "close")
+                return
+            ey = by - bh - 10
+            x = rect.centerx - (sum(ew) + 14 * (len(ew) - 1)) // 2
+            for k, (label, _cb) in enumerate(self.extra):
+                self.button(gui, pygame.Rect(x, ey, ew[k], bh), label, f"extra_{k}", True, k == 0)
+                x += ew[k] + 14
+            x = rect.centerx - (nw + 14 + cw) // 2
+            self.button(gui, pygame.Rect(x, by, nw, bh), "New game", "new")
+            self.button(gui, pygame.Rect(x + nw + 14, by, cw, bh), "Look at the board", "close")
+            return
         x = rect.centerx - (nw + 14 + cw) // 2
         self.button(gui, pygame.Rect(x, by, nw, bh), "New game", "new", True, True, True)
         self.button(gui, pygame.Rect(x + nw + 14, by, cw, bh), "Look at the board", "close")
@@ -1307,25 +1330,31 @@ class GameOverDialog(Dialog):
             self.on_new()
         elif name == "close":
             self.done = True
+        elif name and name.startswith("extra_"):          # round CD4
+            self.done = True
+            self.extra[int(name[6:])][1]()
 
     def key(self, gui, ev):
-        if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_n):
+        if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and self.extra:      # round CD4: Enter = Play again
+            self.done = True
+            self.extra[0][1]()
+        elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_n):
             self.done = True
             self.on_new()
         elif ev.key in (pygame.K_ESCAPE, pygame.K_SPACE):
             self.done = True
 
 
-def game_over_dialog(state, my_name, on_new=None, spectator=False):
+def game_over_dialog(state, my_name, on_new=None, spectator=False, extra=()):
     on_new = on_new or (lambda: None)
     winner = state.get("winner") or ""
     if not winner:
-        return GameOverDialog("Game over", "The game has ended.", GOLD, on_new)
+        return GameOverDialog("Game over", "The game has ended.", GOLD, on_new, extra)
     if spectator:                                    # Round MP2: someone watching an online game
         return GameOverDialog("Game over", f"{winner} won the game.", GOLD, on_new)
     won = winner == my_name
     return GameOverDialog("Victory!" if won else "Defeat", f"{winner} won the game." if not won else "You won the game.",
-                          GREEN if won else RED, on_new)
+                          GREEN if won else RED, on_new, extra)
 
 
 def make_request_dialog(request, gui):

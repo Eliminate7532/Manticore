@@ -22,8 +22,9 @@ PHASE 0 - Version control (top priority, asked for 2026-09-20)
     for all six confirmed to exist on PyPI
 [x] Crash log verified on Karl's PC (2026-09-20): its 40 tests pass and --version printed the expected code 476bb2da
     (still not seen there: the crash message box and the hard-crash file)
-[ ] Known flaky test: tests.test_forge_live ...fetchland_search... failed once in four runs (stays at stage 'start' for 150 s; it
+[x] Known flaky test: tests.test_forge_live ...fetchland_search... failed once in four runs (stays at stage 'start' for 150 s; it
     looks like it depends on who plays first / whether a fetchland is in the opening hand). Uses none of the new files. Make it robust.
+    Fixed by Round 14 (the test sets up its own board); Round FLK1 measured it, 25 of 25 passed (docs/rounds/FLK1.md).
 [ ] Later: automatic tests on GitHub (Windows + Python 3.14) - needs the repository, which now exists
 
 PHASE 1 - Core Engine Validation (current)
@@ -49,15 +50,19 @@ PHASE 1B - Interactive Table, old engine (built 2026-09-19; tested headless; Kar
 [x] Resizable window, F11 fullscreen, and text size 100-200% (+ / - keys or A- / A+ buttons);
     layout is computed from the window size and remembered in settings.json
 [x] Offline tests (rules helpers, Forge parser and rules, headless GUI with simulated clicks); 500 now, counting the Forge table
-[ ] Play a real game on Karl's PC and report what feels wrong (first thing to do); also try
+[x] Play a real game on Karl's PC and report what feels wrong (first thing to do); also try
     F11, dragging the window edge, and the text sizes on the real monitor (both tables)
+    -> RM1 (15 Oct): done - his first games and three F8 reports (26 Sep, Round 27c), the window on Remote Desktop (Round 27e),
+    his game of 3 Oct with screenshots at 4096x2160 / 175% (Rounds 31 and 32). Later finds go in their own lines below.
 [x] Mana abilities that the card-text parser couldn't do (Chrome Mox, Fellwar Stone,
     Springleaf Drum, Mox Amber, Gene Pollinator, Elvish Spirit Guide) now work through
     the Forge scripts; only The Cabbage Merchant is still manual (keys 1-6)
 [x] Fetchland: asks "crack it now?" when played, FETCH label, life shown in the message
 [x] Shock lands, Chrome Mox and Mox Diamond ask their questions instead of guessing
-[ ] Enforce "spend this mana only on ..." restrictions (Delighted Halfling)
-[ ] Mana Vault / Basalt Monolith: pay to untap (Forge script has the ability; not menu-driven yet)
+[x] Enforce "spend this mana only on ..." restrictions (Delighted Halfling) (Forge enforces it: the restricted mana floats but
+    won't pay for a non-legendary spell - tests/test_rmv1.py; Round RMV1)
+[x] Mana Vault / Basalt Monolith: pay to untap (through the bridge: a tapped Monolith's click is its untap; Mana Vault's upkeep
+    asks to pay {4} - tests/test_rmv1.py; Round RMV1)
 [x] Gemstone Caverns: begin the game on the battlefield when it is in the opening hand
     (old table: opening-hand step + T to flip who goes first; Forge table: Forge runs the step itself)
 [x] Back-face art for double-faced cards (card_data.get_image_path picks the matching face's image)
@@ -129,9 +134,12 @@ mode, including one with a full pipeline from Moxfield deck -> .dck file
     Forge itself has Android and iOS ports, which is worth studying for the mobile phase
 [ ] Evaluate Forge AI quality specifically for cEDH-style play - Forge's own docs note its AI is strongest with
     aggro/midrange, weaker with control, and poor against many combo decks (Karl's decks are combo-centric)
-[ ] Prompts still answered with Forge's default instead of asking: reordering/choosing among card lists in a few rare cases (manipulateCardList).
+[x] Prompts still answered with Forge's default instead of asking: reordering/choosing among card lists in a few rare cases (manipulateCardList).
+    (unreachable: Forge reaches it only from scry with its card displays on, and the bridge turns them off - tests/test_rmv1.py
+    GuardTests fails if a Forge update adds another way in; Round RMV1)
     (Combat damage among several blockers and "divide N" / generic amounts are DONE in round 14.)
-[ ] Counter names other than +1/+1 and -1/-1 are shown as Forge names them (mapping is assumed, unchecked)
+[x] Counter names: the table shows Forge's own names (CounterEnumType.getName) - "-0/-1", "Acquired taste" - checked
+    against fb4d809's 237 constants and live (Round CTR1)
 [ ] Pods (3-4 players) draw the opponents small; a side-by-side pod layout is still to do. LOW PRIORITY: Karl (2026-09-20) is happy
     with ONE AI opponent for now
 [ ] Forge AI thinking time and start-up time on Karl's PC (start takes 10-20 s in the sandbox)
@@ -152,8 +160,10 @@ PHASE 3 - Playtesting & Bug Reporting
 [ ] Discord's real file-size limit for webhooks is unconfirmed (the zip stays under about 5 MB); if a refusal ever shows up, lower MAX_ZIP_BYTES
 [x] Reports can be replayed (round 13): python replay.py report.zip plays the same seed and clicks in the sandbox (README: REPLAYING A REPORT).
 [ ] Still open: turn a reproduced report into a regression test automatically; a --replay mode inside the game window itself (the sandbox script is not a window)
-[ ] The webhook file has to be copied into each friend's folder by hand until there is an installer
-[ ] Playtest with friends once Phase 1 and 2 are stable
+[x] The webhook file has to be copied into each friend's folder by hand until there is an installer
+    -> RM1: the installer bundles it (Round 29: bug_report_config.bundled.json, reporting.load_config's fallback).
+[x] Playtest with friends once Phase 1 and 2 are stable
+    -> RM1: testers play the released builds (Release 0.28.53.9, 12 Oct: "the cube draft for the testers"; CLAUDE.md).
 
 PHASE 4 - Polish & Packaging
 -------------------------------
@@ -311,29 +321,38 @@ PHASE 4 - Polish & Packaging
     to run a command on his own PC; the public repository has not been created). Code (after this round) printed by --version.
     NOT seen on Karl's screen yet; not run on Windows.
 [ ] Forge AI plays Kinnan as midrange, never loops (docs/incoming/AI_EVAL_2026-09-23.md): scripted combo lines brief waiting on Karl (A12).
+    -> RM1: Karl moved scripted combo lines to the roadmap, "no longer an immediate priority" (25 Sep, claude/STATUS_2026-09-24.md);
+    the Kinnan deck left the alpha decks on 4 Oct (patch 38). Still open: no later decision found.
 [x] Sounds and a glide-out ghost for a card leaving the battlefield: DONE in rounds 24-25 (placeholder synthesised cues; a fading
     ghost tweens from the card's last spot to the graveyard/exile/hand/library tile it went to). Combat arrows in a pod: DONE in
     round 25 (attacker -> defending player's panel).
 [ ] Effects, still not built: a "NEW" marker for cards that came in this turn, a ring for cards changing controller / being exiled
     without dying, arrows for combat DAMAGE assignment specifically (round 25 only added the attacker-to-defender line itself).
-[ ] Possible: a true "take back" (Karl put undo aside for now; needs a save of the whole engine state before each action, which Forge does not offer).
+[x] Possible: a true "take back" (Karl put undo aside for now; needs a save of the whole engine state before each action, which Forge does not offer).
+    -> RM1: built as Round UNDO1 (9 Oct) - Undo goes back to a moment of your turn by rebuilding the game from its journal.
 [ ] GUI gaps still open (ranked): (a) DONE in round 13 (violet keyword chips + hover list; the bridge sends CardStateView keywords; abilities gained are not shown, only keywords); (b) DONE in round 10 (Skip window; see the eleventh request); (c) DONE in round 14 (the combat damage assignment window and the same window for
     "divide this amount" prompts); (d) DONE in round 10 (target arrows); (e) small: a
     float-all-mana key, a stops preset/reset, an opponent-speed setting, colour-blind check of the yellow/red/blue/orange frames; (f) day/night,
     energy, experience and rad counters are not sent by the bridge at all; (g) animations and sounds only if it still feels flat.
 [ ] Confirm on Karl's PC: Ctrl+V / Paste reads the Windows clipboard (falls back to tkinter; drag a .txt otherwise) and the
     deck screen looks right on his screen
-[ ] Deck screen extras: a different deck per AI opponent, import by Moxfield/Archidekt link, a file-open dialog, a deck-list
+[~] Deck screen extras: a different deck per AI opponent, import by Moxfield/Archidekt link, a file-open dialog, a deck-list
     preview, editing a saved deck
+    -> RM1: done - a deck per AI (Round 27b), import by Moxfield / Archidekt link (deck_importer.py), the import window shows the
+    pasted list (ImportDialog.draw_preview). Editing by hand exists for drafted decks only (Round CD4). Not built: a file-open
+    dialog for decks (patch 40's is for card pictures), editing any saved deck.
 [ ] Confirm on Karl's PC: free mulligan puts nothing back on the first mulligan; Gemstone Caverns is offered when he goes second
     (if not, get forge_engine.log and the coin-toss result)
 [ ] Look at the new table on Karl's real screen again and list what still looks ugly (colours, cards, text, spacing)
-[ ] Play/draw choice in pods of 3+ (still Forge's generic "Who would you like to start?" prompt)
+[~] Play/draw choice in pods of 3+ (still Forge's generic "Who would you like to start?" prompt)
+    -> RM1: the prompt now says "choose who starts - click a player's panel" (Round 28ba); the question is still Forge's.
 [ ] Pods draw the log/feed cramped (long stack text now scrolls, round 9)
-[ ] Proper installer/executable so friends don't need to set up Python (and Java)
+[x] Proper installer/executable so friends don't need to set up Python (and Java)
     manually (e.g. PyInstaller). Mind the GPL note in PHASE 2B before giving it to anyone
+    -> RM1: Round 29 (PyInstaller + Inno Setup, a bundled Java); released from v0.28.43 on (patch 41); public source: patch 35.
 [ ] Settings for personalization: player name, preferred deck colors, etc.
-[ ] Save/load game state mid-session
+[x] Save/load game state mid-session
+    -> RM1: Resume last game (Round 21) and the last good state (Round LAST1, autosave only - Karl's call, 11 Oct; CLAUDE.md).
 [ ] Visual polish pass - aiming for a presentation quality closer to MTG
     Arena (though not as heavily animated): customizable table backgrounds,
     custom/selectable card backs, improved card and zone layout beyond the
@@ -518,7 +537,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     copies Exocet) and Grok's terms for the pictures (NOTICES.json: font-display, art-backgrounds are unverified;
     tools/build_notices.py --release refuses until they are verified). If AvQest can't be cleared, delete assets/fonts/AvQest.ttf:
     the game falls back to Cinzel Decorative (SIL OFL) on its own.
-[ ] Round 29 installer must include assets/ (paths.assets_dir() is program_dir()/"assets")
+[x] Round 29 installer must include assets/ (paths.assets_dir() is program_dir()/"assets")
+    -> RM1: it does - commander_sim.spec's datas has _data("assets"), and tools/check_dist.py requires assets/fonts.
 [x] Round 29a (2026-10-02, Claude (Opus), a patch on main): the bridge watches the program that started it (--parent-pid,
     ParentWatch.java) from its first second and exits when it's gone. Before, a program killed during Forge's start-up
     (10-20 s) left java.exe running until Forge reached its command loop. Alpha must-have 1, gap 4. Also soak night 10's two
@@ -558,8 +578,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [x] Round OS1 (2026-10-02, Claude (Opus), 0.28.25, patch 21, after CHK2): online soak, 18 games on the chain, no real finding;
     two harness false alarms fixed
 [ ] START_HERE.txt blanks (Karl): disk size from the first Windows build, the installer version, known issues from 20 games
-[ ] Round 29 (Sonnet): the installer, per claude/SONNET_SPEC_R29_2026-10-01.md (docs\incoming\round29\). Name "Manticore",
-    data folders included (Karl, 2026-10-01).
+[x] Round 29 (Sonnet): the installer, per claude/SONNET_SPEC_R29_2026-10-01.md (docs\incoming\round29\). Name "Manticore",
+    data folders included (Karl, 2026-10-01). -> RM1: built, the next line.
 [x] Round 29 (2026-10-02, Claude (Sonnet 5.5), branch round-29 on 29a): installer code, build script, check_dist, Inno script,
     Sandbox scripts, rename to Manticore, bundled alpha webhook. NOT yet built or run on Windows: that is Karl's checklist
     (EVENING_CHECKLIST.txt). Still to do after the first build: fill licenses/NOTICES.json native_libraries (the DLL list), set
@@ -583,9 +603,10 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [x] Round 30 (2026-10-02, Claude (Opus), 0.28.19): an installed copy updates itself - the title screen offers Update now / Later /
     Skip this version, downloads the installer (checksum checked), closes, installs silently over itself and reopens. OFF until
     update_config.json names the public GitHub repository for releases (Karl's decision). NOT yet tried on Windows.
-[ ] Karl: choose the public repository for releases (the source repo for the GPL offer could be the same one), put it in
+[x] Karl: choose the public repository for releases (the source repo for the GPL offer could be the same one), put it in
     update_config.json, build with --release, publish with tools\make_update_feed.py's gh line. The first build that has the
     repo set must reach testers by hand; every later one arrives by itself.
+    -> RM1: done - github.com/Eliminate7532/Manticore (patch 35), releases from v0.28.43 (patch 41; claude/RELEASE_RUNBOOK.md).
 [ ] Later (production): signed updates (an offline key, tufup), so a hijacked GitHub account can't push an update; a code-
     signing certificate for the installer (SmartScreen).
 [x] Round MP1a (2026-10-02, Claude (Opus), 0.28.26): the online soak (49 games) found two ways a concede hung a game for good
@@ -601,15 +622,18 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [x] Patch 25 (2026-10-02, 0.28.29): licences on the chain - patch 6 (DLLs, AvQest, Grok credit, Java libraries) applied after
     PUB1, and Forge's own five modules in forge.jar count as the Forge component (--release had named them). --release now names
     only Python and Temurin, until the first real Windows installer build is checked.
-[ ] Karl: create the public repository, export into it, set update_config.json's repo and NOTICES.json's source_url
+[x] Karl: create the public repository, export into it, set update_config.json's repo and NOTICES.json's source_url
     (README: PUBLISHING THE SOURCE AND RELEASES). Licences: settled on 2 Oct (patch 6, licence_native_dlls.patch).
+    -> RM1: done in patch 35 (3 Oct).
 [x] Round FMT1 (2026-10-02/03, Claude (Opus), 0.28.32, after MP2's patch 27; patch 28 - FB1 is 29): formats, with MTG Arena's 100-card
     Brawl beside Commander (Karl, 2 Oct: "Arena 100 card brawl"). The deck screen's Format switch; a deck's format is a
     "# format: brawl" line in its file; Brawl's rules on the deck screen (a planeswalker commander, Arena's card pool and banned
     list, colourless commanders' basics) and in the engine (Forge's Brawl variant: 25 life, 30 in a pod, no commander damage);
     four Brawl sample decks; tools\soak.py --format brawl. Online stays Commander only.
-[ ] Formats still waiting for Karl's answers (claude/FORMATS_SKETCH_2026-10-02.md, D2-D10): Standard (best-of-one first?),
-    Two-Headed Giant, Limited. Online Brawl: NetHost (MP2) would build its seats with Main.register() and start Main.variant() as Main does, and the host dialog would carry the format.
+[ ] Formats still waiting for Karl's answers (claude/FORMATS_SKETCH_2026-10-02.md, D2-D10): Two-Headed Giant, Sealed.
+    -> RM1: built since - Standard (Round CON1, best-of-one; CON2's third sample deck) and drafting (Rounds CD1-CD4: Commander and
+    classic cubes, not set boosters). No answer on Two-Headed Giant or Sealed was found. Online stays Commander only: NetHost
+    (MP2) would build its seats with Main.register() and start Main.variant() as Main does, and the host dialog would carry the format.
 [x] Round FB1b (2026-10-03, Claude (Opus), 0.28.34, patch 30 after FB1): what FB1's checks found, neither from the Forge update.
     NetHost no longer says a friend dropped after saying they were back (a lock around both announcements). The soak seat
     declares attackers at last (it never had: Forge marks attackers "weak", the bot looked for "selectable") and uses Alpha
@@ -629,7 +653,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     same Discord channel (or an optional ideas_webhook), a picture only if ticked, and an idea_*.txt copy every time.
 [x] Patch 35 (2026-10-03, 0.28.39): the public repository, github.com/Eliminate7532/Manticore (Karl made it from the 0.28.38
     export). update_config.json names it, so installed copies look for updates there; the Licenses window links to it.
-[ ] The first release from it: the installer (Round 29, never built on Windows yet), the gh release line, Forge's source archive.
+[x] The first release from it: the installer (Round 29, never built on Windows yet), the gh release line, Forge's source archive.
+    -> RM1: v0.28.43 and v0.28.44 were the first (patch 41); testers are on 0.28.53.11 (18 Oct; claude/STATUS_2026-10-17.md).
 [x] Round ALT2 (2026-10-03, Claude (Opus), 0.28.40, patch 36): MPC Autofill as a second source in the Card art picker, the
     way proxxied.com does it - one card's community renders as thumbnails (mpcfill.com's search, then Google Drive's small
     pictures), one click picks one and only that picture is downloaded, bleed cut off, kept per deck as "# art: <card> =
@@ -764,9 +789,10 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     size (Cog > DISPLAY > Cards beside Text, Ctrl and + / -, 100% to 200%, remembered). A battlefield whose cards fit in ONE row
     shows them up to that much bigger (mine, a 1v1 opponent's, and a pod opponent's where its row has room); a fuller board keeps
     today's two rows. At 100% the table is exactly as before (UI6's 28 recorded layouts).
-[ ] Card size, the hand and the command zone: Karl's choice (CLAUDE.md, Round UI7): (b) the hand strip grows and the
+[x] Card size, the hand and the command zone: Karl's choice (CLAUDE.md, Round UI7): (b) the hand strip grows and the
     battlefield gives up the room, or (c) Arena-style - bigger hand cards rising from the bottom edge, partly hidden until
     hovered, or (a) leave them.
+    -> RM1: Karl chose (c) on 13 Oct; built in Rounds HAND1 (the hand) and HAND2 (the command zone, "Yes, like the hand").
 [x] Round JDG1 (2026-10-10, Claude (Opus), 0.28.53.7 proposed, after the Undo bar; spec of 8 Oct, section E): Judge?! v0 - J or the
     Judge?! button (in the stack's heading, the log's when the stack is empty) opens a card's Oracle text, every face, and its
     official rulings, newest first, from Scryfall (kept 30 days in cache/rulings: offline too once seen); for a stack item also
@@ -792,13 +818,19 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     Undo at 150% gives way only for more words; the soak bot's stale attack plan); DROP1 (the soak's dropped clicks, by cause);
     RPG2-RPG6 (the RPG's data, logic and map engine - no screen yet). The bridge jar rebuilt from CD3's and LAST1c's sources
     (tests/test_rel10.py checks where they meet). One git am series: docs/incoming/rel_0.28.53.10/.
-[ ] Cube draft, next (spec docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md): CD4 - edit your drafted deck by hand (Arena-style
-    builder, commander slot, basic land steppers, Suggest lands, Auto-build; for a classic deck too, with a splash), Play again /
-    Edit deck from the end screen, the short-deck tuning (CD1: 107 of 800 AI decks had basics standing in for spells); CD5 - drafting
-    with friends online (Draft decks online). From CD3: the Turbo emblem drawn on the table (a Draft game has no command-zone frame);
-    the classic AI's settings and the 17 lands are first settings, not measured (tools/draft_sim.py can); a 4-player or resumed Turbo
-    game not run. Open: the AI drafters' bar (spec section 10) is Karl's to accept; asking the cube owners (Karl chose to bundle with
-    credit); whether drafts (saves/drafts/, about 100 KB each) should stay out of git.
+[x] Release 0.28.53.11 (2026-10-18, Claude (Opus 5.5); Karl: "generate an appropriate version number and push"): everything
+    merged since 0.28.53.10 - the 13-14 Oct rounds (BNR1, CDFIX1, LG2, HAND1, HAND2, CD4a, CD4, ANS1, RPG7, RPG8, RPG9, QT1, HK1)
+    and the 15-17 Oct rounds merged on 18 Oct (COV1, HUGE1, EMB1, EMB2, CTR1, RM1, FLK1, RMV1). Notes: docs/rounds/<round>.md.
+    LG2 rebuilt the bridge jar, so games saved on 0.28.53.10 can't be resumed. Adventure (RPG8) is on the main menu.
+[x] Cube draft, CD4 (13 Oct; docs/rounds/CD4.md, CD4a.md, ANS1.md): your drafted deck edited by hand (draft_builder.py: commander
+    slot, basic land steppers, Suggest lands, Auto-build; a classic deck too), Play again / Edit deck from the end screen (and Play
+    again after every offline game, ANS1); the short-deck tuning (CD4a: 107 of 800 AI decks short before, 57 of 800 after, seed 7);
+    drafts out of git, kept in the local zip (ANS1, Karl's answer).
+[ ] Cube draft, next (spec docs/incoming/cd1/SPEC_CUBE_DRAFT_2026-10-09.md): CD5 - drafting with friends online (Draft decks
+    online). From CD3: the Turbo emblem drawn on the table (a Draft game has no command-zone frame) - built 15 Oct as round EMB1,
+    not merged; the classic AI's settings and the 17 lands are first settings, not measured (tools/draft_sim.py can); a 4-player
+    or resumed Turbo game not run. Open: the AI drafters' bar (spec section 10) is Karl's to accept; asking the cube owners (Karl
+    chose to bundle with credit).
 [x] LAST1c (in 0.28.53.10): the bridge says state_load_failed for a restore Forge refuses (untouched when nothing changed); a
     restore keeps The Monarch, The Initiative and the City's Blessing. NOT kept (no format for them): hideaway and other cards' own
     effects, emblems (a house rule's emblem comes back from the game's own rule), a dungeon and its room.
@@ -811,8 +843,24 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
 [ ] The RPG plan, next phases (Karl's plan of 9 Oct, a Claude Doc): RPG2-RPG6 built the data (card pool, tiers, Jumpstart starting
     decks, booster pools, ten enemy kinds), the logic (saves, collection, shop, rewards) and the map engine (Tiled maps, Zelda-style
     rooms, a developer's window). Gate 2 is Karl's: the top of the tier list and the two tier caps (RPG3: lands_max, common_max, both
-    off). Next: the RPG's screens, then rpg/ in the installer. Open from CON1: Karl may prefer a plain any-cards 60-card format
-    beside Standard.
+    off). Open from CON1: Karl may prefer a plain any-cards 60-card format beside Standard.
+    -> RM1: since then RPG7 (Karl's answers), RPG8 (the first playable loop: main menu > Adventure, duels on the real table, the
+    shop, the deck editor; rpg/data and rpg/maps in the installer) and RPG9 (an easier first map: 59% for a starting deck, Forge's
+    AI on both sides). Next: Karl's hand check of RPG9's foes ("Karl's hand check is the test of that", docs/rounds/RPG9.md).
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
     commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
     and by commander-on-turn-N, missed land drops, colour screw.
+[x] Rounds of 13 and 14 Oct, merged into main on 14 Oct (3abeab7, "Merge round-hk1 into main (with RPG9, RPG8 and the 13 Oct
+    rounds)"); each has its notes in docs/rounds/<round>.md. Added by RM1 (15 Oct): none of them had a line here.
+    - BNR1: the turn banner lasts 0.6 s (was 1.1 s; Karl: "Shorten only the banner").
+    - CDFIX1: a resumed or rewound draft game knows it is a draft; the cube you drafted is remembered.
+    - LG2: the AI loop guard counts a repeat only when the AI's board isn't shrinking (bridge jar rebuilt).
+    - HAND1: Arena-style hand cards above 100% Card size (Karl's choice (c), 13 Oct).
+    - CD4a, CD4: fewer short AI decks; your drafted deck built by hand; Play again / Edit deck after a draft game.
+    - ANS1: Play again after every offline game; saves/drafts/ out of git (local zip only).
+    - HAND2: the command zone follows Card size, like the hand.
+    - RPG7: Karl's RPG answers (basic lands 1 gold, a 0.3 s room slide, dark only in dungeons, PyTMX).
+    - QT1: quick_tests doesn't blame a test when the scheduled backup ran during the run.
+    - RPG8: the Adventure's first playable loop.
+    - RPG9: an easier first map (two-colour starting decks; Jumpstart foes with 9 spells swapped for lands; 59%).
+    - HK1: housekeeping (branches, ignore rules, deliveries no longer committed, the Project tidied); no program code.

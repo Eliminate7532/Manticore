@@ -433,10 +433,12 @@ class CoverageReportTests(unittest.TestCase):
 
     def test_several_files_are_summed_together(self):
         data = dict(self.FULL)
-        missing_key = "confirm|no_card"
-        n = data.pop(missing_key)
+        missing_key = "order|all:sorted=2+:unsorted=0"      # Round COV1: a REQUIRED shape (confirm|no_card no longer is, so
+        n = data.pop(missing_key)                            # leaving it out of one file proved nothing about the summing)
         path_a = self.write(data)
         path_b = self.write({missing_key: n})
+        self.assertEqual(cov.main([path_a]), 1)              # neither file has every required shape alone
+        self.assertEqual(cov.main([path_b]), 1)
         self.assertEqual(cov.main([path_a, path_b]), 0)
 
 

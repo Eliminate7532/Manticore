@@ -585,7 +585,8 @@ class SoakBotTests(unittest.TestCase):
         self.assertEqual(bot.next_action(again, [], mem), ("cancel",))
 
 
-    def test_a_huge_record_is_not_read_back(self):
+    def test_a_huge_record_is_judged_from_a_cut_down_copy(self):
+        # Round HUGE1: patch 44 skipped a huge record (None, never judged); it is now read with its snapshots cut down.
         from tools import soak
         soak._load_modules()
         d = tempfile.mkdtemp()
@@ -595,12 +596,16 @@ class SoakBotTests(unittest.TestCase):
             for i in range(50):
                 f.write(json.dumps({"t": "state", "turn": i, "pad": "x" * 200}) + "\n")
         self.assertEqual(len(soak._load_messages(path)), 50)
+        self.assertIn("pad", soak._load_messages(path)[0])                 # read whole: nothing cut
         with mock.patch.object(soak, "RECORD_JUDGE_LIMIT", 1000):
-            self.assertIsNone(soak._load_messages(path))
+            cut = soak._load_messages(path)
+            self.assertEqual(len(cut), 50)
+            self.assertNotIn("pad", cut[0])                                 # cut down
             result = soak.GameResult(0, 1, 2)
             session = mock.Mock(stderr_path=os.path.join(d, "none.log"))
             soak._finish_report(result, session, path, d, d)
             self.assertEqual([f["rule"] for f in result.findings], ["huge_record"])
+            self.assertIn("cut-down copy", result.findings[0]["detail"])
 
 
 # ---- sources and folders ----------------------------------------------------------------------------------------------------

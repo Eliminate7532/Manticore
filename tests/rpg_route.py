@@ -93,3 +93,29 @@ def walk_to_tile(ex, goal, limit=6000, stop_at_event=True):
             if ex.area is not area:
                 return events, frames
     raise AssertionError(f"didn't reach {goal} in {limit} frames (at {ex.area.tile_at(ex.walker.x, ex.walker.y)})")
+
+
+def next_press(ex, goal):
+    """Round RPG8: the key walk_to_tile would hold now on the way to tile `goal` ((col, row), or a function returning one), as
+    (dx, dy) - for driving the Adventure's screen (rpg_screens.AdventureFlow.walk_tick), which does the stepping itself. None
+    once the walker stands in the goal tile's middle; (0, 0) while the view slides to the next room."""
+    if ex.sliding():
+        return (0, 0)
+    area = ex.area
+    target = goal() if callable(goal) else goal
+    here = area.tile_at(ex.walker.x, ex.walker.y)
+    route = tile_route(area, here, target, avoid=trigger_tiles(area) - {target})
+    if route is None:
+        raise AssertionError(f"no way from {here} to {target} on {area.name}")
+    mx, my = middle(area, here)
+    ddx, ddy = mx - ex.walker.x, my - ex.walker.y
+    toward_x = (1 if ddx > 0 else -1, 0)
+    toward_y = (0, 1 if ddy > 0 else -1)
+    if len(route) == 1:
+        if abs(ddx) <= NEAR and abs(ddy) <= NEAR:
+            return None
+        return toward_x if abs(ddx) > NEAR else toward_y
+    sx, sy = route[1][0] - here[0], route[1][1] - here[1]
+    if sx:
+        return toward_y if abs(ddy) > NEAR else (sx, 0)
+    return toward_x if abs(ddx) > NEAR else (0, sy)

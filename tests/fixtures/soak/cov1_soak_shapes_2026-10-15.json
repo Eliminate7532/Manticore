@@ -1,0 +1,11 @@
+{
+ "choose|min=0:max=1:offered=2+": 70,
+ "choose_one|optional:offered=2+": 253,
+ "order|all:sorted=0:unsorted=2+": 152,
+ "choose|min=1:max=1:offered=2+": 149,
+ "order|some:sorted=0:unsorted=2+": 6,
+ "choose|min=0:max=1:offered=1": 21,
+ "order|all:sorted=2+:unsorted=0": 28,
+ "choose_one|required:offered=2+": 5,
+ "choose|min=0:max=2+:offered=2+": 40
+}

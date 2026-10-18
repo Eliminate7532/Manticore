@@ -41,12 +41,16 @@ a = Analysis(
         _data("banned_standard.snapshot.json", "."),     # Round CON1: the same for Standard
         _data("update_config.json", "."),          # Round 30: where an installed copy looks for updates
         _data("stock_cubes"),                       # Round CD3: the stock cubes' bundled lists
+        _data(os.path.join("rpg", "data")),         # Round RPG8: the Adventure's data (card pool, tiers, packs, enemies, numbers)
+        _data(os.path.join("rpg", "maps")),         # Round RPG8: its Tiled maps and their tiles
     ],
     # Modules only imported lazily or by name: --soak imports tools.soak, which imports the rest inside _load_modules().
     # Opus's Linux probe needed exactly these (SONNET_SPEC_R29 section 1.3); add whatever the first Windows build's warnings
     # file (build\\pyinstaller\\commander_sim\\warn-commander_sim.txt) names as missing.
     hiddenimports=[
         "tools.soak", "soak_bot", "soak_report", "soak_boards", "bridge_rules", "card_check", "deck_loader",
+        # Round RPG8: the Adventure is opened from the main menu by a function-level import
+        "rpg_screens", "rpg_map_view", "rpg.adventure", "rpg.explore", "rpg.tmx", "pytmx",
     ],
     hookspath=[],
     runtime_hooks=[],

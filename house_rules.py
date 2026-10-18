@@ -117,6 +117,21 @@ def engine_args(keys):
     return out
 
 
+# Round EMB1 (15 Oct 2026): the emblem card's own words. The bridge makes an effect card named this (HouseRules.TURBO_NAME) with a
+# static ability whose Description$ is EMBLEM_TEXT, but the snapshot sends no rules text for an effect card, so the panel's chip
+# said only "An emblem: it stays for the rest of the game." tests/test_emb1.py checks both strings against HouseRules.java.
+EMBLEMS = {
+    "turbo cube emblem": ("Spells you cast and abilities you activate cost {2} less to cast or activate.",
+                          "Turbo Cube's house rule: every player starts the game with this emblem."),
+}
+
+
+def emblem_text(card_name):
+    """What a house rule's emblem does, for the chip on a player's panel: "" for any other card."""
+    hit = EMBLEMS.get(" ".join((card_name or "").split()).lower())
+    return " ".join(hit) if hit else ""
+
+
 def describe(keys):
     """One line per rule, for the loading screen and the draft window: "Turbo Cube emblem: all spells and activated abilities
     cost {2} less." """

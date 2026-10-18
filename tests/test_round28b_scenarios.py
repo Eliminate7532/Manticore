@@ -8,12 +8,12 @@ tests/test_round27c.py's play_spiteful_to_my_second_draw; this module covers wha
 with confidence from a card's own rules text, without a JDK to probe Forge directly:
 
   built here   4 (surveil twice), 6 (a modal spell twice), 7 (a commander removed twice, plus its
-               NO_COMMANDER_VARIANT red twin), 10 (yield "until end of turn")
+               NO_COMMANDER_VARIANT red twin), 10 (yield "until end of turn"), and - round RMV1, after
+               a live probe - 5 (scry 2 twice)
   skipped      2 (two replacement effects: FORGE_REPEAT_BEHAVIOURS.md itself calls this "a real
                unknown... the first probe will show it"), 3 (an optional "you may" trigger fired
                twice: no card I could name with confidence scripts a plain repeatable confirm() for
-               this), 5 (scry 2 twice: the exact request shape - "the many + order path" - isn't
-               shown by anything already proven live), 9 (blocked by two creatures twice: whether
+               this), 9 (blocked by two creatures twice: whether
                the AI's blocks can be forced through Setup Game State is unverified)
 
 Each scenario asserts session.checks == [] AND that bridge_rules.check_stream finds no `fail` in
@@ -331,13 +331,69 @@ class ScenarioTests(unittest.TestCase):
                       "Setup Game State. Answer yes the first time, no the second, and check the "
                       "ability actually did or didn't happen each time.")
 
-    def test_scenario5_scry_twice_needs_a_probe(self):
-        self.skipTest("needs a probe on Windows: FORGE_REPEAT_BEHAVIOURS.md section E, #5 calls this "
-                      "'the many + order path', but nothing already proven live shows the exact request "
-                      "shape scry uses (unlike surveil, which is a plain prompt with ok/cancel). Cast a "
-                      "scry-2 spell (e.g. Preordain), see what kind of request(s) actually arrive, THEN "
-                      "write the answering code, bottoming one card the first time and reordering both "
-                      "on top the second.")
+    # -----------------------------------------------------------------------------------------
+    # scenario 5: scry 2 twice - one card to the bottom the first time, both kept on top and
+    # reordered the second (round RMV1, 16 Oct 2026; the probe the skip asked for, real Forge fb4d809)
+    # -----------------------------------------------------------------------------------------
+    # What arrives, seen live: one "order" request "Select cards to be put on the bottom of your
+    # library" (min 0, max 2) - Forge's arrangeForScry with UI_SELECT_FROM_CARD_DISPLAYS off, never
+    # manipulateCardList (tests/test_rmv1.py GuardTests) - then, only when two or more stay on top,
+    # a second "order" request "Arrange cards to be put on top of your library" (min = max = the
+    # number kept); the first card of that answer ends up on top.
+    def cast_preordain(self, chk, answers):
+        """Cast Preordain (scry 2, then draw) and answer its requests with `answers`: a list of functions,
+        one per request, each taking the request and returning the answer. Returns the requests seen."""
+        s = chk.s
+        before = names(s, "graveyard").count("Preordain")
+        card = next(c for c in s.me()["zones"]["hand"] if c["name"] == "Preordain")
+        s.click_card(card["id"])
+        seen, end = [], time.time() + 40
+        while time.time() < end and names(s, "graveyard").count("Preordain") == before:
+            s.poll()
+            if s.requests:
+                req = s.requests[0]
+                self.assertLess(len(seen), len(answers), "an extra request: %s" % req.get("title"))
+                seen.append(req)
+                s.answer(req, answers[len(seen) - 1](req))
+                time.sleep(0.4)
+                continue
+            self.pump_priority(s, tries=1, pause=0.3)
+        self.assertEqual(names(s, "graveyard").count("Preordain"), before + 1, "Preordain never resolved")
+        chk.pump(0.6)
+        return seen
+
+    def test_scenario5_scry_twice_one_to_the_bottom_then_both_on_top_reordered(self):
+        chk = self.checker()
+        s = chk.s
+        lines = ["humanlife=40", "ailife=40", "activeplayer=human", "activephase=MAIN1", "turn=3",
+                 "humanhand=Preordain;Preordain", "humanbattlefield=Island;Island",
+                 "humanlibrary=Forest;Mountain;Plains;Swamp;Wastes;Island",
+                 "aihand=", "ailibrary=Forest;Forest;Forest", "aibattlefield=", "removesummoningsickness=true"]
+        self.assertTrue(chk.apply(lines, ["Preordain", "Preordain"]))
+        record_path = start_recording(chk)
+
+        def pick(*wanted):
+            def answer(req):
+                items = [(it.get("card") or {}).get("name") for it in req.get("items") or []]
+                return [items.index(w) for w in wanted]
+            return answer
+
+        # 1: Forest and Mountain are on top; Forest to the bottom, so the draw is the Mountain
+        seen = self.cast_preordain(chk, [pick("Forest")])
+        self.assertEqual([r["kind"] for r in seen], ["order"])
+        self.assertIn("bottom of your library", seen[0]["title"])
+        self.assertEqual((seen[0]["min"], seen[0]["max"]), (0, 2))
+        self.assertIn("Mountain", names(s, "hand"))
+        # 2: Plains and Swamp are on top now; none to the bottom, then Swamp above Plains, so the draw is the Swamp
+        seen = self.cast_preordain(chk, [pick(), pick("Swamp", "Plains")])
+        self.assertEqual([r["kind"] for r in seen], ["order", "order"])
+        self.assertIn("bottom of your library", seen[0]["title"])
+        self.assertIn("top of your library", seen[1]["title"])
+        self.assertEqual((seen[1]["min"], seen[1]["max"]), (2, 2))
+        self.assertIn("Swamp", names(s, "hand"))
+        self.assertNotIn("Plains", names(s, "hand"))
+        self.assertNotIn("auto_answered", [c.get("rule") for c in s.checks])
+        self.assert_clean(chk, record_path)
 
     def test_scenario9_combat_damage_order_twice_needs_a_probe(self):
         self.skipTest("needs a probe on Windows: whether Setup Game State can force the AI to block one "

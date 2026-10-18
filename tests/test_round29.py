@@ -294,6 +294,7 @@ def make_tree(root, natives=True):
     for i in range(cd.EXPECTED_SAMPLE_DECKS):
         files.append(f"sample_decks/d{i}.txt")
     files += cd.stock_cube_files()                                                   # round CD3
+    files += cd.rpg_data_files()                                                     # Round RPG8
     for rel in files:
         if rel == "forge_runtime/forge.jar":
             os.makedirs(os.path.join(root, "forge_runtime"), exist_ok=True)

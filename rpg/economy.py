@@ -8,6 +8,7 @@ that is missing or can't be used is a ValueError naming it - the game never runs
 
 The arithmetic lives here and nowhere else, so a screen and a test compute the same thing:
   price(tier)              a single's price in gold
+  basic_land_price         one basic land in any shop (Round RPG7; 0 while basic_lands_free); shops don't buy them back
   sell_price(tier)         what the shop pays for one copy (a fraction of the price, rounded down, at least 1)
   loss_cost(gold)          the gold a lost duel costs (a share of what you carry, rounded down)
   reward_gold(kind, rng)   the gold a won duel gives (a range per kind of encounter)
@@ -21,6 +22,7 @@ from rpg import data_path
 NUMBERS_FILE = data_path("numbers.json")
 TOWNS_FILE = data_path("towns.json")
 ENCOUNTERS = ("regular", "dungeon", "boss")
+ENEMY_DECK_SOURCES = ("archetype", "jumpstart")   # Round RPG9: which of a kind's deck lists a region's fights use (rpg.enemies)
 TIERS = (1, 2, 3, 4, 5)
 
 
@@ -64,6 +66,16 @@ class Numbers:
         if not isinstance(data["basic_lands_free"], bool):
             raise ValueError("basic_lands_free: true or false")
         self.basic_lands_free = data["basic_lands_free"]
+        # Round RPG7 (Karl, 13 Oct: basic lands are bought, "1 gold each"): with basic_lands_free false, basic_land_price is what
+        # one basic land costs in any town's shop. It is needed then, and only then.
+        if self.basic_lands_free:
+            self.basic_land_price = 0
+            if "basic_land_price" in data:
+                _int(data["basic_land_price"], "basic_land_price")
+        else:
+            if "basic_land_price" not in data:
+                raise ValueError("numbers: missing basic_land_price (basic_lands_free is false)")
+            self.basic_land_price = _int(data["basic_land_price"], "basic_land_price", 1)
         prices = data["single_price"]
         if not isinstance(prices, dict) or sorted(prices) != [str(t) for t in TIERS]:
             raise ValueError("single_price: one price for each tier 1-5 is needed")
@@ -99,7 +111,8 @@ class Numbers:
     # ---- the arithmetic ----------------------------------------------------------------------------------------------------
 
     def price(self, tier):
-        """A single's price; None for a card the shop never sells (tier 0 = basic lands, None = banned)."""
+        """A single's price; None for a card the shop never sells as a single (tier 0 = basic lands - see basic_land_price -,
+        None = banned)."""
         return self.single_price.get(tier)
 
     def sell_price(self, tier):
@@ -151,7 +164,13 @@ class World:
             lo, hi = _range(band, f"regions[{rid}].tiers")
             if not (1 <= lo <= hi <= 5):
                 raise ValueError(f"regions[{rid}].tiers: a band inside 1-5 is needed, not {band!r}")
-            self.regions[int(rid)] = {"name": r.get("name", f"Region {rid}"), "tiers": (lo, hi)}
+            decks = r.get("enemy_decks", {})
+            if not isinstance(decks, dict) or any(k not in ENCOUNTERS for k in decks) \
+                    or any(v not in ENEMY_DECK_SOURCES for v in decks.values()):
+                raise ValueError(f"regions[{rid}].enemy_decks: {{encounter: source}} with encounters from {', '.join(ENCOUNTERS)} "
+                                 f"and sources from {', '.join(ENEMY_DECK_SOURCES)} is needed, not {decks!r}")
+            self.regions[int(rid)] = {"name": r.get("name", f"Region {rid}"), "tiers": (lo, hi),
+                                      "enemy_decks": {e: decks.get(e, "archetype") for e in ENCOUNTERS}}
         towns = data.get("towns")
         if not isinstance(towns, list) or not towns:
             raise ValueError("towns: at least one town is needed")
@@ -179,6 +198,12 @@ class World:
 
     def band(self, region):
         return self.regions[region]["tiers"]
+
+    def deck_source(self, region, encounter):
+        """Round RPG9: "jumpstart" or "archetype" - which of an enemy kind's deck lists a fight of this kind uses in this region
+        (towns.json "enemy_decks"; a region or encounter it doesn't name: "archetype", as before RPG9)."""
+        r = self.regions.get(region)
+        return (r or {}).get("enemy_decks", {}).get(encounter, "archetype")
 
 
 def read_world(path=TOWNS_FILE):

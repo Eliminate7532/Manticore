@@ -45,6 +45,7 @@ import forge_menu as fmenu
 import forge_net
 import forge_settings as fset
 import forge_status as fstat
+from counter_names import counter_name
 import forge_why
 import formats
 import house_rules
@@ -204,7 +205,6 @@ PILL_FULL = {"UPKEEP": "the upkeep step", "DRAW": "the draw step", "MAIN1": "you
              "COMBAT_DECLARE_BLOCKERS": "declare blockers", "COMBAT_DAMAGE": "combat damage", "COMBAT_END": "the end of combat",
              "MAIN2": "the second main phase", "END_OF_TURN": "the end step"}
 PILL_OF = {"COMBAT_FIRST_STRIKE_DAMAGE": "COMBAT_DAMAGE", "CLEANUP": "END_OF_TURN"}
-COUNTER_NAMES = {"P1P1": "+1/+1", "M1M1": "-1/-1"}
 COLOUR_WORDS = {"W": "white", "U": "blue", "B": "black", "R": "red", "G": "green"}
 
 
@@ -306,7 +306,7 @@ HELP_LINES = [
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
     ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
     ("F11 / + / -", "Fullscreen / bigger and smaller text; Ctrl+0 puts the text back to 100%. With Ctrl, + / - is the card size "
-                    "(round UI7): battlefield cards that fit in one row show bigger. All remembered."),
+                    "(UI7, HAND1, HAND2): hand and command-zone cards, and battlefield cards in one row, show bigger. All remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
     ("F8 / Bug or idea", "Something wrong? The game packs a report (a picture of the table, the board, the log, the version) into one zip and sends it to Karl if his Discord is set up, even with a question on screen. The second tab, Suggest a feature, sends him an idea instead (F8 on the deck screen opens on it)."),
     ("Licenses and credits", "Cog > Licenses and credits (or Shift+F1): the program's licence (GNU GPL v3), where to get the source, and the licences of everything it uses."),
@@ -314,6 +314,20 @@ HELP_LINES = [
     ("Mouse wheel", "Scrolls the game log and long card lists."),
     ("Where your data is", paths.describe() + ". Cog > Open my data folder opens it."),
 ]
+
+
+def draft_of(entry):
+    """Round CD4: {"pod": id, "path": file} when a deck entry is a drafted deck with its "# draft:" line, else None."""
+    path = getattr(entry, "path", None)
+    if not path or not formats.drafted(getattr(entry, "format", None)):
+        return None
+    try:
+        import draft_pod as dp
+        with open(path, encoding="utf-8") as f:
+            pid = dp.draft_id_of(f.read())
+    except (OSError, UnicodeDecodeError):
+        return None
+    return {"pod": pid, "path": path} if pid else None
 
 
 def deck_meta(entry):
@@ -455,21 +469,48 @@ _PAY_LOOSE = re.compile(r"^(?P<src>.*?)\s*pay\s+mana\s+cost\s*:?\s*(?P<cost>.*)$
 _RETURN_LOOSE = re.compile(r"(?P<n>\d+)")
 
 
-def _pay_view(src, cost, floating, trouble):
+_PAY_SOURCE_ID = re.compile(r"\((\d+)\)")
+
+
+def resolving_payment(state):
+    """Round RMV1: True when Forge asks me to pay while the top of the stack is resolving from the very card named in the payment
+    prompt - a "you may pay" or "unless ... pays" cost (Mana Vault's upkeep {4}, Rhystic Study's tax, ward). Cancel then means not
+    paying (Mana Vault stays tapped), not taking a spell back. Casting a spell or activating an ability starts with the stack's top
+    from another card, or an empty stack."""
+    state = state or {}
+    message = clean_text((state.get("prompt") or {}).get("message", ""))
+    if "Pay Mana Cost:" not in message:
+        return False
+    head = message.split("Pay Mana Cost:")[0]
+    m = _PAY_SOURCE_ID.search(head)
+    stack = state.get("stack") or []
+    if not m or not stack:
+        return False
+    return str((stack[0].get("card") or {}).get("id")) == m.group(1)
+
+
+def _pay_view(src, cost, floating, trouble, resolving=False):
     src = re.split(r"\s-\s", src)[0].strip() if src else ""
+    head = (f"Pay {cost}" if cost else "Pay the cost") + ("?" if resolving else "") + (f"  -  {src}" if src else "")
+    if resolving:                                            # round RMV1: "you may pay" - say what Cancel does first, before the line is cut
+        if trouble:
+            return head, "Cancel = don't pay. " + trouble, None
+        return head, ("Cancel = don't pay. Or click floating mana (yellow, above), tap glowing lands / mana rocks, or press Auto."
+                      if floating else "Cancel = don't pay. Or tap glowing lands / mana rocks, or press Auto to let Forge tap them."), None
     hint = ("Click floating mana (yellow, above) or tap glowing lands / mana rocks, or press Auto (floating mana first). "
             "Cancel = take the spell back." if floating else
             "Tap lands / mana rocks (glowing) to pay, or press Auto to let Forge tap them. Cancel = take the spell back.")
     if trouble:                                              # mana_hint.explain: why what you have cannot pay this
         hint = trouble + " Cancel takes the spell back."
-    return (f"Pay {cost}" if cost else "Pay the cost") + (f"  -  {src}" if src else ""), hint, None
+    return head, hint, None
 
 
-def _view_by_kind(kind, message, text, flat, my_name, mulligans, floating, trouble):
+def _view_by_kind(kind, message, text, flat, my_name, mulligans, floating, trouble, resolving=False):
     """prompt_view for a known kind: the kind picks the branch, the text only supplies details. None = let the text decide."""
     if kind == "pay":
         m = _PAY.match(text) or _PAY_LOOSE.match(text)
-        return _pay_view(m.group("src").strip(" -\n") if m else "", " ".join(m.group("cost").split()) if m else "", floating, trouble)
+        return _pay_view(m.group("src").strip(" -\n") if m else "", " ".join(m.group("cost").split()) if m else "", floating, trouble,
+                         resolving)
     if kind == "target":
         tgt = parse_target_prompt(message)
         if tgt:
@@ -500,7 +541,7 @@ def commander_zone_name(message):
     return m.group("name").strip() if m else None
 
 
-def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", kind=None):
+def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", kind=None, resolving=False):
     """What the bar above the hand says. Returns (headline, hint, ok_label or None). Forge's own wording is one long sentence
     per prompt ('Select creatures to block Kinnan, Bonder Prodigy (155) or select another attacker to declare blockers for.');
     this gives a short headline, one line saying what to do, and (at priority) a clearer name for the OK button."""
@@ -512,7 +553,7 @@ def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", ki
     if name:
         return "Return your commander to the command zone?", f"{name}  -  No leaves it where it is.", None
     if kind:
-        by_kind = _view_by_kind(kind, message, text, flat, my_name, mulligans, floating, trouble)
+        by_kind = _view_by_kind(kind, message, text, flat, my_name, mulligans, floating, trouble, resolving)
         if by_kind is not None:
             return by_kind
     m = _PRIORITY_FULL.match(flat)
@@ -545,7 +586,7 @@ def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", ki
                 f"Click a glowing {what}. The orange SOURCE tag marks {tgt['source']} itself.{pay} Cancel backs out.", None)
     m = _PAY.match(text)
     if m:
-        return _pay_view(m.group("src").strip(" -\n"), m.group("cost").strip(), floating, trouble)
+        return _pay_view(m.group("src").strip(" -\n"), m.group("cost").strip(), floating, trouble, resolving)
     m = _RETURN_PROMPT.match(flat)
     if m:
         n = int(m.group("n"))
@@ -605,15 +646,18 @@ class Launcher:
     def __init__(self, runtime=None, name="Karl", seed=None, record=None):
         self.runtime, self.name, self.seed, self.record = runtime, name, seed, record
 
-    def start(self, mine, opponents, fmt=None, rules=()):
+    def start(self, mine, opponents, fmt=None, rules=(), names=None):
         """mine = (commanders, deck); opponents = [(commanders, deck), ...]; fmt (round FMT1) "commander" (None) or "brawl".
         Round CD3: rules = house rules (house_rules.py keys - Turbo Cube's emblem), written into every .dck file, where the
-        session (and a resumed game) reads them. Returns a started ForgeSession."""
+        session (and a resumed game) reads them. Round RPG8: names = each opponent's deck name (the bridge names the AI seat
+        "AI 1 (<name>)"); None = "Opponent 1", ... Returns a started ForgeSession."""
         fmt = formats.normal(fmt)
         os.makedirs(DECK_DIR, exist_ok=True)
         my_path = fc.write_deck_file(os.path.join(DECK_DIR, "player.dck"), mine[0], mine[1], "Player", self.runtime, fmt,
                                      rules=rules)
-        opp_paths = [fc.write_deck_file(os.path.join(DECK_DIR, f"opponent{i}.dck"), o[0], o[1], f"Opponent {i}", self.runtime, fmt,
+        names = list(names or [])
+        opp_paths = [fc.write_deck_file(os.path.join(DECK_DIR, f"opponent{i}.dck"), o[0], o[1],
+                                        (names[i - 1] if i <= len(names) and names[i - 1] else f"Opponent {i}"), self.runtime, fmt,
                                         rules=rules)
                      for i, o in enumerate(opponents, 1)]
         return fc.ForgeSession(my_path, opp_paths, name=self.name, seed=self.seed, runtime=self.runtime,
@@ -691,6 +735,7 @@ LANDING_SQUASH = 0.09              # seconds of squash-and-recover after a fligh
 
 # ---- round 25: departure ghosts, particles, shakes ---------------------------------------------------------------------------------
 
+DOT_GAP = 4                         # Round EMB2: px between a pod panel's name and its priority dot
 BOARD_FRAME_BELOW = 200             # a battlefield card shorter than this (times max(1, fs/1.3)) gets a compact board frame
 COPYRIGHT_BAND = 0.065              # bottom fraction of a real Scryfall picture kept clear of badges (an estimate - Round 27)
 
@@ -737,6 +782,10 @@ class ForgeTable:
         self.report_folder = None                    # where bug reports are written (None: next to the program; tests point it elsewhere)
         self.deck_choice = {}                        # what was picked there last time (saved in settings.json)
         self.current_decks = None                    # (my deck, [the AI decks]) of the game on screen: what Restart plays again
+        self.current_draft = None                    # round CD4: {"pod": id, "path": my deck file} when my deck is a drafted one
+        self.adventure_duel = None                   # Round RPG8: {"slot", "folder", "kind", "enemy", "stats_id", "outcome", ...}
+        self.stats_folder = None                     # Round RPG8: where the next game's record goes (None: the usual stats/)
+        self.stats_adventure = None                  # Round RPG8: the Adventure slot the next game's duel belongs to
         self.current_format = formats.DEFAULT        # round FMT1: that game's format (Restart plays it again)
         self.settings_path = settings_path
         self.text_scale = 1.0
@@ -748,6 +797,7 @@ class ForgeTable:
         self.frames = False                 # round 26: small battlefield cards use an art-crop board frame; default OFF (Karl, OPEN_QUESTIONS A5)
         self.hand_sort_by_type = False      # off = Forge's own hand order (usually draw order); on = grouped by card type (cog: "Sort hand by type")
         self.art_picker_zoom = 1.0          # patch 38: the Card art window's card size (art_picker.ZOOM_STEPS), remembered
+        self.draft_cube = None              # round CDFIX1: the last cube drafted ({"stock": key} or {"ref": link, "style": ...})
         self.auto_pass = True               # Forge passes for me whenever I have nothing to do (Skip window); remembered between runs
                                             # (patch 43: on by default; a settings file from before patch 43 is switched on once)
         self.always_stop = []               # patch 43: card names whose stack items always stop me (Skip window); remembered
@@ -930,6 +980,9 @@ class ForgeTable:
                 self.art_picker_zoom = max(0.5, min(3.0, float(data.get("art_picker_zoom", 1.0))))
             except (TypeError, ValueError):
                 self.art_picker_zoom = 1.0
+            dc_ = data.get("draft_cube")                            # round CDFIX1: only plain short strings are kept
+            self.draft_cube = ({k: v for k, v in dc_.items() if k in ("stock", "ref", "style") and isinstance(v, str) and len(v) <= 300}
+                               or None) if isinstance(dc_, dict) else None
             self.auto_pass = bool(data.get("auto_pass", True))
             if int(data.get("passing_version", 0) or 0) < PASSING_VERSION:
                 # Patch 43: auto-pass used to be off by default, and nearly every saved file says so only because it was.
@@ -987,6 +1040,8 @@ class ForgeTable:
             data["screens"] = screens
         if self.deck_choice:
             data["decks"] = self.deck_choice
+        if self.draft_cube:                                         # round CDFIX1: only once a draft has been started
+            data["draft_cube"] = self.draft_cube
         if self.reporter_name:
             data["reporter_name"] = self.reporter_name
         if self.tour_done:
@@ -1135,6 +1190,9 @@ class ForgeTable:
             if boot.stage == "splash":
                 return None, None
             return "amb.title", ("settings" if self.settings_music() else "title")
+        hook = getattr(self.modal, "soundscape", None)
+        if hook is not None and not self.game_in_progress():
+            return hook()                                               # Round RPG8: the Adventure's map, towns and screens
         if self.game_showing():
             amb = f"amb.{self.current_bg}" if f"amb.{self.current_bg}" in getattr(self.audio, "cues", {}) else "amb.plain"
             if self.vs is not None and self.vs.holding(self):
@@ -1563,7 +1621,8 @@ class ForgeTable:
             self.say(f"Card size is already {'maximum' if direction > 0 else 'minimum'} ({round(self.card_scale * 100)}%).", DIM)
             return
         self.card_scale = CARD_STEPS[j]
-        self.say(f"Card size {round(self.card_scale * 100)}%  -  battlefield cards grow where the board fits one row", DIM)
+        self.say(f"Card size {round(self.card_scale * 100)}%  -  hand and commander cards grow; battlefield cards where the board fits "
+                 "one row", DIM)                            # round HAND1, HAND2
         self.save_settings()
 
     def say(self, text, colour=TEXT, seconds=3.0):
@@ -1661,9 +1720,12 @@ class ForgeTable:
         if self.journal is None:
             return None
         try:
-            return gjournal.unfinished(self.journal.folder)
+            info = gjournal.unfinished(self.journal.folder)
         except OSError:
             return None
+        if info and isinstance(info[0].get("stats"), dict) and info[0]["stats"].get("adventure") is not None:
+            return None                     # Round RPG8: an Adventure duel that never finished doesn't count - nothing to resume
+        return info
 
     # ---- state shortcuts -------------------------------------------------------------
 
@@ -2087,7 +2149,8 @@ class ForgeTable:
             draw_text(surf, label, r.centerx, r.centery, small, WHITE, "center")
             y = r.top - 2
         for name, n in list((card.get("counters") or {}).items())[:3]:
-            label = f"{n} x {COUNTER_NAMES.get(name, name.title())}" if n > 1 else COUNTER_NAMES.get(name, name.title())
+            word = counter_name(name)           # Round CTR1: Forge's own words ("-0/-1", "Acquired taste"), not "M0M1"
+            label = f"{n} x {word}" if n > 1 else word
             label = clip_text(label, small, int(w * 0.55))
             tw, th = small.size(label)
             r = pygame.Rect(3, y - th - 4, tw + 10, th + 4)
@@ -2525,7 +2588,8 @@ class ForgeTable:
                 if L.pad + max(f.get_height(), lf.get_height()) + 1 + chip_need <= rect.h - L.pad // 2:
                     break                    # piles' row fits under it
             draw_text(scr, shown, rect.right - L.pad - 4, y - 1, lf, colour, "topright")
-            draw_text(scr, clip_text(name, f, w - lf.size(str(life))[0] - 14), x, y, f, WHITE)
+            name_room = w - lf.size(str(life))[0] - 14   # Round EMB1: the name is drawn at the end - chips on the name row may
+            name_y = y                                   # shorten it (never below name_floor)
             if delta:
                 self.draw_life_change(delta, glow, rect.right - L.pad - 4 - lf.size(str(life))[0] - 8, y, lf, "topright")
             y += max(f.get_height(), lf.get_height()) + 1
@@ -2541,8 +2605,13 @@ class ForgeTable:
             y += big.get_height()
         if player.get("priority"):
             if compact:                                  # Round UI2: beside the life total, not on top of its last digit
-                lw_ = self.font("title", True).size(shown)[0]
-                pygame.draw.circle(scr, GREEN, (rect.right - L.pad - 4 - lw_ - 10, rect.y + L.pad + f.get_height() // 2), 5)
+                lw_ = lf.size(shown)[0]                  # Round EMB1: the font the life is drawn in (big text steps lf down from
+                #                                          "title"; measured in "title" the dot sat left of where badges and the
+                #                                          UI5 Cmdr chip end - under them at 200% in 4-player pods)
+                dot_x = rect.right - L.pad - 4 - lw_ - 10
+                pygame.draw.circle(scr, GREEN, (dot_x, rect.y + L.pad + f.get_height() // 2), 5)
+                # Round EMB2: the name stops DOT_GAP px before the dot (its text box reached up to 3 px into it - EMB1's review)
+                name_room = min(name_room, dot_x - 5 - DOT_GAP - x)
             else:
                 pygame.draw.circle(scr, GREEN, (rect.right - L.pad - 8, rect.y + L.pad + f.get_height() // 2), 5)
         # the piles: library, graveyard, exile as little stacks with counts (or plain chips when the panel is too short)
@@ -2558,10 +2627,22 @@ class ForgeTable:
         draw_text(scr, hand_txt, x + cw // 2, cy + chip_h // 2, tiny, WHITE if player["handCount"] else DIM, "center")
         badges = self.player_badges(player)
         room_r = x + w
+        name_row_left = None                                      # Round EMB1: where badges moved onto the name row start
+        # commander damage taken (round FMT1: none in Brawl - Forge doesn't count it there either)
+        damage = list(((player.get("commanderDamage") or {}) if formats.get(self.game_format()).commander_damage else {}).items())
         if badges and compact:                                    # short panels: tiny chips flush right on the hand row
             placed, _ = self.place_badges(badges, x + cw + 8, cy, w - cw - 8, tiny, chip_h, short=True, right=True)
+            # Round EMB1 (review): with the piles on the hand row, Round UI5 puts the "Cmdr N" chip on the name row - moved badges
+            # must leave it its room, or it isn't drawn at all (it was, before badges moved there)
+            cmdr_w = (tiny.size(f"Cmdr {max(d for _c, d in damage)}")[0] + 12 + 4) if damage else 0
+            moved = self.badges_to_name_row(player, badges, placed, rect, L, x, w, cy, cw, chip_h, f, lf, name, shown, tiny,
+                                            reserve=cmdr_w)
+            if moved:
+                placed = moved
+                name_row_left = min(r.x for r, _ in placed)
             self.draw_badges(placed, tiny, chip_h, player['id'])
-            room_r = min([r.x for r, _ in placed] or [room_r]) - 6
+            if not moved:
+                room_r = min([r.x for r, _ in placed] or [room_r]) - 6
         pool = self.pool_items(player)
         row_end = x + cw
         if pool:                                                  # floating mana, right beside the hand count
@@ -2625,8 +2706,6 @@ class ForgeTable:
                     self.add_hit(r, "zone", player=player["id"], zone=zone)
                 cx += cw + 4
             y += chip_h + 4
-        # commander damage taken (round FMT1: none in Brawl - Forge doesn't count it there either)
-        damage = list(((player.get("commanderDamage") or {}) if formats.get(self.game_format()).commander_damage else {}).items())
         if damage and compact and y + len(damage) * (small.get_height() + 1) > rect.bottom - L.pad // 2:
             # Round UI5: a pod panel has no room for "Cmdr dmg: Adeline 5/21" under its piles (a real 4-player game at 1080p
             # showed the top half of it, cut by the panel's edge) - "Cmdr 5" chips at the right end of the hand row instead,
@@ -2634,7 +2713,11 @@ class ForgeTable:
             if hand_row_used:                    # big text: the piles fill the hand row - one chip between the name and the life
                 name_h = max(f.get_height(), lf.get_height())
                 right = rect.right - L.pad - 4 - lf.size(shown)[0] - (22 if player.get("priority") else 8)
-                left, top = x + f.size(clip_text(name, f, w - lf.size(str(life))[0] - 14))[0] + 8, rect.y + L.pad + (name_h - chip_h) // 2
+                # Round EMB1 (review): the name gives way down to its floor ("AI 1...") - with a long name ("AI 1 (We Just Need
+                # to Punch Them (Stompy))", the bridge's naming) the chip found no room and wasn't drawn at all
+                left, top = x + self.name_floor(name, f) + 8, rect.y + L.pad + (name_h - chip_h) // 2
+                if name_row_left is not None:            # Round EMB1: the panel's badges took the right end of the name row
+                    right = name_row_left - 4
                 most = 1
             else:
                 right, left, top, most = room_r, row_end + 6, cy, 2
@@ -2647,7 +2730,12 @@ class ForgeTable:
                 round_rect(scr, r, gfx.BANNER_RED_BG if dmg >= 15 else gfx.CHIP_BG, chip_h // 2, 1, RED if dmg >= 15 else gfx.CHIP_EDGE)
                 draw_text(scr, txt, r.centerx, r.centery, tiny, RED if dmg >= 15 else WHITE, "center")
                 right = r.x - 4
+                if hand_row_used:
+                    name_row_left = r.x if name_row_left is None else min(name_row_left, r.x)
             damage = []
+        if compact:                              # Round EMB1: the name last, up to the first chip on the name row
+            room = name_room if name_row_left is None else min(name_room, name_row_left - 8 - x)
+            draw_text(scr, clip_text(name, f, room), x, name_y, f, WHITE)
         for cid, dmg in damage:
             card = self.find_card(int(cid))
             nm = (card or {}).get("name", "Commander").split(",")[0]
@@ -2669,14 +2757,61 @@ class ForgeTable:
         """Monarch / initiative / the Ring / emblems for this player, from the effect cards Forge keeps in their command zone."""
         return fstat.badges_for((player.get("zones") or {}).get("command", []), self.commander_ids(player))
 
+    def badges_to_name_row(self, player, badges, placed, rect, L, x, w, cy, cw, chip_h, f, lf, name, shown, tiny, reserve=0):
+        """Round EMB1: a pod panel whose piles go onto the hand row (no room for a second row - Round UI2) drew its badges on that
+        row too, and the piles ran over them (4 players at 1360x840: Turbo Cube's emblem showed as "rb" under "Ex 1"; the monarch's
+        crown the same). When the piles and the badges can't both fit there, the badges go to the right end of the name row,
+        between the name and the life total - where Round UI5 already puts a commander-damage chip - folded into one chip when
+        they don't fit side by side. `reserve`: room kept left of them for that "Cmdr N" chip. Every chip keeps its full width
+        (a long name left room for slivers, or chips of negative width that couldn't be hovered - the review of 15 Oct). Returns
+        the new placement, or None to leave them on the hand row (not too wide, or no room on the name row either)."""
+        piles_on_hand_row = cy + chip_h + 4 + chip_h > rect.bottom - L.pad                  # the test _draw_panel_body uses
+        if not placed or not piles_on_hand_row:
+            return None
+        start = x + cw + 6 + self.pool_width(player, chip_h, tiny)
+        piles = [("Lib", player.get("libraryCount", 0)), ("GY", len(player["zones"].get("graveyard") or [])),
+                 ("Ex", len(player["zones"].get("exile") or []))]
+        piles_min = sum(tiny.size(f"{label} {n}")[0] + 8 + 4 for label, n in piles) - 4   # short labels, tight chips (UI5)
+        if start + piles_min <= min(r.x for r, _ in placed) - 6:
+            return None                                                                      # they fit beside each other
+        name_h = max(f.get_height(), lf.get_height())
+        left = x + self.name_floor(name, f) + 8                      # the name gives way to them, down to its floor (review)
+        right = rect.right - L.pad - 4 - lf.size(shown)[0] - (22 if player.get("priority") else 8)
+        top = rect.y + L.pad + (name_h - chip_h) // 2
+        for group in (badges, [fstat.Badge("effects", f"Effects {len(badges)}", f"Fx {len(badges)}",
+                                           " ".join(b.text for b in badges))] if len(badges) > 1 else []):
+            need = sum(self.badge_width(b, tiny, chip_h, short=True) for b in group) + 4 * (len(group) - 1)
+            if need <= right - left - reserve:
+                spot, _ = self.place_badges(group, right - need, top, need, tiny, chip_h, short=True, right=True)
+                return spot
+        return None
+
+    @staticmethod
+    def name_floor(name, f):
+        """Round EMB1 (review): the narrowest a pod panel's name gets when chips need the name row - the player's own part ("AI 1"
+        of "AI 1 (We Just Need to Punch Them (Stompy))", as the bridge names AI players) and "..."; the whole name when shorter."""
+        head = name.split(" (", 1)[0]
+        if not head.strip():             # Round EMB2: a name starting with " (" kept no part of itself and could shorten to a
+            head = (name.split() or [""])[0]                        # bare "..." (EMB1's review) - keep its first word
+        return min(f.size(name)[0], f.size(head + "...")[0])
+
+    @staticmethod
+    def badge_width(b, font, h, short=False):
+        """A badge chip's own width (place_badges' rule, before it is squeezed into a row)."""
+        return (h + 8 if b.key == "monarch" else 7) + font.size(b.short if short else b.label)[0] + 7   # the crown's room first
+
+    def pool_width(self, player, chip_h, font):
+        """How wide draw_pool_item draws this player's floating mana beside the hand count (0 for none)."""
+        rr = max(6, chip_h // 2 - 1)
+        total = 0
+        for _sym, n in self.pool_items(player):
+            total += 2 * rr + 3 + ((font.size(f"x{n}")[0] + 4) if n > 1 else 0) + 6
+        return total + (8 if total else 0)
+
     def place_badges(self, badges, x, y, w, font, h, short=False, right=False):
         """Where each badge chip goes: [(rect, badge)] and the height used. Chips flow left to right and wrap onto a new row; with
         right=True they sit in one row flush with the right edge (short panels)."""
-        items = []
-        for b in badges:
-            label = b.short if short else b.label
-            cw = (h + 8 if b.key == "monarch" else 7) + font.size(label)[0] + 7        # the crown takes room before the text
-            items.append((b, min(cw, w)))
+        items = [(b, min(self.badge_width(b, font, h, short), w)) for b in badges]
         placed, cx, cy = [], x, y
         if right:
             cx = max(x, x + w - (sum(cw for _, cw in items) + 4 * (len(items) - 1)))
@@ -2855,7 +2990,8 @@ class ForgeTable:
 
     def draw_command_zone(self, player, frame, ch, compact=False):
         """A labelled gold frame holding the player's commander(s); `ch` is the card height inside it. Round UI5: `compact` (a
-        short pod row at big text) has a one-line title in the tiny font and no names line, so the card keeps some size."""
+        short pod row at big text) has a one-line title in the tiny font and no names line, so the card keeps some size.
+        (My own command zone at Card size above 100% is draw_my_command_zone_big, round HAND2.)"""
         scr, L = self.screen, self.L
         round_rect(scr, frame, gfx.IMPRINT_BG, 12, 2, GOLD_DARK, alpha=235)
         f1, f2 = (self.font("tiny", True), self.font("tiny")) if compact else (self.font("small", True), self.font("tiny"))
@@ -2905,6 +3041,122 @@ class ForgeTable:
         line = ", ".join(n for n in names if n) if not compact else ""
         if line:
             draw_text(scr, clip_text(line, f2, frame.w - 8), frame.centerx, frame.y + 5 + f1.get_height() + 1, f2, gfx.IMPRINT_TEXT, "midtop")
+
+    def draw_my_command_zone_big(self, me, frame, ch):
+        """Round HAND2 (Karl, 13 Oct: "Yes, like the hand"): my command zone at Card size above 100%. My commander cards are Card
+        size times bigger, Arena-style like round HAND1's hand: the top where it always was (`ch` is the 100% card height), the
+        rest below the window's edge, the side past the frame hidden (as a hand card's is under its neighbour); the card under the
+        mouse rises whole (draw_cmd_risen, after the hand, so it shows over the action bar). Click areas never leave the frame.
+        The frame, the bar and the hand keep their places and sizes; opponents' command zones are not changed."""
+        scr, L = self.screen, self.L
+        H = scr.get_height()
+        round_rect(scr, frame, gfx.IMPRINT_BG, 12, 2, GOLD_DARK, alpha=235)
+        f1, f2 = self.font("small", True), self.font("tiny")
+        pad = L.pad
+        title, f1 = next(((t, f) for f in (f1, self.font("tiny", True)) for t in ("COMMAND ZONE", "COMMANDER", "CMDR", "CMD")
+                          if f.size(t)[0] <= frame.w - 8), ("CMD", self.font("tiny", True)))
+        draw_text(scr, clip_text(title, f1, frame.w - 6), frame.centerx, frame.y + 5, f1, GOLD, "midtop")
+        ids = self.commander_ids(me)
+        names = [((self.find_card(cid) or {}).get("name") or "").split(",")[0] for cid in ids]
+        line = ", ".join(n for n in names if n)
+        if line:
+            draw_text(scr, clip_text(line, f2, frame.w - 8), frame.centerx, frame.y + 5 + f1.get_height() + 1, f2, gfx.IMPRINT_TEXT,
+                      "midtop")
+        bch = int(round(ch * self.card_scale))
+        bcw = int(bch * CARD_ASPECT)
+        y0 = frame.bottom - 4 - ch                                   # the card's top where it is at 100%
+        slots = ids or [None]
+        inner = frame.w - 2 * pad                                    # partners: each shows an equal share of the frame (as
+        xs = [frame.x + pad + k * inner // len(slots) for k in range(len(slots))]   # layout_row would leave the first a sliver)
+        side = pygame.Rect(frame.x + 2, 0, frame.w - 4, H)           # the frame's sides; below the frame, down to the window's edge
+        # each slot's own column of the frame: from its x to the next slot's (a partner, or the place of one that is elsewhere) -
+        # its hover, its click area and its tax tag stay there, never over the other slot's
+        ends = xs[1:] + [side.right]
+        cols = [pygame.Rect(xs[k], frame.y, max(1, ends[k] - xs[k]), frame.h).clip(frame) for k in range(len(slots))]
+        rise = max(0, y0 + bch - (H - L.margin))                     # hovered: the whole card shows
+        casts = me.get("commanderCasts") or {}
+        in_zone = {c["id"]: c for c in me["zones"].get("command", [])}
+        hovered = None
+        for k, cid in enumerate(slots):
+            if cid in in_zone and cols[k].collidepoint(self.mouse):
+                hovered = k
+        self.rest_commander_lift(me, keep=[c for c in ids if c in in_zone])
+        self._cmd_risen = None
+        prev = scr.get_clip()
+        for k, cid in enumerate(slots):
+            x = xs[k]
+            card = in_zone.get(cid)
+            if card is None:
+                slot = pygame.Rect(x, y0, bcw, bch)
+                scr.set_clip(side.clip(prev))
+                round_rect(scr, slot, gfx.SLOT_BG, max(4, int(bcw * 0.06)), 1, gfx.SLOT_EDGE, alpha=200)
+                scr.set_clip(prev)
+                zone = self.where_is(me, cid) if cid is not None else None
+                msg = {"battlefield": "in play", "graveyard": "in graveyard", "exile": "in exile", "hand": "in hand",
+                       "library": "in library", "stack": "on the stack"}.get(zone, "elsewhere") if zone else "empty"
+                vis_w = min(slot.right, side.right) - slot.x
+                ty = slot.y + 8
+                for ln in wrap_text(msg, f2, vis_w - 8)[:3]:
+                    if ty + f2.get_height() > min(slot.bottom, frame.bottom) - 2 or f2.size(ln)[0] > vis_w - 4:
+                        break
+                    draw_text(scr, ln, slot.x + vis_w // 2, ty, f2, DIM, "midtop")
+                    ty += f2.get_height()
+                continue
+            cm = self.get_motion(card["id"])
+            if k == hovered:
+                cm.lift.target = rise
+                self._cmd_risen = (card, x, y0, bcw, bch, frame, casts.get(str(cid), 0))
+                continue                                            # drawn after the hand (draw_cmd_risen)
+            cm.lift.target = 0
+            lift = cm.lift.value if self.animations else 0.0
+            scr.set_clip(side.clip(prev))
+            r = self.draw_card_at(card, x, y0, bcw, bch, plate=False, lift=int(round(lift)))
+            scr.set_clip(prev)
+            self.card_rects[card["id"]] = r
+            self.add_hit(r.clip(cols[k]), "card", card=card)
+            n = casts.get(str(cid), 0)
+            if n:
+                vis = r.clip(side).clip(pygame.Rect(cols[k].x, 0, cols[k].w, H))
+                self.draw_tax_tag(n, vis.centerx, min(vis.bottom, frame.bottom) - 4, vis.w)
+
+    def rest_commander_lift(self, me, keep=()):
+        """Round HAND2: a commander card that isn't drawn in the bigger command zone this frame (it was cast, or Card size went back
+        to 100%) lets its rise go, so it doesn't come back risen and the frame pacer doesn't think it is still moving. Not a card
+        in my hand: the hand sets its own lift."""
+        hand = {c["id"] for c in me["zones"].get("hand", [])}
+        for cid in self.commander_ids(me):
+            m = self.motion.get(cid)
+            if m is not None and cid not in keep and cid not in hand:
+                m.lift.target = 0
+
+    def draw_cmd_risen(self):
+        """Round HAND2: my hovered commander card, risen until it shows whole, drawn after the action bar and the hand. Its click
+        area stays inside the command zone's frame (round HAND1's rule for the hand)."""
+        risen = getattr(self, "_cmd_risen", None)
+        self._cmd_risen = None
+        if not risen:
+            return
+        card, x, y0, cw, ch, frame, casts = risen
+        cm = self.get_motion(card["id"])
+        lift = cm.lift.value if self.animations else float(cm.lift.target)
+        r = self.draw_card_at(card, x, y0, cw, ch, plate=False, lift=int(round(lift)))
+        self.card_rects[card["id"]] = r
+        self.add_hit(r.clip(frame), "card", card=card)
+        if casts:
+            vis = r.clip(self.screen.get_rect())
+            self.draw_tax_tag(casts, vis.centerx, vis.bottom - 4, vis.w)
+
+    def draw_tax_tag(self, n, cx, bottom, room):
+        """The commander tax tag ("Tax +2") centred at cx, its bottom at `bottom`; "+2" when the long one is wider than `room`."""
+        scr = self.screen
+        tf = self.font("tiny", True)
+        tag = f"Tax +{2 * n}"
+        if tf.size(tag)[0] + 10 > room - 6:
+            tag = f"+{2 * n}"
+        tr = pygame.Rect(0, 0, tf.size(tag)[0] + 10, tf.get_height() + 3)
+        tr.midbottom = (cx, bottom)
+        round_rect(scr, tr, gfx.TRAY_BG, tr.h // 2, 1, GOLD, alpha=235)
+        draw_text(scr, tag, tr.centerx, tr.centery, tf, GOLD, "center")
 
     def cmd_head_h(self, compact=False):
         """The height of a command-zone frame's title and names lines (compact: the tiny title only)."""
@@ -2970,10 +3222,16 @@ class ForgeTable:
         round_rect(self.screen, L.my_bf, gfx.BF_MINE_BG, 12, 1, gfx.BF_MINE_EDGE, alpha=150)
         self.draw_battlefield(me, L.my_bf, L.my_row_h, one_row_max=self.battlefield_one_row_max(L.my_bf, L.my_row_h),
                               gain=ONE_ROW_GAIN)                 # round UI7
-        if L.cmd_rect.w:
-            self.draw_command_zone(me, L.cmd_rect, L.cmd_ch)
+        self._cmd_risen = None
+        if L.cmd_rect.w and self.card_scale > 1.0:              # round HAND2: the command zone follows Card size
+            self.draw_my_command_zone_big(me, L.cmd_rect, L.cmd_ch)
+        else:
+            self.rest_commander_lift(me)                        # (no zone drawn - cast, or 100%: a risen card lets go)
+            if L.cmd_rect.w:
+                self.draw_command_zone(me, L.cmd_rect, L.cmd_ch)
         self.draw_action_bar()
         self.draw_hand(me)
+        self.draw_cmd_risen()                                   # round HAND2: a hovered commander card over the bar
 
     # ---- action bar and hand -----------------------------------------------------------------
 
@@ -2986,7 +3244,8 @@ class ForgeTable:
         waiting = self.waiting()
         ok, cancel = p.get("ok", {}), p.get("cancel", {})
         me = self.session.me()
-        headline, hint, ok_label = prompt_view(p.get("message", ""), me["name"] if me else "", self.mulligans, bool(self.pool_items(me)), self.pay_trouble(), self.input_kind()) if s.get("prompt") else ("", "", None)
+        headline, hint, ok_label = prompt_view(p.get("message", ""), me["name"] if me else "", self.mulligans, bool(self.pool_items(me)), self.pay_trouble(), self.input_kind(),
+                                          resolving_payment(s)) if s.get("prompt") else ("", "", None)
         # buttons, right to left
         specs = []
         if ok.get("label"):
@@ -3209,10 +3468,14 @@ class ForgeTable:
         if not hand:
             return
         ch = L.hand_ch
+        arena = self.card_scale > 1.0                       # round HAND1: Card size above 100% - Arena-style hand cards
+        if arena:
+            ch = int(round(L.hand_ch * self.card_scale))    # bigger, the top where it always was, the rest below the window
         cw = int(ch * CARD_ASPECT)
         gap = int(cw * 0.06)
         xs = layout_row([cw] * len(hand), L.hand.x, L.hand.w, gap)
         y = L.hand.y + L.lift
+        rise = max(L.lift, y + ch - (self.screen.get_height() - L.margin)) if arena else L.lift   # hovered: the whole card
         # `positions[pos]` is the hand index shown at screen position `pos`; sort_by_type reorders the cards without
         # touching Forge's own hand array, so hand[i] (the click target) still matches the id Forge expects.
         positions = sorted(range(len(hand)), key=lambda i: hand_sort_key(hand[i])) if self.hand_sort_by_type \
@@ -3234,10 +3497,10 @@ class ForgeTable:
             i = positions[pos]
             c = hand[i]
             cm = self.get_motion(c["id"])
-            target_lift = L.lift if pos == hovered else (L.lift // 3 if (c.get("weak") or c.get("selectable")) else 0)
+            target_lift = rise if pos == hovered else (L.lift // 3 if (c.get("weak") or c.get("selectable")) else 0)
             cm.lift.target = target_lift
             lift = cm.lift.value if self.animations else float(target_lift)
-            hover_scale = 1.0 + 0.06 * (lift / L.lift) if (pos == hovered and L.lift > 0) else 1.0
+            hover_scale = 1.0 + 0.06 * min(1.0, lift / L.lift) if (pos == hovered and L.lift > 0 and not arena) else 1.0
             scale = hover_scale * cm.scale.value
             if abs(scale - 1.0) > 0.001:
                 r = self.draw_hand_card_scaled(c, xs[pos], y, cw, ch, lift, scale)
@@ -3245,6 +3508,8 @@ class ForgeTable:
                 r = self.draw_card_at(c, xs[pos], y, cw, ch, plate=False, lift=int(round(lift)))
             self.card_rects[c["id"]] = r
             hit = pygame.Rect(r.x, r.y, r.w, r.h + int(round(lift))) if pos == hovered else r
+            if arena:                                       # round HAND1: a risen card never takes the bar's clicks
+                hit = hit.clip(L.hand)
             self.add_hit(hit, "card", card=c)
 
     def draw_hand_card_scaled(self, card, x, y, w, h, lift, scale):
@@ -4138,12 +4403,62 @@ class ForgeTable:
             flow.draw_pregame(self, me)
 
     def end_continue(self):
-        """VICTORY / DEFEAT -> the end-of-game dialog (New game / Look at the board), as before Round AD2b."""
+        """VICTORY / DEFEAT -> the end-of-game dialog (New game / Look at the board), as before Round AD2b. Round CD4: after a
+        game with my drafted deck, also Play again (the same pod, a fresh shuffle) and Edit deck (the builder, then play)."""
+        if self.adventure_duel is not None:                   # Round RPG8: straight back to the Adventure, which says what it did
+            self.back_to_adventure()
+            return
         self.end_screen = None
         me = self.session.me()
         self.modal = dlg.game_over_dialog(self.state or {}, me["name"] if me else "", self.open_menu,
-                                          spectator=getattr(self.session, "spectator", False))
+                                          spectator=getattr(self.session, "spectator", False), extra=self.end_extras())
         self.modal.closes_game = False
+
+    def end_extras(self):
+        """The end dialog's extra buttons. Round ANS1 (Karl, 13 Oct: "Yes, every offline game"): Play again (the same decks, a fresh
+        shuffle; Enter) after every game that can be restarted - offline, from the deck screen; Round CD4's Edit deck after a game
+        with my drafted deck. An online game, a resumed one or one started without the deck screen has none (can_restart)."""
+        if not self.can_restart():
+            return []
+        extra = [("Play again", self.restart_game)]
+        if self.current_draft:
+            extra.append(("Edit deck", self.edit_draft_deck))
+        return extra
+
+    def edit_draft_deck(self):
+        """Round CD4: Edit deck at the end of a draft game - the draft window's builder on my deck as saved (the pod's pool)."""
+        info = self.current_draft or {}
+        import draft_pod as dp
+        import draft_screens
+        try:
+            pod = dp.Pod.load(os.path.join(dp.pods_dir(), info.get("pod") or ""))
+            entry = lib.DeckEntry(info["path"], os.path.splitext(os.path.basename(info["path"]))[0], False,
+                                  self.deck_dirs[2]).load()
+        except (dp.PodError, KeyError, OSError) as e:
+            self.say(f"The draft behind this deck can't be opened: {e}", RED, 8.0)
+            return
+        if not entry.ok and not entry.deck:
+            self.say(f"Your deck file can't be read: {entry.error}", RED, 8.0)
+            return
+        self.modal = draft_screens.DraftFlow(self, edit={"pod": pod, "path": info["path"],
+                                                         "names": (list(entry.commanders or []), list(entry.deck or []))})
+        self.play_cue("ui.dialog_open")
+
+    def after_draft_edit(self, path, play):
+        """Round CD4: the builder saved my deck over its file - play the pod again with it, or show the deck screen."""
+        try:
+            entry = lib.DeckEntry(path, os.path.splitext(os.path.basename(path))[0], False, self.deck_dirs[2]).load()
+        except OSError as e:
+            self.say(f"Your deck couldn't be read back: {e}", RED, 8.0)
+            return
+        if self.current_decks:
+            self.current_decks = ((list(entry.commanders or []), list(entry.deck or [])), self.current_decks[1])
+        if play and self.can_restart():
+            self.restart_game()
+            self.say("Your deck is saved. The same pod again, with a fresh shuffle.", GREEN, 6.0)
+        else:
+            self.open_menu()
+            self.say("Your deck is saved. Start plays the pod again.", GREEN, 6.0)
 
     # ---- Round UX1: the table tour (tour.py) --------------------------------------------------------------------------------
     def tour_wanted(self):
@@ -4661,6 +4976,108 @@ class ForgeTable:
         self.modal = draft_screens.DraftFlow(self, from_title=from_title)
         self.play_cue("ui.dialog_open")
 
+    def open_adventure(self, folder=None):
+        """Round RPG8: the Adventure (rpg_screens.AdventureFlow) - its save slots, a new game, the map, towns and duels. Opened
+        from the main menu; it goes back there when you leave it."""
+        import rpg_screens
+        self.menu = None
+        self.modal = rpg_screens.AdventureFlow(self, folder=folder)
+        self.title_ok = True
+        self.play_cue("ui.dialog_open")
+
+    def start_adventure_duel(self, flow, duel):
+        """Round RPG8: the Adventure's duel on the real table - the player's deck against the enemy's, Standard's engine (60 cards,
+        20 life, no commander), the AI named after the enemy ("AI 1 (Grave Robber)"). The save already says the duel is going on
+        (rpg.adventure.start_duel). The game's record goes to the Adventure's own file (rpg_saves/duel_stats), and its result is
+        put in the save the moment the game knows it (adventure_settle). Returns None, or why it couldn't start."""
+        if self.launcher is None:
+            return "This copy was started without the deck screen, so it can't start a duel."
+        from rpg import adventure as adv
+        g = flow.game
+        deck_name = (g.deck() or {}).get("name") or adv.DECK_NAME
+        mine = ([], adv.deck_cards(duel.player_main()))
+        theirs = ([], adv.deck_cards(duel.enemy_main()))
+        self.stats_decks = ({"id": f"rpg:{g.slot}:{deck_name}", "name": deck_name},
+                            [{"id": f"rpg-enemy:{duel.kind}", "name": duel.enemy_name}])
+        self.stats_folder = adv.duel_stats_dir(g.folder)
+        self.stats_adventure = g.slot
+        try:
+            problem = self.begin(mine, [theirs], labels=(deck_name, [duel.enemy_name]), fmt=duel.format, names=[duel.enemy_name])
+        finally:
+            self.stats_folder = self.stats_adventure = None
+        if problem:
+            return problem
+        info = getattr(self.session, "stats_info", None) or {}
+        self.adventure_duel = {"slot": g.slot, "folder": g.folder, "kind": duel.kind, "enemy": duel.enemy_name,
+                               "stats_id": info.get("id"), "outcome": None, "error": None, "settled": False, "result": None,
+                               "tried": 0.0}
+        self.menu = None
+        self.boot = None
+        self.modal = None
+        self.current_draft = None
+        self.title_ok = True
+        return None
+
+    def adventure_settle(self, force=False):
+        """Round RPG8: the Adventure's duel has a result in the game's record - put it in the save now (a crash after the game
+        can't lose it). "unfinished" isn't settled: the duel stays marked, and the next load says it didn't count. A save that
+        can't be written is tried again (at most every 2 s, and at once when force) - the result is kept until it is written."""
+        d = self.adventure_duel
+        if not d or d.get("settled"):
+            return
+        end = self.stats_end
+        if d.get("result") is None:
+            if not isinstance(end, dict) or end.get("id") != d.get("stats_id"):
+                return
+            if end.get("result") not in ("won", "lost", "conceded", "draw"):
+                return
+            d["result"] = end["result"]
+        now = time.monotonic()
+        if not force and now - d.get("tried", 0.0) < 2.0:
+            return
+        d["tried"] = now
+        try:
+            from rpg import adventure as adv
+            d["outcome"] = adv.finish_duel(d["slot"], d["result"], d.get("folder"))
+            d["error"] = None if d["outcome"] is not None else "The save had no duel going on, so nothing was won or lost."
+            d["settled"] = True
+        except Exception as e:                                  # the game still ends normally; the Adventure says what went wrong
+            first = d.get("error") is None
+            d["error"] = f"The duel's result couldn't be saved yet: {e}"
+            if first:
+                crashlog.note(f"Adventure: the duel's result ({d['result']}) couldn't be saved: {type(e).__name__}: {e}")
+
+    def end_adventure_duel(self):
+        """Round RPG8: the duel's game goes away (another game, the main menu, an online game): its record is closed first, so a
+        result the game knew (won, lost, conceded, draw) is in the save before the duel is forgotten."""
+        if self.adventure_duel is None:
+            return
+        self.stats_close()
+        self.adventure_settle(force=True)
+        self.adventure_duel = None
+
+    def back_to_adventure(self):
+        """Round RPG8: Continue after an Adventure duel - the engine is closed and the Adventure opens on the same game, saying
+        what the duel did."""
+        d = self.adventure_duel or {}
+        self.stats_close()                                    # Continue pressed before Forge's own result came: the board's
+        self.adventure_settle(force=True)                     # result (stats.py) settles it now
+        self.adventure_duel = None
+        try:
+            self.session.close()
+        except Exception:
+            pass
+        self.session = fc.ForgeSession("", [])
+        self.current_decks = None
+        self.end_screen = None
+        self.overlay = None
+        self.set_title()
+        import rpg_screens
+        self.modal = rpg_screens.AdventureFlow(self, folder=d.get("folder"), slot=d.get("slot"), outcome=d.get("outcome"),
+                                               error=d.get("error"),
+                                               retry=None if d.get("settled") else d.get("result"))
+        self.title_ok = True
+
     def open_boot(self, splash=True):
         """Round AD2: the studio splash, then the title with the main menu. main() starts here."""
         self.title_ok = True
@@ -4715,27 +5132,31 @@ class ForgeTable:
         self.menu = None
         self.deck_choice = dict(choice or {})
         self.save_settings()
+        self.current_draft = draft_of(mine)                                       # round CD4: Play again / Edit deck
         return None
 
-    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None, rules=()):
+    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None, rules=(), names=None):
         """End the current game (if any) and start a new one with these decks ((commanders, cards) each).
         labels (Round AD2b): (my deck's name, [each AI deck's name]) for the VS screen; Restart passes the last game's.
         printings (Round ALT1): [my deck's, each AI deck's] {card name lower: (set, cn)}; Restart passes the last game's.
         fmt (Round FMT1): "commander" (None) or "brawl"; Restart passes the last game's.
         rules (Round CD3): house rules (Turbo Cube's emblem); Restart passes the last game's. None: the launcher is called
         exactly as before.
+        names (Round RPG8): the AI seats' deck names (the AI is "AI 1 (<name>)"); None: "Opponent 1", ... as before.
         Returns None when it worked, or a message saying why not."""
         old = self.session
+        self.end_adventure_duel()                             # Round RPG8: start_adventure_duel sets a new one after this
+        kw = {"names": list(names)} if names else {}
         fmt = formats.normal(fmt)
         rules = house_rules.normal(rules)
         try:
             old.close()                                       # first: the old engine still holds forge_engine.log
             if rules:
-                session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt, rules=rules)
-            elif fmt == formats.DEFAULT:
+                session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt, rules=rules, **kw)
+            elif fmt == formats.DEFAULT and not kw:
                 session = self.launcher.start(my_deck, list(opp_decks))
             else:
-                session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt)
+                session = self.launcher.start(my_deck, list(opp_decks), fmt=fmt, **kw)
         except Exception as e:                                # Java missing, runtime broken, ...
             self.session = fc.ForgeSession("", [])
             self.current_decks = None
@@ -4786,6 +5207,7 @@ class ForgeTable:
         if not info or self.launcher is None:
             self.say("There is no unfinished game to resume.", DIM)
             return
+        self.end_adventure_duel()                                   # Round RPG8
         start, cmds = info
         if not gjournal.replay_matches(start, self.replay_key()):
             self.say("That saved game is from another version of the program and can't be resumed.", RED, 6.0)
@@ -4928,6 +5350,7 @@ class ForgeTable:
         """HostDialog's Host: start NetHost with my deck and wait for the friend (HostWait). None when it started, else a message.
         Round MP2c: `guests` friends (1-3) and `ai` AI players, whose decks are the deck screen's AI 1, AI 2 choices.
         Round MP2b: resume = (folder, meta) of a saved online game (online_save.latest) continues it instead."""
+        self.end_adventure_duel()                                   # Round RPG8
         if resume:
             return self._host_saved_game(resume, port, password, upnp, relay)
         problem = self._online_deck_problem(entry)
@@ -5138,6 +5561,7 @@ class ForgeTable:
 
     def begin_online(self, session):
         """The friend's game accepted me (JoinJob finished): show its table."""
+        self.end_adventure_duel()                                   # Round RPG8
         old = self.session
         try:
             old.close()
@@ -5354,7 +5778,8 @@ class ForgeTable:
         return self.game_showing() and not (self.session.game_over or (self.state or {}).get("gameOver"))
 
     def can_restart(self):
-        return bool(self.launcher and self.current_decks) and not getattr(self.session, "online", None)
+        return (bool(self.launcher and self.current_decks) and not getattr(self.session, "online", None)
+                and self.adventure_duel is None)                # Round RPG8: an Adventure duel is never played again from here
 
     def ask_new_game(self):
         """Cog > New game...: play the same decks again (fresh shuffle) or pick decks. This window is the question, so it is also the
@@ -5406,6 +5831,7 @@ class ForgeTable:
             self.session.close()
         except Exception:
             pass
+        self.end_adventure_duel()                           # Round RPG8: a conceded Adventure duel is a loss, settled now
         self.session = fc.ForgeSession("", [])
         self.modal = self.overlay = self.end_screen = None
         self.hosting_wait = None
@@ -5565,7 +5991,8 @@ class ForgeTable:
         if key == pygame.K_F3:
             self.show_perf = not self.show_perf
             return
-        if key == pygame.K_F1 and (mod & pygame.KMOD_SHIFT) and not isinstance(self.modal, licenses_view.LicensesDialog):
+        if key == pygame.K_F1 and (mod & pygame.KMOD_SHIFT) and not isinstance(self.modal, licenses_view.LicensesDialog) \
+                and getattr(self.modal, "walk_tick", None) is None:          # Round RPG8: not over the Adventure (it would replace it)
             self.open_licenses()
             return
         if key == pygame.K_i and (mod & pygame.KMOD_CTRL) and getattr(self.session, "online", None) == "host" \
@@ -6056,8 +6483,13 @@ class ForgeTable:
         if mine is None:
             mine = {"id": None, "name": labels[0] or ""}
             opps = [{"id": None, "name": n or ""} for n in (labels[1] or [])]
-        return {"id": gstats.new_id(), "format": formats.normal(fmt), "online": None, "deck": dict(mine),
+        info = {"id": gstats.new_id(), "format": formats.normal(fmt), "online": None, "deck": dict(mine),
                 "opponent_decks": [dict(o) for o in opps or []]}
+        if self.stats_folder:                         # Round RPG8: an Adventure duel's record goes to the Adventure's own file
+            info["folder"] = self.stats_folder
+        if self.stats_adventure is not None:          # Round RPG8: and the journal knows it is one (not offered to Resume)
+            info["adventure"] = self.stats_adventure
+        return info
 
     def _stats_sync_session(self):
         """A new session is a new game: the old one's recorder is closed (unfinished, conceded or lost) and a new one starts.
@@ -6099,6 +6531,8 @@ class ForgeTable:
                 self._stats_over_at = now
             elif now - self._stats_over_at > STATS_RESULT_WAIT:
                 self.stats_end = rec.finish(None, st)
+        if self.adventure_duel is not None:
+            self.adventure_settle()                    # Round RPG8
 
     def stats_close(self):
         """The game on the table goes away (a new game, the main menu, closing the program): write down how it stands."""
@@ -6110,7 +6544,13 @@ class ForgeTable:
                 print(f"[forge_table] stats: {e}")
 
     def end_stats_lines(self):
-        """Patch 44: the end-of-game screen's lines - how the game ended, and this deck's record (decision 8)."""
+        """Patch 44: the end-of-game screen's lines - how the game ended, and this deck's record (decision 8). Round RPG8: after an
+        Adventure duel, what it won or cost comes first."""
+        d = self.adventure_duel
+        if d is not None and (d.get("outcome") or d.get("error")):
+            from rpg import adventure as adv
+            lines = adv.outcome_lines(d.get("outcome")) if d.get("outcome") else [d["error"]]
+            return lines + ["Continue goes back to the Adventure."]
         rec = self.stats_rec
         if rec is None:
             return []
@@ -6762,7 +7202,8 @@ class ForgeTable:
             self.end_online_save("won" if me and winner and winner == me["name"] else "lost")     # Round MP2b
             if self.shown_out:                       # Round AD2b: I was knocked out earlier - DEFEAT was shown then, not again
                 self.end_screen = None
-                self.modal = dlg.game_over_dialog(self.state or {}, me["name"] if me else "", self.open_menu)
+                self.modal = dlg.game_over_dialog(self.state or {}, me["name"] if me else "", self.open_menu,
+                                                  extra=self.end_extras())       # Round ANS1: Play again here too
                 self.modal.closes_game = False
             else:
                 self.end_screen = flow.end_screen_for(self)
@@ -6836,6 +7277,9 @@ class ForgeTable:
             had_input = True
             if not self.handle_event(ev):
                 self.running = False
+        walk = getattr(self.modal, "walk_tick", None)
+        if walk is not None:
+            walk(self, now)                     # Round RPG8: walking the Adventure's map follows every tick
         self.check_display(now)             # round 27e: a Remote Desktop reconnect changes the screen under a running game
         self.poll_crash_job()               # round 28d
         changed = self.sync()
@@ -6945,6 +7389,10 @@ class ForgeTable:
         online = getattr(self.session, "online", None)
         if online:                                         # Round MP1 (never the password or the address)
             lines.append(f"Online: {online}, with {getattr(self.session, 'peer_name', None) or 'nobody yet'}")
+        if self.adventure_duel:                             # Round RPG8
+            d = self.adventure_duel
+            lines.append(f"Adventure duel: slot {d.get('slot')} against the {d.get('enemy')}"
+                         + (f" - result saved: {d['outcome'].get('result')}" if d.get("outcome") else ""))
         if self.speed == "slow" or self.slow_now():         # round PRI1 (Fast, the default, adds no line)
             lines.append(f"Speed: {self.speed_label()} in the settings; my seat plays {'Slow' if self.slow_now() else 'Fast'}")
         return lines
@@ -6972,7 +7420,14 @@ class ForgeTable:
                 job.session.close()
             except Exception:
                 pass
+        self.end_adventure_duel()                  # Round RPG8: Concede and close the program - the loss is saved first
         self.stats_close()                         # patch 44: a game still going is written down as unfinished
+        close = getattr(self.modal, "adventure_close", None)
+        if close is not None:                       # Round RPG8: the Adventure open as the program closes - where you stand is saved
+            try:
+                close()
+            except Exception as e:
+                crashlog.note(f"Adventure: not saved on closing: {type(e).__name__}: {e}")
         if self.journal is not None:
             self.journal.close()
         self.save_settings()

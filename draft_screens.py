@@ -36,6 +36,7 @@ import pygame
 import art_loader
 import crashlog
 import cube_source as cs
+import draft_builder as db
 import draft_core as dc
 import draft_deck as dd
 import draft_pod as dp
@@ -158,7 +159,7 @@ class DraftFlow(dlg.Dialog):
     """The cube draft window. from_title: Draft was chosen on the main menu (leaving goes back there). root, lookup, cube_folder:
     tests give a folder for the pods, a stand-in for Forge's card scripts and a folder of kept cubes."""
 
-    def __init__(self, gui, from_title=False, root=None, lookup=None, cube_folder=None):
+    def __init__(self, gui, from_title=False, root=None, lookup=None, cube_folder=None, edit=None):
         super().__init__()
         import forge_settings as fset
         self.from_title, self.root, self.lookup, self.cube_folder = from_title, root, lookup, cube_folder
@@ -169,8 +170,15 @@ class DraftFlow(dlg.Dialog):
         self.loaded_ref = None
         self.message = None                                   # (text, colour) under the current stage
         self.pod = None
+        self.builder = None                                   # round CD4: the build stage's draft_builder.Builder
+        self.by_hand = False                                  # round CD4: your deck was changed in the builder
+        self.edit = edit                                      # round CD4: {"pod", "path", "names"} - Edit deck after a game
+        self.build_scroll = 0
+        self.build_max_scroll = 0
+        self.choosing = False                                 # round CD4: the commander list is open
+        self.btiles = []                                      # round CD4: (rect, "pool" | "deck", card) drawn this frame
         try:
-            self.resume = dp.unfinished(root)
+            self.resume = None if edit else dp.unfinished(root)
         except Exception as e:                                # a broken saved draft must not stop the window
             crashlog.note(f"Cube draft: the unfinished draft couldn't be read: {type(e).__name__}: {e}")
             self.resume = None
@@ -185,8 +193,25 @@ class DraftFlow(dlg.Dialog):
         self.max_scroll = 0
         self.decks = None
         self.problems = None
-        if self.resume is None:
+        remembered = getattr(gui, "draft_cube", None)          # round CDFIX1: the cube of the last draft started
+        if isinstance(remembered, dict):
+            if remembered.get("ref"):
+                self.field.text = str(remembered["ref"])[:300]
+                self.stock = None
+            elif remembered.get("stock") in {st.key for st in cs.STOCK_CUBES}:
+                self.stock = remembered["stock"]
+        if edit:                                              # round CD4: straight to the builder, on the saved deck
+            self.pod = edit["pod"]
+            self.builder = db.Builder(self.pod, None)
+            lost = self.builder.load_names(*edit["names"])
+            self.stage = "build"
+            if lost:
+                self.message = (f"Not in your drafted cards, left out: {', '.join(lost[:6])}{' ...' if len(lost) > 6 else ''}",
+                                ORANGE)
+        elif self.resume is None:
             self.load_cube()
+            if isinstance(remembered, dict) and remembered.get("ref") and remembered.get("style") in cs.STYLES:
+                self.style_choice = remembered["style"]
 
     # ---- setup -------------------------------------------------------------------------------------------------------------------
     def ref(self):
@@ -245,7 +270,16 @@ class DraftFlow(dlg.Dialog):
             gui.play_cue("ui.error")
             return
         gui.play_cue("deck.shuffle")
+        self.remember_cube(gui)
         self.to_pick(gui)
+
+    def remember_cube(self, gui):
+        """Round CDFIX1: the next draft opens on this cube (settings.json "draft_cube"). A link keeps the style you chose."""
+        ref = self.field.text.strip()
+        gui.draft_cube = ({"ref": ref, "style": self.style_choice} if self.style_choice else {"ref": ref}) if ref else \
+            {"stock": self.stock or cs.DEFAULT_CUBE}
+        if hasattr(gui, "save_settings"):
+            gui.save_settings()
 
     def continue_draft(self, gui):
         self.pod, self.resume = self.resume, None
@@ -281,6 +315,55 @@ class DraftFlow(dlg.Dialog):
         self.pod.save()
         self.stage, self.hover, self.message = "decks", None, None
         gui.play_cue("deck.shuffle")
+
+    def to_build(self, gui):
+        """Round CD4: your deck, by hand - from the decks stage, starting from the deck shown there."""
+        if self.pod is None or not self.decks:
+            return
+        self.builder = db.Builder(self.pod, self.decks[0])
+        self.stage, self.hover, self.message, self.build_scroll, self.choosing = "build", None, None, 0, False
+        if not self.pod.classic and self.decks[0] is None:
+            self.choosing = bool(self.builder.commander_options())
+        gui.play_cue("ui.click")
+
+    def build_done(self, gui):
+        """Round CD4: back to the decks stage with your deck as you built it (saved with the others there)."""
+        b = self.builder
+        if b is None:
+            return
+        if b.blocking():
+            self.message = (b.blocking()[0], RED)
+            gui.play_cue("ui.error")
+            return
+        deck = b.deck()
+        self.decks[0] = deck
+        self.by_hand = self.by_hand or b.changed                          # the file will say "built by hand"
+        if self.problems:
+            self.problems[0] = b.problems()
+        self.stage, self.hover, self.message, self.choosing = "decks", None, None, False
+        gui.play_cue("ui.click")
+
+    def save_edit(self, gui, play=False):
+        """Round CD4, Edit deck after a game: your deck file is written again in place (the AIs' stay as they are); then the deck
+        screen with the pod's decks chosen, or (play) the same pod again at once."""
+        b = self.builder
+        if b is None or self.edit is None:
+            return False
+        if b.blocking():
+            self.message = (b.blocking()[0], RED)
+            gui.play_cue("ui.error")
+            return False
+        try:
+            self.pod.save_deck_in_place(0, b.deck(), self.edit["path"], by_hand=True)
+        except OSError as e:
+            self.message = (f"Your deck couldn't be saved: {e}", RED)
+            gui.play_cue("ui.error")
+            return False
+        gui.play_cue("ui.menu_select")
+        self.done = True
+        if hasattr(gui, "after_draft_edit"):
+            gui.after_draft_edit(self.edit["path"], play)
+        return True
 
     def prefetch(self, gui):
         art = getattr(gui, "art", None)
@@ -338,7 +421,7 @@ class DraftFlow(dlg.Dialog):
             return False
         library, _samples, base = getattr(gui, "deck_dirs", (None, None, None))
         try:
-            entries = self.pod.save_decks(self.decks, library, base)
+            entries = self.pod.save_decks(self.decks, library, base, by_hand=(0,) if self.by_hand else ())
         except OSError as e:
             self.message = (f"The decks couldn't be saved: {e}", RED)
             gui.play_cue("ui.error")
@@ -403,6 +486,49 @@ class DraftFlow(dlg.Dialog):
         elif name.startswith("versus_"):
             self.opponent = int(name[7:])
             gui.play_cue("ui.click")
+        elif name == "edit":                                  # round CD4
+            self.to_build(gui)
+        elif name == "leave_edit":
+            self.done = True
+        elif name == "build_done":
+            self.build_done(gui)
+        elif name in ("save_edit", "save_play"):
+            self.save_edit(gui, play=name == "save_play")
+        elif name == "auto":
+            if self.builder.auto_build():
+                self.message = ("Auto-build: the best deck your pool makes" + (" with this commander." if
+                                self.builder.commanders and not self.pod.classic else "."), GREEN)
+            gui.play_cue("deck.shuffle")
+        elif name == "suggest":
+            self.builder.suggest_lands()
+            self.message = (f"Basic lands to {self.builder.size} cards.", GREEN)
+            gui.play_cue("ui.click")
+        elif name == "choose_cmd":
+            self.choosing = True
+            gui.play_cue("ui.click")
+        elif name == "cmd_cancel":
+            self.choosing = False
+            gui.play_cue("ui.click")
+        elif name.startswith("cmd_"):
+            opts = self.builder.commander_options()
+            k = int(name[4:])
+            if 0 <= k < len(opts):
+                out = self.builder.set_commanders(opts[k])
+                self.message = ((f"Taken out (outside the new colours): {', '.join(out[:5])}{' ...' if len(out) > 5 else ''}",
+                                 ORANGE) if out else None)
+            self.choosing = False
+            gui.play_cue("ui.click")
+        elif name.startswith("basic+_") or name.startswith("basic-_"):
+            self.builder.step_basic(name[7:], 1 if name[5] == "+" else -1)
+            gui.play_cue("ui.click")
+        elif name.startswith("f_"):                           # f_colour_W, f_type_land, f_mv_2, f_clear
+            if name == "f_clear":
+                self.builder.clear_filters()
+            else:
+                _f, kind, value = name.split("_", 2)
+                self.builder.toggle_filter(kind, value)
+            self.build_scroll = 0
+            gui.play_cue("ui.click")
 
     def click(self, gui, pos, button):
         name = self.button_at(pos)
@@ -414,12 +540,33 @@ class DraftFlow(dlg.Dialog):
                 if rect.collidepoint(pos):
                     self.toggle(gui, card)
                     return
+        if self.stage == "build" and button == 1 and not self.choosing:    # round CD4: pool -> deck, deck -> pool
+            for rect, where, card in reversed(self.btiles):
+                if rect.collidepoint(pos):
+                    b = self.builder
+                    if where == "deck":
+                        b.remove(card)
+                        self.message = None
+                        gui.play_cue("card.pickup")
+                    elif b.add(card):
+                        self.message = None
+                        gui.play_cue("card.pickup")
+                    else:
+                        self.message = (b.why_not(card) or "That card is already in your deck.", ORANGE)
+                        gui.play_cue("ui.error")
+                    return
 
     def key(self, gui, ev):
         k = ev.key
         enter = k in (pygame.K_RETURN, pygame.K_KP_ENTER)
         if k == pygame.K_ESCAPE:
-            if self.stage == "decks":
+            if self.stage == "build" and self.choosing and self.builder.commanders:     # round CD4
+                self.choosing = False
+            elif self.stage == "build" and self.edit is None:
+                self.build_done(gui)
+            elif self.stage == "build":
+                self.done = True                              # Edit deck after a game: Esc leaves without saving
+            elif self.stage == "decks":
                 self.to_review()
             else:
                 self.leave(gui)
@@ -446,6 +593,10 @@ class DraftFlow(dlg.Dialog):
             self.save_decks(gui)
 
     def wheel(self, gui, dy):
+        if self.stage == "build":                            # round CD4: the pool scrolls
+            step = int(80 * gui.L.fs)
+            self.build_scroll = max(0, min(self.build_max_scroll, self.build_scroll - dy * step))
+            return
         if self.stage == "review":
             step = int(80 * gui.L.fs)
             self.scroll = max(0, min(self.max_scroll, self.scroll - dy * step))
@@ -464,6 +615,8 @@ class DraftFlow(dlg.Dialog):
             self.draw_pick(gui, rect)
         elif self.stage == "review":
             self.draw_review(gui, rect)
+        elif self.stage == "build":                           # round CD4
+            self.draw_build(gui, rect)
         else:
             self.draw_decks(gui, rect)
 
@@ -848,20 +1001,25 @@ class DraftFlow(dlg.Dialog):
         else:
             y = self.header(gui, rect, "The decks",
                             "Each is the best deck its pool makes: a commander, the best cards of its colours by Cube Cobra's "
-                            "ratings, the pool's lands, then basic lands to 60. Editing your deck by hand comes in a later version.")
+                            "ratings, the pool's lands, then basic lands to 60. Edit my deck builds yours by hand.")
         foot = rect.bottom - pad - self.bh - int(10 * fs)
         n = len(self.decks or [])
         gap = int(14 * fs)
         col_w = (rect.w - 2 * pad - gap * (n - 1)) // max(1, n)
         self.hover = None
+        mine_col = None
         for s, deck in enumerate(self.decks or []):
             col = pygame.Rect(rect.x + pad + s * (col_w + gap), y, col_w, foot - y)
+            if s == 0:
+                mine_col = col
             versus = pod.classic and s == self.opponent           # round CD3: the AI you will play
             round_rect(scr, col, gfx.ROW_BG, 10, 2 if (s == 0 or versus) else 1,
                        GOLD if s == 0 else (gfx.VS_TEXT if versus else gfx.ROW_EDGE))
             if pod.classic and s > 0:
                 self.buttons.append((pygame.Rect(col), f"versus_{s}"))      # a click on an AI's column chooses it
             inner = col.inflate(-2 * int(10 * fs), -2 * int(10 * fs))
+            if s == 0:                                            # round CD4: room for Edit my deck at the bottom
+                inner.h -= self.bh + int(8 * fs)
             prev = scr.get_clip()
             scr.set_clip(col)
             cy = inner.y
@@ -910,8 +1068,239 @@ class DraftFlow(dlg.Dialog):
                       else "Save the decks and choose them")
         top = self.footer(gui, rect, [("Back to the review", "to_review", True, False), ("Save and leave", "leave", True, False)],
                           [(save_label, "save", mine_ok, True)])
+        if mine_col is not None:                              # round CD4: in your deck's column, under its card list
+            w = min(mine_col.w - int(16 * fs), max(gui.button_width("Edit my deck"), int(140 * fs)))
+            self.button(gui, pygame.Rect(mine_col.centerx - w // 2, mine_col.bottom - self.bh - int(8 * fs), w, self.bh),
+                        "Edit my deck", "edit", True, False, fkey="small" if w < gui.button_width("Edit my deck") else "btn")
         if self.message:
             self.draw_message(gui, rect.x + pad, top - smallb.get_height() - 6, rect.w - 2 * pad)
+
+    # ---- round CD4: the build stage ---------------------------------------------------------------------------------------------
+    def draw_build(self, gui, rect):
+        scr, fs, pad = gui.screen, gui.L.fs, self.pad
+        b, pod = self.builder, self.pod
+        small, smallb, tiny = gui.font("small"), gui.font("small", True), gui.font("tiny")
+        self.btiles, self.hover = [], None
+        sub = ("Click a card in your pool to put it in your deck; click a card in the deck to take it out. "
+               + ("Any colours; this cube's own basic lands are free." if pod.classic else
+                  "Greyed: outside your commander's colours. Basic lands are free."))
+        y = self.header(gui, rect, "Build your deck", sub)
+        gap = int(8 * fs)
+        # the top row: commander, counter, Auto-build, Suggest lands
+        row = pygame.Rect(rect.x + pad, y, rect.w - 2 * pad, self.bh)
+        x = row.x
+        if not pod.classic:
+            names = " + ".join(pod.cards[i].name for i in b.commanders) or "no commander yet"
+            label = "Commander: "
+            draw_text(scr, label, x, row.centery, smallb, GOLD, "midleft")
+            x += smallb.size(label)[0]
+            cw = gui.button_width("Change")
+            room = max(40, row.w // 2 - (x - row.x) - cw - gap)
+            text = clip_text(names, small, room)
+            draw_text(scr, text, x, row.centery, small, WHITE if b.commanders else ORANGE, "midleft")
+            for i in b.commanders:                            # hover a commander's name for its picture
+                tw = small.size(text)[0]
+                if pygame.Rect(x, row.y, tw, row.h).collidepoint(gui.mouse):
+                    self.hover = i
+            x += small.size(text)[0] + gap
+            self.button(gui, pygame.Rect(x, row.y, cw, row.h), "Change", "choose_cmd", bool(b.commander_options()))
+            x += cw + gap
+        total = b.total()
+        big = gui.font("body", True)
+        ccol = GREEN if total == b.size else (ORANGE if total < b.size else WHITE)
+        right = [("Suggest lands", "suggest"), ("Auto-build", "auto")]
+        rx = row.right
+        for label, name in right:
+            w = gui.button_width(label)
+            rx -= w
+            self.button(gui, pygame.Rect(rx, row.y, w, row.h), label, name, True, name == "auto")
+            rx -= gap
+        counter = b.counter()
+        cx = max(x + big.size(counter)[0] // 2 + gap, (x + rx) // 2)
+        if x + big.size(counter)[0] < rx:
+            draw_text(scr, counter, cx, row.centery, big, ccol, "center")
+        y = row.bottom + gap
+        # the second row: filters (left), basic land steppers (right)
+        fh = int(max(26, 30 * fs))
+        pool_w = int((rect.w - 2 * pad) * 0.44)
+        frow = pygame.Rect(rect.x + pad, y, pool_w, fh)
+        fx = frow.x
+        chips = [("colour", c, "{%s}" % c if c in "WUBRG" else ("Colourless" if c == "C" else "Multi")) for c in db.COLOUR_FILTERS]
+        chips += [("type", t, t.title()) for t in db.TYPE_FILTERS] + [("mv", m, m) for m in db.MV_FILTERS]
+        fy = frow.y
+        for kind, value, label in chips:
+            on = value in b.filters[kind]
+            w = (tiny.size(label)[0] if "{" not in label else fh) + int(14 * fs)
+            if fx + w > frow.right:
+                fx, fy = frow.x, fy + fh + 4
+            r = pygame.Rect(fx, fy, w, fh)
+            round_rect(scr, r, gfx.ROW_BG if not on else gfx.GOLD_DARK, 6, 1, GOLD if on else gfx.ROW_EDGE)
+            if "{" in label:
+                gfx.draw_rich(scr, label, r.x + (r.w - fh) // 2 + 2, r.centery, tiny, WHITE)
+            else:
+                draw_text(scr, label, r.centerx, r.centery, tiny, WHITE if on else DIM, "center")
+            self.buttons.append((r, f"f_{kind}_{value}"))
+            fx += w + 4
+        if any(b.filters.values()):
+            w = tiny.size("Clear")[0] + int(14 * fs)
+            if fx + w > frow.right:
+                fx, fy = frow.x, fy + fh + 4
+            r = pygame.Rect(fx, fy, w, fh)
+            round_rect(scr, r, gfx.ROW_BG, 6, 1, gfx.ROW_EDGE)
+            draw_text(scr, "Clear", r.centerx, r.centery, tiny, ORANGE, "center")
+            self.buttons.append((r, "f_clear"))
+        filters_bottom = fy + fh
+        sx = rect.x + pad + pool_w + int(18 * fs)
+        sy = y
+        for name in b.basic_names():
+            n = b.basics.get(name, 0)
+            label = f"{n} {name}"
+            w = fh + small.size(label)[0] + fh + int(16 * fs)
+            if sx + w > rect.right - pad:
+                sx, sy = rect.x + pad + pool_w + int(18 * fs), sy + fh + 4
+            self.button(gui, pygame.Rect(sx, sy, fh, fh), "-", f"basic-_{name}", n > 0, fkey="small")
+            draw_text(scr, label, sx + fh + int(8 * fs), sy + fh // 2, small, WHITE if n else DIM, "midleft")
+            self.button(gui, pygame.Rect(sx + fh + int(8 * fs) + small.size(label)[0] + int(8 * fs), sy, fh, fh), "+",
+                        f"basic+_{name}", True, fkey="small")
+            sx += w + int(12 * fs)
+        y = max(filters_bottom, sy + fh) + gap
+        foot = rect.bottom - pad - self.bh - small.get_height() - int(14 * fs)
+        pool_area = pygame.Rect(rect.x + pad, y, pool_w, max(40, foot - y))
+        deck_area = pygame.Rect(pool_area.right + int(18 * fs), y, rect.right - pad - pool_area.right - int(18 * fs),
+                                pool_area.h)
+        self.draw_pool(gui, pool_area)
+        self.draw_deck_columns(gui, deck_area)
+        # the footer
+        if self.edit is not None:
+            top = self.footer(gui, rect, [("Leave without saving", "leave_edit", True, False)],
+                              [("Save and play again", "save_play", True, True), ("Save", "save_edit", True, False)])
+        else:
+            top = self.footer(gui, rect, [("Done - back to the decks", "build_done", True, True)], [])
+        problems = b.problems()
+        if self.message:
+            self.draw_message(gui, rect.x + pad, top - smallb.get_height() - 6, rect.w - 2 * pad)
+        elif problems:
+            draw_text(scr, clip_text(problems[0] + ("  (it still plays)" if not b.blocking() else ""), small, rect.w - 2 * pad),
+                      rect.x + pad, top - small.get_height() - 6, small, RED if b.blocking() else ORANGE)
+        if self.choosing:
+            self.draw_commander_list(gui, rect)
+        elif self.hover is not None:
+            self.draw_big(gui, rect, self.hover)
+
+    def tile_size(self, gui, area, per_row):
+        w = max(30, (area.w - (per_row - 1) * int(6 * gui.L.fs)) // per_row)
+        return w, int(w / CARD_ASPECT)
+
+    def draw_pool(self, gui, area):
+        scr, fs, b = gui.screen, gui.L.fs, self.builder
+        tiny = gui.font("tiny")
+        cards = b.available()
+        label = f"Your pool  -  {len(cards)} card{'s' if len(cards) != 1 else ''} not in the deck"
+        draw_text(scr, clip_text(label, tiny, area.w), area.x, area.y, tiny, DIM)
+        area = pygame.Rect(area.x, area.y + tiny.get_height() + 4, area.w, area.h - tiny.get_height() - 4)
+        per_row = max(3, area.w // int(96 * fs))
+        w, h = self.tile_size(gui, area, per_row)
+        gap = int(6 * fs)
+        rows = -(-len(cards) // per_row) if cards else 0
+        self.build_max_scroll = max(0, rows * (h + gap) - area.h)
+        self.build_scroll = min(self.build_scroll, self.build_max_scroll)
+        prev = scr.get_clip()
+        scr.set_clip(area)
+        shade = pygame.Surface((w, h), pygame.SRCALPHA)
+        shade.fill(gfx.BACKDROP + (170,))
+        for k, i in enumerate(cards):
+            r = pygame.Rect(area.x + (k % per_row) * (w + gap), area.y + (k // per_row) * (h + gap) - self.build_scroll, w, h)
+            if r.bottom < area.y or r.y > area.bottom:
+                continue
+            scr.blit(card_picture(gui, self.pod.cards[i], w, h), r)
+            if not b.fits(i):
+                scr.blit(shade, r)
+            vis = r.clip(area)
+            self.btiles.append((vis, "pool", i))
+            if vis.collidepoint(gui.mouse):
+                self.hover = i
+        scr.set_clip(prev)
+        if not cards:
+            draw_text(scr, "No card matches these filters." if any(b.filters.values()) else "Every card you drafted is in your deck.",
+                      area.centerx, area.y + 20, tiny, DIM, "midtop")
+
+    def draw_deck_columns(self, gui, area):
+        scr, fs, b = gui.screen, gui.L.fs, self.builder
+        tiny, tinyb = gui.font("tiny"), gui.font("tiny", True)
+        cols = b.columns()
+        names = list(cols)
+        gap = int(6 * fs)
+        cw = max(30, (area.w - gap * (len(names) - 1)) // len(names))
+        ch = int(cw / CARD_ASPECT)
+        head = tinyb.get_height() + 4
+        for k, key in enumerate(names):
+            x = area.x + k * (cw + gap)
+            n = len(cols[key])
+            draw_text(scr, clip_text(f"{key}  ({n})" if key != "Lands" else f"Lands ({n})", tinyb, cw), x, area.y, tinyb, GOLD)
+            if not n:
+                continue
+            room = area.h - head - ch
+            step = max(6, min(int(ch * 0.17), room // max(1, n - 1))) if n > 1 else 0
+            for j, i in enumerate(cols[key]):
+                r = pygame.Rect(x, area.y + head + j * step, cw, ch)
+                scr.blit(card_picture(gui, self.pod.cards[i], cw, ch), r)
+                vis = pygame.Rect(r.x, r.y, cw, step if j < n - 1 else ch).clip(area)
+                self.btiles.append((vis, "deck", i))
+                if vis.collidepoint(gui.mouse):
+                    self.hover = i
+        basics = sum(b.basics.values())
+        if basics:
+            text = "Basic lands: " + ", ".join(f"{k} {n}" for n, k in b.basics.items() if k)
+            draw_text(scr, clip_text(text, tiny, area.w), area.x, area.bottom - tiny.get_height(), tiny, DIM)
+
+    def draw_big(self, gui, rect, i):
+        """The card under the mouse, big, on the side of the window away from it."""
+        h = int(rect.h * 0.55)
+        w = int(h * CARD_ASPECT)
+        x = rect.x + self.pad if gui.mouse[0] > rect.centerx else rect.right - self.pad - w
+        r = pygame.Rect(x, rect.y + int(rect.h * 0.2), w, h)
+        gfx.shadowed(gui.screen, r, radius=max(4, int(w * 0.05)))
+        gui.screen.blit(card_picture(gui, self.pod.cards[i], w, h), r)
+
+    def draw_commander_list(self, gui, rect):
+        """Round CD4: the pool's commanders (and legal pairs), one button each."""
+        scr, fs, b = gui.screen, gui.L.fs, self.builder
+        small, smallb = gui.font("small"), gui.font("small", True)
+        opts = b.commander_options()
+        shade = pygame.Surface(rect.size, pygame.SRCALPHA)
+        shade.fill(gfx.BACKDROP + (200,))
+        scr.blit(shade, rect)
+        self.buttons = []                                    # only this list (and Cancel) takes clicks now
+        w = min(rect.w - 4 * self.pad, int(720 * max(1.0, fs)))
+        rh = int(max(30, 34 * fs))
+        h = min(rect.h - 4 * self.pad, smallb.get_height() * 2 + (len(opts) + 1) * (rh + 4) + 3 * self.pad)
+        panel = pygame.Rect(rect.centerx - w // 2, rect.centery - h // 2, w, h)
+        round_rect(scr, panel, gfx.ROW_BG, 10, 2, GOLD)
+        y = panel.y + self.pad
+        draw_text(scr, "Choose your commander", panel.x + self.pad, y, smallb, GOLD)
+        y += smallb.get_height() + 6
+        if not opts:
+            draw_text(scr, "No card in your pool can be a commander (903.13).", panel.x + self.pad, y, small, RED)
+        bottom = panel.bottom - self.pad - rh
+        for k, opt in enumerate(opts):
+            if y + rh > bottom - 4:
+                draw_text(scr, f"... and {len(opts) - k} more", panel.x + self.pad, y, small, DIM)
+                break
+            r = pygame.Rect(panel.x + self.pad, y, panel.w - 2 * self.pad, rh)
+            names = " + ".join(self.pod.cards[i].name for i in opt)
+            ident = dd.identity_of(self.pod.cards, opt)
+            colours = "".join("{%s}" % c for c in "WUBRG" if c in ident) or "colourless"
+            chosen = tuple(b.commanders) == tuple(opt)
+            round_rect(scr, r, gfx.GOLD_DARK if chosen else gfx.ROW_BG, 6, 1, GOLD if chosen else gfx.ROW_EDGE)
+            draw_text(scr, clip_text(names, small, r.w - int(120 * fs)), r.x + 8, r.centery, small, WHITE, "midleft")
+            gfx.draw_rich(scr, colours, r.right - int(110 * fs), r.centery, small, DIM)
+            self.buttons.append((r, f"cmd_{k}"))
+            if r.collidepoint(gui.mouse):
+                self.hover = opt[0]
+            y += rh + 4
+        if b.commanders:
+            cw = gui.button_width("Cancel")
+            self.button(gui, pygame.Rect(panel.right - self.pad - cw, bottom, cw, rh), "Cancel", "cmd_cancel")
 
     def face(self, deck):
         """Round CD3: the card that stands for a classic deck - its strongest spell by Cube Cobra's rating (or a land)."""

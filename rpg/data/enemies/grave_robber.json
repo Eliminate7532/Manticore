@@ -397,5 +397,712 @@
    }
   },
   "soak_failed": []
+ },
+ "jumpstart": [
+  {
+   "name": "Grave Robber 1",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Vampires 3",
+    "J22 Boneyard 2",
+    "J22 Rats"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Chittering Rats",
+     1
+    ],
+    [
+     "Gifted Aetherborn",
+     1
+    ],
+    [
+     "Stitcher's Supplier",
+     1
+    ],
+    [
+     "Exquisite Blood",
+     1
+    ],
+    [
+     "Ogre Slumlord",
+     1
+    ],
+    [
+     "Sengir Vampire",
+     1
+    ],
+    [
+     "Shadowborn Demon",
+     1
+    ],
+    [
+     "Ashcoat of the Shadow Swarm",
+     1
+    ],
+    [
+     "Sangromancer",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Bloodbond Vampire",
+     1
+    ],
+    [
+     "Nocturnal Feeder",
+     1
+    ],
+    [
+     "Vampire Neonate",
+     1
+    ],
+    [
+     "Silversmote Ghoul",
+     1
+    ],
+    [
+     "Gloom Sower",
+     1
+    ],
+    [
+     "Agonizing Syphon",
+     1
+    ],
+    [
+     "Sanguine Indulgence",
+     1
+    ],
+    [
+     "Last Gasp",
+     1
+    ],
+    [
+     "Thriving Moor",
+     3
+    ],
+    [
+     "Swamp",
+     30
+    ],
+    [
+     "Graveblade Marauder",
+     1
+    ],
+    [
+     "Ossuary Rats",
+     2
+    ],
+    [
+     "Liliana's Elite",
+     1
+    ],
+    [
+     "Necrotic Wound",
+     1
+    ],
+    [
+     "Suspicious Shambler",
+     1
+    ],
+    [
+     "Ghoul's Feast",
+     1
+    ],
+    [
+     "Wailing Ghoul",
+     1
+    ],
+    [
+     "Gorging Vulture",
+     1
+    ],
+    [
+     "Moodmark Painter",
+     1
+    ],
+    [
+     "Corpse Churn",
+     1
+    ],
+    [
+     "Nezumi Bone-Reader",
+     1
+    ],
+    [
+     "Crypt Rats",
+     1
+    ],
+    [
+     "Infiltration Lens",
+     1
+    ],
+    [
+     "Ulcerate",
+     1
+    ],
+    [
+     "Typhoid Rats",
+     1
+    ],
+    [
+     "Burglar Rat",
+     1
+    ],
+    [
+     "Sinuous Vermin",
+     1
+    ],
+    [
+     "Eviscerate",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 26,
+    "2": 4
+   }
+  },
+  {
+   "name": "Grave Robber 2",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Grave Robbers 4",
+    "J25 Clerics 1",
+    "JMP Plus One 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Disfigure",
+     1
+    ],
+    [
+     "Liliana, Death's Majesty",
+     1
+    ],
+    [
+     "Branching Evolution",
+     1
+    ],
+    [
+     "Nullpriest of Oblivion",
+     1
+    ],
+    [
+     "Archfiend's Vessel",
+     1
+    ],
+    [
+     "Wildwood Scourge",
+     1
+    ],
+    [
+     "Shardless Outlander",
+     1
+    ],
+    [
+     "Goremand",
+     1
+    ],
+    [
+     "Revoke Demise",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Isareth the Awakener",
+     1
+    ],
+    [
+     "Eternal Taskmaster",
+     1
+    ],
+    [
+     "Gorging Vulture",
+     1
+    ],
+    [
+     "Gravedigger",
+     1
+    ],
+    [
+     "Persistent Specimen",
+     1
+    ],
+    [
+     "Undead Butler",
+     1
+    ],
+    [
+     "Deal Gone Bad",
+     1
+    ],
+    [
+     "Murder",
+     1
+    ],
+    [
+     "Revoke Demise",
+     1
+    ],
+    [
+     "Thriving Moor",
+     2
+    ],
+    [
+     "Swamp",
+     20
+    ],
+    [
+     "Taborax, Hope's Demise",
+     1
+    ],
+    [
+     "Bonecaller Cleric",
+     1
+    ],
+    [
+     "Eerie Soultender",
+     1
+    ],
+    [
+     "Koma's Faithful",
+     1
+    ],
+    [
+     "Scion of the Swarm",
+     1
+    ],
+    [
+     "Skemfar Shadowsage",
+     1
+    ],
+    [
+     "Dark Bargain",
+     1
+    ],
+    [
+     "Agonizing Syphon",
+     1
+    ],
+    [
+     "Armorcraft Judge",
+     1
+    ],
+    [
+     "Nessian Hornbeetle",
+     1
+    ],
+    [
+     "Fertilid",
+     1
+    ],
+    [
+     "Ironshell Beetle",
+     1
+    ],
+    [
+     "Trufflesnout",
+     1
+    ],
+    [
+     "Pridemalkin",
+     1
+    ],
+    [
+     "Hunter's Edge",
+     1
+    ],
+    [
+     "Arbor Armament",
+     1
+    ],
+    [
+     "Invigorating Surge",
+     1
+    ],
+    [
+     "Thriving Grove",
+     1
+    ],
+    [
+     "Forest",
+     11
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 28,
+    "2": 1
+   }
+  },
+  {
+   "name": "Grave Robber 3",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Vampires 1",
+    "J25 Vampires 1",
+    "J22 Fiery 1"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Gifted Aetherborn",
+     1
+    ],
+    [
+     "Blood Fountain",
+     1
+    ],
+    [
+     "Chandra, Flame's Fury",
+     1
+    ],
+    [
+     "Silversmote Ghoul",
+     1
+    ],
+    [
+     "Vito, Thorn of the Dusk Rose",
+     1
+    ],
+    [
+     "Blood Artist",
+     1
+    ],
+    [
+     "Thrill of Possibility",
+     1
+    ],
+    [
+     "Pillar of Flame",
+     1
+    ],
+    [
+     "Vampire of the Dire Moon",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Bloodbond Vampire",
+     1
+    ],
+    [
+     "Kalastria Nightwatch",
+     1
+    ],
+    [
+     "Nocturnal Feeder",
+     1
+    ],
+    [
+     "Gloom Sower",
+     1
+    ],
+    [
+     "Agonizing Syphon",
+     1
+    ],
+    [
+     "Sanguine Indulgence",
+     1
+    ],
+    [
+     "Last Gasp",
+     1
+    ],
+    [
+     "Eternal Thirst",
+     1
+    ],
+    [
+     "Thriving Moor",
+     2
+    ],
+    [
+     "Swamp",
+     21
+    ],
+    [
+     "Scourge of the Undercity",
+     1
+    ],
+    [
+     "Nazar, the Velvet Fang",
+     1
+    ],
+    [
+     "Skymarch Bloodletter",
+     1
+    ],
+    [
+     "Blood Burglar",
+     1
+    ],
+    [
+     "Bloodtithe Collector",
+     1
+    ],
+    [
+     "Gluttonous Guest",
+     1
+    ],
+    [
+     "Bleed Dry",
+     1
+    ],
+    [
+     "Urge to Feed",
+     1
+    ],
+    [
+     "Gift of Fangs",
+     1
+    ],
+    [
+     "Chandra's Pyreling",
+     1
+    ],
+    [
+     "Chandra's Spitfire",
+     1
+    ],
+    [
+     "Spiteful Prankster",
+     1
+    ],
+    [
+     "Coalborn Entity",
+     1
+    ],
+    [
+     "Chandra's Magmutt",
+     1
+    ],
+    [
+     "Goblin Researcher",
+     1
+    ],
+    [
+     "Wildfire Elemental",
+     1
+    ],
+    [
+     "Chandra's Pyrohelix",
+     1
+    ],
+    [
+     "Fiery Intervention",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     1
+    ],
+    [
+     "Mountain",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 29
+   }
+  },
+  {
+   "name": "Grave Robber 4",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Ghastly 1",
+    "JMP Vampires 2",
+    "JMP Above the Clouds 3"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Gifted Aetherborn",
+     1
+    ],
+    [
+     "Lofty Denial",
+     1
+    ],
+    [
+     "Village Rites",
+     1
+    ],
+    [
+     "Windreader Sphinx",
+     1
+    ],
+    [
+     "Harvester of Souls",
+     1
+    ],
+    [
+     "Silversmote Ghoul",
+     1
+    ],
+    [
+     "Vito, Thorn of the Dusk Rose",
+     1
+    ],
+    [
+     "Tragic Slip",
+     1
+    ],
+    [
+     "Gloom Sower",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Ozox, the Clattering King",
+     1
+    ],
+    [
+     "Doomed Dissenter",
+     1
+    ],
+    [
+     "Dross Hopper",
+     1
+    ],
+    [
+     "Falkenrath Noble",
+     1
+    ],
+    [
+     "Morbid Opportunist",
+     1
+    ],
+    [
+     "Wakedancer",
+     1
+    ],
+    [
+     "Murder",
+     1
+    ],
+    [
+     "Blood Beckoning",
+     1
+    ],
+    [
+     "Moan of the Unhallowed",
+     1
+    ],
+    [
+     "Thriving Moor",
+     2
+    ],
+    [
+     "Swamp",
+     20
+    ],
+    [
+     "Blood Host",
+     1
+    ],
+    [
+     "Bloodbond Vampire",
+     1
+    ],
+    [
+     "Child of Night",
+     1
+    ],
+    [
+     "Nocturnal Feeder",
+     1
+    ],
+    [
+     "Agonizing Syphon",
+     1
+    ],
+    [
+     "Sanguine Indulgence",
+     1
+    ],
+    [
+     "Last Gasp",
+     1
+    ],
+    [
+     "Eternal Thirst",
+     1
+    ],
+    [
+     "Warden of Evos Isle",
+     1
+    ],
+    [
+     "Tide Skimmer",
+     1
+    ],
+    [
+     "Keen Glidemaster",
+     1
+    ],
+    [
+     "Roaming Ghostlight",
+     1
+    ],
+    [
+     "Wall of Runes",
+     1
+    ],
+    [
+     "Rain of Revelation",
+     1
+    ],
+    [
+     "Unsubstantiate",
+     1
+    ],
+    [
+     "Frost Breath",
+     1
+    ],
+    [
+     "Capture Sphere",
+     1
+    ],
+    [
+     "Thriving Isle",
+     1
+    ],
+    [
+     "Island",
+     11
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 28,
+    "2": 1
+   }
+  }
+ ],
+ "jumpstart_balance": {
+  "when": "2026-10-14 11:23",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "seed": 303,
+  "keep": 4,
+  "handicap": 9,
+  "target": 0.65,
+  "rule": "two",
+  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
  }
 }

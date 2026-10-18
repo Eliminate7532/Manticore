@@ -38,10 +38,12 @@ import cube_source as cs
 
 DECK_MIN = 60                            # 903.13f(1)
 LANDS = 25
+LANDS_MAX = 26                           # round CD4a: the top of "24 to 26 lands" (EsMag's page): a deck a spell or so short plays more
 TOP_END_CMC = 6                          # mana value from which a card costs a little more (Claude's estimate)
 TOP_END_COST = 0.25                      # per point of mana value over TOP_END_CMC - 1, in Elo standard deviations
 AVOID_COST = 5.0                         # an AI-flagged card is used only after every other card of the colours
-SHORT_COST = 1.5                         # per basic land that only stands in for a missing spell (choosing the commander)
+SHORT_COST = 3.0                         # per basic land that only stands in for a missing spell (choosing the commander);
+                                         # round CD4a: 1.5 -> 3.0 (tools/draft_sim.py, docs/rounds/CD4a.md)
 COMMANDER_WEIGHT = 1.5                   # the commander's own strength, when choosing between commanders
 CLASSIC_SIZE = 40                        # round CD3: 100.2b
 CLASSIC_LANDS = 17                       # round CD3: the usual limited land count (Claude's default)
@@ -153,7 +155,16 @@ def split_basics(cards, spells, ident, count, names=None):
 
 
 def build_for(cards, pool, commanders, z=None, avoid=frozenset(), size=DECK_MIN, lands=LANDS):
-    """The deck for these commanders from this pool (a Deck). Never fewer than `size` cards: missing spells become basics."""
+    """The deck for these commanders from this pool (a Deck). Never fewer than `size` cards: missing spells become basics.
+    Round CD4a: a deck short of spells with the default 25 lands plays up to LANDS_MAX (26) lands first, inside the 24-26 its source
+    recommends; only what is still missing then counts as short."""
+    deck = _build_for(cards, pool, commanders, z, avoid, size, lands)
+    if deck.short and lands == LANDS and lands < LANDS_MAX:
+        deck = _build_for(cards, pool, commanders, z, avoid, size, min(LANDS_MAX, lands + deck.short))
+    return deck
+
+
+def _build_for(cards, pool, commanders, z=None, avoid=frozenset(), size=DECK_MIN, lands=LANDS):
     z = z if z is not None else zscores(cards)
     ident = identity_of(cards, commanders)
     used = set(commanders)

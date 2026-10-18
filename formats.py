@@ -100,6 +100,7 @@ BLURB = {
 
 _TXT_LINE = re.compile(r"^\s*#\s*format\s*[:=]\s*([A-Za-z_]+)\s*$", re.I | re.M)      # round CD2: "commander_draft"
 _DCK_LINE = re.compile(r"^\s*Deck Type\s*=\s*(\S+)\s*$", re.I | re.M)
+_MANTICORE_LINE = re.compile(r"^\s*Manticore Format\s*=\s*([A-Za-z_]+)\s*$", re.I | re.M)   # round CDFIX1
 
 
 def normal(key):
@@ -184,13 +185,27 @@ def with_format(text, key):
 
 # ---- Forge's .dck file ----------------------------------------------------------------------------------------------------------
 def dck_lines(key):
-    """Extra [metadata] lines for write_deck_file: ["Deck Type=Brawl"] for Brawl, [] for Commander."""
+    """Extra [metadata] lines for write_deck_file: ["Deck Type=Brawl"] for Brawl, [] for Commander. Round CDFIX1: a format
+    its Deck Type line can't name (Commander Draft has none, as a Commander deck) also gets "Manticore Format=<key>", a key
+    Forge's reader skips (as CD3's "Manticore Rules="), so a resumed or rewound game knows it again. Commander, Brawl,
+    Standard and Draft files are exactly what they were."""
     t = get(key).dck_type
-    return [f"Deck Type={t}"] if t else []
+    lines = [f"Deck Type={t}"] if t else []
+    if _from_type_line("\n".join(lines)) != get(key).key:
+        lines.append(f"Manticore Format={get(key).key}")
+    return lines
 
 
 def from_dck(text):
-    """The format of a .dck file's text (its "Deck Type=" line); Commander when it has none."""
+    """The format of a .dck file's text: its "Manticore Format=" line (round CDFIX1), else its "Deck Type=" line; Commander when
+    it has neither."""
+    m = _MANTICORE_LINE.search(text or "")
+    if m and m.group(1).strip().lower() in FORMATS:
+        return m.group(1).strip().lower()
+    return _from_type_line(text)
+
+
+def _from_type_line(text):
     m = _DCK_LINE.search(text or "")
     if not m:
         return DEFAULT

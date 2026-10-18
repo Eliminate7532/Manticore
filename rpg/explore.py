@@ -29,15 +29,18 @@ dark palette kept, the map side only):
     (inventwithpython.com/blog/2012/12/10/8-bit-nes-legend-of-zelda-map-data). One room is on screen (RoomCamera); walking off
     it slides the view to the next room over ROOM_SLIDE_SECONDS, and the walker waits meanwhile.
   - the Explorer walks in four directions (four_way): with two directions held, the one pressed later wins. Walking along one
-    axis, the walker drifts onto the nearest half-tile line across its way (ALIGN); stopped by a wall, it slides across to a way
-    through within CORNER tiles (Walker._corner), so a one-tile gap lets you in from anywhere beside it.
+    axis, the walker drifts onto the nearest half-tile line across its way (ALIGN). Stopped by a wall, it stops dead (Round RPG7,
+    Karl 13 Oct; CORNER_HELP = False). With CORNER_HELP it would slide across to a way through within CORNER tiles
+    (Walker._corner), so a one-tile gap lets you in from anywhere beside it - RPG6's first version.
   - a foe walks about its own room (Foe), only while you are in that room, and is back where it started when you come in again;
     a boss stands still (map property wander=false does the same for any foe). Touching it starts the duel, as before.
   - save.world["seen"]: the rooms you have been in, "<map>#<column>,<row>" (the minimap shows them).
   - a map property light = a radius in tiles makes the map dark but for a light around the walker (rpg_map_view draws it): the
-    plan's "Diablo 1 and Vermis feel through palette and lighting".
+    plan's "Diablo 1 and Vermis feel through palette and lighting". Round RPG7 (Karl, 13 Oct: "Dark only in dungeons"): only on a
+    dungeon - a map whose property dungeon is true, or (without that property) one with a dungeon or boss encounter.
 None of Nintendo's art, music or names is used: the tiles are this project's own placeholders (tools/rpg_make_maps.py).
-More of my estimates: ROOM_SLIDE_SECONDS, ALIGN, CORNER, FOE_TILES_PER_SECOND, FOE_TURN, FOE_BOX, PANEL_MIN_W.
+More of my estimates: ALIGN, CORNER, FOE_TILES_PER_SECOND, FOE_TURN, FOE_BOX, PANEL_MIN_W. Karl's (Round RPG7):
+ROOM_SLIDE_SECONDS 0.3, CORNER_HELP off, darkness only in dungeons.
 """
 import math
 import os
@@ -56,9 +59,10 @@ FEET = (0.625, 0.5)                  # the walker's box, as a share of a tile (w
 ROWS_IN_VIEW = 15                    # the camera's zoom aims at about this many rows of tiles on the screen - my estimate
 EPS = 1e-6
 ROOM_COLS, ROOM_ROWS = 16, 11         # Round RPG6: the original Zelda's screen, in tiles (see the module's notes)
-ROOM_SLIDE_SECONDS = 0.6              # the view's slide to the next room - my estimate
+ROOM_SLIDE_SECONDS = 0.3              # the view's slide to the next room - Karl, 13 Oct (Round RPG7; RPG6's estimate was 0.6)
 ALIGN = 0.5                           # tiles: the half-tile lines the walker drifts onto across its way - my estimate
-CORNER = 0.5                          # tiles: stopped by a wall, the walker slides this far across to a way through - my estimate
+CORNER_HELP = False                   # Round RPG7 (Karl, 13 Oct): stopped by a wall, the walker stops dead - no corner help
+CORNER = 0.5                          # tiles: with CORNER_HELP, how far across the walker slides to a way through - my estimate
 FOE_TILES_PER_SECOND = 1.6            # a wandering foe's pace - my estimate
 FOE_TURN = (0.5, 1.6)                 # seconds between a foe's turns - my estimate
 FOE_BOX = 0.75                        # a foe's box, as a share of a tile - my estimate
@@ -110,6 +114,7 @@ class Area:
         self.region = tiled.props.get("region")
         light = tiled.props.get("light")                  # Round RPG6: dark but for a light this many tiles round the walker
         self.light = float(light) if isinstance(light, (int, float)) and not isinstance(light, bool) and light > 0 else None
+        # (Round RPG7: only a dungeon is dark - see the end of __init__)
         self.room_w, self.room_h = ROOM_COLS * self.tw, ROOM_ROWS * self.th
         self.room_cols = max(1, -(-self.cols // ROOM_COLS))
         self.room_rows = max(1, -(-self.rows // ROOM_ROWS))
@@ -137,6 +142,15 @@ class Area:
             else:
                 box = (ob.x, ob.y, ob.x + ob.width, ob.y + ob.height)
             self.triggers.append(Trigger(ob.kind, ob, box, f"{name}#{ob.id}"))
+        # Round RPG7 (Karl, 13 Oct: "Dark only in dungeons"): a map is a dungeon when its property dungeon says so (true / false),
+        # else when it has a dungeon or boss encounter. Only a dungeon is dark; light on any other map is left out and said.
+        dungeon = tiled.props.get("dungeon")
+        self.dungeon = dungeon if isinstance(dungeon, bool) else any(
+            t.kind == "encounter" and t.encounter in ("dungeon", "boss") for t in self.triggers)
+        if self.light is not None and not self.dungeon:
+            self.problems.append("the map has light (dark but round the walker), but only dungeons are dark: give it a dungeon or "
+                                 "boss encounter, or the map property dungeon = true")
+            self.light = None
 
     # ---- tiles ------------------------------------------------------------------------------------------------------------
 
@@ -310,7 +324,7 @@ class Walker:
         triggers walked into, in the order they were entered; spots in `skip` (cleared or beaten encounters) never fire.
         Round RPG6: `boxes` {spot: box} - moving foes where they are now; `align` - walking along one axis, drift onto the
         nearest ALIGN-tile line across it (never into a wall), as the original Zelda keeps its hero on a half-tile grid, and when a
-        wall stops it, slide across to a way through within CORNER tiles (_corner)."""
+        wall stops it, stop dead (Round RPG7) - or, with CORNER_HELP, slide across to a way through within CORNER tiles (_corner)."""
         if dx == 0 and dy == 0 or dt <= 0:
             return []
         self.facing = ("right" if dx > 0 else "left") if dx else ("down" if dy > 0 else "up")
@@ -329,7 +343,9 @@ class Walker:
                 main = 0 if sx else 1
                 want = (sx if sx else sy) / steps
                 stopped = abs((self.x, self.y)[main] - before[main] - want) > EPS
-                if not (stopped and self._corner(main, want, dist / steps)):
+                if stopped and not CORNER_HELP:
+                    pass                            # Round RPG7: a wall stops the walker dead (no slide across, no drift)
+                elif not (stopped and self._corner(main, want, dist / steps)):
                     self._align(1 - main, dist / steps)
             now = self._touching(skip, boxes)
             spots = {t.spot for t in now}

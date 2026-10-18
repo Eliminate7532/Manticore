@@ -77,6 +77,19 @@
    "group": "Python libraries"
   },
   {
+   "id": "pytmx",
+   "name": "PyTMX",
+   "version": "3.32",
+   "license": "LGPL-3.0-or-later",
+   "copyright": "Copyright (C) 2012-2023, Leif Theden (pytmx/pytmx.py and pytmx/__init__.py: 'either version 3 of the License, or (at your option) any later version')",
+   "url": "https://github.com/bitcraft/PyTMX",
+   "used_for": "Reading the RPG mode's Tiled maps (rpg/tmx.py; Round RPG7, Karl 13 Oct 2026: \"Switch to PyTMX\")",
+   "shipped": "with the RPG mode: in the source and requirements.txt; not in the installer until the RPG has a screen",
+   "group": "Python libraries",
+   "status": "verified",
+   "note": "Checked in the PyPI wheel PyTMX-3.32-py3-none-any.whl: METADATA says 'License: LGPLv3', the source files' headers say LGPL version 3 or later, and dist-info/LICENSE is the LGPL v3 text (copied unchanged to licenses/texts/LGPL-3.0-or-later.txt). Used unmodified, as a separate Python module that can be replaced by another version. The LGPL v3 adds to the GPL v3 text, which is licenses/texts/GPL-3.0-or-later.txt."
+  },
+  {
    "id": "font-display",
    "name": "AvQest (display font)",
    "version": "GemFonts AvQest 1.3 from 1001fonts.com avqest.zip, AvQest.ttf sha256 5929a5fd6c16df17069ed7cf57b6ff61bbe3c959d9ef59b30120a3845d98fee6 (unmodified)",

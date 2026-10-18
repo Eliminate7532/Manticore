@@ -87,7 +87,7 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "menu")
                 self.assertIsNone(gui.menu)                      # the key that left the title did not also press Play
                 frame(gui, 2)
-                self.assertEqual(len(gui.boot.buttons), 5)      # Play, Draft, Settings, Credits, Quit
+                self.assertEqual(len(gui.boot.buttons), 6)      # Play, Draft, Adventure (Round RPG8), Settings, Credits, Quit
 
     def test_the_title_keeps_the_lettering_and_the_menu_dims_the_picture(self):
         fboot._PICS.clear()
@@ -113,9 +113,9 @@ class BootTests(TempDecks):
                 self.assertEqual(gui.boot.stage, "title")
                 self.assertTrue(gui.boot.moving(time.monotonic()))
 
-    def test_the_menu_has_the_five_items(self):
+    def test_the_menu_has_the_six_items(self):
         gui = self.boot_gui(splash=False)
-        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "adventure", "settings", "credits", "quit"])  # RPG8
 
     def test_there_is_no_continue_item(self):
         gui = self.boot_gui(splash=False)

@@ -1,9 +1,10 @@
 {
- "about": "Round RPG4: the RPG's numbers - gold, prices, rewards, shop stock. EVERY value here is a placeholder (Claude's estimate, 12 Oct 2026); the plan leaves prices, the share of gold lost and reward rates open, to be tuned while Karl plays the slice. rpg/economy.py checks this file when it is read and names any key it can't use.",
+ "about": "Round RPG4: the RPG's numbers - gold, prices, rewards, shop stock. EVERY value here is a placeholder (Claude's estimate, 12 Oct 2026); the plan leaves prices, the share of gold lost and reward rates open, to be tuned while Karl plays the slice. Karl's own numbers so far: basic lands are bought, 1 gold each (13 Oct, Round RPG7). rpg/economy.py checks this file when it is read and names any key it can't use.",
  "save_slots": 3,
  "start_gold": 100,
  "loss_gold_share": 0.2,
- "basic_lands_free": true,
+ "basic_lands_free": false,
+ "basic_land_price": 1,
  "single_price": {"1": 10, "2": 25, "3": 60, "4": 150, "5": 400},
  "sell_share": 0.25,
  "pack_price": 80,

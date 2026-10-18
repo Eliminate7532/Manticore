@@ -265,8 +265,9 @@ class Pod:
         names = [self.cards[i].name.split(",")[0].split(" // ")[0] for i in deck.commanders]
         return f"{day} draft - {SEAT_NAMES[seat]} - {' + '.join(names) or 'no commander'}"
 
-    def deck_text(self, seat, deck):
-        """The deck file: the format and draft lines, a note, then Commander and Deck sections (Moxfield's layout)."""
+    def deck_text(self, seat, deck, by_hand=False):
+        """The deck file: the format and draft lines, a note, then Commander and Deck sections (Moxfield's layout). Round CD4:
+        by_hand says the deck was built by hand (the builder) instead of by Auto-build."""
         commanders, main = dd.deck_names(self.cards, deck)
         counts = {}
         for n in main:
@@ -278,17 +279,17 @@ class Pod:
             lines = [formats.text_line(CLASSIC_FORMAT), f"# draft: {self.id}"]
             if self.rules:
                 lines.append(house_rules.text_line(self.rules))
-            lines += [f"# Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by Manticore's Auto-build.",
+            lines += [f"# Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by " + ("hand" if by_hand else "Manticore's Auto-build") + ".",
                       "", "Deck"]
             lines += [f"{k} {n}" for n, k in counts.items()]
             return "\n".join(lines) + "\n"
         lines = [formats.text_line(FORMAT), f"# draft: {self.id}",
-                 f"# Commander Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by Manticore's Auto-build.",
+                 f"# Commander Draft of {cube} ({self.cube.get('id')}), {day}: drafted by {who}, built by " + ("hand" if by_hand else "Manticore's Auto-build") + ".",
                  "", "Commander"] + [f"1 {c}" for c in commanders] + ["", "Deck"]
         lines += [f"{k} {n}" for n, k in counts.items()]
         return "\n".join(lines) + "\n"
 
-    def save_decks(self, decks, library_dir=None, base_dir=None):
+    def save_decks(self, decks, library_dir=None, base_dir=None, by_hand=()):
         """Write every seat's deck to My decks (a free file name each). Returns their DeckEntry list, in seat order; the pod
         remembers their ids and is "saved". A seat whose deck is None (no commander drafted) gets None and no file."""
         import deck_library as lib
@@ -304,13 +305,22 @@ class Pod:
             path = os.path.join(library_dir, name + ".txt")
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-                f.write(self.deck_text(seat, deck))
+                f.write(self.deck_text(seat, deck, by_hand=seat in by_hand))       # round CD4: a deck you built by hand
             os.replace(tmp, path)
             entries.append(lib.DeckEntry(path, name, False, base_dir).load())
         self.deck_ids = [e.id if e is not None else None for e in entries]
         self.stage = "saved"
         self.save()
         return entries
+
+    def save_deck_in_place(self, seat, deck, path, by_hand=True):
+        """Round CD4, Edit deck after a game: write this seat's deck again over its file (atomically); the file keeps its name and
+        so its deck id. Returns the path."""
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(self.deck_text(seat, deck, by_hand=by_hand))
+        os.replace(tmp, path)
+        return path
 
     def discard(self):
         """Discard: the pod stays on disk (nothing is deleted) but is no longer offered to continue."""

@@ -36,6 +36,10 @@ COMMANDER_BONUS = 1.5
 WORRY_FROM = 12
 WORRY_FULL = 36
 NOISE = 0.3
+NEED_BONUS = 6.0                         # round CD4a: a playable of the planned colours when the pool is short of them...
+NEED_FROM = 12                           # ... from the 12th card on, growing as each pack empties (people take power early in a
+                                         # pack and playables late); tools/draft_sim.py, docs/rounds/CD4a.md
+NEED_SPELLS = dd.DECK_MIN - dd.LANDS - 1 # the spells a 60-card deck with one commander and 25 lands holds
 PLAN_SUPPORT_FLOOR = 1.0                 # a card's weight in the plan: max(0, z + PLAN_SUPPORT_FLOOR)
 OPEN_CLASSIC = 3                         # round CD3: the classic draft's first three picks: strength only
 COMMIT_CLASSIC = 18                      # round CD3: settled by about the start of pack 2 (45 cards in all)
@@ -93,10 +97,12 @@ class Drafter:
         return frozenset(top), ()
 
     # ---- the pick --------------------------------------------------------------------------------------------------------------
-    def score(self, i, pool, colours, has_commander):
+    def score(self, i, pool, colours, has_commander, late=0.0, need=0):
         card = self.cards[i]
         s = self.z[i]
         n = len(pool)
+        if need and late and n >= NEED_FROM and not dd.cs.is_land(card) and dd.fits(card, colours):
+            s += NEED_BONUS * min(1.0, need / max(1, 60 - n)) * late        # round CD4a: playables late in a pack
         if self.style == "classic":                      # round CD3: a colourless-only cube (Devoid) settles with no colours
             commit = ramp(n, OPEN_CLASSIC, COMMIT_CLASSIC) if (colours or not self.allowed) else 0.0
         else:
@@ -110,10 +116,15 @@ class Drafter:
                 s += COMMANDER_BONUS * worry
         return s + self.rng.gauss(0.0, NOISE)
 
-    def choose(self, pack, pool, count):
+    def choose(self, pack, pool, count, pack_size=20):
         colours, cmd = self.plan(pool)
         has_commander = bool(cmd)
-        ranked = sorted(pack, key=lambda i: -self.score(i, pool, colours, has_commander))
+        late, need = 0.0, 0
+        if self.style != "classic" and colours:                      # round CD4a: how short of playables, how late in the pack
+            late = max(0.0, 1.0 - len(pack) / float(pack_size))
+            have = sum(1 for j in pool if not dd.cs.is_land(self.cards[j]) and dd.fits(self.cards[j], colours))
+            need = max(0, NEED_SPELLS - have)
+        ranked = sorted(pack, key=lambda i: -self.score(i, pool, colours, has_commander, late, need))
         return ranked[:count]
 
 

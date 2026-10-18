@@ -63,7 +63,7 @@ def measure(cards, drafts=200, seed=1, flagged=frozenset()):
     z = dd.zscores(cards)
     legal = short_decks = short_cards = 0
     first_cmd, early_hits, early_total, late_on, late_total = [], 0, 0, 0, 0
-    strength, colours, flagged_in = [], {}, 0
+    strength, colours, flagged_in, lands26 = [], {}, 0, 0
     t0 = time.time()
     for k in range(drafts):
         d, decks = one_draft(cards, z, seed + k, flagged)
@@ -77,6 +77,8 @@ def measure(cards, drafts=200, seed=1, flagged=frozenset()):
             if deck.short:
                 short_decks += 1
                 short_cards += deck.short
+            if len(deck.lands) + sum(deck.basics.values()) - deck.short > dd.LANDS:      # round CD4a: a 26th land instead
+                lands26 += 1
             pool = d.pools[s]
             firsts = [n for n, i in enumerate(pool, 1) if cards[i].commander]
             if firsts:
@@ -101,7 +103,7 @@ def measure(cards, drafts=200, seed=1, flagged=frozenset()):
             "early_top": early_hits / early_total if early_total else 0.0,
             "late_on_colour": late_on / late_total if late_total else 0.0,
             "strength_mean": st.fmean(strength) if strength else 0.0, "colours": dict(sorted(colours.items())),
-            "flagged_in_decks": flagged_in}
+            "flagged_in_decks": flagged_in, "lands26": lands26}
 
 
 def report(name, cards, m, flagged, missing):
@@ -115,6 +117,7 @@ def report(name, cards, m, flagged, missing):
     lines += [f"Legal decks:          {m['legal']} of {seats}",
               f"No commander drafted: {m['no_commander']} of {seats}",
               f"Short decks:          {m['short_decks']} of {seats} ({m['short_cards']} basics standing in for spells in all)",
+              f"26 lands:             {m['lands26']} of {seats} (round CD4a: a deck a spell short plays the 24-26 range's top)",
               f"First commander:      median card {m['first_commander_median']}, latest card {m['first_commander_max']}",
               f"Picks like people:    {100 * m['early_top']:.0f}% of first picks among the pack's top {TOP_FOR_EARLY} by Elo",
               f"On colour later:      {100 * m['late_on_colour']:.0f}% of non-land picks from card {LATE_FROM_CARD} fit the final deck",

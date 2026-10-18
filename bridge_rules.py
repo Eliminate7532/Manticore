@@ -26,6 +26,7 @@ import gzip
 import json
 import os
 import re
+import zlib
 
 import card_check
 
@@ -41,6 +42,104 @@ def load_stream(path):
     opener = gzip.open if path.endswith(".gz") else open
     with opener(path, "rt", encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+# Round HUGE1 (soak of 15-16 Oct, games 18 and 96): a record too big to read back whole (a 1,040-permanent board made 1.2 GB) used
+# to be skipped, so the rules never ran on it. A snapshot cut down to what the rules and soak_report.game_health read is a few KB
+# whatever the board, and every other message is kept whole. What each rule reads from a snapshot (keep this list in step):
+#   commander_stranded  me, asking, inputSeq, prompt.message, every zone's commander cards (id, owner, "commander")
+#   prompt_card_missing prompt.message, prompt.source
+#   ai_loop             turn, each player's id and name, battlefield cards' controller and isCreature (_boards)
+#   game_health         me, len(players), asking, input, inputSeq
+STATE_KEEP = ("t", "turn", "phase", "me", "asking", "input", "inputSeq", "gameOver")
+PLAYER_KEEP = ("id", "name", "lost", "life", "ai")
+REDUCED_MESSAGE_LIMIT = 3000000      # never hold more than this many messages; the rest is counted, not judged
+
+
+def reduce_state(m, _shared=None):
+    """A snapshot cut down to what the rules and the soak's game health read (see STATE_KEEP). A battlefield card that is not a
+    commander becomes one shared {"controller", "isCreature"} dict per kind, so a 1,000-permanent board costs a list of
+    pointers, not 1,000 dicts."""
+    shared = {} if _shared is None else _shared
+    out = {k: m[k] for k in STATE_KEEP if k in m}
+    prompt = m.get("prompt") or {}
+    out["prompt"] = {"message": prompt.get("message"), "source": prompt.get("source")}
+    players = []
+    for p in m.get("players") or []:
+        q = {k: p[k] for k in PLAYER_KEEP if k in p}
+        zones = {}
+        for zone, cards in (p.get("zones") or {}).items():
+            kept = []
+            for c in cards or []:
+                if c.get("commander"):
+                    kept.append({k: c[k] for k in ("id", "name", "owner", "controller", "commander", "isCreature") if k in c})
+                elif zone == "battlefield":
+                    key = (c.get("controller", None), bool(c.get("isCreature")), "controller" in c)
+                    one = shared.get(key)
+                    if one is None:
+                        one = {"isCreature": key[1]}
+                        if key[2]:
+                            one["controller"] = key[0]
+                        shared[key] = one
+                    kept.append(one)
+            zones[zone] = kept
+        q["zones"] = zones
+        players.append(q)
+    out["players"] = players
+    return out
+
+
+# Past REDUCED_MESSAGE_LIMIT only these are kept, so that the rules that look at how a game ended (unanswered_request, fatal,
+# engine_error's "did the game finish") are not misled by a stream cut short - the review of 16 Oct showed a cut that dropped
+# the replies and game_over turning a warning into two FAILs.
+TAIL_KINDS = ("game_over", "_exit", "fatal", "check", "request", "ai_loop_guard")
+TAIL_SENT = ("reply", "quit")
+
+
+def _keep_past_limit(m):
+    t = m.get("t")
+    return t in TAIL_KINDS or (t == "_sent" and (m.get("cmd") or {}).get("c") in TAIL_SENT)
+
+
+def load_stream_reduced(path, limit=None):
+    """Round HUGE1: (messages, info) for a record too big for load_stream - read line by line, every snapshot cut down with
+    reduce_state, every other message kept whole. info = {"messages": n read, "kept": n kept, "truncated": bool, "error": text
+    or None}. Past `limit` (REDUCED_MESSAGE_LIMIT) messages only the ends of the game are kept (TAIL_KINDS). A record that
+    ends mid-line or mid-file (a soak stopped hard) gives what came before it, with "error" saying so - it never raises for
+    that; a file that can't be opened still raises OSError."""
+    limit = REDUCED_MESSAGE_LIMIT if limit is None else limit
+    opener = gzip.open if path.endswith(".gz") else open
+    shared = {}
+    out = []
+    read = 0
+    dropped = 0
+    error = None
+    with opener(path, "rt", encoding="utf-8") as f:
+        try:
+            for line in f:
+                if not line.strip():
+                    continue
+                read += 1
+                if len(out) >= limit and line.lstrip().startswith(('{"t":"state"', '{"t": "state"')):
+                    dropped += 1
+                    continue
+                try:
+                    m = json.loads(line)
+                except ValueError:
+                    read -= 1                                    # the broken line is not a message
+                    raise
+                if m.get("t") == "state":
+                    if len(out) >= limit:
+                        dropped += 1
+                        continue
+                    m = reduce_state(m, shared)
+                elif len(out) >= limit and not _keep_past_limit(m):
+                    dropped += 1
+                    continue
+                out.append(m)
+        except (EOFError, ValueError, zlib.error) as e:
+            error = "the record ends early, after %d messages (%s)" % (read, type(e).__name__)
+    return out, {"messages": read, "kept": len(out), "truncated": dropped > 0, "error": error}
 
 
 def load_engine_log(path):
@@ -412,10 +511,29 @@ AI_LOOP_LIMIT = 30
 _ACTIVATED = re.compile(r"^(?P<who>.+?) activated (?P<card>.+)$")
 
 
+def _boards(state):
+    """Round LG2: {player name: (permanents it controls, creatures among them)} from a snapshot, as LoopGuard counts them."""
+    names = {p.get("id"): p.get("name") for p in state.get("players") or []}
+    out = {n: [0, 0] for n in names.values()}
+    for p in state.get("players") or []:
+        for c in (p.get("zones") or {}).get("battlefield") or []:
+            who = names.get(c.get("controller", p.get("id")), p.get("name"))
+            if who in out:
+                out[who][0] += 1
+                out[who][1] += 1 if c.get("isCreature") else 0
+    return out
+
+
 def _rule_ai_loop(messages):
+    """Round LG2: as the bridge's guard, an activation counts only when its player's board (permanents, creatures) is no
+    smaller than at that ability's previous activation, and only once a newer snapshot has come (a recording that sends one
+    snapshot for several activations can't tell). A board that shrinks every time ends by itself (night 14's Carrion Feeder)."""
     out = []
     turn = None
     counts = {}
+    last = {}
+    boards = {}
+    seq = 0
     reported = set()
     for i, m in enumerate(messages):
         t = m.get("t")
@@ -423,6 +541,9 @@ def _rule_ai_loop(messages):
             if m.get("turn") != turn:
                 turn = m.get("turn")
                 counts = {}
+                last = {}
+            boards = _boards(m)
+            seq += 1
         elif t == "log":
             for e in m.get("entries") or []:
                 if e.get("type") != "STACK_ADD":
@@ -431,6 +552,15 @@ def _rule_ai_loop(messages):
                 if not hit:
                     continue
                 key = (hit.group("who"), hit.group("card"))
+                here = boards.get(key[0])
+                before = last.get(key)
+                if here is not None:
+                    last[key] = (seq, here)
+                if before is not None and here is not None:
+                    if before[0] == seq:
+                        continue                                        # no newer snapshot: can't tell
+                    if here[0] < before[1][0] or here[1] < before[1][1]:
+                        continue                                        # the board shrank: not a repeat
                 counts[key] = counts.get(key, 0) + 1
                 if counts[key] > AI_LOOP_LIMIT and (turn, key) not in reported:
                     reported.add((turn, key))

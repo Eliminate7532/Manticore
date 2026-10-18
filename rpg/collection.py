@@ -4,7 +4,8 @@ only in the RPG's save, the main deck screen stays as it is).
 
 A Collection counts copies by card. Names are kept as the card pool writes them (so a save file reads like a deck list) and looked
 up by cardpool.normal_name, so "lim-dul's vault" finds "Lim-Dûl's Vault". Basic lands are free and never counted when numbers.json
-says basic_lands_free (my choice, as on MTG Arena: a deck builder that makes you buy Islands only adds clicks).
+says basic_lands_free (RPG4's first choice, as on MTG Arena). Round RPG7 (Karl, 13 Oct): they aren't any more - basic lands are
+counted like any card, bought in shops (rpg.shop, 1 gold each) and found in packs; a save keeps which rule it was made under.
 
 A deck is two lists of [name, count] (main and sideboard). problems() is the RPG's deck rules (rpg/rules.py) plus one more: you
 must own every copy the deck uses. Several decks may share the same copies (a deck is a list, not a set of cards taken out); a card

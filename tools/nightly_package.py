@@ -4,8 +4,9 @@ tools/nightly_package.py - builds the nightly test package: one zip a tester can
 
     python tools/nightly_package.py OUT_FOLDER [--date YYYY-MM-DD] [--commit SHA]
 
-GitHub runs this every night (.github/workflows/nightly.yml) and uploads the zip as a release in the private
-nightly repository. You can also run it yourself to get the same zip.
+Run it yourself to get the zip. (A GitHub workflow, .github/workflows/nightly.yml, was to run it every night and upload the zip
+to a private nightly repository; it was never switched on and was removed in Round HK1 - Karl, 13 Oct 2026: "delete the parked
+nightly-build workflow".)
 
 What goes in:
   * the program's source, using tools/export_public.py's file list: never my_decks/, settings.json,

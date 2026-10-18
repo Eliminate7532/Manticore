@@ -28,8 +28,9 @@ their licences are confirmed).
 The program opens on a short studio splash (a click skips it) and the title screen with the main menu: Play (the deck screen),
 Draft, Settings, Credits and Quit. An unfinished game is resumed from the deck screen ("Resume last game"). Starting a game shows the commanders face to face while the rules
 engine starts, then your opening hand full-screen (keep, or mulligan and choose the cards to put on the bottom). The end of a game
-shows VICTORY or DEFEAT before the usual window. During play, short animations show what the AI just did (its card large in the
-top-right panel), damage and life changes, whose turn it is, and attacks. Cog > Animations turns the animations off.
+shows VICTORY or DEFEAT before the usual window: Play again (the same decks, a fresh shuffle; Enter), New game and Look at the
+board (round ANS1). During play, short animations show what the AI just did (its card large in the top-right panel), damage and
+life changes, whose turn it is, and attacks. Cog > Animations turns the animations off.
 
 SETUP (new table)
 -----------------
@@ -172,7 +173,9 @@ that is what it does.
   F11 ......................... fullscreen     + / - .... bigger / smaller text (100%-200%); Ctrl+0 text back to 100%
   Ctrl and + / - .............. bigger / smaller cards (round UI7, 100%-200%; Cog > DISPLAY > Cards): a battlefield whose
                                 cards fit in one row shows them bigger, up to that size; a fuller board keeps today's two
-                                rows. The hand and the command zone are not changed yet. Remembered like text size.
+                                rows. Hand cards grow too, Arena style (round HAND1): their lower part goes below the
+                                window's edge and the card under the mouse rises whole. Your command zone's cards grow the
+                                same way (round HAND2). Remembered like text size.
                                  Window and text size are remembered for each screen size (round 27e): your monitor and a
                                  Remote Desktop session each keep their own, and the window never opens bigger than the screen.
   H ........................... help
@@ -613,7 +616,13 @@ CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/inc
     - The decks are Commander Draft decks ("# format: commander_draft" in the file): at least 60 cards, any number of a card the
       pool held (903.13f), no banned list. They are listed under Commander with a DRAFT tag and play Commander games (40 life, 21
       commander damage - 903.13g). Basic lands are free (the rules' glossary and 100.2b; 903.13 itself doesn't say).
-    - Not yet (CD4): editing your drafted deck by hand. Online drafting is later (CD5).
+    - Edit my deck (round CD4, on the decks stage): your pool on the left (filters: colour, type, mana value), your deck on the
+      right in mana-value columns. Click a pool card to put it in, a deck card to take it out; cards outside your commander's
+      colours are greyed. Change chooses another commander (or a legal pair) from your pool; - and + set each basic land of your
+      colours; Suggest lands adds basics to 60; Auto-build makes the best deck your pool has (keeping the commander you chose);
+      the counter says "54 / 60". Only a commander problem stops you; anything else is said, and the deck still plays.
+    - After a draft game (round CD4): Play again (the same pod, a fresh shuffle - since round ANS1 after every offline game) and
+      Edit deck (the builder on your saved deck, then Save, or Save and play again). Online drafting is later (CD5).
   STOCK CUBES AND THE CLASSIC DRAFT (round CD3, Karl, 12 Oct 2026): the draft window's "Stock cubes" buttons - Commander Cube
   (tritoch), Entry-level Cubing (DeepSky8), MTGO Vintage Cube (Dekkaru), The Cube of Cthulhu (CavsFangelo), Turbo Cube
   (anthonymattox), Lord of the Rings standalone 360 (zarocks), The Devoid Cube (Isticle) and The Spooty Peasant Cube (Spootyone).
@@ -630,6 +639,40 @@ CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/inc
       decks carry it ("# rules: turbo"), so every game with them has it, Resume and Undo too.
   tools\draft_sim.py measures the AI drafters over many drafts; tools\cd2_screens.py and tools\cd3_screens.py make pictures of
   the screens.
+
+ADVENTURE - THE RPG MODE (Round RPG8, Karl 13 Oct 2026: "First playable loop"; the plan: "Manticore RPG Mode: Plan", a Claude Doc)
+  Main menu > Adventure. The first playable version of the RPG mode: walk a map, duel what you meet, and build a deck from the
+  cards you win and buy. Everything in it lives in its own save (rpg_saves\save_<slot>.json in your data folder); the deck
+  screen and My decks are not touched.
+    - Slots: three (rpg\data\numbers.json save_slots). Continue a game, or New game (a used slot asks before it is replaced).
+    - A new game: your name, then three Jumpstart half-decks, one at a time (three are offered; Show others offers three more;
+      Back undoes a pick). Together they make your first 60 cards, in at most two colours (Round RPG9): once two colours are
+      picked, only half-decks of those colours are offered. Begin saves the game and opens the start town.
+    - The town: Singles (cards from the town's tier band and colours, restocked every 5 duels), Packs (opened at once, the new
+      cards marked), Basic lands (1 gold each, as many as you like), Sell (a card your deck still uses can't be sold), Your deck,
+      Leave town. Every purchase and sale is saved at once.
+    - The deck editor: your cards on the left - click one to put one more copy in the deck, right-click to take one out; the
+      corner says "in the deck / you own". The deck on the right by type - click a line to take one out. Colour and type buttons
+      filter, and typing searches (Esc clears the search). Done keeps the deck (it becomes the one you duel with), Cancel changes
+      throws the changes away. A deck that breaks a rule is kept and said; only a duel refuses it.
+    - The map: the arrows or WASD walk, one room at a time (Rounds RPG5-RPG7); Esc or Menu: Back to the map / Your deck / Save and
+      leave. Walking into a town's gate opens the town; walking into a foe asks first: who it is, what a win gives and what a
+      loss costs - Fight or Not now.
+    - The foes (Round RPG9, Karl 14 Oct: the first map was "way too hard"): on the map, a foe plays a Jumpstart deck made the way
+      yours is (three half-decks, at most two colours), with a handicap: its strongest spells swapped for basic lands, as many as
+      it takes for a typical starting deck to win about 65% of games, measured with Forge's AI on both sides (rpg\data\balance.json;
+      tools\rpg_balance.py). The cave's foes and its boss play tuned Pauper decks - harder, and worth more. towns.json's
+      enemy_decks says which, by kind of fight.
+    - A duel: a 60-card game at 20 life against the AI with the enemy's deck, on the same table as your other games (Undo, the
+      Judge, Speed and the rest all work; the AI is called "AI 1 (<enemy>)"). The result goes into your save the moment the
+      game knows it: a win gives gold and cards from the beaten enemy's deck, and the foe is gone (a regular one comes back after
+      your next visit to a town); a loss or a concede costs a share of your gold (20%) and sends you back to the last town you
+      visited; a draw changes nothing. Continue on VICTORY / DEFEAT goes back to the Adventure, which says what happened. There
+      is no Play again for a duel. A duel that never finished (the program closed, or you started another game) doesn't count;
+      the Adventure says so the next time you open the game.
+    - Duels are kept in their own game record (rpg_saves\duel_stats\), not on the deck screen's Stats page.
+  Placeholders for now: the two maps (The Outskirts and The Cave), the towns' names, every price and reward (rpg\data\numbers.json),
+  and the art (the walker, the foes and the tiles). tools\rpg_walk.py is still the developer's map window.
 
 SKIPPING AHEAD (round 10; this uses Forge's own "yield" features, the ones its desktop window has)
   Skip... (the button left of Undo, or the S key) opens a window with:

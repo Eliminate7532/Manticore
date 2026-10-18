@@ -89,7 +89,8 @@ GUARDED = ("forge_table.py", "forge_dialogs.py", "forge_menu.py", "forge_setting
            "update_screens.py",                                      # Round 30
            "stats_view.py",                                          # patch 44
            "judge_dialog.py",                                        # round JDG1
-           "draft_screens.py")                                       # round CD2
+           "draft_screens.py",                                       # round CD2
+           "rpg_screens.py")                                         # Round RPG8
 # Colour-looking tuples that are allowed to stay outside gfx.py: value -> why it is not a colour anyone sees.
 ALLOWED_LITERALS = {
     (255, 120, 120): "BLEND_RGB_MULT tint",

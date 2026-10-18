@@ -202,6 +202,24 @@ def import_from_text_with_printings(text_block, sideboard=None, fmt=None):
     return commanders, deck, printings
 
 
+def _descents(names):
+    """How many times a name sorts after the one below it (case-insensitive): 0 for an alphabetical run."""
+    keys = [n.casefold() for n in names]
+    return sum(1 for a, c in zip(keys, keys[1:]) if a > c)
+
+
+def _second_line_is_a_partner(rest):
+    """Round PARTNER-PASTE: `rest` is a 100-card Moxfield export after its first line (the commander) was taken off. Moxfield lists
+    every commander first and the other 99 cards ALPHABETICALLY, so with a partner pair the second commander is the one card
+    that breaks the alphabetical run: it sorts after the card below it, while the 97 cards under it are in order. True only
+    then. A card that happens to sort before the first real card (Abdel Adrian above Ad Nauseam) leaves no trace in the
+    text, so that pair is still read as one commander, as before - the deck screen then says so (the 99th card is outside
+    the commander's colours, or the deck has 99 cards). Lists that aren't alphabetical at all are left alone."""
+    if len(rest) < 5 or rest[0] == rest[1]:                      # a second line with a quantity (4 Shock) is no commander
+        return False
+    return rest[0].casefold() > rest[1].casefold() and _descents(rest[1:]) <= 2
+
+
 def import_from_text(text_block, printings=None, sideboard=None, fmt=None):
     """
     Parse a plain pasted decklist, one card per line, formats like:
@@ -346,6 +364,9 @@ def import_from_text(text_block, printings=None, sideboard=None, fmt=None):
     if not commanders and len(deck_list) == 100 and first_line_qty == 1:
         commanders = [deck_list[0]]
         deck_list = deck_list[1:]
+        if _second_line_is_a_partner(deck_list):          # a partner pair: Moxfield lists both commanders first
+            commanders.append(deck_list[0])
+            deck_list = deck_list[1:]
 
     return commanders, deck_list
 

@@ -40,6 +40,7 @@ import pygame
 
 import forge_fx as ffx
 import gfx
+from counter_names import float_words
 from gfx import draw_text, get_font
 
 SPOT_SECONDS = 0.9          # one AI action on screen
@@ -49,7 +50,7 @@ MAX_LAG = 2.0               # an AI action waiting longer than this is dropped (
 FLOAT_SECONDS = 0.9
 FLOAT_RISE = 34             # px at text scale 1.0
 LIFE_SECONDS = 0.45
-BANNER_SECONDS = 1.1
+BANNER_SECONDS = 0.6         # Round BNR1 (Karl, 13 Oct): the turn banner was 1.1 s; AD2c's rule is 150-600 ms per effect
 TAP_SECONDS = 0.16
 GROW_SECONDS = 0.25         # attack / block lines
 STEP = 0.10                 # an attacker steps this fraction of its height toward the defender
@@ -244,7 +245,8 @@ class Animator:
             elif k == "counters":
                 new, old = d.get("new"), b.data.get("old")
                 if new is not None and old is not None and new != old:
-                    label = COUNTER_SHORT.get(str(d.get("counter")), "")
+                    raw = d.get("counter")
+                    label = COUNTER_SHORT.get(str(raw)) or float_words(raw)   # Round CTR1: every counter gets its words
                     sign = "+" if new > old else "-"
                     text = f"{sign}{abs(new - old)} {label}".strip() if label != "+1/+1" else f"{sign}{abs(new - old)} +1/+1"
                     self.floats.append((text, gfx.GOLD if new > old else gfx.DIM, b.card, None, now, float_scale(new - old)))

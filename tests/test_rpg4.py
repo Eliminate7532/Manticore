@@ -256,7 +256,7 @@ class SaveTests(Temp):
         self.assertFalse(os.path.exists(path + ".tmp"))
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
-        self.assertEqual((raw["format"], raw["version"], raw["future_key"]), ("manticore-rpg-save", 1, [1, 2]))
+        self.assertEqual((raw["format"], raw["version"], raw["future_key"]), ("manticore-rpg-save", sv.VERSION, [1, 2]))  # RPG7: 2
         back, note = sv.read(1, self.tmp, pool=POOL)
         self.assertIsNone(note)
         self.assertEqual(back.to_dict(), s.to_dict())
@@ -410,7 +410,9 @@ class NewGameTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             f.pick("TST Not A Half Deck 9")
         browse = [h.code for h in f.all_choices()]
-        self.assertEqual(len(browse), len(HALVES) - 1)
+        self.assertEqual(sorted(browse), sorted(h.code for h in HALVES if h.code != again[0]          # Round RPG9: within
+                                                and len(products.colours_of(f.picks + [h], POOL)) <= 2))  # two colours
+        self.assertTrue(browse)
         f.pick(browse[-1])                                            # one from the browse list, not the offer
         self.assertEqual(f.picks[-1].code, browse[-1])
 
@@ -642,7 +644,7 @@ class DuelTests(Temp):
         self.assertIn(d.deck_index, (0, 1))
         self.assertEqual(sum(k for _n, k in d.player_main()), 60)
         self.assertEqual(s.pending_duel, {"kind": "elf_gang", "encounter": "regular", "deck": d.deck_index, "map": "green_town",
-                                          "x": None, "y": None, "started": 5.0})
+                                          "x": None, "y": None, "started": 5.0, "source": "archetype"})   # Round RPG9: source
         with self.assertRaises(duel.DuelError) as cm:
             self.start(s)
         self.assertIn("already", str(cm.exception))

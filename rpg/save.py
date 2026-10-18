@@ -10,6 +10,11 @@ The file is versioned ("format": "manticore-rpg-save", "version": 1). A newer ve
 of the game doesn't know its fields); an older one would be brought up to date by MIGRATIONS (none yet). Keys this version doesn't
 know are kept and written back unchanged (SaveGame.extra).
 
+Round RPG7: "basics_free" says which rule the save was made under (basic lands free and uncounted, or bought and counted - Karl,
+13 Oct: bought, 1 gold each). It is save version 2: a version 1 save (made while basic lands were free) is brought up to date with
+basics_free true, and an older copy of the game refuses a version 2 save instead of reading it under the wrong rule and dropping
+its basic lands. A save is always read under its own rule; the basics_free a caller passes is only for a new SaveGame.
+
 Randomness is the save's own: rng(purpose) gives a random.Random seeded from (seed, counter, purpose) by SHA-256 and moves the
 counter on, so the same save makes the same pack, reward and deck choice on any computer and any Python, and loading a save never
 re-rolls what was already rolled. stable_rng(*parts) doesn't move the counter (a shop's stock is drawn again every time it is
@@ -25,11 +30,21 @@ import time
 from rpg.collection import Collection
 
 FORMAT = "manticore-rpg-save"
-VERSION = 1
-MIGRATIONS = {}           # {old version: function(dict) -> dict of the next version}
+VERSION = 2               # Round RPG7: "basics_free" (version 1 had none: basic lands were free)
+
+
+def _v1_to_v2(d):
+    """Version 1 was made while basic lands were free and uncounted: say so, so the save keeps that rule."""
+    d = dict(d)
+    d["basics_free"] = True
+    d["version"] = 2
+    return d
+
+
+MIGRATIONS = {1: _v1_to_v2}   # {old version: function(dict) -> dict of the next version}
 NAME_MAX = 24
 KNOWN = ("format", "version", "slot", "name", "created", "updated", "seed", "rng_counter", "gold", "collection", "decks",
-         "active_deck", "start", "world", "shops", "record", "pending_duel", "forge")
+         "active_deck", "start", "world", "shops", "record", "pending_duel", "forge", "basics_free")
 
 
 class SaveError(Exception):
@@ -127,7 +142,7 @@ class SaveGame:
                   "updated": self.updated, "seed": self.seed, "rng_counter": self.rng_counter, "gold": self.gold,
                   "collection": self.collection.to_dict(), "decks": self.decks, "active_deck": self.active_deck,
                   "start": self.start, "world": self.world, "shops": self.shops, "record": self.record,
-                  "pending_duel": self.pending_duel, "forge": self.forge})
+                  "pending_duel": self.pending_duel, "forge": self.forge, "basics_free": self.collection.basics_free})
         return d
 
     @classmethod
@@ -148,7 +163,8 @@ class SaveGame:
         except SaveError:
             raise SaveError("The save file is damaged (name).")
         _need(_is_int(d.get("seed")), "seed")
-        s = cls(d["slot"], name, d["seed"], pool=pool, basics_free=basics_free)
+        _need(isinstance(d.get("basics_free"), bool), "basics_free")       # Round RPG7: the save's own rule
+        s = cls(d["slot"], name, d["seed"], pool=pool, basics_free=d["basics_free"])
         for k in ("created", "updated"):
             _need(isinstance(d.get(k), (int, float)) and not isinstance(d.get(k), bool), k)
         s.created, s.updated = float(d["created"]), float(d["updated"])

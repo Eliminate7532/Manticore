@@ -1,0 +1,953 @@
+{
+ "_source": "Forge fb4d809 forge-game/src/main/java/forge/game/card/CounterEnumType.java (sha256 c1342c350d4e33163e554b72e0a42b0556fceb7bafccf3b8905f67e63eead126): every constant and what CounterEnumType.getName() returns for it (the three-string constructor's name, else the constant with only its first letter capital).",
+ "counters": [
+  {
+   "enum": "M1M1",
+   "name": "-1/-1"
+  },
+  {
+   "enum": "P1P1",
+   "name": "+1/+1"
+  },
+  {
+   "enum": "LOYALTY",
+   "name": "Loyalty"
+  },
+  {
+   "enum": "ACORN",
+   "name": "Acorn"
+  },
+  {
+   "enum": "ACQUIREDTASTE",
+   "name": "acquired taste"
+  },
+  {
+   "enum": "AEGIS",
+   "name": "Aegis"
+  },
+  {
+   "enum": "AGE",
+   "name": "Age"
+  },
+  {
+   "enum": "AIM",
+   "name": "Aim"
+  },
+  {
+   "enum": "ARROW",
+   "name": "Arrow"
+  },
+  {
+   "enum": "ARROWHEAD",
+   "name": "Arrowhead"
+  },
+  {
+   "enum": "AWAKENING",
+   "name": "Awakening"
+  },
+  {
+   "enum": "BAIT",
+   "name": "Bait"
+  },
+  {
+   "enum": "BLAZE",
+   "name": "Blaze"
+  },
+  {
+   "enum": "BLESSING",
+   "name": "Blessing"
+  },
+  {
+   "enum": "BLIGHT",
+   "name": "Blight"
+  },
+  {
+   "enum": "BLOOD",
+   "name": "Blood"
+  },
+  {
+   "enum": "BLOODLINE",
+   "name": "Bloodline"
+  },
+  {
+   "enum": "BLOODSTAIN",
+   "name": "Bloodstain"
+  },
+  {
+   "enum": "BORE",
+   "name": "Bore"
+  },
+  {
+   "enum": "BOUNTY",
+   "name": "Bounty"
+  },
+  {
+   "enum": "BRAIN",
+   "name": "Brain"
+  },
+  {
+   "enum": "BRIBERY",
+   "name": "Bribery"
+  },
+  {
+   "enum": "BRICK",
+   "name": "Brick"
+  },
+  {
+   "enum": "BURDEN",
+   "name": "Burden"
+  },
+  {
+   "enum": "CAGE",
+   "name": "Cage"
+  },
+  {
+   "enum": "CARRION",
+   "name": "Carrion"
+  },
+  {
+   "enum": "CELL",
+   "name": "Cell"
+  },
+  {
+   "enum": "CHARGE",
+   "name": "Charge"
+  },
+  {
+   "enum": "CHORUS",
+   "name": "Chorus"
+  },
+  {
+   "enum": "COIN",
+   "name": "Coin"
+  },
+  {
+   "enum": "COLLECTION",
+   "name": "Collection"
+  },
+  {
+   "enum": "COMPONENT",
+   "name": "Component"
+  },
+  {
+   "enum": "CONQUEROR",
+   "name": "Conqueror"
+  },
+  {
+   "enum": "CONTESTED",
+   "name": "Contested"
+  },
+  {
+   "enum": "CORPSE",
+   "name": "Corpse"
+  },
+  {
+   "enum": "CORRUPTION",
+   "name": "Corruption"
+  },
+  {
+   "enum": "CROAK",
+   "name": "Croak"
+  },
+  {
+   "enum": "CREDIT",
+   "name": "Credit"
+  },
+  {
+   "enum": "CRYSTAL",
+   "name": "Crystal"
+  },
+  {
+   "enum": "CUBE",
+   "name": "Cube"
+  },
+  {
+   "enum": "CURRENCY",
+   "name": "Currency"
+  },
+  {
+   "enum": "DEATH",
+   "name": "Death"
+  },
+  {
+   "enum": "DEFENSE",
+   "name": "Defense"
+  },
+  {
+   "enum": "DELAY",
+   "name": "Delay"
+  },
+  {
+   "enum": "DEPLETION",
+   "name": "Depletion"
+  },
+  {
+   "enum": "DESCENT",
+   "name": "Descent"
+  },
+  {
+   "enum": "DESPAIR",
+   "name": "Despair"
+  },
+  {
+   "enum": "DEVOTION",
+   "name": "Devotion"
+  },
+  {
+   "enum": "DISCOVERY",
+   "name": "Discovery"
+  },
+  {
+   "enum": "DIVINITY",
+   "name": "Divinity"
+  },
+  {
+   "enum": "DOOM",
+   "name": "Doom"
+  },
+  {
+   "enum": "DREAD",
+   "name": "Dread"
+  },
+  {
+   "enum": "DREAM",
+   "name": "Dream"
+  },
+  {
+   "enum": "DUTY",
+   "name": "Duty"
+  },
+  {
+   "enum": "ECHO",
+   "name": "Echo"
+  },
+  {
+   "enum": "EGG",
+   "name": "Egg"
+  },
+  {
+   "enum": "ELIXIR",
+   "name": "Elixir"
+  },
+  {
+   "enum": "EMBER",
+   "name": "Ember"
+  },
+  {
+   "enum": "EON",
+   "name": "Eon"
+  },
+  {
+   "enum": "ERUPTION",
+   "name": "Eruption"
+  },
+  {
+   "enum": "EXPOSURE",
+   "name": "Exposure"
+  },
+  {
+   "enum": "EYEBALL",
+   "name": "Eyeball"
+  },
+  {
+   "enum": "EYESTALK",
+   "name": "Eyestalk"
+  },
+  {
+   "enum": "EVERYTHING",
+   "name": "Everything"
+  },
+  {
+   "enum": "FADE",
+   "name": "Fade"
+  },
+  {
+   "enum": "FATE",
+   "name": "Fate"
+  },
+  {
+   "enum": "FEATHER",
+   "name": "Feather"
+  },
+  {
+   "enum": "FEEDING",
+   "name": "Feeding"
+  },
+  {
+   "enum": "FELLOWSHIP",
+   "name": "Fellowship"
+  },
+  {
+   "enum": "FETCH",
+   "name": "Fetch"
+  },
+  {
+   "enum": "FILIBUSTER",
+   "name": "Filibuster"
+  },
+  {
+   "enum": "FILM",
+   "name": "Film"
+  },
+  {
+   "enum": "FINALITY",
+   "name": "Finality"
+  },
+  {
+   "enum": "FIRE",
+   "name": "Fire"
+  },
+  {
+   "enum": "FLAME",
+   "name": "Flame"
+  },
+  {
+   "enum": "FLAVOR",
+   "name": "Flavor"
+  },
+  {
+   "enum": "FLOOD",
+   "name": "Flood"
+  },
+  {
+   "enum": "FORESHADOW",
+   "name": "Foreshadow"
+  },
+  {
+   "enum": "FUNGUS",
+   "name": "Fungus"
+  },
+  {
+   "enum": "FUNK",
+   "name": "Funk"
+  },
+  {
+   "enum": "FURY",
+   "name": "Fury"
+  },
+  {
+   "enum": "FUSE",
+   "name": "Fuse"
+  },
+  {
+   "enum": "GEM",
+   "name": "Gem"
+  },
+  {
+   "enum": "GHOSTFORM",
+   "name": "Ghostform"
+  },
+  {
+   "enum": "GLASS",
+   "name": "Glass"
+  },
+  {
+   "enum": "GLYPH",
+   "name": "Glyph"
+  },
+  {
+   "enum": "GOLD",
+   "name": "Gold"
+  },
+  {
+   "enum": "GROWTH",
+   "name": "Growth"
+  },
+  {
+   "enum": "HARMONY",
+   "name": "Harmony"
+  },
+  {
+   "enum": "HATCHING",
+   "name": "Hatching"
+  },
+  {
+   "enum": "HATCHLING",
+   "name": "Hatchling"
+  },
+  {
+   "enum": "HEALING",
+   "name": "Healing"
+  },
+  {
+   "enum": "HIT",
+   "name": "Hit"
+  },
+  {
+   "enum": "HONE",
+   "name": "Hone"
+  },
+  {
+   "enum": "HOPE",
+   "name": "Hope"
+  },
+  {
+   "enum": "HOOFPRINT",
+   "name": "Hoofprint"
+  },
+  {
+   "enum": "HOUR",
+   "name": "Hour"
+  },
+  {
+   "enum": "HOURGLASS",
+   "name": "Hourglass"
+  },
+  {
+   "enum": "HUNGER",
+   "name": "Hunger"
+  },
+  {
+   "enum": "HUSK",
+   "name": "Husk"
+  },
+  {
+   "enum": "ICE",
+   "name": "Ice"
+  },
+  {
+   "enum": "IMPOSTOR",
+   "name": "Impostor"
+  },
+  {
+   "enum": "INCARNATION",
+   "name": "Incarnation"
+  },
+  {
+   "enum": "INCUBATION",
+   "name": "Incubation"
+  },
+  {
+   "enum": "INGREDIENT",
+   "name": "Ingredient"
+  },
+  {
+   "enum": "INFECTION",
+   "name": "Infection"
+  },
+  {
+   "enum": "INFLUENCE",
+   "name": "Influence"
+  },
+  {
+   "enum": "INGENUITY",
+   "name": "Ingenuity"
+  },
+  {
+   "enum": "INTEL",
+   "name": "Intel"
+  },
+  {
+   "enum": "INTERVENTION",
+   "name": "Intervention"
+  },
+  {
+   "enum": "INVASION",
+   "name": "Invasion"
+  },
+  {
+   "enum": "INVITATION",
+   "name": "Invitation"
+  },
+  {
+   "enum": "ISOLATION",
+   "name": "Isolation"
+  },
+  {
+   "enum": "JAVELIN",
+   "name": "Javelin"
+  },
+  {
+   "enum": "JUDGMENT",
+   "name": "Judgment"
+  },
+  {
+   "enum": "KI",
+   "name": "Ki"
+  },
+  {
+   "enum": "KICK",
+   "name": "Kick"
+  },
+  {
+   "enum": "KNOWLEDGE",
+   "name": "Knowledge"
+  },
+  {
+   "enum": "LANDMARK",
+   "name": "Landmark"
+  },
+  {
+   "enum": "LEVEL",
+   "name": "Level"
+  },
+  {
+   "enum": "LOOT",
+   "name": "Loot"
+  },
+  {
+   "enum": "LORE",
+   "name": "Lore"
+  },
+  {
+   "enum": "LUCK",
+   "name": "Luck"
+  },
+  {
+   "enum": "MANABOND",
+   "name": "Manabond"
+  },
+  {
+   "enum": "M0M1",
+   "name": "-0/-1"
+  },
+  {
+   "enum": "M0M2",
+   "name": "-0/-2"
+  },
+  {
+   "enum": "M1M0",
+   "name": "-1/-0"
+  },
+  {
+   "enum": "M2M1",
+   "name": "-2/-1"
+  },
+  {
+   "enum": "M2M2",
+   "name": "-2/-2"
+  },
+  {
+   "enum": "MAGNET",
+   "name": "Magnet"
+  },
+  {
+   "enum": "MANA",
+   "name": "Mana"
+  },
+  {
+   "enum": "MANIFESTATION",
+   "name": "Manifestation"
+  },
+  {
+   "enum": "MANNEQUIN",
+   "name": "Mannequin"
+  },
+  {
+   "enum": "MATRIX",
+   "name": "Matrix"
+  },
+  {
+   "enum": "MEMORY",
+   "name": "Memory"
+  },
+  {
+   "enum": "MIDWAY",
+   "name": "Midway"
+  },
+  {
+   "enum": "MINE",
+   "name": "Mine"
+  },
+  {
+   "enum": "MINING",
+   "name": "Mining"
+  },
+  {
+   "enum": "MIRE",
+   "name": "Mire"
+  },
+  {
+   "enum": "MUSIC",
+   "name": "Music"
+  },
+  {
+   "enum": "MUSTER",
+   "name": "Muster"
+  },
+  {
+   "enum": "NECRODERMIS",
+   "name": "Necrodermis"
+  },
+  {
+   "enum": "NET",
+   "name": "Net"
+  },
+  {
+   "enum": "NEST",
+   "name": "Nest"
+  },
+  {
+   "enum": "ODOR",
+   "name": "Odor"
+  },
+  {
+   "enum": "OIL",
+   "name": "Oil"
+  },
+  {
+   "enum": "OMEN",
+   "name": "Omen"
+  },
+  {
+   "enum": "ORE",
+   "name": "Ore"
+  },
+  {
+   "enum": "PAGE",
+   "name": "Page"
+  },
+  {
+   "enum": "PAIN",
+   "name": "Pain"
+  },
+  {
+   "enum": "PALLIATION",
+   "name": "Palliation"
+  },
+  {
+   "enum": "PARALYZATION",
+   "name": "Paralyzation"
+  },
+  {
+   "enum": "PETAL",
+   "name": "Petal"
+  },
+  {
+   "enum": "PETRIFICATION",
+   "name": "Petrification"
+  },
+  {
+   "enum": "PIN",
+   "name": "Pin"
+  },
+  {
+   "enum": "PLAGUE",
+   "name": "Plague"
+  },
+  {
+   "enum": "PLOT",
+   "name": "Plot"
+  },
+  {
+   "enum": "PRESSURE",
+   "name": "Pressure"
+  },
+  {
+   "enum": "PHYLACTERY",
+   "name": "Phylactery"
+  },
+  {
+   "enum": "PHYRESIS",
+   "name": "Phyresis"
+  },
+  {
+   "enum": "PLAN",
+   "name": "Plan"
+  },
+  {
+   "enum": "POINT",
+   "name": "Point"
+  },
+  {
+   "enum": "POLYP",
+   "name": "Polyp"
+  },
+  {
+   "enum": "POSSESSION",
+   "name": "Possession"
+  },
+  {
+   "enum": "PREY",
+   "name": "Prey"
+  },
+  {
+   "enum": "PROMOTION",
+   "name": "Promotion"
+  },
+  {
+   "enum": "PUPA",
+   "name": "Pupa"
+  },
+  {
+   "enum": "P0P1",
+   "name": "+0/+1"
+  },
+  {
+   "enum": "P0P2",
+   "name": "+0/+2"
+  },
+  {
+   "enum": "P1P0",
+   "name": "+1/+0"
+  },
+  {
+   "enum": "P1P2",
+   "name": "+1/+2"
+  },
+  {
+   "enum": "P2P0",
+   "name": "+2/+0"
+  },
+  {
+   "enum": "P2P2",
+   "name": "+2/+2"
+  },
+  {
+   "enum": "QUEST",
+   "name": "Quest"
+  },
+  {
+   "enum": "RALLY",
+   "name": "Rally"
+  },
+  {
+   "enum": "REFINE",
+   "name": "Refine"
+  },
+  {
+   "enum": "REJECTION",
+   "name": "Rejection"
+  },
+  {
+   "enum": "RELEASE",
+   "name": "Release"
+  },
+  {
+   "enum": "REPRIEVE",
+   "name": "Reprieve"
+  },
+  {
+   "enum": "REV",
+   "name": "Rev"
+  },
+  {
+   "enum": "REVIVAL",
+   "name": "Revival"
+  },
+  {
+   "enum": "RIBBON",
+   "name": "Ribbon"
+  },
+  {
+   "enum": "RITUAL",
+   "name": "Ritual"
+  },
+  {
+   "enum": "ROPE",
+   "name": "Rope"
+  },
+  {
+   "enum": "RUST",
+   "name": "Rust"
+  },
+  {
+   "enum": "SAURIAN",
+   "name": "Saurian"
+  },
+  {
+   "enum": "SCREAM",
+   "name": "Scream"
+  },
+  {
+   "enum": "SCROLL",
+   "name": "Scroll"
+  },
+  {
+   "enum": "SHELL",
+   "name": "Shell"
+  },
+  {
+   "enum": "SHIELD",
+   "name": "Shield"
+  },
+  {
+   "enum": "SHRED",
+   "name": "Shred"
+  },
+  {
+   "enum": "SHY",
+   "name": "Shy"
+  },
+  {
+   "enum": "SILVER",
+   "name": "Silver"
+  },
+  {
+   "enum": "SKEWER",
+   "name": "Skewer"
+  },
+  {
+   "enum": "SLEEP",
+   "name": "Sleep"
+  },
+  {
+   "enum": "SLUMBER",
+   "name": "Slumber"
+  },
+  {
+   "enum": "SLEIGHT",
+   "name": "Sleight"
+  },
+  {
+   "enum": "SLIME",
+   "name": "Slime"
+  },
+  {
+   "enum": "SOUL",
+   "name": "Soul"
+  },
+  {
+   "enum": "SOOT",
+   "name": "Soot"
+  },
+  {
+   "enum": "SPITE",
+   "name": "Spite"
+  },
+  {
+   "enum": "SPORE",
+   "name": "Spore"
+  },
+  {
+   "enum": "STASH",
+   "name": "Stash"
+  },
+  {
+   "enum": "STORAGE",
+   "name": "Storage"
+  },
+  {
+   "enum": "STORY",
+   "name": "Story"
+  },
+  {
+   "enum": "STRIFE",
+   "name": "Strife"
+  },
+  {
+   "enum": "STUDY",
+   "name": "Study"
+  },
+  {
+   "enum": "STUN",
+   "name": "Stun"
+  },
+  {
+   "enum": "SUPPLY",
+   "name": "Supply"
+  },
+  {
+   "enum": "TAKEOVER",
+   "name": "Takeover"
+  },
+  {
+   "enum": "TASK",
+   "name": "Task"
+  },
+  {
+   "enum": "THEFT",
+   "name": "Theft"
+  },
+  {
+   "enum": "TIDE",
+   "name": "Tide"
+  },
+  {
+   "enum": "TIME",
+   "name": "Time"
+  },
+  {
+   "enum": "TOWER",
+   "name": "tower"
+  },
+  {
+   "enum": "TRAINING",
+   "name": "Training"
+  },
+  {
+   "enum": "TRAP",
+   "name": "Trap"
+  },
+  {
+   "enum": "TREASURE",
+   "name": "Treasure"
+  },
+  {
+   "enum": "UNITY",
+   "name": "Unity"
+  },
+  {
+   "enum": "UNLOCK",
+   "name": "Unlock"
+  },
+  {
+   "enum": "VALOR",
+   "name": "Valor"
+  },
+  {
+   "enum": "VELOCITY",
+   "name": "Velocity"
+  },
+  {
+   "enum": "VERSE",
+   "name": "Verse"
+  },
+  {
+   "enum": "VITALITY",
+   "name": "Vitality"
+  },
+  {
+   "enum": "VORTEX",
+   "name": "Vortex"
+  },
+  {
+   "enum": "VOYAGE",
+   "name": "Voyage"
+  },
+  {
+   "enum": "WAGE",
+   "name": "Wage"
+  },
+  {
+   "enum": "WINCH",
+   "name": "Winch"
+  },
+  {
+   "enum": "WIND",
+   "name": "Wind"
+  },
+  {
+   "enum": "WISH",
+   "name": "Wish"
+  },
+  {
+   "enum": "WRECK",
+   "name": "Wreck"
+  },
+  {
+   "enum": "CONTRACT",
+   "name": "Contract"
+  },
+  {
+   "enum": "ENERGY",
+   "name": "Energy"
+  },
+  {
+   "enum": "EXPERIENCE",
+   "name": "Experience"
+  },
+  {
+   "enum": "POISON",
+   "name": "Poison"
+  },
+  {
+   "enum": "RAD",
+   "name": "Rad"
+  },
+  {
+   "enum": "TICKET",
+   "name": "Ticket"
+  }
+ ]
+}

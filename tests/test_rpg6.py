@@ -14,6 +14,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 
 from rpg import explore
 from rpg import save as sv
@@ -98,6 +99,8 @@ class CornerTests(Temp):
         return w
 
     def test_a_one_tile_gap_lets_you_in_from_anywhere_beside_it(self):
+        # Round RPG7: the help is off (Karl, 13 Oct - stop dead at walls); the code is kept, and this is what it does when on
+        self.enterContext(mock.patch.object(explore, "CORNER_HELP", True))
         a = gap_map(self.tmp)
         gx = mid(4, 3)[0]
         for off in (-7.5, -6, -4, -2, 0, 2, 4, 6, 7.5):
@@ -114,6 +117,7 @@ class CornerTests(Temp):
         self.assertEqual(w.x, gx + 6)
 
     def test_the_help_reaches_half_a_tile_and_no_further(self):
+        self.enterContext(mock.patch.object(explore, "CORNER_HELP", True))          # Round RPG7: off by default
         a = gap_map(self.tmp)
         gx = mid(4, 3)[0]
         w = self.walk_up(a, gx + TILE)                      # a whole tile beside the gap
@@ -162,9 +166,11 @@ class RoomTests(Temp):
                     self.assertEqual(said, [f"the map is {w} x {h} tiles: make it whole rooms of 16 x 11"])
 
     def test_the_light_property(self):
-        for props, light in (("", None), ('<properties><property name="light" type="float" value="4.5"/></properties>', 4.5),
-                             ('<properties><property name="light" type="float" value="0"/></properties>', None),
-                             ('<properties><property name="light" value="bright"/></properties>', None)):
+        # Round RPG7: only a dungeon is dark - these maps say so with the map property dungeon (tests/test_rpg7.py has the rest)
+        dungeon = '<property name="dungeon" type="bool" value="true"/>'
+        for props, light in (("", None), (f'<properties>{dungeon}<property name="light" type="float" value="4.5"/></properties>', 4.5),
+                             (f'<properties>{dungeon}<property name="light" type="float" value="0"/></properties>', None),
+                             (f'<properties>{dungeon}<property name="light" value="bright"/></properties>', None)):
             with self.subTest(props=props):
                 explore.forget_areas()
                 write_map(self.tmp, "lit", 8, 6, [layer_xml("g", 8, 6, room())], map_props=props)

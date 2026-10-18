@@ -4,9 +4,10 @@ boot_screens.py - Round AD2: what the program shows before the deck screen.
 
     the studio splash (assets/splash/studio.jpg, 2.2 s, a click or a key skips it)
       -> the title: the picture alone (assets/splash/title.png, the manticore on its plinth) and "Press any key"
-      -> the main menu over a dimmed copy of it: Play / Draft / Settings / Credits / Quit
+      -> the main menu over a dimmed copy of it: Play / Draft / Adventure / Settings / Credits / Quit
          Play = the deck screen; Draft (round CD2) = the cube draft (draft_screens.py), over the deck screen;
          (Continue left the menu on 13 Oct 2026 - "Resume last game" is on the deck screen; its slot is for Adventure.)
+         Adventure (Round RPG8) = the RPG mode (rpg_screens.py): save slots, a new game, the map, towns, duels.
          Settings = the cog pop-up; Credits = Licenses and credits; Quit closes the program.
 
 Only main() starts here (ForgeTable.open_boot); tests and the --deck command line go straight to their own screens. The deck
@@ -32,8 +33,8 @@ BACKDROP_DIM = 80                # that fill is multiplied by this (of 255): it 
 FEATHER = 0.07                   # the picture's edges fade into the fill over this share of its width (or height)
 MENU_DIM = 105                   # the title picture is multiplied by this (of 255) behind the menu
 PROMPT = "Press any key"
-ITEMS = (("play", "Play"), ("draft", "Draft"), ("settings", "Settings"), ("credits", "Credits"),
-         ("quit", "Quit"))                                # round CD2: Draft - the cube draft (draft_screens.py)
+ITEMS = (("play", "Play"), ("draft", "Draft"), ("adventure", "Adventure"), ("settings", "Settings"), ("credits", "Credits"),
+         ("quit", "Quit"))                                # round CD2: Draft - the cube draft; Round RPG8: Adventure, in Continue's slot
 _PICS = {}                       # (name, size) -> Surface (one size kept per picture)
 
 
@@ -174,6 +175,9 @@ class BootFlow:
         elif name == "draft":                           # round CD2: the cube draft, over the deck screen
             gui.boot = None
             gui.open_draft(from_title=True)
+        elif name == "adventure":                       # Round RPG8: the RPG mode
+            gui.boot = None
+            gui.open_adventure()
         elif name == "settings":
             import forge_settings as fset
             gui.overlay = fset.SettingsPopup()

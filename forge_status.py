@@ -8,6 +8,8 @@ non-commander cards of the command zone into a short list of badges. It has no p
 """
 from collections import namedtuple
 
+import house_rules
+
 # key: which badge (also picks its colours); label: the chip text; short: the text when there is very little room;
 # text: what the tooltip says. KNOWN is keyed by the effect card's name in lower case.
 Badge = namedtuple("Badge", "key label short text")
@@ -56,6 +58,7 @@ def badges_for(command_cards, commander_ids):
         for name, text in others:
             label = name[4:] if name.lower().startswith("the ") else name
             emblem = "emblem" in name.lower()
-            detail = text or ("An emblem: it stays for the rest of the game." if emblem else "An effect kept in the command zone.")
+            detail = (text or house_rules.emblem_text(name)        # round EMB1: a house rule's emblem says what it does
+                      or ("An emblem: it stays for the rest of the game." if emblem else "An effect kept in the command zone."))
             out.append(Badge("emblem" if emblem else "effects", label, label[:4], f"{name}: {detail}"))
     return out

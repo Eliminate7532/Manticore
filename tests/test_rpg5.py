@@ -166,8 +166,8 @@ class ReaderTests(Temp):
             ("damaged", dict(layers=[layer_xml("g", 2, 1, [1, 1], "base64").replace("<data encoding=\"base64\">",
                                                                                     "<data encoding=\"base64\" compression=\"zlib\">")]),
              "damaged"),
-            ("bool", dict(layers=[good], map_props='<properties><property name="x" type="bool" value="yes"/></properties>'),
-             "'yes'"),
+            ("bool", dict(layers=[good], map_props='<properties><property name="x" type="bool" value="maybe"/></properties>'),
+             "maybe"),                       # Round RPG7: PyTMX reads true/false, 1/0 and yes/no, and refuses the rest
             ("overlap", dict(layers=[good], tileset='<tileset firstgid="1" source="t.tsx"/><tileset firstgid="3" source="t.tsx"/>'),
              "overlaps"),
             ("image", dict(layers=[good], tileset='<tileset firstgid="1" name="n" tilewidth="16" tileheight="16"></tileset>'),

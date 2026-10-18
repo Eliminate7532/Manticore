@@ -360,5 +360,691 @@
    }
   },
   "soak_failed": []
+ },
+ "jumpstart": [
+  {
+   "name": "Thornback 1",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Beasts 2",
+    "JMP Tree Hugging 2",
+    "J25 Stoked 1"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Explore",
+     1
+    ],
+    [
+     "Kiln Fiend",
+     1
+    ],
+    [
+     "Garruk, Caller of Beasts",
+     1
+    ],
+    [
+     "Primordial Sage",
+     1
+    ],
+    [
+     "Slinza, the Spiked Stampede",
+     1
+    ],
+    [
+     "Frontline Heroism",
+     1
+    ],
+    [
+     "Llanowar Visionary",
+     1
+    ],
+    [
+     "Roil Eruption",
+     1
+    ],
+    [
+     "Wall of Blossoms",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Hungry Megasloth",
+     1
+    ],
+    [
+     "Woodland Liege",
+     1
+    ],
+    [
+     "Advocate of the Beast",
+     1
+    ],
+    [
+     "Baloth Gorger",
+     1
+    ],
+    [
+     "Brushstrider",
+     1
+    ],
+    [
+     "Garruk's Packleader",
+     1
+    ],
+    [
+     "Gnarlid Colony",
+     1
+    ],
+    [
+     "Predator's Strike",
+     1
+    ],
+    [
+     "Bushwhack",
+     1
+    ],
+    [
+     "Time to Feed",
+     1
+    ],
+    [
+     "Thriving Grove",
+     2
+    ],
+    [
+     "Forest",
+     20
+    ],
+    [
+     "Ambassador Oak",
+     1
+    ],
+    [
+     "Burlfist Oak",
+     1
+    ],
+    [
+     "Warden of the Woods",
+     1
+    ],
+    [
+     "Snarespinner",
+     1
+    ],
+    [
+     "Gnarled Sage",
+     1
+    ],
+    [
+     "Nature's Way",
+     1
+    ],
+    [
+     "Crushing Canopy",
+     1
+    ],
+    [
+     "Wildsize",
+     1
+    ],
+    [
+     "Scholar of Combustion",
+     1
+    ],
+    [
+     "Cleon, Merry Champion",
+     1
+    ],
+    [
+     "Arena Athlete",
+     1
+    ],
+    [
+     "Resistance Skywarden",
+     1
+    ],
+    [
+     "Satyr Hoplite",
+     1
+    ],
+    [
+     "Hearts on Fire",
+     1
+    ],
+    [
+     "Titan's Strength",
+     1
+    ],
+    [
+     "Twinferno",
+     1
+    ],
+    [
+     "Uncaged Fury",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     1
+    ],
+    [
+     "Mountain",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 27,
+    "2": 3
+   }
+  },
+  {
+   "name": "Thornback 2",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Dinosaurs 2",
+    "J25 Landfall 3",
+    "JMP Plus One 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Ghalta, Primal Hunger",
+     1
+    ],
+    [
+     "Branching Evolution",
+     1
+    ],
+    [
+     "Harrow",
+     1
+    ],
+    [
+     "Topiary Stomper",
+     1
+    ],
+    [
+     "Rampant Growth",
+     1
+    ],
+    [
+     "Scythecat Cub",
+     1
+    ],
+    [
+     "Wildwood Scourge",
+     1
+    ],
+    [
+     "Thundering Spineback",
+     1
+    ],
+    [
+     "Colossal Dreadmaw",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Saurian Symbiote",
+     1
+    ],
+    [
+     "Cherished Hatchling",
+     1
+    ],
+    [
+     "Drowsing Tyrannodon",
+     1
+    ],
+    [
+     "Thrashing Brontodon",
+     1
+    ],
+    [
+     "Predator's Strike",
+     1
+    ],
+    [
+     "Tail Swipe",
+     1
+    ],
+    [
+     "Commune with Dinosaurs",
+     1
+    ],
+    [
+     "Thriving Grove",
+     3
+    ],
+    [
+     "Forest",
+     31
+    ],
+    [
+     "Sutina, Speaker of the Tajuru",
+     1
+    ],
+    [
+     "Canopy Baloth",
+     1
+    ],
+    [
+     "Kazandu Stomper",
+     1
+    ],
+    [
+     "Murasa Ranger",
+     1
+    ],
+    [
+     "Snapping Gnarlid",
+     1
+    ],
+    [
+     "Territorial Scythecat",
+     1
+    ],
+    [
+     "Bite Down",
+     1
+    ],
+    [
+     "Retreat to Kazandu",
+     1
+    ],
+    [
+     "Cliffhaven Kitesail",
+     1
+    ],
+    [
+     "Evolving Wilds",
+     1
+    ],
+    [
+     "Armorcraft Judge",
+     1
+    ],
+    [
+     "Nessian Hornbeetle",
+     1
+    ],
+    [
+     "Fertilid",
+     1
+    ],
+    [
+     "Ironshell Beetle",
+     1
+    ],
+    [
+     "Trufflesnout",
+     1
+    ],
+    [
+     "Pridemalkin",
+     1
+    ],
+    [
+     "Hunter's Edge",
+     1
+    ],
+    [
+     "Arbor Armament",
+     1
+    ],
+    [
+     "Invigorating Surge",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 25,
+    "2": 3,
+    "3": 1
+   }
+  },
+  {
+   "name": "Thornback 3",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J22 Landfall 1",
+    "J22 Elves 4",
+    "J22 Landfall 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Dwynen's Elite",
+     1
+    ],
+    [
+     "Groundswell",
+     1
+    ],
+    [
+     "Avenger of Zendikar",
+     1
+    ],
+    [
+     "Rampaging Baloths",
+     1
+    ],
+    [
+     "Ivy Lane Denizen",
+     1
+    ],
+    [
+     "Courser of Kruphix",
+     1
+    ],
+    [
+     "Presence of Gond",
+     1
+    ],
+    [
+     "Wildborn Preserver",
+     1
+    ],
+    [
+     "Adventuring Gear",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Turntimber Basilisk",
+     2
+    ],
+    [
+     "Primeval Herald",
+     2
+    ],
+    [
+     "Zendikar's Roil",
+     1
+    ],
+    [
+     "Rampaging Growth",
+     2
+    ],
+    [
+     "Oashra Cultivator",
+     2
+    ],
+    [
+     "Snapping Gnarlid",
+     2
+    ],
+    [
+     "Canopy Baloth",
+     2
+    ],
+    [
+     "Khalni Heart Expedition",
+     2
+    ],
+    [
+     "Master's Rebuke",
+     1
+    ],
+    [
+     "Evolving Wilds",
+     2
+    ],
+    [
+     "Thriving Grove",
+     3
+    ],
+    [
+     "Forest",
+     28
+    ],
+    [
+     "Woodland Champion",
+     1
+    ],
+    [
+     "Elven Bow",
+     1
+    ],
+    [
+     "Overcome",
+     1
+    ],
+    [
+     "Elvish Rejuvenator",
+     1
+    ],
+    [
+     "Dutiful Replicator",
+     1
+    ],
+    [
+     "Elderleaf Mentor",
+     1
+    ],
+    [
+     "Roots of Wisdom",
+     1
+    ],
+    [
+     "Band Together",
+     1
+    ],
+    [
+     "Baloth Woodcrasher",
+     1
+    ],
+    [
+     "Fertilid",
+     1
+    ],
+    [
+     "Broken Bond",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 28,
+    "1": 27,
+    "2": 3,
+    "3": 2
+   }
+  },
+  {
+   "name": "Thornback 4",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Dinosaurs 2",
+    "JMP Lands 1",
+    "JMP Above the Clouds 1"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Cultivate",
+     1
+    ],
+    [
+     "Lofty Denial",
+     1
+    ],
+    [
+     "Ulvenwald Hydra",
+     1
+    ],
+    [
+     "Inniaz, the Gale Force",
+     1
+    ],
+    [
+     "Selvala, Heart of the Wilds",
+     1
+    ],
+    [
+     "Sylvan Ranger",
+     1
+    ],
+    [
+     "Thundering Spineback",
+     1
+    ],
+    [
+     "Colossal Dreadmaw",
+     1
+    ],
+    [
+     "Roaming Ghostlight",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Drover of the Mighty",
+     1
+    ],
+    [
+     "Orazca Frillback",
+     1
+    ],
+    [
+     "Ornery Dilophosaur",
+     1
+    ],
+    [
+     "Drowsing Tyrannodon",
+     1
+    ],
+    [
+     "Savage Stomp",
+     1
+    ],
+    [
+     "Commune with Dinosaurs",
+     1
+    ],
+    [
+     "Crushing Canopy",
+     2
+    ],
+    [
+     "New Horizons",
+     1
+    ],
+    [
+     "Garruk's Uprising",
+     1
+    ],
+    [
+     "Thriving Grove",
+     2
+    ],
+    [
+     "Forest",
+     20
+    ],
+    [
+     "Awakener Druid",
+     1
+    ],
+    [
+     "Feral Hydra",
+     1
+    ],
+    [
+     "Fa'adiyah Seer",
+     1
+    ],
+    [
+     "Fertilid",
+     1
+    ],
+    [
+     "Wildheart Invoker",
+     1
+    ],
+    [
+     "Elemental Uprising",
+     1
+    ],
+    [
+     "Zendikar's Roil",
+     1
+    ],
+    [
+     "Vastwood Zendikon",
+     1
+    ],
+    [
+     "Warden of Evos Isle",
+     1
+    ],
+    [
+     "Tide Skimmer",
+     1
+    ],
+    [
+     "Keen Glidemaster",
+     1
+    ],
+    [
+     "Wall of Runes",
+     1
+    ],
+    [
+     "Mistral Singer",
+     1
+    ],
+    [
+     "Unsubstantiate",
+     1
+    ],
+    [
+     "Rain of Revelation",
+     1
+    ],
+    [
+     "Rookie Mistake",
+     1
+    ],
+    [
+     "Capture Sphere",
+     1
+    ],
+    [
+     "Thriving Isle",
+     1
+    ],
+    [
+     "Island",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 27,
+    "2": 3
+   }
+  }
+ ],
+ "jumpstart_balance": {
+  "when": "2026-10-14 11:23",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "seed": 303,
+  "keep": 4,
+  "handicap": 9,
+  "target": 0.65,
+  "rule": "two",
+  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
  }
 }

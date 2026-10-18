@@ -132,9 +132,17 @@ class BadgeOnTableTests(unittest.TestCase):
             st["players"].append(p)
         gui = make_gui(st, (1440, 900))
         found = self.badges(gui)
-        self.assertEqual(len(found), 6)
+        # Round EMB1: "AI 1 (Kinnan)"'s piles share its hand row and ran over its two chips there; they now go to the name row,
+        # folded into one chip when both don't fit beside the long name - so 5 or 6 chips, every player's two badges in them
+        self.assertIn(len(found), (5, 6))
+        for pid in (p["id"] for p in st["players"] if p["id"] != st["me"]):
+            text = " ".join(d["text"] for r, k, d in gui.hits if k == "badge" and d.get("player") == pid)
+            self.assertIn("initiative", text)
+            self.assertIn("Ring", text)
+        piles = [r for r, k, _d in gui.hits if k in ("zone", "library")]
         for rect, _ in found:
             self.assertTrue(any(o.contains(rect) for o in gui.L.opp_rects), rect)
+            self.assertFalse(any(rect.colliderect(p) for p in piles), rect)
 
     def test_a_chip_on_a_targetable_panel_still_means_click_the_player(self):
         gui = make_gui(with_effects("main1_start", theirs=[(902, "The Monarch")]))
@@ -309,7 +317,8 @@ class RestartConcedeTests(unittest.TestCase):
         self.assertEqual(gui.boot.stage, "menu")
         self.assertFalse(gui.game_showing())
         frame(gui, 2)
-        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "continue", "settings", "credits", "quit"])
+        # 13 Oct: Continue left the main menu ("Resume last game" is on the deck screen; boot_screens.ITEMS)
+        self.assertEqual([n for _r, n in gui.boot.buttons], ["play", "draft", "adventure", "settings", "credits", "quit"])
         click(gui, next(r.center for r, n in gui.boot.buttons if n == "play"))
         frame(gui, 1)
         self.assertIsNotNone(gui.menu)

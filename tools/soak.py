@@ -461,26 +461,64 @@ def _watchdog_kill(holder):
         pass
 
 
-RECORD_JUDGE_LIMIT = 400 * 1024 * 1024   # patch 44: bytes of record (uncompressed) the rules and the summary still read
+RECORD_JUDGE_LIMIT = 400 * 1024 * 1024   # patch 44: bytes of record (uncompressed) read back whole; above it, cut down (HUGE1)
 
 
 def _too_big(path):
     """Patch 44: a record so big that reading it back would take gigabytes of memory - a game that went round in a loop (6 Oct:
-    a 1.9 GB record, 28,000 refused attacks; reading it killed the soak). A .gz counts about ten times its size."""
+    a 1.9 GB record, 28,000 refused attacks; reading it killed the soak). Such a record is read cut down (round HUGE1)."""
     try:
         size = os.path.getsize(path)
     except OSError:
         return 0
-    size = size * 10 if path.endswith(".gz") else size
+    if path.endswith(".gz"):
+        # Round HUGE1: "about ten times" was too low for a big board's record - game 18 of the 15-16 Oct soak was 36 MB
+        # gzipped and 1.2 GB inside (33 times), so the end-of-run summary read it whole. A gzip file ends with the size of
+        # what it holds (modulo 4 GiB); the larger of that and ten times the file counts.
+        size = max(size * 10, _gzip_inner_size(path))
     return size if size > RECORD_JUDGE_LIMIT else 0
 
 
-def _load_messages(path):
-    """The record's messages, or None when it is too big to read back."""
-    if not path or _too_big(path):
-        return None
+def _gzip_inner_size(path):
+    """The uncompressed size a gzip file's trailer gives (ISIZE: the last 4 bytes, little-endian, modulo 2**32), or 0."""
     try:
-        return bridge_rules.load_stream(path)
+        with open(path, "rb") as f:
+            f.seek(-4, os.SEEK_END)
+            return int.from_bytes(f.read(4), "little")
+    except OSError:
+        return 0
+
+
+def _load_messages(path):
+    """The record's messages. Round HUGE1: a record too big to read back whole is read line by line with every snapshot cut down
+    to what the rules and the summary read (bridge_rules.load_stream_reduced) - before, it was skipped (None) and its game never
+    judged (15-16 Oct soak: games 18 and 96)."""
+    messages, _info = _load_messages_info(path)
+    return messages
+
+
+def _load_messages_info(path):
+    """(messages, info): info is None for a record read whole, else load_stream_reduced's {"messages", "kept", "truncated",
+    "error"}. A huge record that can't be read still comes back with an info (so it still gets its huge_record warning)."""
+    if not path:
+        return [], None
+    if _too_big(path):
+        try:
+            return bridge_rules.load_stream_reduced(path)
+        except OSError as e:
+            return [], {"messages": 0, "kept": 0, "truncated": False, "error": "could not be read: %s" % e}
+    try:
+        return bridge_rules.load_stream(path), None
+    except OSError:
+        return [], None
+
+
+def _health_messages(path):
+    """Round HUGE1: a record's messages for soak_report.game_health, always cut down (see write_outputs)."""
+    if not path:
+        return []
+    try:
+        return bridge_rules.load_stream_reduced(path)[0]
     except OSError:
         return []
 
@@ -507,11 +545,15 @@ def _note_java_crash(result, session):
 
 def _finish_report(result, session, record_path, game_dir, out_root):
     """bridge_rules over what was recorded, and a bug-report zip when a rule failed."""
-    messages = _load_messages(record_path)
-    if messages is None:
-        result.findings.append({"rule": "huge_record", "severity": "warn", "at": -1,
-                                "detail": "record of %d MB not read back (a loop?)" % (_too_big(record_path) // (1024 * 1024))})
-        messages = []
+    messages, info = _load_messages_info(record_path)
+    if info is not None:                                  # round HUGE1: judged from a cut-down copy, not skipped
+        detail = "record of %d MB judged from a cut-down copy (snapshots trimmed to what the rules read)" % (
+            _too_big(record_path) // (1024 * 1024))
+        if info.get("truncated"):
+            detail += "; past the first %d of %d messages only the ends of the game were kept" % (info["kept"], info["messages"])
+        if info.get("error"):
+            detail += "; " + info["error"]
+        result.findings.append({"rule": "huge_record", "severity": "warn", "at": -1, "detail": detail})
     engine_lines = bridge_rules.load_engine_log(session.stderr_path)
     result.findings = result.findings + bridge_rules.check_stream(messages, engine_lines)
     crash = _note_java_crash(result, session)            # patch 46
@@ -647,7 +689,10 @@ def write_outputs(out_root, results, shapes, header=None, canary=None, history_d
     _load_modules()
     healths = []
     for r in results:
-        messages = (_load_messages(r.record_path) or []) if r.record_path else []        # patch 44: never a huge one
+        # Round HUGE1: the health needs only what the cut-down copy keeps, so every record is read cut down here - no size
+        # guess (a .gz's own size field wraps at 4 GiB), no whole 1.2 GB record in memory at the end of a night, and a record
+        # that ends mid-line (a soak stopped hard) gives what it has instead of stopping the summary.
+        messages = _health_messages(r.record_path)
         health = soak_report.game_health(messages)
         health["board"] = getattr(r, "start", "turn 1") == "board"      # round 28c: see soak_report.run_verdict
         healths.append(health)

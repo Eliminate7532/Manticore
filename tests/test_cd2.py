@@ -83,7 +83,8 @@ class FormatTests(unittest.TestCase):
         self.assertEqual((f.name, f.deck_size, f.exact, f.life_two, f.life_pod), ("Commander Draft", 60, False, 40, 40))
         self.assertTrue(f.commander and f.commander_damage)
         self.assertEqual(formats.engine("commander_draft"), "commander")         # 903.13g: Forge plays it as Commander
-        self.assertEqual(formats.dck_lines("commander_draft"), [])                 # a .dck exactly like a Commander one
+        # Round CDFIX1: a Commander .dck plus one line Forge skips, so a resumed game knows it is a draft (was: [])
+        self.assertEqual(formats.dck_lines("commander_draft"), ["Manticore Format=commander_draft"])
         self.assertFalse(f.online)                                                 # online drafting is CD5
         self.assertTrue(formats.any_copies("commander_draft"))
         self.assertFalse(formats.any_copies("commander"))
@@ -110,7 +111,8 @@ class FormatTests(unittest.TestCase):
                                fmt="commander_draft")
         b = fc.write_deck_file(os.path.join(tmp, "b.dck"), ["Kinnan, Bonder Prodigy"], ["Sol Ring", "Sol Ring", "Forest"], "D")
         with open(a, encoding="utf-8") as fa, open(b, encoding="utf-8") as fb:
-            self.assertEqual(fa.read(), fb.read())
+            # Round CDFIX1: the same file but for the one "Manticore Format=" line (Forge's reader skips it)
+            self.assertEqual(fa.read().replace("Manticore Format=commander_draft\n", ""), fb.read())
 
 
 # ==================================================================================================================================
@@ -383,7 +385,7 @@ class ScreenTests(unittest.TestCase):
     # ---- the main menu ---------------------------------------------------------------------------------------------------------
     def test_draft_is_on_the_main_menu_right_after_play(self):
         g = self.gui()
-        self.assertEqual([n for _r, n in g.boot.buttons], ["play", "draft", "settings", "credits", "quit"])
+        self.assertEqual([n for _r, n in g.boot.buttons], ["play", "draft", "adventure", "settings", "credits", "quit"])  # RPG8
         self.assertEqual(dict(fboot.ITEMS)["draft"], "Draft")
 
     def test_the_main_menu_row_still_fits_at_every_size(self):

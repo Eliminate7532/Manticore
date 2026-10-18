@@ -11,6 +11,10 @@ cache/
 mpc_art/
 deck_art/
 
+# Cube drafts in progress or done (Round CD2: saves/drafts/<id>/, about 100 KB each): kept on this computer and in the local
+# backup zips, but not pushed to GitHub (Round ANS1, Karl 13 Oct: "Local zip only"). The decks a draft saves (My decks) still are.
+saves/drafts/
+
 # Made every time you play.
 forge_engine.log
 forge_engine.prev.log
@@ -80,3 +84,16 @@ docs/incoming/ad1_rebase/
 # be added as an embedded repository.
 .worktrees/
 .sessions/
+
+# Round HK1 (14 Oct 2026, Karl: housekeeping) - kept on this computer only:
+# Deliveries land in docs/incoming/<round>/ and are applied as commits on their round's branch; once merged, a delivery's folder
+# moves to ..\manticore_archive\incoming\ (beside commander_sim). They were 85% of this repository (506 of 594 MiB).
+docs/incoming/*
+!docs/incoming/README.md
+# The last good game states (Round LAST1): rewritten during every game, removed after 3 days.
+last_good/
+# Captured test output and the card checker's report: made again by every run.
+quick.txt
+test_results.txt
+r28d_test.txt
+card_check_report.txt

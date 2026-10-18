@@ -209,13 +209,15 @@ class LayoutTests(unittest.TestCase):
             self.assertEqual(kind, "card")
             self.assertEqual(data["card"]["id"], cid)
 
-    def test_the_hand_and_command_zone_are_not_changed_yet(self):
+    def test_the_hand_strip_and_command_zone_are_not_changed(self):
+        # Round HAND1 (Karl, 13 Oct: "Arena-style hand"): the hand's CARDS grow with Card size now (tests/test_hand1.py); the
+        # strip, the command zone and the hand's card height in the layout stay as they were (was: the hand's card rects too).
         a, b = table("main1_lands", (1360, 840), 1.0, 1.0), table("main1_lands", (1360, 840), 1.0, 2.0)
         me = a.session.me()
         mine = [c["id"] for c in me["zones"]["hand"]]
         self.assertTrue(mine)
         for cid in mine:
-            self.assertEqual(a.card_rects[cid], b.card_rects[cid], cid)
+            self.assertEqual(a.card_rects[cid].top, b.card_rects[cid].top, cid)
         self.assertEqual((a.L.hand, a.L.cmd_rect, a.L.hand_ch), (b.L.hand, b.L.cmd_rect, b.L.hand_ch))
 
 

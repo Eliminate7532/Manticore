@@ -98,6 +98,20 @@ def stock_cube_files():
     return [f"{cube_source.STOCK_DIR_NAME}/{st.key}.json" for st in cube_source.STOCK_CUBES]
 
 
+def rpg_data_files(root=None):
+    """Round RPG8: every file of the Adventure's data and maps (rpg/data/, rpg/maps/ of this source tree), as the build must
+    hold them (commander_sim.spec's datas)."""
+    root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out = []
+    for sub in ("rpg/data", "rpg/maps"):
+        base = os.path.join(root, *sub.split("/"))
+        for dirpath, _dirs, names in os.walk(base):
+            for n in names:
+                rel = os.path.relpath(os.path.join(dirpath, n), root).replace(os.sep, "/")
+                out.append(rel)
+    return sorted(out)
+
+
 def check_layout(folder, tree, dirs, exe=".exe", sample_decks=EXPECTED_SAMPLE_DECKS):
     """[problems]"""
     problems = []
@@ -113,6 +127,9 @@ def check_layout(folder, tree, dirs, exe=".exe", sample_decks=EXPECTED_SAMPLE_DE
     for rel in stock_cube_files():                                                    # round CD3: the stock cubes' lists
         if rel.lower() not in have:
             problems.append(f"missing file: {rel}")
+    missing = [rel for rel in rpg_data_files() if rel.lower() not in have]            # Round RPG8: the Adventure's data
+    if missing:
+        problems.append(f"missing file: {missing[0]}" + (f" (and {len(missing) - 1} more of rpg/)" if len(missing) > 1 else ""))
     decks = [rel for rel, _ in tree if rel.lower().startswith("sample_decks/") and rel.lower().endswith(".txt")]
     if sample_decks is not None and len(decks) != sample_decks:
         problems.append(f"sample_decks/ has {len(decks)} deck(s), expected {sample_decks}")

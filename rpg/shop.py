@@ -3,12 +3,18 @@
 gold by tier; booster packs from the town's list of sets; cards sell back at a fraction of their price).
 
 Singles: the stock is drawn from the card pool - cards whose tier is inside the town's region band (towns.json), whose colours fit
-the town's (every colour of the card is one of the town's, or the card is colourless), never a basic land (free), a banned or
-restricted card, or a name starting with a skipped prefix (numbers.json shop_skip_prefixes: "A-", Arena's rebalanced versions).
+the town's (every colour of the card is one of the town's, or the card is colourless), never a basic land (they are sold on their
+own, below), a banned or restricted card, or a name starting with a skipped prefix (numbers.json shop_skip_prefixes: "A-", Arena's
+rebalanced versions).
 numbers.json stock says how many slots of each tier, stock_copies how many copies a slot holds. The stock is drawn again every time
 the shop opens, from the save's stable_rng(town, restock number), so it is the same until the town restocks - after every
 restock_after_duels duels the player has fought anywhere. What was bought is kept in the save per town (shops[town]["bought"]),
 and forgotten at a restock.
+
+Basic lands (Round RPG7, Karl 13 Oct: "1 gold each"): while numbers.json says basic_lands_free is false, every town's shop sells
+the six plain basic lands (Plains, Island, Swamp, Mountain, Forest, Wastes - the ones the card pool has; snow-covered ones come only
+in packs) at basic_land_price each, as many as you can pay for, and buys none back (sell_price: tier 0 has no price). A new game's
+starting deck comes with its basic lands owned (rpg.newgame adds every card of it to the collection).
 
 Packs: the town's sets that have a pack pool (rpg/data/packs/<SET>.json, opened by Forge's own generator at build time); one pack
 drawn from the pool with the save's rng, every card added to the collection.
@@ -19,6 +25,7 @@ from rpg import cardpool, products, rules
 from rpg.collection import sell_problem
 
 _CANDIDATES = {}
+BASIC_LANDS = ("Plains", "Island", "Swamp", "Mountain", "Forest", "Wastes")     # Round RPG7: what every shop sells, in this order
 
 
 class Offer:
@@ -116,6 +123,38 @@ class Shop:
         bought[offer.slot] = bought.get(offer.slot, 0) + 1
         offer.left -= 1
         return offer
+
+    # ---- basic lands (Round RPG7) -------------------------------------------------------------------------------------------
+
+    def basics(self):
+        """[(name, price)] - the basic lands this shop sells; [] when the save's basic lands are free (nothing to buy). The save's
+        rule decides, not numbers.json's (a save keeps the rule it was made under); the price is numbers.json's (0 if it says
+        free)."""
+        if self.save.collection.basics_free:
+            return []
+        out = []
+        for name in BASIC_LANDS:
+            card = self.pool.get(name)
+            if card is not None and card.is_basic:
+                out.append((card.name, self.numbers.basic_land_price))
+        return out
+
+    def buy_basic(self, name, k=1):
+        """Buy k basic lands of one name. Returns the gold paid."""
+        if isinstance(k, bool) or not isinstance(k, int) or k < 1:
+            raise ShopError("Buy at least one (a whole number).")
+        offer = next(((n, p) for n, p in self.basics() if n.lower() == str(name).strip().lower()), None)
+        if offer is None:
+            if self.save.collection.basics_free:
+                raise ShopError("Basic lands are free - there is nothing to buy.")
+            raise ShopError(f"{name} isn't a basic land this shop sells.")
+        n, price = offer
+        cost = price * k
+        if self.save.gold < cost:
+            raise ShopError(f"{k} {n} cost{'s' if k == 1 else ''} {cost} gold; you have {self.save.gold}.")
+        self.save.gold -= cost
+        self.save.collection.add(n, k)
+        return cost
 
     # ---- packs ---------------------------------------------------------------------------------------------------------------
 

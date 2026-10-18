@@ -335,5 +335,673 @@
    }
   },
   "soak_failed": []
+ },
+ "jumpstart": [
+  {
+   "name": "Zealot 1",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Feathered Friends 4",
+    "J25 Healers 2",
+    "J22 Zombies 4"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Angel of Vitality",
+     1
+    ],
+    [
+     "Dead Weight",
+     1
+    ],
+    [
+     "Valkyrie Harbinger",
+     1
+    ],
+    [
+     "Archon of Justice",
+     1
+    ],
+    [
+     "Archon of Redemption",
+     1
+    ],
+    [
+     "Liliana's Mastery",
+     1
+    ],
+    [
+     "Lord of the Accursed",
+     1
+    ],
+    [
+     "Ajani's Pridemate",
+     1
+    ],
+    [
+     "Revitalize",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Healer's Hawk",
+     1
+    ],
+    [
+     "Falconer Adept",
+     1
+    ],
+    [
+     "Concordia Pegasus",
+     1
+    ],
+    [
+     "Warded Battlements",
+     1
+    ],
+    [
+     "Gale Swooper",
+     1
+    ],
+    [
+     "Celestial Enforcer",
+     1
+    ],
+    [
+     "Aerial Assault",
+     1
+    ],
+    [
+     "Aegis of the Heavens",
+     1
+    ],
+    [
+     "Dauntless Onslaught",
+     1
+    ],
+    [
+     "Sky Tether",
+     1
+    ],
+    [
+     "Thriving Heath",
+     2
+    ],
+    [
+     "Plains",
+     20
+    ],
+    [
+     "Hinterland Sanctifier",
+     1
+    ],
+    [
+     "Qala, Ajani's Pridemate",
+     1
+    ],
+    [
+     "Bishop's Soldier",
+     1
+    ],
+    [
+     "Brightmare",
+     1
+    ],
+    [
+     "Speakeasy Server",
+     1
+    ],
+    [
+     "Divine Arrow",
+     1
+    ],
+    [
+     "Take Up the Shield",
+     1
+    ],
+    [
+     "Recumbent Bliss",
+     1
+    ],
+    [
+     "Deadly Plot",
+     1
+    ],
+    [
+     "Undead Augur",
+     1
+    ],
+    [
+     "Cellar Door",
+     1
+    ],
+    [
+     "Suspicious Shambler",
+     1
+    ],
+    [
+     "Shambling Ghoul",
+     1
+    ],
+    [
+     "Crow of Dark Tidings",
+     1
+    ],
+    [
+     "Marauding Boneslasher",
+     1
+    ],
+    [
+     "Maalfeld Twins",
+     1
+    ],
+    [
+     "Cemetery Recruitment",
+     1
+    ],
+    [
+     "Thriving Moor",
+     1
+    ],
+    [
+     "Swamp",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 26,
+    "2": 4
+   }
+  },
+  {
+   "name": "Zealot 2",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Legion 1",
+    "JMP Doctor 2",
+    "JMP Doctor 3"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Adeline, Resplendent Cathar",
+     1
+    ],
+    [
+     "Recruitment Officer",
+     1
+    ],
+    [
+     "Speaker of the Heavens",
+     1
+    ],
+    [
+     "Rhox Faithmender",
+     1
+    ],
+    [
+     "Search Party Captain",
+     1
+    ],
+    [
+     "Ancestral Blade",
+     1
+    ],
+    [
+     "Raise the Alarm",
+     1
+    ],
+    [
+     "Revitalize",
+     2
+    ]
+   ],
+   "main": [
+    [
+     "Dawnwing Marshal",
+     1
+    ],
+    [
+     "Hinterland Sanctifier",
+     1
+    ],
+    [
+     "Mentor of the Meek",
+     1
+    ],
+    [
+     "Argivian Phalanx",
+     1
+    ],
+    [
+     "Dauntless Unity",
+     1
+    ],
+    [
+     "Make a Stand",
+     1
+    ],
+    [
+     "Pacifism",
+     1
+    ],
+    [
+     "Thriving Heath",
+     3
+    ],
+    [
+     "Plains",
+     30
+    ],
+    [
+     "Brightmare",
+     2
+    ],
+    [
+     "Stone Haven Pilgrim",
+     1
+    ],
+    [
+     "Angel of Mercy",
+     2
+    ],
+    [
+     "Anointed Chorister",
+     2
+    ],
+    [
+     "Basri's Acolyte",
+     2
+    ],
+    [
+     "Secure the Scene",
+     1
+    ],
+    [
+     "Moment of Heroism",
+     2
+    ],
+    [
+     "Swift Response",
+     2
+    ],
+    [
+     "Griffin Aerie",
+     2
+    ],
+    [
+     "Light of Promise",
+     2
+    ],
+    [
+     "Mesa Unicorn",
+     1
+    ],
+    [
+     "Faith's Fetters",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 27,
+    "2": 3
+   }
+  },
+  {
+   "name": "Zealot 3",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Healers 2",
+    "JMP Dogs 2",
+    "JMP Heavily Armored 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Angel of Vitality",
+     1
+    ],
+    [
+     "Valkyrie Harbinger",
+     1
+    ],
+    [
+     "Cathars' Crusade",
+     1
+    ],
+    [
+     "Ajani's Pridemate",
+     1
+    ],
+    [
+     "Pack Leader",
+     1
+    ],
+    [
+     "Revitalize",
+     1
+    ],
+    [
+     "Gird for Battle",
+     1
+    ],
+    [
+     "Isamaru, Hound of Konda",
+     1
+    ],
+    [
+     "Bulwark Giant",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Hinterland Sanctifier",
+     1
+    ],
+    [
+     "Qala, Ajani's Pridemate",
+     1
+    ],
+    [
+     "Bishop's Soldier",
+     1
+    ],
+    [
+     "Brightmare",
+     1
+    ],
+    [
+     "Speakeasy Server",
+     1
+    ],
+    [
+     "Divine Arrow",
+     1
+    ],
+    [
+     "Take Up the Shield",
+     1
+    ],
+    [
+     "Recumbent Bliss",
+     1
+    ],
+    [
+     "Thriving Heath",
+     3
+    ],
+    [
+     "Plains",
+     30
+    ],
+    [
+     "Affa Guard Hound",
+     1
+    ],
+    [
+     "Supply Runners",
+     1
+    ],
+    [
+     "Cathar's Companion",
+     1
+    ],
+    [
+     "Trusty Retriever",
+     2
+    ],
+    [
+     "Alpine Watchdog",
+     1
+    ],
+    [
+     "Rambunctious Mutt",
+     1
+    ],
+    [
+     "Release the Dogs",
+     1
+    ],
+    [
+     "Secure the Scene",
+     2
+    ],
+    [
+     "Dauntless Onslaught",
+     1
+    ],
+    [
+     "Pacifism",
+     1
+    ],
+    [
+     "Patron of the Valiant",
+     1
+    ],
+    [
+     "Lightwalker",
+     1
+    ],
+    [
+     "Tempered Veteran",
+     1
+    ],
+    [
+     "Siege Striker",
+     1
+    ],
+    [
+     "Makeshift Battalion",
+     1
+    ],
+    [
+     "Basri's Acolyte",
+     1
+    ],
+    [
+     "Battlefield Promotion",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 27,
+    "2": 3
+   }
+  },
+  {
+   "name": "Zealot 4",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Dogs 2",
+    "J22 Cats 3",
+    "JMP Discarding 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Ajani, Strength of the Pride",
+     1
+    ],
+    [
+     "Phyrexian Rager",
+     1
+    ],
+    [
+     "Liliana's Reaver",
+     1
+    ],
+    [
+     "Ravenous Chupacabra",
+     1
+    ],
+    [
+     "Nyxathid",
+     1
+    ],
+    [
+     "Ajani's Pridemate",
+     1
+    ],
+    [
+     "Burglar Rat",
+     1
+    ],
+    [
+     "Pack Leader",
+     1
+    ],
+    [
+     "Isamaru, Hound of Konda",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Affa Guard Hound",
+     1
+    ],
+    [
+     "Supply Runners",
+     1
+    ],
+    [
+     "Cathar's Companion",
+     1
+    ],
+    [
+     "Trusty Retriever",
+     1
+    ],
+    [
+     "Alpine Watchdog",
+     1
+    ],
+    [
+     "Rambunctious Mutt",
+     1
+    ],
+    [
+     "Release the Dogs",
+     1
+    ],
+    [
+     "Secure the Scene",
+     1
+    ],
+    [
+     "Dauntless Onslaught",
+     1
+    ],
+    [
+     "Pacifism",
+     1
+    ],
+    [
+     "Thriving Heath",
+     2
+    ],
+    [
+     "Plains",
+     20
+    ],
+    [
+     "Ingenious Leonin",
+     1
+    ],
+    [
+     "King of the Pride",
+     1
+    ],
+    [
+     "Make a Stand",
+     1
+    ],
+    [
+     "Trained Caracal",
+     1
+    ],
+    [
+     "Leonin Snarecaster",
+     1
+    ],
+    [
+     "Savannah Sage",
+     1
+    ],
+    [
+     "Basri's Acolyte",
+     1
+    ],
+    [
+     "Leonin Scimitar",
+     1
+    ],
+    [
+     "Impeccable Timing",
+     1
+    ],
+    [
+     "Weight of Conscience",
+     1
+    ],
+    [
+     "Fell Specter",
+     1
+    ],
+    [
+     "Entomber Exarch",
+     1
+    ],
+    [
+     "Slate Street Ruffian",
+     1
+    ],
+    [
+     "Wight of Precinct Six",
+     2
+    ],
+    [
+     "Assassin's Strike",
+     1
+    ],
+    [
+     "Death's Approach",
+     1
+    ],
+    [
+     "Thriving Moor",
+     1
+    ],
+    [
+     "Swamp",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 28,
+    "2": 2
+   }
+  }
+ ],
+ "jumpstart_balance": {
+  "when": "2026-10-14 11:23",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "seed": 303,
+  "keep": 4,
+  "handicap": 9,
+  "target": 0.65,
+  "rule": "two",
+  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
  }
 }

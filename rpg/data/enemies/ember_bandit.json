@@ -417,5 +417,730 @@
    }
   },
   "soak_failed": []
+ },
+ "jumpstart": [
+  {
+   "name": "Ember Bandit 1",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Seismic",
+    "J22 Fiery 1",
+    "J25 Ne'er-do-wells 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Grim Lavamancer",
+     1
+    ],
+    [
+     "Thieves' Guild Enforcer",
+     1
+    ],
+    [
+     "Chandra, Flame's Fury",
+     1
+    ],
+    [
+     "Balustrade Spy",
+     1
+    ],
+    [
+     "Rev, Tithe Extractor",
+     1
+    ],
+    [
+     "Volcanic Fallout",
+     1
+    ],
+    [
+     "Magma Jet",
+     1
+    ],
+    [
+     "Magmaquake",
+     1
+    ],
+    [
+     "Thrill of Possibility",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Cinder Elemental",
+     1
+    ],
+    [
+     "Seismic Elemental",
+     1
+    ],
+    [
+     "Ashmouth Hound",
+     1
+    ],
+    [
+     "Bloodrock Cyclops",
+     1
+    ],
+    [
+     "Molten Ravager",
+     1
+    ],
+    [
+     "Spitting Earth",
+     1
+    ],
+    [
+     "Volcanic Geyser",
+     1
+    ],
+    [
+     "Mana Geode",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     2
+    ],
+    [
+     "Mountain",
+     20
+    ],
+    [
+     "Chandra's Pyreling",
+     1
+    ],
+    [
+     "Chandra's Spitfire",
+     1
+    ],
+    [
+     "Spiteful Prankster",
+     1
+    ],
+    [
+     "Coalborn Entity",
+     1
+    ],
+    [
+     "Chandra's Magmutt",
+     1
+    ],
+    [
+     "Goblin Researcher",
+     1
+    ],
+    [
+     "Wildfire Elemental",
+     1
+    ],
+    [
+     "Pillar of Flame",
+     1
+    ],
+    [
+     "Chandra's Pyrohelix",
+     1
+    ],
+    [
+     "Fiery Intervention",
+     1
+    ],
+    [
+     "Audacious Thief",
+     1
+    ],
+    [
+     "Bloodtithe Collector",
+     1
+    ],
+    [
+     "Expedition Skulker",
+     1
+    ],
+    [
+     "Masked Blackguard",
+     1
+    ],
+    [
+     "Morbid Opportunist",
+     1
+    ],
+    [
+     "Fake Your Own Death",
+     1
+    ],
+    [
+     "Foul Play",
+     1
+    ],
+    [
+     "Grim Bounty",
+     1
+    ],
+    [
+     "Thieves' Tools",
+     1
+    ],
+    [
+     "Thriving Moor",
+     1
+    ],
+    [
+     "Swamp",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 29,
+    "2": 1
+   }
+  },
+  {
+   "name": "Ember Bandit 2",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Minotaurs 2",
+    "J25 Dragons 1",
+    "JMP Doctor 3"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Lathliss, Dragon Queen",
+     1
+    ],
+    [
+     "Sethron, Hurloon General",
+     1
+    ],
+    [
+     "Dragon Whelp",
+     1
+    ],
+    [
+     "Rhox Faithmender",
+     1
+    ],
+    [
+     "Rageblood Shaman",
+     1
+    ],
+    [
+     "Seize the Spoils",
+     1
+    ],
+    [
+     "Dragon's Fire",
+     1
+    ],
+    [
+     "Dragonlord's Servant",
+     1
+    ],
+    [
+     "Revitalize",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Bloodrage Brawler",
+     1
+    ],
+    [
+     "Borderland Minotaur",
+     1
+    ],
+    [
+     "Lightning Visionary",
+     1
+    ],
+    [
+     "Minotaur Skullcleaver",
+     1
+    ],
+    [
+     "Minotaur Sureshot",
+     1
+    ],
+    [
+     "Flurry of Horns",
+     1
+    ],
+    [
+     "Traitorous Greed",
+     1
+    ],
+    [
+     "Unleash Fury",
+     1
+    ],
+    [
+     "Soul Sear",
+     1
+    ],
+    [
+     "Sure Strike",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     2
+    ],
+    [
+     "Mountain",
+     20
+    ],
+    [
+     "Firespitter Whelp",
+     1
+    ],
+    [
+     "Dragon Hatchling",
+     1
+    ],
+    [
+     "Rapacious Dragon",
+     1
+    ],
+    [
+     "Sparktongue Dragon",
+     1
+    ],
+    [
+     "Bathe in Dragonfire",
+     1
+    ],
+    [
+     "Carnelian Orb of Dragonkind",
+     1
+    ],
+    [
+     "Forgotten Cave",
+     1
+    ],
+    [
+     "Brightmare",
+     1
+    ],
+    [
+     "Angel of Mercy",
+     1
+    ],
+    [
+     "Mesa Unicorn",
+     1
+    ],
+    [
+     "Anointed Chorister",
+     1
+    ],
+    [
+     "Basri's Acolyte",
+     1
+    ],
+    [
+     "Moment of Heroism",
+     1
+    ],
+    [
+     "Swift Response",
+     1
+    ],
+    [
+     "Griffin Aerie",
+     1
+    ],
+    [
+     "Light of Promise",
+     1
+    ],
+    [
+     "Faith's Fetters",
+     1
+    ],
+    [
+     "Thriving Heath",
+     1
+    ],
+    [
+     "Plains",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 28,
+    "2": 1,
+    "3": 1
+   }
+  },
+  {
+   "name": "Ember Bandit 3",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Dragons 1",
+    "J22 Fiery 1",
+    "JMP Enchanted 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Terror of the Peaks",
+     1
+    ],
+    [
+     "Celestial Mantle",
+     1
+    ],
+    [
+     "Chandra, Flame's Fury",
+     1
+    ],
+    [
+     "Ajani's Chosen",
+     1
+    ],
+    [
+     "Dragonspeaker Shaman",
+     1
+    ],
+    [
+     "Dragon Fodder",
+     1
+    ],
+    [
+     "Thrill of Possibility",
+     2
+    ],
+    [
+     "Pillar of Flame",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Dragonloft Idol",
+     1
+    ],
+    [
+     "Rapacious Dragon",
+     1
+    ],
+    [
+     "Dragon Hatchling",
+     1
+    ],
+    [
+     "Lightning Shrieker",
+     1
+    ],
+    [
+     "Hellkite Punisher",
+     1
+    ],
+    [
+     "Bathe in Dragonfire",
+     1
+    ],
+    [
+     "Draconic Roar",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     2
+    ],
+    [
+     "Mountain",
+     21
+    ],
+    [
+     "Chandra's Pyreling",
+     1
+    ],
+    [
+     "Chandra's Spitfire",
+     1
+    ],
+    [
+     "Spiteful Prankster",
+     1
+    ],
+    [
+     "Coalborn Entity",
+     1
+    ],
+    [
+     "Chandra's Magmutt",
+     1
+    ],
+    [
+     "Goblin Researcher",
+     1
+    ],
+    [
+     "Wildfire Elemental",
+     1
+    ],
+    [
+     "Chandra's Pyrohelix",
+     1
+    ],
+    [
+     "Fiery Intervention",
+     1
+    ],
+    [
+     "Blessed Spirits",
+     1
+    ],
+    [
+     "Stone Haven Pilgrim",
+     1
+    ],
+    [
+     "Bulwark Giant",
+     1
+    ],
+    [
+     "Trusty Retriever",
+     1
+    ],
+    [
+     "Staunch Shieldmate",
+     1
+    ],
+    [
+     "Face of Divinity",
+     1
+    ],
+    [
+     "Knightly Valor",
+     1
+    ],
+    [
+     "Forced Worship",
+     1
+    ],
+    [
+     "Indomitable Will",
+     1
+    ],
+    [
+     "Faith's Fetters",
+     1
+    ],
+    [
+     "Thriving Heath",
+     1
+    ],
+    [
+     "Plains",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 28,
+    "2": 1
+   }
+  },
+  {
+   "name": "Ember Bandit 4",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Burning",
+    "J22 Raid 1",
+    "JMP Dinosaurs 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Kari Zev, Skyship Raider",
+     1
+    ],
+    [
+     "Play with Fire",
+     1
+    ],
+    [
+     "Rionya, Fire Dancer",
+     1
+    ],
+    [
+     "Selvala, Heart of the Wilds",
+     1
+    ],
+    [
+     "Thundering Spineback",
+     1
+    ],
+    [
+     "Colossal Dreadmaw",
+     1
+    ],
+    [
+     "Jaya's Firenado",
+     1
+    ],
+    [
+     "Plundering Predator",
+     1
+    ],
+    [
+     "Storm Fleet Pyromancer",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Firespitter Whelp",
+     1
+    ],
+    [
+     "Fathom Fleet Firebrand",
+     1
+    ],
+    [
+     "Goblin Fireslinger",
+     1
+    ],
+    [
+     "Bloodfire Expert",
+     1
+    ],
+    [
+     "Chandra's Spitfire",
+     1
+    ],
+    [
+     "Firebrand Archer",
+     1
+    ],
+    [
+     "Wildfire Elemental",
+     1
+    ],
+    [
+     "Hearts on Fire",
+     1
+    ],
+    [
+     "Flames of the Firebrand",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     2
+    ],
+    [
+     "Mountain",
+     20
+    ],
+    [
+     "Rigging Runner",
+     1
+    ],
+    [
+     "War-Name Aspirant",
+     1
+    ],
+    [
+     "Goblin Oriflamme",
+     1
+    ],
+    [
+     "Daring Piracy",
+     1
+    ],
+    [
+     "Lavastep Raider",
+     1
+    ],
+    [
+     "Swaggering Corsair",
+     1
+    ],
+    [
+     "Keldon Raider",
+     1
+    ],
+    [
+     "Raze the Effigy",
+     1
+    ],
+    [
+     "Firecannon Blast",
+     1
+    ],
+    [
+     "Drover of the Mighty",
+     1
+    ],
+    [
+     "Orazca Frillback",
+     1
+    ],
+    [
+     "Ornery Dilophosaur",
+     1
+    ],
+    [
+     "Drowsing Tyrannodon",
+     1
+    ],
+    [
+     "Savage Stomp",
+     1
+    ],
+    [
+     "Commune with Dinosaurs",
+     1
+    ],
+    [
+     "Crushing Canopy",
+     1
+    ],
+    [
+     "New Horizons",
+     1
+    ],
+    [
+     "Garruk's Uprising",
+     1
+    ],
+    [
+     "Thriving Grove",
+     1
+    ],
+    [
+     "Forest",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 29,
+    "2": 1
+   }
+  }
+ ],
+ "jumpstart_balance": {
+  "when": "2026-10-14 11:23",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "seed": 303,
+  "keep": 4,
+  "handicap": 9,
+  "target": 0.65,
+  "rule": "two",
+  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
  }
 }

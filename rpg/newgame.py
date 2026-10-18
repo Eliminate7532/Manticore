@@ -6,9 +6,15 @@ NewGameFlow is the new-game screen's logic without the screen: the steps are the
 half-decks of different themes at a time (products.offer), with "show others" (reroll) as often as the player likes, and back
 (undo the last pick). preview() is the deck the picks so far make. finish() makes the save: the starting deck (products.starter_deck:
 four of a card at most, one of a restricted card, filled to 60 with its most common basic land), the collection (every card of that
-deck - free basic lands are not counted), the starting gold, and the world at the start town.
+deck - its basic lands too since Round RPG7, when they stopped being free; free ones are not counted), the starting gold, and the
+world at the start town.
 
 The offers come from the new game's own seed, so a test (or a bug report) can replay them exactly.
+
+Round RPG9 (Karl, 14 Oct 2026: "Two colours max"): the three picks use at most MAX_COLOURS colours between them - offer() and
+all_choices() leave out a half-deck that would make a third colour, and pick() refuses one with a sentence saying why. A half-deck's
+colours are those of its non-land cards (products.colours). Karl's deck of 13 Oct (Angels, Beasts, Spirits: white, green and blue,
+7 basic lands of each) is what this stops.
 """
 import os
 import time
@@ -18,6 +24,8 @@ from rpg.save import SaveError, SaveGame, check_name
 
 OFFER_SIZE = 3            # half-decks shown at a time (my estimate: three cards side by side fit any window)
 PICKS = 3                 # decision 11
+MAX_COLOURS = 2           # Round RPG9 (Karl, 14 Oct 2026: "Two colours max"): the three picks together use at most two colours, so
+                          # the deck's basic lands match its spells. JMP Rainbow and J25 Chaos (five colours each) can't be picked.
 
 
 class NewGameFlow:
@@ -68,15 +76,34 @@ class NewGameFlow:
             return str(e)
         return None
 
+    def colours(self):
+        """Round RPG9: the colours the picks so far use ("" before the first), in WUBRG order."""
+        return products.colours_of(self.picks, self._pool())
+
+    def allowed(self, half):
+        """Round RPG9: whether `half` can be the next pick - with it, the picks use at most MAX_COLOURS colours."""
+        return len(products.colours_of(self.picks + [half], self._pool())) <= MAX_COLOURS
+
+    def colour_note(self):
+        """Round RPG9: one line for the screen about the colour rule as it stands after the picks so far."""
+        cols = self.colours()
+        if not self.picks or not cols:
+            return f"At most {MAX_COLOURS} colours in all."
+        if len(cols) < MAX_COLOURS:
+            return f"So far {products.colour_words(cols)}: one more colour at most."
+        return f"Your colours: {products.colour_words(cols)}. Only half-decks of these colours are offered now."
+
     def offer(self):
-        """The half-decks to choose from now (different themes, none already picked)."""
+        """The half-decks to choose from now (different themes, none already picked; Round RPG9: only those that keep the picks
+        within MAX_COLOURS colours)."""
         if self.step != "pick":
             return []
         if self._offer is None:
             from rpg.save import _seed_int
             import random
             rng = random.Random(_seed_int(self.seed, "offer", len(self.picks), self.rerolls))
-            self._offer = products.offer(rng, self.decks(), self.offer_size, exclude={h.code for h in self.picks})
+            free = [h for h in self.decks() if self.allowed(h)]
+            self._offer = products.offer(rng, free, self.offer_size, exclude={h.code for h in self.picks})
         return list(self._offer)
 
     def reroll(self):
@@ -87,9 +114,10 @@ class NewGameFlow:
 
     def all_choices(self):
         """Every half-deck still free to pick, by set, theme and number - for a screen that lets the player browse all 363
-        instead of (or beside) the offer."""
+        instead of (or beside) the offer. Round RPG9: only those within the colour rule."""
         picked = {h.code for h in self.picks}
-        return sorted((h for h in self.decks() if h.code not in picked), key=lambda h: (h.set, h.theme.lower(), h.number))
+        return sorted((h for h in self.decks() if h.code not in picked and self.allowed(h)),
+                      key=lambda h: (h.set, h.theme.lower(), h.number))
 
     def pick(self, code):
         """Take a half-deck by its code: one from the offer, or any other not picked yet (the browse list)."""
@@ -100,6 +128,11 @@ class NewGameFlow:
                 self.picks.append(h)
                 self._offer = None
                 return h
+        for h in self.decks():
+            if h.code == code and h.code not in {p.code for p in self.picks}:
+                cols = products.colours_of(self.picks + [h], self._pool())
+                raise ValueError(f"{h.theme} would make a deck of {len(cols)} colours ({products.colour_words(cols)}); "
+                                 f"a starting deck has at most {MAX_COLOURS}.")
         raise ValueError(f"{code!r} isn't a half-deck that can be picked")
 
     def undo(self):
