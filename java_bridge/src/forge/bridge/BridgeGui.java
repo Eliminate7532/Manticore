@@ -17,6 +17,7 @@ import forge.game.player.PlayerView;
 import forge.game.spellability.SpellAbilityView;
 import forge.game.phase.PhaseType;
 import forge.gamemodes.match.AbstractGuiGame;
+import forge.gamemodes.match.Selection;
 import forge.item.PaperCard;
 import forge.localinstance.skin.FSkinProp;
 import forge.player.PlayerZoneUpdate;
@@ -176,6 +177,8 @@ public class BridgeGui extends AbstractGuiGame {
             watchedQueue.addObserver((queue, arg) -> {
                 noteInput(watchedQueue.getInput());
                 releaseIfGameOver(h);
+                releaseIfOut(h);                            // round OUT1: a player who has conceded or lost is asked nothing
+                javax.swing.SwingUtilities.invokeLater(this::refreshBlockOptions);   // round BLK1: a new question
             });
             noteInput(watchedQueue.getInput());
         }
@@ -222,6 +225,39 @@ public class BridgeGui extends AbstractGuiGame {
             }
         } catch (RuntimeException e) {
             System.err.println("gamesync: could not release a late question: " + e);
+        }
+    }
+
+    /**
+     * Round OUT1 (23 Oct 2026, the cloud online soak of release-0.28.53.12, game 18): in a game that goes on (3-4 players), a
+     * player who has conceded or lost is asked nothing more. PlayerControllerHuman.concede() releases the questions waiting only
+     * when the concede ends the game (InputQueue.onGameOver - the same at fb4d809 and at master 9a6f776), so the question that
+     * was open when a friend conceded stayed open, and patch 44 drops every click from a seat that is out ("out") - nobody could
+     * answer it and the game froze for everyone ("Waiting for Sam..."). The question is stopped as if answered with nothing
+     * (a priority question: pass), on Swing's thread, as Forge's own answers are, once it is still the same question there.
+     * Called from the input observer (a question asked later) and from Main.concedeWhenSafe (the one open at the concede).
+     */
+    static void releaseIfOut(forge.player.PlayerControllerHuman h) {
+        try {
+            forge.game.player.Player p = h.getPlayer();
+            forge.gamemodes.match.input.InputQueue q = h.getInputQueue();
+            forge.game.Game g = h.getGame();
+            if (p == null || !p.hasLost() || q == null || g == null || g.isGameOver()) {
+                return;
+            }
+            Object input = q.getInput();
+            if (!(input instanceof forge.gamemodes.match.input.InputSyncronizedBase)) {
+                return;
+            }
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                if (q.getInput() == input && !g.isGameOver()) {
+                    System.err.println("gamesync: released a question of " + p.getName() + ", who is out ("
+                            + input.getClass().getSimpleName() + ")");
+                    ((forge.gamemodes.match.input.InputSyncronizedBase) input).stop();
+                }
+            });
+        } catch (RuntimeException e) {
+            System.err.println("gamesync: could not release a question of a player who is out: " + e);
         }
     }
 
@@ -296,6 +332,50 @@ public class BridgeGui extends AbstractGuiGame {
             // the game thread changed the list under us: leave the players unmarked for this one snapshot
         }
         return null;
+    }
+
+    /**
+     * Round BLK1 (the soak of 19-20 Oct, game 58): during my block question, which attackers each of my untapped creatures may
+     * block right now, by card id - Forge's own CombatUtil.canBlock(attacker, blocker, combat), which also applies "must be
+     * blocked if able" and lure ("if the attacker has no lure effect, but the blocker can block another attacker with lure, the
+     * blocker can't block the former"). Forge's refusal ("Spirit Token (319) must block an attacker, but has not been assigned to
+     * block any.") names the blocker but not the attacker, and clicking it while another attacker is current does nothing. The
+     * snapshot sends this as each creature's "canBlock"; the table names the attackers in its explanation.
+     * Computed on Swing's thread - where InputBlock changes the blocks (every bridge command runs there) - while the game thread
+     * waits for the answer; the snapshot (another thread) only reads the finished map. null when I'm not declaring blockers.
+     */
+    volatile java.util.Map<Integer, java.util.List<Integer>> blockOptions = null;
+
+    void refreshBlockOptions() {
+        java.util.Map<Integer, java.util.List<Integer>> out = null;
+        try {
+            forge.interfaces.IGameController gc = getGameController();
+            if (gc instanceof forge.player.PlayerControllerHuman h && h.getInputQueue() != null
+                    && h.getInputQueue().getInput() instanceof forge.gamemodes.match.input.InputBlock
+                    && h.getGame() != null && h.getGame().getCombat() != null) {
+                forge.game.combat.Combat combat = h.getGame().getCombat();
+                out = new java.util.HashMap<>();
+                for (forge.game.card.Card blocker : h.getPlayer().getCreaturesInPlay()) {
+                    if (blocker.isTapped()) {
+                        continue;
+                    }
+                    java.util.List<Integer> can = new java.util.ArrayList<>();
+                    for (forge.game.card.Card attacker : combat.getAttackers()) {
+                        if (forge.game.combat.CombatUtil.canBlock(attacker, blocker, combat)) {
+                            can.add(attacker.getId());
+                        }
+                    }
+                    out.put(blocker.getId(), can);
+                }
+            }
+        } catch (RuntimeException e) {
+            out = null;                                 // something changed under us: no hint in this snapshot (never an error)
+        }
+        java.util.Map<Integer, java.util.List<Integer>> before = blockOptions;
+        blockOptions = out;
+        if (!java.util.Objects.equals(before, out)) {
+            markDirty();
+        }
     }
 
     /** Round 28bd: Forge is tapping a mana source for the current payment on its own thread (see Main.handle). */
@@ -524,33 +604,25 @@ public class BridgeGui extends AbstractGuiGame {
     // snapshot sends - so the right cards were never marked. Found by the soak test (Pariah, Retether: "select a creature to
     // attach to" with nothing highlighted, though clicking a creature worked). Reproduced live with Retether before the fix.
     // The id set is also safe to read while Forge's game thread changes it (the snapshot is built on another thread).
-    private final java.util.Set<Integer> selectableIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    // Round FB2 (Forge 9a6f776): Forge now hands over one Selection (cards, min/max, players and stack items it accepts, what is
+    // chosen) instead of setSelectables / clearSelectables / setHighlighted. The ids are swapped in whole, so a snapshot built on
+    // another thread sees the old set or the new one, never a half-cleared one.
+    private volatile java.util.Set<Integer> selectableIds = java.util.Set.of();
 
     @Override
-    public void setSelectables(Iterable<CardView> cards, int min, int max) {
-        super.setSelectables(cards, min, max);
-        for (CardView c : cards) {
-            if (c != null) selectableIds.add(c.getId());
+    public void setSelection(Selection selection) {
+        super.setSelection(selection);
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        for (CardView c : selection.cards()) {
+            if (c != null) ids.add(c.getId());
         }
-        markDirty();
-    }
-
-    @Override
-    public void clearSelectables() {
-        super.clearSelectables();
-        selectableIds.clear();
+        selectableIds = java.util.Collections.unmodifiableSet(ids);
         markDirty();
     }
 
     @Override
     public boolean isSelectable(CardView card) {
         return card != null && selectableIds.contains(card.getId());
-    }
-
-    @Override
-    public void setHighlighted(Iterable<GameEntityView> entities, boolean b) {
-        super.setHighlighted(entities, b);
-        markDirty();
     }
 
     // ---- change notifications: all just "send a new snapshot" -----------------------------
@@ -590,7 +662,6 @@ public class BridgeGui extends AbstractGuiGame {
         boolean mine = m != null && m.equals(playerTurn);
         return !stopSet(mine).contains(phase);                // round PRI1: Slow's stops or Fast's
     }
-    @Override public GameState getGamestate() { return null; }
 
     @Override
     public void finishGame() {

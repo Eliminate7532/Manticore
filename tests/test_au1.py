@@ -153,7 +153,8 @@ class AssetTests(unittest.TestCase):
 
     def test_the_sounds_stay_small(self):
         total = sum(os.path.getsize(p) for p in glob.glob(os.path.join(SOUNDS, "**", "*.ogg"), recursive=True))
-        self.assertLess(total, 32 * 1024 * 1024, "sounds/ should stay under 32 MB (the installer carries it)")
+        # Round RPG15 (expected change): 32 -> 40 MB for the Adventure's 6 tracks and its sting (5.6 MB at Vorbis q3)
+        self.assertLess(total, 40 * 1024 * 1024, "sounds/ should stay under 40 MB (the installer carries it)")
         for p in glob.glob(os.path.join(SOUNDS, "sfx", "*.ogg")):
             self.assertLess(os.path.getsize(p), 400 * 1024, p)
 

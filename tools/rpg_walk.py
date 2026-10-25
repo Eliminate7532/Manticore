@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """A developer's window onto the RPG's map engine (Round RPG5) - not the game's RPG screen, which isn't built yet.
 
-    python tools/rpg_walk.py [--map sample_region] [--size 1280x800]
+    python tools/rpg_walk.py [--map ashfen_outskirts] [--size 1280x800]
     python tools/rpg_walk.py --walk "right 1.5, down 2" --screenshot out.png      (no window needed: SDL's dummy driver)
 
 Arrow keys or WASD walk; Esc closes. Nothing is saved: the walk uses a save-shaped stand-in, so no RPG save is read or written.
 Walking into a foe says who you would fight and counts it as won (it disappears), a town says which, an exit takes you through.
-Round RPG6: one room at a time (rpg.explore.RoomCamera) with the side panels (rpg_map_view.draw_panels); four directions.
+Round RPG6: one room at a time with side panels; four directions. Round RPG11: the camera follows the walker
+(rpg.explore.Camera, whole map pixels); no rooms, no panels; DawnLike's people walk.
 """
 import argparse
 import os
@@ -24,7 +25,7 @@ KEYS = {"left": (-1, 0), "right": (1, 0), "up": (0, -1), "down": (0, 1)}
 
 def stand_in_save(map_name=None, town="town_1"):
     return types.SimpleNamespace(world={"region": 1, "map": map_name or town, "x": None, "y": None, "last_town": town,
-                                        "towns_visited": [town], "cleared": [], "beaten": [], "seen": []},
+                                        "towns_visited": [town], "cleared": [], "beaten": []},
                                  gold=100, deck_name="Starting deck (stand-in)", cards=60)
 
 
@@ -63,6 +64,7 @@ def run(argv=None):
     ap.add_argument("--walk", default="", help='walk by itself first, e.g. "right 1.5, down 2"')
     ap.add_argument("--screenshot", default=None, help="save a picture after the walk and close")
     ap.add_argument("--fps", type=int, default=60)
+    ap.add_argument("--maps", default=None, help="the folder of maps to walk (default: rpg/maps; the tests pass their fixtures)")
     a = ap.parse_args(argv)
     if a.screenshot:
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -76,9 +78,9 @@ def run(argv=None):
     screen = pygame.display.set_mode((w, h))
     pygame.display.set_caption("Manticore - RPG map (developer's view)")
     save = stand_in_save(a.map)
-    ex = explore.Explorer(save, start_town="town_1")
+    ex = explore.Explorer(save, start_town="town_1", folder=a.maps)
     views = {}
-    cam = explore.RoomCamera(w, h, ex.area.tw, ex.area.th)
+    cam = explore.Camera(w, h, explore.Camera.zoom_for(h, ex.area.th))
     font = gfx.get_font(max(14, h // 45))
     line, line_until = None, 0.0
     script = parse_walk(a.walk)
@@ -99,13 +101,10 @@ def run(argv=None):
         view = views.get(ex.area.name)
         if view is None:
             view = views[ex.area.name] = rpg_map_view.MapView(ex.area)
-        cam.look_at(ex.view_origin())
+        cam.follow(ex.walker.x, ex.walker.y, ex.area.width, ex.area.height)
         view.draw(screen, cam, ex.walker, ex.encounters(), now)
-        rpg_map_view.draw_panels(screen, cam, ex.area, ex.room, save.world.get("seen", ()),
-                                 {"gold": save.gold, "deck": save.deck_name, "cards": save.cards})
         if line and time.monotonic() < line_until:
-            vx, vy, vw, vh = cam.viewport()
-            gfx.draw_text(screen, line, vx + 12, vy + vh - 12, font, gfx.GOLD, anchor="bottomleft", shadow=True)
+            gfx.draw_text(screen, line, 12, h - 12, font, gfx.GOLD, anchor="bottomleft", shadow=True)
 
     for (dx, dy), secs in script:                  # the scripted walk runs in fixed 1/60 s steps: the same every time
         steps = int(round(secs * 60))

@@ -52,7 +52,7 @@ final class LoopGuard {
 
     /** The AI opponent as Forge's GamePlayerUtil.createAiPlayer made it, with the same name, profile and avatar, but guarded. */
     static LobbyPlayer guarded(LobbyPlayer made) {
-        if (!(made instanceof LobbyPlayerAi) || cap <= 0) {
+        if (!(made instanceof LobbyPlayerAi) || (cap <= 0 && !Threats.on)) {     // Round AI2: Threats rides on this controller
             return made;
         }
         LobbyPlayerAi src = (LobbyPlayerAi) made;
@@ -96,7 +96,7 @@ final class LoopGuard {
 
         @Override
         public List<SpellAbility> chooseSpellAbilityToPlay() {
-            List<SpellAbility> chosen = super.chooseSpellAbilityToPlay();
+            List<SpellAbility> chosen = Threats.adjust(getPlayer(), super.chooseSpellAbilityToPlay());   // Round AI2
             if (chosen == null || chosen.isEmpty() || cap <= 0) {
                 return chosen;
             }

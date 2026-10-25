@@ -1,7 +1,7 @@
 {
  "kind": "zealot",
  "name": "Zealot",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -17,55 +17,72 @@
    "index": 10,
    "main": [
     [
-     "Seeker of the Way",
+     "Karametra's Blessing",
      4
-    ],
-    [
-     "Plains",
-     23
     ],
     [
      "Akroan Skyguard",
-     4
+     1
     ],
     [
-     "Cartouche of Solidarity",
-     4
+     "Mutagenic Growth",
+     2
     ],
     [
      "Hyena Umbra",
      4
     ],
     [
-     "Lagonna-Band Trailblazer",
+     "Plains",
+     22
+    ],
+    [
+     "Benevolent Blessing",
      4
     ],
     [
      "Emerge Unscathed",
-     4
-    ],
-    [
-     "Karametra's Blessing",
      2
     ],
     [
-     "Secluded Steppe",
-     4
-    ],
-    [
-     "Ethereal Armor",
+     "Cartouche of Solidarity",
      3
     ],
     [
-     "Sentinel's Eyes",
+     "Seeker of the Way",
+     1
+    ],
+    [
+     "Ethereal Armor",
+     4
+    ],
+    [
+     "Secluded Steppe",
+     3
+    ],
+    [
+     "Forest",
+     2
+    ],
+    [
+     "Lagonna-Band Trailblazer",
+     3
+    ],
+    [
+     "Sacred Cat",
+     1
+    ],
+    [
+     "Eland Umbra",
      4
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 23,
-    "3": 26,
-    "4": 11
+    "0": 24,
+    "1": 4,
+    "3": 25,
+    "4": 7
    }
   },
   {
@@ -74,15 +91,15 @@
    "index": 10,
    "main": [
     [
-     "Akroan Skyguard",
+     "Karametra's Blessing",
      3
     ],
     [
-     "Plains",
-     19
+     "Sentinel's Eyes",
+     3
     ],
     [
-     "Forest",
+     "Akroan Skyguard",
      3
     ],
     [
@@ -90,52 +107,49 @@
      4
     ],
     [
-     "Lagonna-Band Trailblazer",
-     1
-    ],
-    [
-     "Emerge Unscathed",
-     4
-    ],
-    [
-     "Secluded Steppe",
-     4
-    ],
-    [
-     "Cartouche of Solidarity",
-     3
-    ],
-    [
-     "Mutagenic Growth",
-     3
+     "Plains",
+     24
     ],
     [
      "Benevolent Blessing",
      3
     ],
     [
-     "Karametra's Blessing",
-     1
+     "Emerge Unscathed",
+     3
+    ],
+    [
+     "Cartouche of Solidarity",
+     4
+    ],
+    [
+     "Lifelink",
+     2
     ],
     [
      "Seeker of the Way",
-     4
-    ],
-    [
-     "Eland Umbra",
-     4
+     3
     ],
     [
      "Ethereal Armor",
-     4
+     2
+    ],
+    [
+     "Lagonna-Band Trailblazer",
+     3
+    ],
+    [
+     "Eland Umbra",
+     3
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 22,
-    "1": 4,
-    "3": 27,
-    "4": 7
+    "0": 24,
+    "1": 3,
+    "2": 2,
+    "3": 22,
+    "4": 9
    }
   },
   {
@@ -144,27 +158,27 @@
    "index": 10,
    "main": [
     [
-     "Ethereal Armor",
-     3
-    ],
-    [
-     "Plains",
-     23
-    ],
-    [
      "Sentinel's Eyes",
      1
     ],
     [
-     "Secluded Steppe",
-     3
-    ],
-    [
      "Akroan Skyguard",
-     3
+     4
     ],
     [
      "Hyena Umbra",
+     4
+    ],
+    [
+     "Plains",
+     24
+    ],
+    [
+     "Emerge Unscathed",
+     4
+    ],
+    [
+     "Benevolent Blessing",
      4
     ],
     [
@@ -172,15 +186,11 @@
      4
     ],
     [
-     "Benevolent Blessing",
-     3
-    ],
-    [
-     "Karametra's Blessing",
-     3
-    ],
-    [
      "Seeker of the Way",
+     3
+    ],
+    [
+     "Ethereal Armor",
      4
     ],
     [
@@ -188,8 +198,8 @@
      4
     ],
     [
-     "Emerge Unscathed",
-     2
+     "Sacred Cat",
+     1
     ],
     [
      "Eland Umbra",
@@ -198,10 +208,10 @@
    ],
    "sideboard": [],
    "tiers": {
-    "0": 23,
+    "0": 24,
     "1": 3,
-    "3": 26,
-    "4": 8
+    "3": 24,
+    "4": 9
    }
   },
   {
@@ -210,15 +220,35 @@
    "index": 10,
    "main": [
     [
-     "Hyena Umbra",
-     4
+     "Sentinel's Eyes",
+     2
     ],
     [
      "Akroan Skyguard",
      4
     ],
     [
+     "Hyena Umbra",
+     4
+    ],
+    [
+     "Plains",
+     24
+    ],
+    [
+     "Emerge Unscathed",
+     2
+    ],
+    [
      "Benevolent Blessing",
+     4
+    ],
+    [
+     "Cartouche of Solidarity",
+     4
+    ],
+    [
+     "Seeker of the Way",
      4
     ],
     [
@@ -226,43 +256,28 @@
      4
     ],
     [
-     "Plains",
-     23
-    ],
-    [
-     "Cartouche of Solidarity",
-     3
-    ],
-    [
-     "Seeker of the Way",
-     4
+     "Secluded Steppe",
+     1
     ],
     [
      "Lagonna-Band Trailblazer",
      3
     ],
     [
-     "Emerge Unscathed",
-     2
-    ],
-    [
-     "Sentinel's Eyes",
-     3
-    ],
+     "Eland Umbra",
+     4
+    ]
+   ],
+   "sideboard": [
     [
      "Secluded Steppe",
-     4
-    ],
-    [
-     "Eland Umbra",
      2
     ]
    ],
-   "sideboard": [],
    "tiers": {
-    "0": 23,
-    "1": 2,
-    "3": 25,
+    "0": 24,
+    "1": 4,
+    "3": 22,
     "4": 10
    }
   }
@@ -270,66 +285,231 @@
  "rejected": [
   {
    "archetype": "Heroic Mono White",
+   "index": 10,
+   "reasons": [
+    "Forge built another archetype instead ('Soul Sisters Sister Generated Deck', not 'Heroic Mono White Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 10,
+   "reasons": [
+    "Forge built another archetype instead ('Ub Dimir Serpent Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x4.",
+    "Forge's AI is told to leave these out: Mental Note (Random)",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Spell Pierce (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 10,
+   "reasons": [
+    "Forge built another archetype instead ('Gw Tokens Gond Generated Deck', not 'Heroic Mono White Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
    "index": 37,
    "reasons": [
-    "Forge built another archetype instead ('Boros Ephemerate Mardu Generated Deck', not 'Heroic Mono White Generated Deck')"
+    "Forge built another archetype instead ('Affinity Mardu Metalcraft Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 37,
+   "reasons": [
+    "Forge built another archetype instead ('Bw Pestilence Orzhov Generated Deck', not 'Heroic Mono White Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 37,
+   "reasons": [
+    "Forge built another archetype instead ('Rakdos Metalcraft Jund Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 37,
+   "reasons": [
+    "Forge built another archetype instead ('Combo Goblins Rakdos Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 37,
+   "reasons": [
+    "Forge built another archetype instead ('Acid Uw Repeat Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 37,
+   "reasons": [
+    "Forge built another archetype instead ('Ponza Cascade Gruul Generated Deck', not 'Heroic Mono White Generated Deck')"
    ]
   },
   {
    "archetype": "Heroic Mono White",
    "index": 52,
    "reasons": [
-    "Forge built another archetype instead ('White Ww Weenie Generated Deck', not 'Heroic Mono White Generated Deck')"
+    "Forge built another archetype instead ('Combo Goblins Rakdos Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Duress (tier 5)"
    ]
   },
   {
    "archetype": "Heroic Mono White",
    "index": 52,
    "reasons": [
-    "Forge built another archetype instead ('Auras Bogles Gw Generated Deck', not 'Heroic Mono White Generated Deck')",
-    "Forge's AI is told to leave these out: Ancestral Mask (Random)"
+    "Forge built another archetype instead ('Burn Madness Rakdos Generated Deck', not 'Heroic Mono White Generated Deck')"
    ]
   },
   {
    "archetype": "Heroic Mono White",
    "index": 52,
    "reasons": [
-    "Forge built another archetype instead ('Corrupt Control Mono Generated Deck', not 'Heroic Mono White Generated Deck')"
+    "Forge built another archetype instead ('Walls Combo Defender Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Axebane Guardian (Random)",
+    "above tier 4: Llanowar Elves (tier 5)"
    ]
   },
   {
    "archetype": "Heroic Mono White",
    "index": 52,
    "reasons": [
-    "Forge built another archetype instead ('Boros Bully Flashback Generated Deck', not 'Heroic Mono White Generated Deck')"
+    "Forge built another archetype instead ('Faeries Fadas Ub Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Zoo Domain Naya Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Matca Rioters (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Affinity Grixis Afinity Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Boros Naya Initiative Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Ephemerate (tier 5), Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Elves Elfos Ug Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Llanowar Elves (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Bw Pestilence Orzhov Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Stompy Mono Green Generated Deck', not 'Heroic Mono White Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Mono Control Mbc Generated Deck', not 'Heroic Mono White Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('(5-0) Fish Ur Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Skred Ur Izzet Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x4.",
+    "Forge's AI is told to leave these out: Skred (Random)",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Elves Elfos Ug Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Forge's AI is told to leave these out: Distant Melody (Random)",
+    "above tier 4: Elvish Mystic (tier 5), Llanowar Elves (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('Mono Terror Ub Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "above tier 4: Counterspell (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Heroic Mono White",
+   "index": 52,
+   "reasons": [
+    "Forge built another archetype instead ('(5-0) Delver Ub Generated Deck', not 'Heroic Mono White Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x3.",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5)"
    ]
   }
  ],
  "soak": {
-  "run": "rpg_enemies2",
-  "when": "2026-10-12 10:44",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Zealot 3": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 3,
-    "failed": []
-   },
-   "Zealot 4": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 3,
-    "failed": []
-   },
    "Zealot 1": {
     "games": 6,
     "game_over": 6,
     "as_ai": 4,
     "failed": []
    },
+   "Zealot 3": {
+    "games": 5,
+    "game_over": 5,
+    "as_ai": 3,
+    "failed": []
+   },
    "Zealot 2": {
-    "games": 6,
-    "game_over": 6,
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 1,
+    "failed": []
+   },
+   "Zealot 4": {
+    "games": 3,
+    "game_over": 3,
     "as_ai": 1,
     "failed": []
    }
@@ -343,7 +523,7 @@
    "halves": [
     "JMP Feathered Friends 4",
     "J25 Healers 2",
-    "J22 Zombies 4"
+    "J22 Demons 2"
    ],
    "handicap": 9,
    "swapped": [
@@ -352,7 +532,11 @@
      1
     ],
     [
-     "Dead Weight",
+     "Diabolic Edict",
+     1
+    ],
+    [
+     "Hinterland Sanctifier",
      1
     ],
     [
@@ -368,19 +552,15 @@
      1
     ],
     [
-     "Liliana's Mastery",
+     "Seizan, Perverter of Truth",
      1
     ],
     [
-     "Lord of the Accursed",
+     "Demon of Catastrophes",
      1
     ],
     [
      "Ajani's Pridemate",
-     1
-    ],
-    [
-     "Revitalize",
      1
     ]
    ],
@@ -434,10 +614,6 @@
      20
     ],
     [
-     "Hinterland Sanctifier",
-     1
-    ],
-    [
      "Qala, Ajani's Pridemate",
      1
     ],
@@ -458,6 +634,10 @@
      1
     ],
     [
+     "Revitalize",
+     1
+    ],
+    [
      "Take Up the Shield",
      1
     ],
@@ -466,39 +646,39 @@
      1
     ],
     [
-     "Deadly Plot",
+     "Conductor of Cacophony",
      1
     ],
     [
-     "Undead Augur",
+     "Disciple of Perdition",
      1
     ],
     [
-     "Cellar Door",
+     "Demon's Disciple",
      1
     ],
     [
-     "Suspicious Shambler",
+     "Dreadhound",
      1
     ],
     [
-     "Shambling Ghoul",
+     "Infernal Idol",
      1
     ],
     [
-     "Crow of Dark Tidings",
+     "Doomed Dissenter",
      1
     ],
     [
-     "Marauding Boneslasher",
+     "Takenuma Bleeder",
      1
     ],
     [
-     "Maalfeld Twins",
+     "Demonic Gifts",
      1
     ],
     [
-     "Cemetery Recruitment",
+     "Demon's Grasp",
      1
     ],
     [
@@ -532,6 +712,10 @@
      1
     ],
     [
+     "Hinterland Sanctifier",
+     1
+    ],
+    [
      "Recruitment Officer",
      1
     ],
@@ -557,16 +741,12 @@
     ],
     [
      "Revitalize",
-     2
+     1
     ]
    ],
    "main": [
     [
      "Dawnwing Marshal",
-     1
-    ],
-    [
-     "Hinterland Sanctifier",
      1
     ],
     [
@@ -622,6 +802,10 @@
      1
     ],
     [
+     "Revitalize",
+     1
+    ],
+    [
      "Moment of Heroism",
      2
     ],
@@ -649,8 +833,8 @@
    "sideboard": [],
    "tiers": {
     "0": 30,
-    "1": 27,
-    "2": 3
+    "1": 26,
+    "2": 4
    }
   },
   {
@@ -659,7 +843,7 @@
    "halves": [
     "J25 Healers 2",
     "JMP Dogs 2",
-    "JMP Heavily Armored 2"
+    "JMP Goblins 3"
    ],
    "handicap": 9,
    "swapped": [
@@ -668,11 +852,23 @@
      1
     ],
     [
-     "Valkyrie Harbinger",
+     "Goblin Chieftain",
      1
     ],
     [
-     "Cathars' Crusade",
+     "Makeshift Munitions",
+     1
+    ],
+    [
+     "Hinterland Sanctifier",
+     1
+    ],
+    [
+     "Shock",
+     1
+    ],
+    [
+     "Valkyrie Harbinger",
      1
     ],
     [
@@ -680,31 +876,15 @@
      1
     ],
     [
+     "Goblin Instigator",
+     1
+    ],
+    [
      "Pack Leader",
-     1
-    ],
-    [
-     "Revitalize",
-     1
-    ],
-    [
-     "Gird for Battle",
-     1
-    ],
-    [
-     "Isamaru, Hound of Konda",
-     1
-    ],
-    [
-     "Bulwark Giant",
      1
     ]
    ],
    "main": [
-    [
-     "Hinterland Sanctifier",
-     1
-    ],
     [
      "Qala, Ajani's Pridemate",
      1
@@ -726,6 +906,10 @@
      1
     ],
     [
+     "Revitalize",
+     1
+    ],
+    [
      "Take Up the Shield",
      1
     ],
@@ -735,11 +919,15 @@
     ],
     [
      "Thriving Heath",
-     3
+     2
     ],
     [
      "Plains",
-     30
+     20
+    ],
+    [
+     "Isamaru, Hound of Konda",
+     1
     ],
     [
      "Affa Guard Hound",
@@ -755,7 +943,7 @@
     ],
     [
      "Trusty Retriever",
-     2
+     1
     ],
     [
      "Alpine Watchdog",
@@ -771,7 +959,7 @@
     ],
     [
      "Secure the Scene",
-     2
+     1
     ],
     [
      "Dauntless Onslaught",
@@ -782,39 +970,51 @@
      1
     ],
     [
-     "Patron of the Valiant",
+     "Goblin Goon",
      1
     ],
     [
-     "Lightwalker",
+     "Beetleback Chief",
      1
     ],
     [
-     "Tempered Veteran",
+     "Goblin Commando",
      1
     ],
     [
-     "Siege Striker",
+     "Volley Veteran",
      1
     ],
     [
-     "Makeshift Battalion",
+     "Boggart Brute",
      1
     ],
     [
-     "Basri's Acolyte",
+     "Goblin Shortcutter",
      1
     ],
     [
-     "Battlefield Promotion",
+     "Ornery Goblin",
      1
+    ],
+    [
+     "Goblin Arsonist",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     1
+    ],
+    [
+     "Mountain",
+     10
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 30,
-    "1": 27,
-    "2": 3
+    "1": 25,
+    "2": 5
    }
   },
   {
@@ -995,13 +1195,13 @@
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-14 11:23",
-  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "when": "2026-10-23 09:32",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
   "handicap": 9,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
+  "tuned_by": null
  }
 }

@@ -1,0 +1,67 @@
+name: Lantern Hollow
+region: 1
+backdrop: forest
+dark_zone: 16,22,24,26 grave_priest_beaten
+darkness: 0.45
+lantern: 3
+music: music.rpg_town
+ambience: amb.ruins
+outdoor: true
+town: town_1
+dungeon: false
+event_rate: 300
+[markers]
+1 = spawn start on =
+2 = spawn from_outskirts on =
+7 = spawn inn on w
+X = exit map=ashfen_outskirts spawn=from_town on =
+3 = town town=town_1 tab=singles spawn=town_1 on K
+4 = spawn town_1 on w
+5 = town town=town_1 tab=packs spawn=town_1_packs on K
+6 = spawn town_1_packs on w
+A = npc name=Marta_the_innkeeper id=innkeeper cell=0,9 on w
+S = npc name=Old_Wendel id=card_seller cell=2,9 on w
+Q = npc name=Ysolde id=pack_seller cell=3,9 on w
+M = npc name=Keeper_Brann id=hall_keeper cell=0,12 on +
+G = npc name=Gate_guard id=gate_guard cell=3,4 when=!phase:night on =
+L = npc name=Pell_the_lamplighter id=lamplighter cell=1,9 when=!phase:dusk|night on _
+E = npc name=Elder_Hesk id=elder cell=2,16 when=!phase:night on _
+P = platino on ,
+h = light radius=4 strength=0.75 on w
+[more markers]
+B = npc name=Watchman_Bertil id=night_watch cell=5,4 when=phase:night on ,
+W = npc name=Wenna id=mourner cell=1,16 when=phase:night on _
+J = npc name=Pell_the_lamplighter id=lamplighter cell=1,9 when=phase:dusk|night on _
+I = npc name=Elder_Hesk id=elder cell=2,16 when=phase:night on w
+a = encounter kind=grave_robber spot=night_yard when=phase:night home=The_back_yards_of_Lantern_Hollow on ,
+[map]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTT,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TTTT
+TT,HHHHHHHHHHH,,,,,,,,,,,,,HHHHHHHHHHTTT
+TT,HewwwwwAwoH,,,,,,,,,,,,,HskwSwkwsH,TT
+TT,HwwwwwKKKoH,,,,*,,,,,,,,HwKK3KKKwH,TT
+TT,HewwwhwwwwH,,,,,,,,*,,,,HwwwwwwwwH,TT
+TT,HwcncwwwwwH,,,,,,,,,,,,,HwwwhwwwwH,TT
+TT,Hwwww7wwxwH,,,,,,,,,,,,,Hwww4wwwxH,TT
+TT,HHHHHDHHHHH,**,,,,,,,*,,HHHHDHHHHH,TT
+TT,,,,,,1=,,,,,,,,,,,,,,,*,,,,,==,,,,,TT
+TT,,,,,,==,,,,____________,,,,,==,,,,,TT
+TT,HHHHHH=,,,,_________L__,,,,,==,,,,,TT
+TT,HewhwH=====___________p=======,,,i,TT
+TT,HwwwwD,,,,,_____~______==========2==X
+TT,HwncwH,,,,,______W_____=========G===X
+TT,HHHHHH,,**,___E________,,,,,==,,Bi,TT
+TT,,,,,,,,,,,,____________,*,,,==,,,,,TT
+TT,,,,,=======________J___*,,,,==,,,,,TT
+TT,HHHHDHHHHH,,,,,,i_i,,,,,,HHHDHHH,,,TT
+TT,Hxww6wwwoH,,,,,,___,,,,,,HewwwwH,,,TT
+TT,HwwwwhwwwH,,#####D#####,,HwwhIwH,,,TT
+TT,HwwwwwwwwH,,#+++++++++#,,HwwwcnH,,,TT
+TT,HwKK5KKKwH,,#+!+++++!+#,,HowwwwH,,,TT
+TT,HswwQwwwsH,,#++++M++++#,,HHHHHHH,,,TT
+TT,HHHHHHHHHH,,#++nnnnn++#,,,,,,,,,,,,TT
+TTTTT,,,,,,,,,,#+!+++++!+#,,,,a,,*,TTTTT
+T,,,,,,,,,,,,,,###########,,,,,,,,,TTTTT
+TPTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT

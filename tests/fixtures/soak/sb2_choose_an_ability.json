@@ -1,0 +1,179 @@
+{
+ "_note": "Round SB2: four real 'Choose an ability' requests. eiganjo (game_036) and steppe (game_022): soak run run_20261015_211150 on Karl's PC, 16 Oct; silundi_mdfc and cyclonic_rift: tests/fixtures/soak/huge1_live_game002.jsonl.gz.",
+ "eiganjo": {
+  "kind": "choose_optional",
+  "title": "Choose an ability",
+  "min": 0,
+  "max": 1,
+  "source": {
+   "id": 9,
+   "hidden": false,
+   "owner": 0,
+   "controller": 0,
+   "zone": "Hand",
+   "name": "Eiganjo, Seat of the Empire",
+   "oracleName": "Eiganjo, Seat of the Empire",
+   "type": "Legendary Land",
+   "cost": "",
+   "colors": [],
+   "text": "{T}: Add {W}.\r\n\r\nChannel \u2014 {2}{W}, Discard Eiganjo, Seat of the Empire: It deals 4 damage to target attacking or blocking creature. This ability costs {1} less to activate for each legendary creature you control.",
+   "isCreature": false,
+   "isLand": true,
+   "isPlaneswalker": false,
+   "set": "NEO",
+   "tapped": false,
+   "sick": false,
+   "attacking": false,
+   "blocking": false,
+   "faceDown": false,
+   "token": false,
+   "commander": false,
+   "damage": 0
+  },
+  "items": [
+   {
+    "kind": "text",
+    "label": "Play land"
+   },
+   {
+    "kind": "text",
+    "label": "Channel \u2014 {2}{W}, Discard Eiganjo, Seat of the Empire: It deals 4 damage to target attacking or blocking creature. This ability costs {1} less to activate for each legendary creature you control."
+   }
+  ],
+  "t": "request",
+  "id": 1
+ },
+ "steppe": {
+  "kind": "choose_optional",
+  "title": "Choose an ability",
+  "min": 0,
+  "max": 1,
+  "source": {
+   "id": 5,
+   "hidden": false,
+   "owner": 0,
+   "controller": 0,
+   "zone": "Hand",
+   "name": "Secluded Steppe",
+   "oracleName": "Secluded Steppe",
+   "type": "Land",
+   "cost": "",
+   "colors": [],
+   "text": "Secluded Steppe enters tapped.\r\n\r\n{T}: Add {W}.\r\n\r\nCycling {W} ({W}, Discard this card: Draw a card.)",
+   "isCreature": false,
+   "isLand": true,
+   "isPlaneswalker": false,
+   "set": "EOC",
+   "tapped": false,
+   "sick": false,
+   "attacking": false,
+   "blocking": false,
+   "faceDown": false,
+   "token": false,
+   "commander": false,
+   "damage": 0
+  },
+  "items": [
+   {
+    "kind": "text",
+    "label": "Play land"
+   },
+   {
+    "kind": "text",
+    "label": "Cycling {W} ({W}, Discard this card: Draw a card.)"
+   }
+  ],
+  "t": "request",
+  "id": 1
+ },
+ "silundi_mdfc": {
+  "kind": "choose_optional",
+  "title": "Choose an ability",
+  "min": 0,
+  "max": 1,
+  "source": {
+   "id": 88,
+   "hidden": false,
+   "owner": 0,
+   "controller": 0,
+   "zone": "Hand",
+   "name": "Silundi Vision",
+   "oracleName": "Silundi Vision",
+   "type": "Instant",
+   "cost": "{2}{U}",
+   "colors": [
+    "U"
+   ],
+   "text": "Look at the top six cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.",
+   "isCreature": false,
+   "isLand": false,
+   "isPlaneswalker": false,
+   "set": "PIO",
+   "tapped": false,
+   "sick": false,
+   "attacking": false,
+   "blocking": false,
+   "faceDown": false,
+   "token": false,
+   "commander": false,
+   "damage": 0
+  },
+  "items": [
+   {
+    "kind": "text",
+    "label": "Look at the top six cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."
+   },
+   {
+    "kind": "text",
+    "label": "Play land (Silundi Isle)"
+   }
+  ],
+  "t": "request",
+  "id": 1
+ },
+ "cyclonic_rift": {
+  "kind": "choose_optional",
+  "title": "Choose an ability",
+  "min": 0,
+  "max": 1,
+  "source": {
+   "id": 9,
+   "hidden": false,
+   "owner": 0,
+   "controller": 0,
+   "zone": "Hand",
+   "name": "Cyclonic Rift",
+   "oracleName": "Cyclonic Rift",
+   "type": "Instant",
+   "cost": "{1}{U}",
+   "colors": [
+    "U"
+   ],
+   "text": "Return target nonland permanent you don't control to its owner's hand.\r\n\r\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+   "isCreature": false,
+   "isLand": false,
+   "isPlaneswalker": false,
+   "set": "SOA",
+   "tapped": false,
+   "sick": false,
+   "attacking": false,
+   "blocking": false,
+   "faceDown": false,
+   "token": false,
+   "commander": false,
+   "damage": 0
+  },
+  "items": [
+   {
+    "kind": "text",
+    "label": "Return target nonland permanent you don't control to its owner's hand."
+   },
+   {
+    "kind": "text",
+    "label": "Overload {6}{U} (You may cast this spell for its overload cost. If you do, change its text by replacing all instances of \"target\" with \"each.\")"
+   }
+  ],
+  "t": "request",
+  "id": 3
+ }
+}

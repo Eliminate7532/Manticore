@@ -30,6 +30,7 @@ import shutil
 import socket
 import ssl
 import subprocess
+import time
 
 DEFAULT_PORT = 36800                 # Forge's own network play uses 36743; stay clear of it
 DEFAULT_RELAY_PORT = 36900           # round MP2d: relay/manticore_relay.py's default
@@ -383,41 +384,85 @@ def connect_tls(address, port, expected_fp=None, timeout=CONNECT_SECONDS, room=N
     """A TLS socket to the host. With expected_fp, the host's certificate must have exactly that SHA-256 fingerprint, or the
     connection is closed before a single byte of ours is sent (NetRefused("fingerprint")). Raises NetRefused for the other
     connection problems too, so the Join screen can show a plain message. Round MP2d: with `room`, (address, port) is a relay
-    and the TLS connection runs through it (relay_join) - the relay only passes the encrypted bytes on."""
+    and the TLS connection runs through it (relay_join) - the relay only passes the encrypted bytes on.
+    Round NETLOG1: when the calling thread has a net_log attempt active, each step (resolve, connect, relay, tls,
+    fingerprint) goes into the connection log with its time and the exact error text, before it becomes a NetRefused."""
+    import net_log
+    log = net_log.current()
+
+    def note(name, ok, t, detail="", error=None):
+        if log is not None:
+            log.step(name, ok, (time.monotonic() - t) * 1000, detail, error)
+
+    t = time.monotonic()
+    if log is not None:
+        try:
+            found = net_log.resolve(address, port)
+            note("resolve", True, t, "%r -> %s" % (address, ", ".join("%s (%s)" % f for f in found) or "nothing"))
+        except (OSError, UnicodeError) as e:
+            note("resolve", False, t, "%r" % (address,), e)
+    t = time.monotonic()
     try:
         raw = socket.create_connection((address, int(port)), timeout=timeout)
-    except ConnectionRefusedError:
+    except ConnectionRefusedError as e:
+        note("connect", False, t, "to port %s: refused (nothing listening, or a firewall said no)" % port, e)
         raise NetRefused("refused_connection") from None
-    except socket.timeout:
+    except socket.timeout as e:
+        note("connect", False, t, "to port %s: no answer within %s s" % (port, timeout), e)
         raise NetRefused("no_answer") from None
-    except socket.gaierror:
+    except socket.gaierror as e:
+        note("connect", False, t, "the address could not be found", e)
         raise NetRefused("unknown", "the address %s could not be found" % address) from None
     except OSError as e:
+        note("connect", False, t, "to port %s" % port, e)
         if getattr(e, "errno", None) in (101, 113, 10051, 10065):          # network / host unreachable
             raise NetRefused("no_answer") from None
         raise NetRefused("unknown", str(e)) from None
+    try:
+        peer, local = raw.getpeername(), raw.getsockname()
+        note("connect", True, t, "%s:%s from %s:%s" % (peer[0], peer[1], local[0], local[1]))
+    except OSError:
+        note("connect", True, t)
     if room:
+        t = time.monotonic()
         try:
             relay_join(raw, room, timeout)
-        except NetRefused:
+        except NetRefused as e:
+            note("relay", False, t, "the relay did not pair us with the host's room", "%s (%s)" % (e.reason, e.text or e))
             raw.close()
             raise
+        note("relay", True, t, "paired with the host's room")
+    t = time.monotonic()
     try:
         raw.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         sock = client_context().wrap_socket(raw, server_hostname=None, do_handshake_on_connect=False)
         sock.settimeout(timeout)
         sock.do_handshake()
-    except socket.timeout:
+    except socket.timeout as e:
+        note("tls", False, t, "connected, but the encrypted handshake got no answer within %s s" % timeout, e)
         raw.close()
         raise NetRefused("no_answer") from None
     except (ssl.SSLError, OSError) as e:
+        note("tls", False, t, "", e)
         raw.close()
         raise NetRefused("tls", str(e)) from None
+    try:
+        note("tls", True, t, "%s %s" % (sock.version(), (sock.cipher() or ("",))[0]))
+    except (AttributeError, ValueError):
+        note("tls", True, t)
     if expected_fp is not None:
         got = fingerprint(sock.getpeercert(binary_form=True) or b"")
+        # round NETLOG1b (review G2): the expected one may come from the invite code, an earlier game with this address
+        # (a join typed by hand) or this game's first connection (a reconnect) - the attempt says which
+        source = getattr(log, "fingerprint_from", None) or "the invite code"
         if got != expected_fp.lower():
+            note("fingerprint", False, time.monotonic(), "the host's certificate is %s..., %s says %s..."
+                 % (got[:16], source, expected_fp.lower()[:16]))
             close_socket(sock)
             raise NetRefused("fingerprint")
+        note("fingerprint", True, time.monotonic(), "matches %s (%s...)" % (source, got[:16]))
+    elif log is not None:
+        note("fingerprint", None, time.monotonic(), "not checked (no fingerprint known for this address)")
     return sock
 
 

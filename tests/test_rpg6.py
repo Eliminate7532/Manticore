@@ -5,6 +5,10 @@ corners, foes that wander about their room, the rooms you have seen in the save,
 round the walker in the dungeon. Map side only: the duels keep the normal table.
 
 Small maps are written to a temp folder (tests.test_rpg5's helpers); the "Shipped" tests read rpg/maps/.
+
+Round RPG11 (the Adventure remaster, Karl 23 Oct 2026: free scrolling instead of rooms) took the rooms out: the room, room-camera,
+slide, minimap, side-panel and "seen" tests are gone; the foe tests check the leash and waking near the walker; the drawing tests
+use the following camera. What RPG11 adds is tested in tests/test_rpg11.py.
 """
 import ast
 import os
@@ -21,6 +25,7 @@ from rpg import save as sv
 from tests import rpg_route as route
 from tests import test_rpg4 as r4
 from tests.test_rpg5 import BASE, Temp, area_of, layer_xml, obj, room, stand_in, write_map
+from tests.rpg_fixture_maps import FIXTURE_MAPS, setUpModule, tearDownModule  # noqa: F401  (Round RPG12: the placeholder maps)
 
 TILE = 16
 
@@ -36,21 +41,6 @@ def frames(n, fn):
     return out
 
 
-def slide_out(ex, most=600):
-    """Step (pressing nothing) until the view has slid to the room; a slide that never ends is a failure, not a hang."""
-    for _ in range(most):
-        if not ex.sliding():
-            return
-        ex.step(0, 0, 1 / 60)
-    raise AssertionError("the slide never ended")
-
-
-def walk_until_slide(ex, dx, dy, most=120):
-    for _ in range(most):
-        if ex.sliding():
-            return
-        ex.step(dx, dy, 1 / 60)
-    raise AssertionError("no slide to the next room")
 
 
 # ---- four directions ----------------------------------------------------------------------------------------------------------
@@ -141,30 +131,9 @@ class CornerTests(Temp):
         self.assertEqual(w.y, mid(3, 3)[1])               # +3 px: the nearer line is the tile's middle
 
 
-# ---- rooms on a map --------------------------------------------------------------------------------------------------------------
+# ---- the light property --------------------------------------------------------------------------------------------------------
 
-class RoomTests(Temp):
-    def test_rooms_of_a_map(self):
-        a = area_of(self.tmp, room(32, 22), 32, 22)
-        self.assertEqual((a.room_w, a.room_h, a.room_cols, a.room_rows), (256, 176, 2, 2))
-        self.assertEqual(a.room_of(0, 0), (0, 0))
-        self.assertEqual(a.room_of(255.9, 175.9), (0, 0))
-        self.assertEqual(a.room_of(256, 176), (1, 1))
-        self.assertEqual(a.room_of(-5, 9999), (0, 1))                     # off the map: the nearest room
-        self.assertEqual(a.room_rect((1, 0)), (256, 0, 512, 176))
-        self.assertEqual(a.room_key((1, 0)), "m#1,0")
-
-    def test_a_map_bigger_than_a_room_must_be_whole_rooms(self):
-        spawn = obj(1, "spawn", 40, 40, name="start")
-        for (w, h), bad in (((20, 11), True), ((32, 12), True), ((32, 22), False), ((10, 8), False), ((16, 11), False)):
-            with self.subTest(size=(w, h)):
-                explore.forget_areas()
-                a = area_of(self.tmp, room(w, h), w, h, objects=spawn, name=f"m{w}x{h}")
-                said = [p for p in a.check() if "whole rooms" in p]
-                self.assertEqual(bool(said), bad, a.check())
-                if bad:
-                    self.assertEqual(said, [f"the map is {w} x {h} tiles: make it whole rooms of 16 x 11"])
-
+class LightPropertyTests(Temp):
     def test_the_light_property(self):
         # Round RPG7: only a dungeon is dark - these maps say so with the map property dungeon (tests/test_rpg7.py has the rest)
         dungeon = '<property name="dungeon" type="bool" value="true"/>'
@@ -177,92 +146,8 @@ class RoomTests(Temp):
                 self.assertEqual(explore.load_area("lit", self.tmp).light, light)
 
 
-# ---- the room's camera ----------------------------------------------------------------------------------------------------------
 
-class RoomCameraTests(unittest.TestCase):
-    def test_the_zoom_and_the_panels_at_every_size(self):
-        for size, zoom in (((1920, 1080), 6), ((4096, 2160), 12), ((1366, 768), 4), ((1280, 800), 4), ((1024, 768), 3),
-                           ((2560, 1440), 8), ((800, 600), 2)):
-            with self.subTest(size=size):
-                cam = explore.RoomCamera(*size)
-                self.assertEqual(cam.zoom, zoom)
-                x, y, w, h = cam.viewport()
-                self.assertEqual((w, h), (256 * zoom, 176 * zoom))
-                self.assertTrue(0 <= x and 0 <= y and x + w <= size[0] and y + h <= size[1])
-                self.assertLessEqual(abs(x - (size[0] - x - w)), 1)                      # centred
-                left, right = cam.panels()
-                self.assertGreaterEqual(min(left[2], right[2]), explore.PANEL_MIN_W)
-                self.assertEqual(left[2] + w + right[2], size[0])
-                bigger = explore.RoomCamera(*size, zoom=zoom + 1)
-                bx, _by, bw, bh = bigger.viewport()
-                self.assertTrue(bh > size[1] or bw > size[0] or bx < explore.PANEL_MIN_W, "the next zoom up wouldn't fit")
-
-    def test_a_tiny_window_still_gets_zoom_one(self):
-        cam = explore.RoomCamera(300, 200)
-        self.assertEqual(cam.zoom, 1)
-
-    def test_to_screen_and_back_and_whole_pixels_while_sliding(self):
-        cam = explore.RoomCamera(1920, 1080)
-        cam.look_at((256, 0))
-        self.assertEqual(cam.to_screen(256, 0), cam.viewport()[:2])
-        self.assertEqual(cam.to_map(*cam.to_screen(300, 40)), (300, 40))
-        cam.look_at((100.07, 0))
-        self.assertEqual((cam.x * cam.zoom) % 1, 0)
-        self.assertEqual(cam.visible(16, 16, 48, 22), (6, 0, 23, 11))
-
-
-# ---- sliding to the next room ---------------------------------------------------------------------------------------------------
-
-class SlideTests(unittest.TestCase):
-    def setUp(self):
-        explore.forget_areas()
-        self.s = stand_in()
-        self.ex = explore.Explorer(self.s, start_town="town_1")
-        self.s.world["beaten"] = [t.spot for t in self.ex.area.triggers if t.kind == "encounter"]
-
-    def test_walking_off_a_room_slides_the_view_and_the_walker_waits(self):
-        ex = self.ex
-        self.assertEqual(ex.room, (0, 0))
-        self.assertEqual(self.s.world["seen"], ["sample_region#0,0"])
-        route.walk_to_tile(ex, (15, 5))                         # the gap in the trees on the room's right
-        for _ in range(60):
-            ex.step(1, 0, 1 / 60)
-            if ex.sliding():
-                break
-        self.assertTrue(ex.sliding())
-        self.assertEqual(ex.room, (1, 0))
-        self.assertGreaterEqual(ex.walker.box()[0], 256)                         # wholly in the new room
-        self.assertIn("sample_region#1,0", self.s.world["seen"])
-        where = (ex.walker.x, ex.walker.y)
-        origins = []
-        while ex.sliding():
-            origins.append(ex.view_origin())
-            ex.step(1, 0, 1 / 60)
-            self.assertEqual((ex.walker.x, ex.walker.y), where)                 # it waits
-            self.assertLess(len(origins), 600, "the slide never ended")
-        self.assertEqual(len(origins), round(explore.ROOM_SLIDE_SECONDS * 60))
-        xs = [o[0] for o in origins]
-        self.assertEqual(xs, sorted(xs))
-        self.assertTrue(0 <= xs[0] < 20 and 236 < xs[-1] <= 256)
-        self.assertEqual(ex.view_origin(), (256, 0))
-        ex.step(1, 0, 1 / 60)
-        self.assertGreater(ex.walker.x, where[0])                               # and walks on
-
-    def test_down_into_the_next_room_and_back_up(self):
-        ex = self.ex
-        route.walk_to_tile(ex, (6, 10))                         # the gap below the town's room
-        for _ in range(60):
-            ex.step(0, 1, 1 / 60)
-        slide_out(ex)
-        self.assertEqual(ex.room, (0, 1))
-        self.assertGreaterEqual(ex.walker.box()[1], 176)
-        route.walk_to_tile(ex, (6, 10))
-        slide_out(ex)
-        self.assertEqual(ex.room, (0, 0))
-        self.assertEqual(self.s.world["seen"], ["sample_region#0,0", "sample_region#0,1"])
-
-
-# ---- foes walk about their room -------------------------------------------------------------------------------------------------
+# ---- foes walk about their spot (Round RPG11: within their leash, while you are near) ---------------------------------------
 
 class FoeTests(unittest.TestCase):
     def setUp(self):
@@ -272,20 +157,19 @@ class FoeTests(unittest.TestCase):
         s = stand_in(where, x, y)
         return s, explore.Explorer(s)
 
-    def test_a_foe_wanders_inside_its_room_and_never_into_a_wall(self):
-        s, ex = self.explorer_in("sample_region", *mid(28, 8))            # room (1, 0), away from the ember bandit
+    def test_a_foe_wanders_within_its_leash_and_never_into_a_wall(self):
+        s, ex = self.explorer_in("sample_region", *mid(28, 8))
         robber = next(f for f in ex.foes.values() if f.enemy == "grave_robber")
-        self.assertEqual(robber.room, ex.room)
+        self.assertTrue(robber.active)
         moved = False
-        r = ex.area.room_rect(robber.room)
         for _ in range(60 * 20):
             ex.step(0, 0, 1 / 60)
-            b = robber.box
-            self.assertFalse(ex.area.box_blocked(b))
-            self.assertTrue(r[0] + TILE <= b[0] + 1e-6 and b[2] <= r[2] - TILE + 1e-6, b)
-            self.assertTrue(r[1] + TILE <= b[1] + 1e-6 and b[3] <= r[3] - TILE + 1e-6, b)
+            self.assertFalse(ex.area.box_blocked(robber.box))
+            self.assertLessEqual(((robber.x - robber.home[0]) ** 2 + (robber.y - robber.home[1]) ** 2) ** 0.5,
+                                 explore.LEASH_TILES * TILE + 1e-6)
             moved = moved or (robber.x, robber.y) != robber.home
         self.assertTrue(moved)
+
 
     def test_a_foe_in_a_pen_never_walks_into_its_walls(self):
         tmp = tempfile.mkdtemp(prefix="rpg6_")
@@ -311,33 +195,36 @@ class FoeTests(unittest.TestCase):
             _s, ex = self.explorer_in("sample_region", *mid(28, 8))
             for _ in range(60 * 5):
                 ex.step(0, 0, 1 / 60)
-            return sorted((f.spot, round(f.x, 6), round(f.y, 6)) for f in ex.room_foes())
+            return sorted((f.spot, round(f.x, 6), round(f.y, 6)) for f in ex.active_foes())
         self.assertEqual(run(), run())
-
-    def test_foes_of_other_rooms_stand_still_and_start_from_home_when_you_come_in(self):
+    def test_far_foes_stand_still_and_start_from_home_when_you_come_near(self):
         s, ex = self.explorer_in("sample_region", *mid(5, 7))
         s.world["beaten"] = [f.spot for f in ex.foes.values() if f.enemy != "grave_robber"]
         robber = next(f for f in ex.foes.values() if f.enemy == "grave_robber")
+        self.assertFalse(robber.active)
         for _ in range(120):
             ex.step(0, 0, 1 / 60)
-        self.assertEqual((robber.x, robber.y), robber.home)                 # you aren't in its room
-        route.walk_to_tile(ex, (16, 5))
-        slide_out(ex)
+        self.assertEqual((robber.x, robber.y), robber.home)                 # too far from you to move
+        reach = ex.area.reachable(ex.area.spawn()) - route.trigger_tiles(ex.area)
+        near = min(reach, key=lambda t: (abs(mid(*t)[0] - (robber.home[0] - 9 * TILE)) + abs(mid(*t)[1] - robber.home[1]), t))
+        route.walk_to_tile(ex, near)                                        # about 9 tiles to its left
+        self.assertTrue(robber.active)
         for _ in range(90):
             ex.step(0, 0, 1 / 60)
         self.assertNotEqual((robber.x, robber.y), robber.home)
-        entered = robber.entered
-        route.walk_to_tile(ex, (14, 5))                                     # back out ...
-        slide_out(ex)
-        route.walk_to_tile(ex, (15, 5))                                     # ... and in again
-        walk_until_slide(ex, 1, 0)
-        self.assertEqual(robber.entered, entered + 1)
-        self.assertEqual((robber.x, robber.y), robber.home)                 # home again the moment you come in
+        woken = robber.woken
+        route.walk_to_tile(ex, (5, 7))                                      # away ...
+        self.assertFalse(robber.active)
+        self.assertNotEqual((robber.x, robber.y), robber.home)              # it stops where it is
+        route.walk_to_tile(ex, near)                                        # ... and near again
+        self.assertEqual(robber.woken, woken + 1)
+        self.assertTrue(robber.active)
+
 
     def test_the_boss_stands_still(self):
         s, ex = self.explorer_in("sample_dungeon", *mid(26, 7))
         boss = next(f for f in ex.foes.values() if f.encounter == "boss")
-        self.assertEqual(boss.room, ex.room)
+        self.assertTrue(boss.active)
         self.assertFalse(boss.wanders)
         for _ in range(60 * 5):
             ex.step(0, 0, 1 / 60)
@@ -345,7 +232,7 @@ class FoeTests(unittest.TestCase):
 
     def test_walking_into_a_foe_and_a_foe_walking_into_you_both_start_its_duel(self):
         s, ex = self.explorer_in("sample_region", *mid(5, 7))
-        thorn = next(f for f in ex.foes.values() if f.room == (0, 1))
+        thorn = next(f for f in ex.foes.values() if f.home[0] < 256 and f.home[1] >= 176)     # RPG6's room (0, 1)
         s.world["beaten"] = [f.spot for f in ex.foes.values() if f is not thorn]
         events, _ = route.walk_to_tile(ex, lambda: ex.area.tile_at(thorn.x, thorn.y))
         self.assertEqual([(k, t.spot) for k, t in events], [("encounter", thorn.spot)])
@@ -360,7 +247,7 @@ class FoeTests(unittest.TestCase):
                 break
         self.assertEqual(got and (got[0], got[1].spot), ("encounter", thorn.spot))
         s.world["beaten"].append(thorn.spot)
-        self.assertNotIn(thorn, ex.room_foes())
+        self.assertNotIn(thorn, ex.active_foes())
         thorn.x, thorn.y = ex.walker.x, ex.walker.y
         self.assertIsNone(ex.step(0, 0, 1 / 60))                            # a won fight never fires again
 
@@ -382,62 +269,69 @@ class FoeTests(unittest.TestCase):
         self.assertNotEqual((walks.x, walks.y), walks.home)
 
 
+
+
 # ---- the save -------------------------------------------------------------------------------------------------------------------
 
-class SeenSaveTests(unittest.TestCase):
-    def test_the_rooms_seen_are_saved_and_read_back(self):
+class FacingSaveTests(unittest.TestCase):
+    """Round RPG11: the save keeps which way you face; RPG6's "seen" rooms are no longer written, and an old list still reads."""
+
+    def test_the_facing_is_saved_and_read_back(self):
         tmp = tempfile.mkdtemp(prefix="rpg6_save_")
         self.addCleanup(shutil.rmtree, tmp, True)
         s = r4.started_save()
         s.world.update(map="sample_region", x=None, y=None)
         explore.forget_areas()
-        explore.Explorer(s, start_town="town_1")
-        self.assertEqual(s.world["seen"], ["sample_region#0,0"])
+        ex = explore.Explorer(s, start_town="town_1")
+        self.assertEqual(s.world["facing"], "down")
+        for _ in range(10):
+            ex.step(-1, 0, 1 / 60)
+        self.assertEqual(s.world["facing"], "left")
+        self.assertNotIn("seen", s.world)
         sv.write(s, tmp)
-        self.assertEqual(sv.read(1, tmp, pool=r4.POOL)[0].world["seen"], ["sample_region#0,0"])
+        back = sv.read(1, tmp, pool=r4.POOL)[0]
+        self.assertEqual(back.world["facing"], "left")
+        explore.forget_areas()
+        self.assertEqual(explore.Explorer(back, start_town="town_1").walker.facing, "left")
         bad = tempfile.mkdtemp(prefix="rpg6_save_")                    # a fresh slot: no backup to fall back to
         self.addCleanup(shutil.rmtree, bad, True)
-        s.world["seen"] = ["sample_region#0,0", 3]
+        s.world["facing"] = "sideways"
         sv.write(s, bad)
         with self.assertRaises(sv.SaveError):
             sv.read(1, bad, pool=r4.POOL)
 
-    def test_an_rpg5_save_without_seen_still_reads(self):
+    def test_an_rpg6_save_with_seen_rooms_still_reads_and_keeps_them(self):
         tmp = tempfile.mkdtemp(prefix="rpg6_save_")
         self.addCleanup(shutil.rmtree, tmp, True)
         s = r4.started_save()
-        s.world.pop("seen", None)
+        s.world["seen"] = ["sample_region#0,0", "sample_region#1,0"]
+        s.world.pop("facing", None)
         sv.write(s, tmp)
         back = sv.read(1, tmp, pool=r4.POOL)[0]
-        self.assertNotIn("seen", back.world)
         explore.forget_areas()
-        explore.Explorer(back, start_town="town_1")
-        self.assertEqual(len(back.world["seen"]), 1)
+        ex = explore.Explorer(back, start_town="town_1")
+        self.assertEqual(back.world["seen"], ["sample_region#0,0", "sample_region#1,0"])
+        self.assertEqual(ex.walker.facing, "down")
 
 
 # ---- the shipped maps -----------------------------------------------------------------------------------------------------------
 
-class ShippedRoomTests(unittest.TestCase):
+class ShippedMapTests(unittest.TestCase):
     def setUp(self):
         explore.forget_areas()
 
-    def test_whole_rooms_every_room_reachable_and_every_foe_free_at_home(self):
-        for name, rooms in (("sample_region", (3, 2)), ("sample_dungeon", (2, 2))):
+    def test_every_trigger_reachable_and_every_foe_free_at_home(self):
+        for name in ("sample_region", "sample_dungeon"):
             with self.subTest(name=name):
                 a = explore.load_area(name)
-                self.assertEqual((a.cols % 16, a.rows % 11), (0, 0))
-                self.assertEqual((a.room_cols, a.room_rows), rooms)
-                reach = a.reachable(a.spawn())
-                for rx in range(a.room_cols):
-                    for ry in range(a.room_rows):
-                        self.assertTrue(any(a.room_of(*mid(c, r)) == (rx, ry) for c, r in reach), (rx, ry))
+                self.assertEqual([p for p in a.check() if "reached" in p], [])
                 for t in a.triggers:
                     if t.kind == "encounter":
                         f = explore.Foe(a, t)
                         self.assertTrue(f._free(*f.home), t)
 
-    def test_every_room_change_on_the_shipped_maps_can_be_walked(self):
-        """Walk (one key at a time) from the start into every room of both maps and back to the start."""
+    def test_the_far_corner_of_each_shipped_map_can_be_walked_to_and_back(self):
+        """Walk (one key at a time) from the start to the reachable tile furthest from it, and back (RPG6 walked into every room)."""
         for name in ("sample_region", "sample_dungeon"):
             with self.subTest(name=name):
                 explore.forget_areas()
@@ -445,27 +339,25 @@ class ShippedRoomTests(unittest.TestCase):
                 ex = explore.Explorer(s)
                 s.world["beaten"] = [t.spot for t in ex.area.triggers if t.kind == "encounter"]
                 home = ex.area.tile_at(*ex.area.spawn())
-                reach = ex.area.reachable(ex.area.spawn())
-                for rx in range(ex.area.room_cols):
-                    for ry in range(ex.area.room_rows):
-                        goal = min((t for t in reach if ex.area.room_of(*mid(*t)) == (rx, ry)
-                                    and t not in route.trigger_tiles(ex.area)),
-                                   key=lambda t: (abs(t[0] - home[0]) + abs(t[1] - home[1]), t))
-                        events, _ = route.walk_to_tile(ex, goal)
-                        self.assertEqual(events, [])
-                        slide_out(ex)
-                        self.assertEqual(ex.room, (rx, ry))
-                route.walk_to_tile(ex, home)
-                self.assertEqual(len(s.world["seen"]), ex.area.room_cols * ex.area.room_rows)
+                reach = ex.area.reachable(ex.area.spawn()) - route.trigger_tiles(ex.area)
+                far = max(reach, key=lambda t: (abs(t[0] - home[0]) + abs(t[1] - home[1]), t))
+                self.assertGreater(abs(far[0] - home[0]) + abs(far[1] - home[1]), 20)
+                events, _ = route.walk_to_tile(ex, far)
+                self.assertEqual(events, [])
+                self.assertEqual(ex.area.tile_at(ex.walker.x, ex.walker.y), far)
+                events, _ = route.walk_to_tile(ex, home)
+                self.assertEqual(events, [])
+                self.assertEqual(ex.area.tile_at(ex.walker.x, ex.walker.y), home)
 
     def test_the_dungeon_is_dark_and_the_region_is_not(self):
         self.assertEqual(explore.load_area("sample_dungeon").light, 4.5)
         self.assertIsNone(explore.load_area("sample_region").light)
 
 
+
 # ---- drawing --------------------------------------------------------------------------------------------------------------------
 
-class RoomDrawTests(Temp):
+class MapDrawTests(Temp):
     @classmethod
     def setUpClass(cls):
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -482,7 +374,7 @@ class RoomDrawTests(Temp):
         ex = explore.Explorer(s, start_town="town_1")
         return s, ex
 
-    def test_only_the_room_is_drawn_and_the_panels_beside_it(self):
+    def test_the_map_fills_the_window_at_every_size(self):
         import gfx
         import rpg_map_view
         s, ex = self.explorer()
@@ -490,65 +382,31 @@ class RoomDrawTests(Temp):
         for size in ((1920, 1080), (1366, 768), (4096, 2160), (1024, 768), (800, 600)):
             with self.subTest(size=size):
                 screen = self.pg.Surface(size)
-                cam = explore.RoomCamera(*size, ex.area.tw, ex.area.th)
-                cam.look_at(ex.view_origin())
+                cam = explore.Camera(*size, explore.Camera.zoom_for(size[1], ex.area.th))
+                cam.follow(ex.walker.x, ex.walker.y, ex.area.width, ex.area.height)
                 view.draw(screen, cam, ex.walker, ex.encounters(), 0.0)
-                x, y, w, h = cam.viewport()
-                for px in ((x - 1, y + h // 2), (x + w, y + h // 2), (x + w // 2, max(0, y - 1)), (2, 2)):
-                    if 0 <= px[0] < size[0] and 0 <= px[1] < size[1] and not (x <= px[0] < x + w and y <= px[1] < y + h):
+                for px in ((size[0] // 2, size[1] // 2), (2, 2), (size[0] - 3, size[1] - 3), (2, size[1] - 3)):
+                    mx, my = cam.to_map(*px)
+                    if 0 <= mx < ex.area.width and 0 <= my < ex.area.height:
+                        self.assertNotEqual(tuple(screen.get_at(px))[:3], gfx.BACKDROP, px)
+                    else:
                         self.assertEqual(tuple(screen.get_at(px))[:3], gfx.BACKDROP, px)
-                self.assertNotEqual(tuple(screen.get_at((x + w // 2, y + h // 2)))[:3], gfx.BACKDROP)
-                out = rpg_map_view.draw_panels(screen, cam, ex.area, ex.room, s.world["seen"],
-                                               {"gold": 100, "deck": "A deck with a rather long name indeed", "cards": 60})
-                for side in ("left", "right"):
-                    r = out[side]
-                    self.assertIsNotNone(r, side)
-                    self.assertTrue(self.pg.Rect(0, 0, *size).contains(r))
-                    self.assertFalse(r.colliderect(self.pg.Rect(cam.viewport())), side)
-                self.assertTrue(out["right"].contains(out["minimap"]))
-                self.assertEqual(len(out["cells"]), 6)
-                self.assertEqual(tuple(screen.get_at(out["cells"][(0, 0)].center))[:3], gfx.GOLD)
-                self.assertEqual(tuple(screen.get_at(out["cells"][(2, 1)].center))[:3], gfx.PANEL_DEEP)
 
-    def test_half_way_through_a_slide_nothing_is_drawn_outside_the_room(self):
-        import gfx
-        import rpg_map_view
-        s, ex = self.explorer()
-        view = rpg_map_view.MapView(ex.area)
-        screen = self.pg.Surface((1920, 1080))
-        cam = explore.RoomCamera(1920, 1080)
-        cam.look_at((100, 40))                       # not on a tile's edge: the tiles at the sides are cut by the room's edge
-        view.draw(screen, cam, ex.walker, ex.encounters(), 0.0)
-        x, y, w, h = cam.viewport()
-        for px in ((x - 1, y + h // 2), (x + w, y + h // 2), (x + w // 2, y - 1), (x + w // 2, y + h)):
-            self.assertEqual(tuple(screen.get_at(px))[:3], gfx.BACKDROP, px)
-        self.assertNotEqual(tuple(screen.get_at((x, y + h // 2)))[:3], gfx.BACKDROP)
-
-    def test_a_seen_room_on_the_minimap(self):
-        import gfx
-        import rpg_map_view
-        s, ex = self.explorer()
-        s.world["seen"].append("sample_region#1,0")
-        screen = self.pg.Surface((1920, 1080))
-        cam = explore.RoomCamera(1920, 1080)
-        out = rpg_map_view.draw_panels(screen, cam, ex.area, ex.room, s.world["seen"])
-        self.assertEqual(tuple(screen.get_at(out["cells"][(1, 0)].center))[:3], gfx.PANEL_EDGE)
-        self.assertEqual(tuple(screen.get_at(out["cells"][(1, 1)].center))[:3], gfx.PANEL_DEEP)
 
     def test_the_dungeon_is_dark_but_round_the_walker(self):
         import rpg_map_view
         s, ex = self.explorer("sample_dungeon", *mid(4, 17))
         view = rpg_map_view.MapView(ex.area)
-        cam = explore.RoomCamera(1920, 1080)
-        cam.look_at(ex.view_origin())
+        cam = explore.Camera(1920, 1080, explore.Camera.zoom_for(1080, ex.area.th))
+        cam.follow(ex.walker.x, ex.walker.y, ex.area.width, ex.area.height)
         lit = self.pg.Surface((1920, 1080))
         view.draw(lit, cam, ex.walker, [], 0.0)
-        light, ex.area.light = ex.area.light, None
+        view.lit = False                                # Round RPG15: the Light setting off = the plain art (expected change)
         try:
             plain = self.pg.Surface((1920, 1080))
             view.draw(plain, cam, ex.walker, [], 0.0)
         finally:
-            ex.area.light = light
+            view.lit = True
         near = cam.to_screen(ex.walker.x + 8, ex.walker.y - 12)
         far = cam.to_screen(*mid(12, 14))
         self.assertEqual(lit.get_at(near), plain.get_at(near))               # in the light: as it is
@@ -586,12 +444,12 @@ class WalkToolTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, True)
         out = os.path.join(tmp, "walk.png")
         r = subprocess.run([sys.executable, os.path.join(BASE, "tools", "rpg_walk.py"), "--walk", walk, "--screenshot", out,
-                            "--size", size], capture_output=True, text=True, timeout=120,
+                            "--size", size, "--maps", FIXTURE_MAPS], capture_output=True, text=True, timeout=120,
                            env=dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy"))
         self.assertEqual(r.returncode, 0, r.stderr)
         return r.stdout, out
 
-    def test_the_window_walks_through_a_room_and_draws_the_panels(self):
+    def test_the_window_walks_and_draws_the_map(self):
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
         import pygame
         import gfx
@@ -599,12 +457,11 @@ class WalkToolTests(unittest.TestCase):
         last = stdout.strip().splitlines()[-1]
         self.assertTrue(last.startswith("saved "), stdout)
         x, y = (int(v) for v in last.split("(")[1].rstrip(")").split(","))
-        self.assertGreaterEqual(y, 176, stdout)                                   # in the room below the town's
+        self.assertGreaterEqual(y, 176, stdout)                                   # below the town (RPG6's next room)
         pic = pygame.image.load(out)
         self.assertEqual(pic.get_size(), (1920, 1080))
-        cam = explore.RoomCamera(1920, 1080)
-        left, _right = cam.panels()
-        self.assertNotEqual(tuple(pic.get_at((left[2] // 2, 1080 // 2)))[:3], gfx.BACKDROP)   # a panel is drawn there
+        self.assertNotEqual(tuple(pic.get_at((1920 // 2, 1080 // 2)))[:3], gfx.BACKDROP)     # the map, round the walker
+        self.assertNotEqual(tuple(pic.get_at((4, 1080 // 2)))[:3], gfx.BACKDROP)            # no side panels now: map there too
 
 
 if __name__ == "__main__":

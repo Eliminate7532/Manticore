@@ -99,7 +99,8 @@ class Profile:
 def load_profiles(deck_file, runtime=None, only=None):
     """[Profile] for every different card of the deck (commanders first), skipping cards not in `only` when it is given."""
     commanders, deck = load_deck(deck_file)
-    root = os.path.join(runtime or fc.DEFAULT_RUNTIME, "res", "cardsfolder")
+    runtime = runtime or os.environ.get("FORGE_RUNTIME") or fc.DEFAULT_RUNTIME   # round SB3: as forge_client finds it
+    root = os.path.join(runtime, "res", "cardsfolder")
     out, seen = [], set()
     for name in list(commanders) + list(deck):
         if name in seen:
@@ -147,7 +148,7 @@ _FLAVOR = {}
 
 def flavor_names(runtime=None):
     """{flavor name lower: real card name} from Forge's edition files (${"flavorName": "..."}), read once per runtime."""
-    key = runtime or fc.DEFAULT_RUNTIME
+    key = runtime or os.environ.get("FORGE_RUNTIME") or fc.DEFAULT_RUNTIME     # round SB3: as forge_client finds it
     if key in _FLAVOR:
         return _FLAVOR[key]
     out = {}
@@ -399,12 +400,15 @@ class Result:
 
 
 class Checker:
-    def __init__(self, deck_file, runtime=None, seed=7, say=print, per_check=40.0, faults=(), classic_stops=True):
+    def __init__(self, deck_file, runtime=None, seed=7, say=print, per_check=40.0, faults=(), classic_stops=True, threat_ai=None,
+                 opponents=1):
         self.deck_file, self.runtime, self.seed, self.say, self.per_check = deck_file, runtime, seed, say, per_check
+        self.opponents = max(1, min(3, int(opponents)))   # round AI2b: 2-3 filler AIs for ai_bench's pod boards (1 = as before)
         # Patch 43: the checker's scripted boards expect every priority stop (its own spell on the stack, the AI's upkeep), so it
         # plays with the bridge's classic stops unless a caller asks for the player's (classic_stops=False).
         self.classic_stops = classic_stops
         self.faults = tuple(faults)         # round 27d: deliberate bridge mistakes, for tests that prove a check goes red
+        self.threat_ai = threat_ai          # round AI2: False = Forge's AI alone (tools/ai_bench.py --threat-ai off)
         self.tmp = tempfile.TemporaryDirectory(prefix="card_check_")
         self.s = None
         self.err_offset = 0
@@ -415,10 +419,11 @@ class Checker:
         commanders, deck = load_deck(self.deck_file)
         self.commanders = [fc.forge_card_name(c) for c in commanders]          # round 29b: put back in the command zone for every check
         mine = fc.write_deck_file(os.path.join(self.tmp.name, "me.dck"), commanders, deck, "Check")
-        filler = fc.write_deck_file(os.path.join(self.tmp.name, "opp.dck"), ["Kinnan, Bonder Prodigy"], ["Forest"] * 99, "Filler")
+        fillers = [fc.write_deck_file(os.path.join(self.tmp.name, "opp.dck" if i == 0 else "opp%d.dck" % (i + 1)),
+                                      ["Kinnan, Bonder Prodigy"], ["Forest"] * 99, "Filler") for i in range(self.opponents)]
         fc.sync_bridge(self.runtime) if self.runtime else fc.sync_bridge()
-        self.s = fc.ForgeSession(mine, [filler], name="Checker", seed=self.seed, runtime=self.runtime, dev=True, faults=self.faults,
-                                 classic_stops=self.classic_stops)
+        self.s = fc.ForgeSession(mine, fillers, name="Checker", seed=self.seed, runtime=self.runtime, dev=True, faults=self.faults,
+                                 classic_stops=self.classic_stops, threat_ai=self.threat_ai)
         self.s.stderr_path = os.path.join(self.tmp.name, f"engine_{self.restarts}.log")
         self.s.start()
         self.err_offset = 0
@@ -431,9 +436,24 @@ class Checker:
                 raise RuntimeError(self.s.fatal or "Forge stopped while starting")
             if st and (st.get("prompt") or {}).get("message", "").startswith("Priority:"):
                 return True
-            move = next_move(st, [], mem) if st else None
-            if move and move[0] == "ok":
-                self.s.ok()
+            # Round AI2: a question asked before the first turn is answered too, and a card it asks for is clicked. With seed 13
+            # the Kinnan list's opening hand holds Gemstone Caverns: Forge asks "Choose cards to activate from opening hand and
+            # their order", then "exile a card from your hand / Select a card from your hand", and this loop - which only pressed
+            # OK - waited 150 s and gave up (ai_bench's seed 13, three times, 18 Oct). Cancel and player clicks stay left out,
+            # as before.
+            # Round AI2b: with 3-4 players Forge asks "Who would you like to start this game?" by a click on a player (OK stays
+            # grey until one is picked; round 28ba). next_move clicks a player only when the message says "player", so the
+            # start would wait here for 150 s: I pick myself, once, then OK. Never asked in a 2-player game.
+            msg = ((st or {}).get("prompt") or {}).get("message", "")
+            if st and "start this game" in msg.lower() and not mem.get("first_player"):
+                mem["first_player"] = True
+                self.s.click_player(st.get("me"))
+                time.sleep(0.4)
+                continue
+            reqs = list(self.s.requests)
+            move = next_move(st, reqs, mem) if st else None
+            if move and move[0] in ("answer", "click", "ok"):
+                self.do(move)
                 time.sleep(0.4)
             time.sleep(0.05)
         raise RuntimeError("the game did not start within 150 seconds")

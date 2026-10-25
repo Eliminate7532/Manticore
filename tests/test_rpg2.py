@@ -100,7 +100,7 @@ class ShippedPoolTests(unittest.TestCase):
     def test_the_shipped_pool_is_forges_whole_card_list(self):
         pool = cardpool.load()
         self.assertGreater(len(pool), 30000)
-        self.assertIn("fb4d809", pool.forge)
+        self.assertIn("9a6f776", pool.forge)
         self.assertTrue(pool.get("Island").is_basic)
         self.assertEqual(pool.get("Relentless Rats").copy_limit, -1)
         self.assertEqual(pool.get("Seven Dwarves").copy_limit, 7)
@@ -279,7 +279,7 @@ class TierInfoTests(unittest.TestCase):
 class ShippedTierTests(unittest.TestCase):
     def test_the_shipped_tiers(self):
         t = tiers.load()
-        self.assertIn("fb4d809", t.forge)
+        self.assertIn("9a6f776", t.forge)
         self.assertEqual(t.tier_of("Island"), 0)
         self.assertEqual(t.tier_of("Black Lotus"), 5)
         self.assertEqual(t.tier_of("Force of Will"), 5)
@@ -388,7 +388,7 @@ class ShippedPackTests(unittest.TestCase):
             data = products.read_pool(code)
             with self.subTest(set=code):
                 self.assertEqual(data["set"], code)
-                self.assertIn("fb4d809", data["forge"])
+                self.assertIn("9a6f776", data["forge"])
                 self.assertEqual(len(data["packs"]), 200)
                 for pack in data["packs"]:
                     self.assertEqual(len(pack), 15)
@@ -467,7 +467,7 @@ class ShippedEnemyTests(unittest.TestCase):
         for k in kinds:
             data = enemies.read_kind(k["id"])
             self.assertEqual(len(data["decks"]), k["decks"], k["id"])
-            self.assertIn("fb4d809", data["forge"])
+            self.assertIn("9a6f776", data["forge"])
             for d in data["decks"]:
                 with self.subTest(deck=d["name"]):
                     entry = dict(d, deckName=d["archetype"] + enemies.FALLBACK_SUFFIX)

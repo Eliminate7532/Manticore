@@ -309,6 +309,9 @@ class LiveForgeTests(unittest.TestCase):
                 stage = "untap"
                 continue
             if stage == "untap":
+                # Round FB2 (Forge 9a6f776): the mana now shows in a snapshot taken between two questions (Forge asks nothing for
+                # about 30 ms after the mana ability), so a click made at once is dropped. Wait for Forge's next question.
+                self.assertTrue(wait_for(s, lambda: s.state.get("asking") is not False, 10), "Forge never asked again")
                 s.click_card(monos[0]["id"])
                 self.assertTrue(wait_for(s, lambda: "Untap" in s.state["prompt"]["message"] or s.requests, 10))
                 if s.requests:

@@ -2,58 +2,58 @@
  "about": "Round RPG9 (Karl, 14 Oct 2026: the first map was \"way too hard\"; \"About 65%\"): how often a starting deck (three Jumpstart half-decks, at most two colours, picked at random from the new-game offers) beats the first map's regular foes, Forge's AI playing both sides (tools/rpg_balance.py; 60 cards, 20 life, Forge's Constructed rules). share = the starting decks' wins / decided games; low-high = the 95% interval (Wilson). handicap = how many of each foe deck's strongest spells are swapped for basic lands (rpg.enemies.handicap). decks_sha = rpg.enemies.jumpstart_digest of the decks measured; a test checks it against the shipped decks.",
  "target": 0.65,
  "handicap": 9,
- "decks_sha": "cac8e1f7418a71bafb312809ea361933ca1be68d5fb3f19161cd9717243018d8",
+ "decks_sha": "9799d15d8dee28bf8370581c7c8c0bf6439518078127096a1fe4a9531ef02ec0",
  "measured": {
   "all": {
    "games": 512,
-   "starter": 304,
-   "enemy": 208,
+   "starter": 313,
+   "enemy": 199,
    "draws": 0,
-   "share": 0.5938,
-   "low": 0.5507,
-   "high": 0.6354,
-   "turns": 20.1
+   "share": 0.6113,
+   "low": 0.5684,
+   "high": 0.6526,
+   "turns": 20.0
   },
   "kinds": {
    "ember_bandit": {
     "games": 128,
-    "starter": 69,
-    "enemy": 59,
+    "starter": 73,
+    "enemy": 55,
     "draws": 0,
-    "share": 0.5391,
-    "low": 0.4528,
-    "high": 0.623,
-    "turns": 18.5
+    "share": 0.5703,
+    "low": 0.4837,
+    "high": 0.6528,
+    "turns": 18.7
    },
    "grave_robber": {
     "games": 128,
-    "starter": 77,
-    "enemy": 51,
+    "starter": 79,
+    "enemy": 49,
     "draws": 0,
-    "share": 0.6016,
-    "low": 0.515,
-    "high": 0.6822,
-    "turns": 20.4
+    "share": 0.6172,
+    "low": 0.5307,
+    "high": 0.6968,
+    "turns": 20.5
    },
    "thornback": {
     "games": 128,
-    "starter": 77,
-    "enemy": 51,
+    "starter": 72,
+    "enemy": 56,
     "draws": 0,
-    "share": 0.6016,
-    "low": 0.515,
-    "high": 0.6822,
-    "turns": 19.2
+    "share": 0.5625,
+    "low": 0.476,
+    "high": 0.6454,
+    "turns": 19.5
    },
    "zealot": {
     "games": 128,
-    "starter": 81,
-    "enemy": 47,
+    "starter": 89,
+    "enemy": 39,
     "draws": 0,
-    "share": 0.6328,
-    "low": 0.5466,
-    "high": 0.7113,
-    "turns": 22.3
+    "share": 0.6953,
+    "low": 0.6108,
+    "high": 0.7684,
+    "turns": 21.3
    }
   },
   "source": "jumpstart",
@@ -61,8 +61,8 @@
   "starters": 16,
   "games_per_pair": 2,
   "seed": 505,
-  "when": "2026-10-14 11:51",
-  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "when": "2026-10-23 09:51",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "handicap": [
    9
   ]
@@ -128,41 +128,6 @@
   "when": "2026-10-14 10:23",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)"
  },
- "jumpstart_without_handicap": {
-  "note": "partial: stopped at 266 of 800 games, 14 Oct 10:38",
-  "all": {
-   "games": 266,
-   "starter": 124,
-   "enemy": 142,
-   "draws": 0,
-   "share": 0.4662,
-   "low": 0.4071,
-   "high": 0.5262,
-   "turns": 19.0
-  },
-  "kinds": {
-   "ember_bandit": {
-    "games": 200,
-    "starter": 99,
-    "enemy": 101,
-    "draws": 0,
-    "share": 0.495,
-    "low": 0.4265,
-    "high": 0.5637,
-    "turns": 18.8
-   },
-   "grave_robber": {
-    "games": 66,
-    "starter": 25,
-    "enemy": 41,
-    "draws": 0,
-    "share": 0.3788,
-    "low": 0.2715,
-    "high": 0.4994,
-    "turns": 19.8
-   }
-  }
- },
  "tuning": [
   {
    "handicap": 6,
@@ -212,5 +177,41 @@
     "turns": 18.9
    }
   }
- ]
+ ],
+ "jumpstart_without_handicap": {
+  "note": "partial: stopped at 266 of 800 games, 14 Oct 10:38",
+  "all": {
+   "games": 266,
+   "starter": 124,
+   "enemy": 142,
+   "draws": 0,
+   "share": 0.4662,
+   "low": 0.4071,
+   "high": 0.5262,
+   "turns": 19.0
+  },
+  "kinds": {
+   "ember_bandit": {
+    "games": 200,
+    "starter": 99,
+    "enemy": 101,
+    "draws": 0,
+    "share": 0.495,
+    "low": 0.4265,
+    "high": 0.5637,
+    "turns": 18.8
+   },
+   "grave_robber": {
+    "games": 66,
+    "starter": 25,
+    "enemy": 41,
+    "draws": 0,
+    "share": 0.3788,
+    "low": 0.2715,
+    "high": 0.4994,
+    "turns": 19.8
+   }
+  }
+ },
+ "history": "23 Oct 2026: Forge updated fb4d809 -> 9a6f776 (round FB2). The RPG data was rebuilt from 9a6f776 (rpg_build_data.py all), the Jumpstart foes made again at the same handicap (rpg_balance.py make --handicap 9 --keep 4 --seed 303) and measured with RPG9's own check (measure --starters 16 --games 2 --seed 505): that is \"measured\". \"before\", \"tuning\" and \"jumpstart_without_handicap\" are RPG9's measurements on fb4d809 (14 Oct), kept as they were."
 }

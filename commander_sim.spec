@@ -48,7 +48,7 @@ a = Analysis(
     # Opus's Linux probe needed exactly these (SONNET_SPEC_R29 section 1.3); add whatever the first Windows build's warnings
     # file (build\\pyinstaller\\commander_sim\\warn-commander_sim.txt) names as missing.
     hiddenimports=[
-        "tools.soak", "soak_bot", "soak_report", "soak_boards", "bridge_rules", "card_check", "deck_loader",
+        "tools.soak", "tools.net_selftest", "soak_bot", "soak_report", "soak_boards", "bridge_rules", "card_check", "deck_loader",
         # Round RPG8: the Adventure is opened from the main menu by a function-level import
         "rpg_screens", "rpg_map_view", "rpg.adventure", "rpg.explore", "rpg.tmx", "pytmx",
     ],

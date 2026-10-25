@@ -51,6 +51,15 @@ public class Main {
      */
     static final int AI_TIMEOUT_SECONDS = 20;
     static int aiTimeout = AI_TIMEOUT_SECONDS;
+    // Round FB2 (Forge 9a6f776): Forge's own undo (#12226, UndoManager) records the whole game before every human priority
+    // prompt in its default mode "Free". The bridge starts it "Off" unless --forge-undo says otherwise, so a prompt costs what it
+    // did at fb4d809. Off means Forge's Undo button does nothing (Forge's old mana-only undo is gone in 9a6f776); the table's own
+    // Undo (round UNDO1) still works. Values: off | single | free (Forge's "Single step" and "Free").
+    static String forgeUndo = "off";
+    static final java.util.Map<String, String> FORGE_UNDO = java.util.Map.of(
+            "off", forge.localinstance.properties.ForgeConstants.UNDO_MODE_OFF,
+            "single", forge.localinstance.properties.ForgeConstants.UNDO_MODE_SINGLE,
+            "free", forge.localinstance.properties.ForgeConstants.UNDO_MODE_FREE);
     /**
      * Round FMT1: the game's format. Commander (the default, and the only one online) or Brawl: MTG Arena's 100-card Brawl,
      * which Forge plays as its Brawl variant (RegisteredPlayer.forVariants: commanders from the deck, 25 life with two players
@@ -97,7 +106,19 @@ public class Main {
                 case "--name": name = args[++i]; break;
                 case "--dev": dev = true; break;
                 case "--ai-timeout": aiTimeout = Integer.parseInt(args[++i]); break;
+                case "--forge-undo": {                                 // round FB2
+                    String v = args[++i];
+                    if (!FORGE_UNDO.containsKey(v)) throw new IllegalArgumentException("--forge-undo must be off, single or free");
+                    forgeUndo = v;
+                    break;
+                }
                 case "--loop-cap": LoopGuard.cap = Integer.parseInt(args[++i]); break;      // round 28e, see LoopGuard (0 = off)
+                case "--threat-ai": Threats.on = !"off".equalsIgnoreCase(args[++i]); break; // round AI2, see Threats (off = Forge's AI alone)
+                case "--plan-cache": {                                                         // round AIT2, see PlanCache (off = Forge's own)
+                    String m = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (PlanCache.MODES.contains(m)) PlanCache.mode = m;
+                    break;
+                }
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
                 case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
                 case "--house-rule": {                                                      // round CD3: a cube's own rule (HouseRules)
@@ -176,7 +197,10 @@ public class Main {
         ready.addProperty("t", "ready");
         ready.addProperty("protocol", 2);                    // 2 = "event" lines, snapshot fields eventSeq / input / inputSeq, "at" on clicks
         ready.addProperty("aiTimeout", aiTimeout);           // round 28d
+        ready.addProperty("forgeUndo", forgeUndo);           // round FB2
         ready.addProperty("loopCap", LoopGuard.cap);         // round 28e
+        ready.addProperty("threatAi", Threats.on);           // round AI2
+        ready.addProperty("planCache", PlanCache.mode);      // round AIT2
         ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
         ready.addProperty("lastStateMarks", true);           // round LAST1c: saves keep the Monarch, Initiative and City's Blessing; a failed load says so
         ready.addProperty("format", format);                 // round FMT1: the Python side checks it
@@ -237,6 +261,11 @@ public class Main {
         FModel.getPreferences().setPref(FPref.UI_SHOW_AUTOTAP_PREVIEW, true);          // which sources auto-pay would tap
         FModel.getPreferences().setPref(FPref.PLAYER_NAME, name);             // skips the "what should we call you" prompt
         FModel.getPreferences().setPref(FPref.MATCH_AI_TIMEOUT, String.valueOf(aiTimeout));   // round 28d, see AI_TIMEOUT_SECONDS (memory only, never saved)
+        FModel.getPreferences().setPref(FPref.UI_UNDO_MODE, FORGE_UNDO.get(forgeUndo));        // round FB2, see forgeUndo (memory only)
+        // Round FB2: Forge 9a6f776 records every local game with one person in it as a replay file (ReplaySession, on by default:
+        // FPref.UI_RECORD_REPLAYS), encoding every game event like a network client and writing into Forge's own user folder
+        // (replays/, the newest 20 kept). Manticore never reads them, so it is only time and disk. Off, in memory only.
+        FModel.getPreferences().setPref(FPref.UI_RECORD_REPLAYS, false);
         if (seed != null) {
             MyRandom.setRandom(new java.util.Random(seed));
         }
@@ -264,6 +293,9 @@ public class Main {
                 System.err.println("gamesync: conceding although the game thread is busy (waited " + CONCEDE_WAIT_MS / 1000 + " s)");
             }
             gc.concede();
+            if (gc instanceof forge.player.PlayerControllerHuman h) {
+                BridgeGui.releaseIfOut(h);                 // round OUT1: the question open at the concede, in a game that goes on
+            }
             return;
         }
         javax.swing.Timer t = new javax.swing.Timer(40, e -> concedeWhenSafe(gui, gc, since));
@@ -476,6 +508,9 @@ public class Main {
                 break;
             }
             default: System.err.println("bridge: unknown command " + c);
+        }
+        if (STALE_CHECKED.contains(c)) {
+            gui.refreshBlockOptions();                         // round BLK1: a click may have changed who blocks whom
         }
     }
 

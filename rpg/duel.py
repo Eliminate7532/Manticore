@@ -53,7 +53,22 @@ class Duel:
         return [(n, k) for n, k in self.enemy_deck["main"]]
 
 
-def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None, now=None, spot=None, once=False, source=None):
+def peek(save, kind_id, encounter="regular", folder=None, source=None):
+    """Round RPG13: (deck index, deck) that the next start() for this foe will play, without using up the save's rng (the
+    encounter screen's "See its deck"; start(index=) then plays that deck for sure). (None, None) when it has no decks;
+    FileNotFoundError when the kind has no file."""
+    data = enemies.read_kind(kind_id, folder)
+    if source is None:
+        source = region_source(save, encounter)
+    _source, decks = enemies.deck_list(data, source)
+    if not decks:
+        return None, None
+    i = save.peek_rng("duel:" + kind_id).randrange(len(decks))
+    return i, decks[i]
+
+
+def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None, now=None, spot=None, once=False, source=None,
+          index=None):
     if encounter not in ENCOUNTERS:
         raise DuelError(f"Unknown kind of fight: {encounter!r}.")
     if save.pending_duel is not None:
@@ -75,7 +90,9 @@ def start(save, kind_id, encounter="regular", pool=None, lists=None, folder=None
     source, decks = enemies.deck_list(data, source)
     if not decks:
         raise DuelError(f"No enemy decks for {kind_id!r}.")
-    index = save.rng("duel:" + kind_id).randrange(len(decks))
+    index_drawn = save.rng("duel:" + kind_id).randrange(len(decks))
+    if not (isinstance(index, int) and not isinstance(index, bool) and 0 <= index < len(decks)):
+        index = index_drawn                  # Round RPG13: index = the deck "See its deck" showed (rpg.duel.peek)
     w = save.world
     save.pending_duel = {"kind": kind_id, "encounter": encounter, "deck": index, "source": source, "map": w.get("map"),
                          "x": w.get("x"), "y": w.get("y"), "started": time.time() if now is None else now}
@@ -173,6 +190,8 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
             gone = save.world.setdefault("cleared" if pd.get("once") else "beaten", [])
             if pd["spot"] not in gone:
                 gone.append(pd["spot"])
+        from rpg import talk                         # Round RPG14: the boss flag, and the quests that count this kind
+        talk.on_duel_won(save.world, pd["kind"], pd.get("encounter"))
     elif result in ("lost", "conceded"):
         rec["losses"] += 1
         cost = numbers.loss_cost(save.gold)
@@ -180,6 +199,15 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
         town = save.world.get("last_town") or world.start_town
         save.world.update(map=town, x=None, y=None)
         out.update(gold=-cost, moved_to=town)
+        inn = save.world.get("inn")                   # Round RPG14: you wake at the inn you last rested at
+        if isinstance(inn, dict) and inn.get("map") and inn.get("spawn"):
+            save.world.update(map=inn["map"], x=None, y=None, spawn=inn["spawn"])
+            save.world.pop("in_town", None)
+            out["inn"] = True
+            # Round RPG17 (Karl 24 Oct: "Losses keep the clock"): no longer on to 07:00 (RPG15 did that, so a player who lost
+            # at night never saw night again - claude/SLICE_ECONOMY_2026-10-24.md 10.3: 0 night fights in 2,495 duels)
+            save.world["beaten"] = []                 # Round RPG15c (review N3): a night at the inn - the beaten foes are back,
+                                                      # as after a rest there (RPG15b) and a loss that wakes you in a town
     else:
         rec["draws"] += 1
     return out

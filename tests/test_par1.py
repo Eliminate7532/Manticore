@@ -384,7 +384,8 @@ class ExportAndDocsTests(unittest.TestCase):
     def test_the_working_agreement_says_how(self):
         text = read(os.path.join(HERE, "docs", "WORKING_AGREEMENT.md"))
         for want in ("desk.py list", "desk.py new", "--elsewhere", "desk.py done", "docs/rounds/", "merging start",
-                     "Never `git worktree prune` or `git worktree repair`", "Never `git push`", "Never run `backup.py` yourself",
+                     "Never `git worktree prune` or `git worktree repair`", "Push only to `claude/...` branches",
+                     "Never push `main`", "never force-push", "Never run `backup.py` yourself",
                      "`/dev/null`", "own engine",
                      "ask for delete permission before your first git write", "don't delete it yourself"):
             self.assertIn(want, text)

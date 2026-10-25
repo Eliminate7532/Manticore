@@ -409,6 +409,15 @@ PLAYING A FRIEND ONLINE (Round MP1: one friend, 1v1, over the internet)
   then your friends join with the new invite code; typing the same name as before gets each of them their own seat back. It
   needs the same version of Forge and the bridge as the game was played with (after a bridge update it can only be
   discarded). Only the host can continue a game; "Resume last game" on the deck screen is for games against the AIs.
+  If it can't connect (Round NETLOG1): every Host online and Join online attempt is written to connection_log.txt in the
+  logs folder (the program folder in your own copy; %LOCALAPPDATA%\Manticore\logs in an installed one) - each step, how long
+  it took and the exact error - and an F8 bug report includes the attempts of the last 7 days (NETLOG1c). Before a two-PC
+  test, run the self-test on the host's PC: python tools\net_selftest.py (an installed copy: Manticore-cli.exe
+  --net-selftest; both take --port N for a port other than 36800, and --timeout S). It listens on the game's port and joins
+  itself through 127.0.0.1, each network address and the Tailscale address, and says in plain words what each result means.
+  An OK there does not prove another PC can get in (Windows Firewall doesn't filter a PC's connections to itself).
+  It also lists which networks Windows calls Public or Private (NETLOG1d) and names a Public one: java.exe must then be
+  allowed on Public networks too, or that network set to Private in Settings > Network & internet.
   Not checked yet on real routers: the exact Windows Firewall prompt, whether Java needs "Public networks" ticked, and UPnP
   on Karl's router. Please report what you see (F8).
 
@@ -856,10 +865,13 @@ forge_bundle/ contains Forge itself (forge.jar and its card scripts), built from
 github.com/Card-Forge/forge (commit fb4d809, version 2.0.16-SNAPSHOT, 2 Oct 2026). Forge is free software
 under the GNU GPL v3 (forge_bundle/FORGE_LICENSE.txt, also LICENSE at the project root).
 The small forge_bridge.jar in java_bridge/ is this project's own code that connects Forge to
-Python (source in java_bridge/src). Two files in it are Forge's own source with small changes, and carry
-the GPL notice as derivatives of Forge: MulliganService.java (one changed line: the free first mulligan) and,
+Python (source in java_bridge/src). Some files in it are Forge's own source with small changes, and carry
+the GPL notice as derivatives of Forge: MulliganService.java (one changed line: the free first mulligan);
 from patch 45, InputPayMana.java (the mana payment waits while a mana ability is still being paid; the
-header of the file and tests/test_patch45.py say what changed and why).
+header of the file and tests/test_patch45.py say what changed and why); from round AIT2, PumpAllAi.java,
+ComputerUtilCard.java and ComputerUtil.java (the AI's combat predictions keep what doesn't change while it
+thinks: one attack plan for identical creatures, one "can it regenerate?" answer per creature; their
+headers and tests/test_ait2.py).
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
@@ -1053,12 +1065,14 @@ FILES - new table and engine
 - forge_client.py      - starts Forge (Java) and talks to it: JSON lines over stdin/stdout
 - java_bridge/         - forge_bridge.jar and its Java source (the bridge into Forge's GUI interface); a newer jar
                          here is copied into forge_runtime/ automatically when the game starts. The jar also holds
-                         two patched copies of Forge classes: MulliganService (src/forge/game/mulligan/: the first
-                         mulligan is free) and, from patch 45, InputPayMana (src/forge/gamemodes/match/input/: the
-                         payment waits while a mana ability is still being paid); the game puts the bridge jar FIRST
-                         on the Java class path so they replace Forge's own copies. When Forge is updated, re-copy
-                         them from the new Forge and re-apply the marked changes (tests/test_patch45.py goes red
-                         until InputPayMana is redone).
+                         patched copies of Forge classes: MulliganService (src/forge/game/mulligan/: the first
+                         mulligan is free), from patch 45 InputPayMana (src/forge/gamemodes/match/input/: the
+                         payment waits while a mana ability is still being paid) and, from round AIT2, PumpAllAi,
+                         ComputerUtilCard and ComputerUtil (src/forge/ai/: the AI's combat predictions keep what
+                         doesn't change while it thinks); the game puts the bridge jar FIRST on the Java class path
+                         so they replace Forge's own copies. When Forge is updated, re-copy them from the new Forge
+                         and re-apply the marked changes (tests/test_patch45.py and tests/test_ait2.py go red until
+                         they are redone).
                          Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
                          and commit it with the change: the jar carries a stamp of the sources it was built from, and
                          tests/test_round27c.py fails when the two differ (round 27c: an old jar once shipped that way).

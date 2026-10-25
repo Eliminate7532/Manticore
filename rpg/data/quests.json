@@ -1,0 +1,81 @@
+{
+ "version": 1,
+ "quests": {
+  "the_dark_hall": {
+   "title": "The Dark Hall",
+   "giver": "elder",
+   "goal": {
+    "flag": "grave_priest_beaten"
+   },
+   "offer": [
+    "Three nights ago the duel hall went dark. Every candle, all at once. Brann hasn't lit one since.",
+    "Now the chapel graves are open and the dead walk the moor. Their tracks lead to the old mill.",
+    "Under the mill lie the Warrens. Someone there is raising the dead with Echoes gone wrong. Hushed.",
+    "I am too old to go down. Orrin is gone. That leaves you. Will you go?"
+   ],
+   "yes": "I'll go down.",
+   "no": "Not yet.",
+   "accepted": [
+    "Good. Take the east gate, then the road past the chapel. The mill's stairs go under the wheel.",
+    "And scribe. If you find anything of Orrin's down there, bring it to me. Anything at all."
+   ],
+   "declined": [
+    "Then sharpen your deck and think on it. The dead are patient. I am less so."
+   ],
+   "progress": [
+    "The Warrens are still under the mill, and the dead still walk. Go down. Find who calls them."
+   ],
+   "ready": [
+    "You beat the Grave Priest. I felt the hall light from here. My knees stopped aching. Odd, that.",
+    "And this paper was on him? Give it here. That's Orrin's hand. He always crossed his sevens.",
+    "A map. The Marches, the Drowned Coast, and a mark on Saltmere. 'Ferry east,' he's written.",
+    "So he went over the water. Then so must you. Take the map, and this purse for the road."
+   ],
+   "done": [
+    "The map is yours now. Follow it to the coast. Find the ferryman who took Orrin east."
+   ],
+   "reward": {
+    "flag": "has_orrins_map",
+    "gold": 50
+   },
+   "journal": "Find who raised the dead below the old mill, and why the duel hall went dark."
+  },
+  "lamplighters_debt": {
+   "title": "The Lamplighter's Debt",
+   "giver": "lamplighter",
+   "goal": {
+    "beat": "ember_bandit",
+    "count": 3
+   },
+   "offer": [
+    "Can I ask you a thing? A big thing? It's three things. Three bandits.",
+    "The Ember lot on the road keep taking my oil. I bought it on credit from Brackwater. Now I owe.",
+    "If you beat three of them, they'll stay off the road. I can pay you. Master Orrin left a card with me."
+   ],
+   "yes": "I'll do it.",
+   "no": "Sorry, Pell.",
+   "accepted": [
+    "Really? Thank you! They wear red sashes. You'll see them on the road, near the bridge.",
+    "Don't let them talk you into a deal. They always win the deals."
+   ],
+   "declined": [
+    "No, that's fair. They're very rude bandits. I'll just. Stand here. In the dark."
+   ],
+   "progress": [
+    "Still bandits on the road? I saw a red sash by the gallows trees. Three, remember. Three in all."
+   ],
+   "ready": [
+    "Three! The road's clear! A cart came in this morning with all its oil. All of it!",
+    "Here. Master Orrin gave me this for lighting the hall. He said I'd know who to give it to.",
+    "I think it's you."
+   ],
+   "done": [
+    "Every lamp on the square is lit. I'm going to stand under them all evening. Just because."
+   ],
+   "reward": {
+    "card": "rare_from_band"
+   },
+   "journal": "Beat three Ember Bandits on the east road so Pell's oil carts get through."
+  }
+ }
+}

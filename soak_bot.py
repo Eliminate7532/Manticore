@@ -30,6 +30,9 @@ from allocation import Allocation
 
 PRIORITY_CLICK_CAP = 2      # don't keep clicking a card that did nothing (card_check.next_move's "clicked" does the same)
 PAY_REPEAT_CAP = 4          # round SB1: the same payment question back this often in one step -> decline it
+CONFIRM_REPEAT_CAP = 4      # round SB4: the same yes/no question back this often in one step -> No
+PLAY_LAND = "Play land"     # round SB2: Forge's label for a land's own "play it" ability ("Play land (Silundi Isle)" for an MDFC)
+PLAY_LAND_SHARE = 0.9       # round SB2: how often the bot takes it when a land's click asks "Choose an ability"
 MULLIGAN_WORDS = ("mulligan", "coin toss")
 
 
@@ -39,6 +42,21 @@ def _playable(card):
     never played a land or a spell in its first night (27 Sept: 0 permanents all game, every game). card_check.next_move
     uses the same either-flag test for mana sources."""
     return bool(card.get("selectable") or card.get("weak"))
+
+
+def _play_land_index(req, items):
+    """Round SB2: the index of "Play land" in a "Choose an ability" question, else None. Clicking a land that has another ability
+    (Channel, Cycling, a Town's ability, an MDFC's spell face) asks which one. Forge offers "Play land" there only when playing
+    it is legal now (InputPassPriority: getAllPossibleAbilities(player, removeUnplayable=true), the bridge's click passes no
+    trigger event), so its being offered means no land was played this turn (or one more is allowed). The old rule (skip 25%,
+    then 0 or 1 item) played such a land 6 of 44 times in the 15-16 Oct soak (claude/SOAK_RUN_2026-10-16.md, re-check)."""
+    if (req.get("title") or "") != "Choose an ability" or req.get("kind") not in ("choose_optional", "choose"):
+        return None
+    for i, it in enumerate(items):
+        label = it.get("label") if isinstance(it, dict) else it
+        if isinstance(label, str) and (label == PLAY_LAND or label.startswith(PLAY_LAND + " (")):
+            return i
+    return None
 
 
 def _is_land(card):
@@ -89,6 +107,11 @@ class SoakBot:
         bridge (BridgeGui.ask) reads every one of these back."""
         items = req.get("items") or []
         real = [i for i, it in enumerate(items) if not card_check.is_heading(it) and not card_check.is_finish(it)]
+        land = _play_land_index(req, items)
+        if land is not None:
+            if self.rng.random() < PLAY_LAND_SHARE:
+                return [land]
+            real = [i for i in real if i != land]           # the other share: the old rule over the land's other abilities
         lo, hi = req.get("min", 0) or 0, req.get("max")
         if hi is None or hi < 0:
             hi = len(real)
@@ -162,7 +185,31 @@ class SoakBot:
             move = self._payment_loop_move(state, prompt, msg, mem)
             if move is not None:
                 return move
+        if state.get("input") == "InputConfirm":
+            move = self._confirm_loop_move(state, prompt, msg, mem)
+            if move is not None:
+                return move
         return card_check.next_move(state, requests, mem)
+
+    @staticmethod
+    def _confirm_loop_move(state, prompt, msg, mem):
+        """Round SB4 (the cloud soak of release-0.28.53.12, 23 Oct 2026, classic draft decks, game 2): Chain of Smog ("Target
+        player discards two cards. That player may copy this spell ...") went back and forth. Forge asked the bot "Do you want
+        to copy the spell Chain of Smog?" in the prompt bar (InputConfirm, Yes/No) and card_check.next_move answers that with
+        OK, so the bot said Yes 575 times in one Main 1 (each copy also made a Pest with its Sedgemoor Witch: 598 permanents)
+        while the AI copied back, until the 30-minute time cap. A person stops. So: the same yes/no question (its text
+        without ids) asked under more than CONFIRM_REPEAT_CAP question numbers in one step of one turn is answered No
+        (Cancel). No is always a legal answer to Forge's InputConfirm. A "confirm" REQUEST (a window) is SoakBot's 50:50
+        and isn't touched; neither is the mulligan."""
+        where = (state.get("turn"), state.get("phase"))
+        if mem.get("soak_confirm_where") != where:
+            mem["soak_confirm_where"] = where
+            mem["soak_confirm_asked"] = {}
+        seqs = mem["soak_confirm_asked"].setdefault(card_check.prompt_key(msg), set())
+        seqs.add(state.get("inputSeq"))
+        if len(seqs) > CONFIRM_REPEAT_CAP and (prompt.get("cancel") or {}).get("enabled"):
+            return ("cancel",)
+        return None
 
     @staticmethod
     def _payment_loop_move(state, prompt, msg, mem):
@@ -200,6 +247,8 @@ class SoakBot:
         mem["seen"] = {}
         mem["soak_players_tried"] = set()
         mem["soak_blocks_done"] = set()
+        mem["soak_must_block"] = {}            # round SB3: the attackers tried for each creature that must block
+        mem["soak_block_queue"] = []           # round SB3: a click planned for an earlier question is never sent in a new one
         mem["soak_picked"] = set()
         mem["soak_pick_want"] = None
         mem["soak_players_picked"] = set()
@@ -293,11 +342,14 @@ class SoakBot:
         count = _BLOCK_COUNT.search(text)
         if count:
             return self._block_count_move(state, me, mem, int(count.group(1)), len(infos))
-        if "must block" not in text and "must be blocked" not in text:
+        if not any(w in text for w in ("must block", "must be blocked", "must still block")):    # SB3: "must still block X"
             return None
         ids = [int(x) for x in re.findall(r"\((\d+)\)", text)]
         done = mem.setdefault("soak_blocks_done", set())
         mine = {c["id"]: c for c in (me.get("zones") or {}).get("battlefield") or []}
+        named_mine = [cid for cid in ids if cid in mine]
+        if named_mine:                                 # round SB3: a creature of mine that must block - see _must_block_move
+            return self._must_block_move(state, me, mem, named_mine[0], ids, len(infos))
         for cid in ids:
             if cid in done:
                 continue
@@ -312,6 +364,78 @@ class SoakBot:
         if queue:
             return ("click", queue.pop(0))
         return None
+
+    @staticmethod
+    def _current_attacker(state):
+        """The attacker Forge's block question is about now: "Select creatures to block Woe Strider (133) or ..." - else the
+        attacking card the snapshot highlights. None when neither says."""
+        m = re.search(r"to block .*?\((\d+)\)", ((state.get("prompt") or {}).get("message") or ""))
+        if m:
+            return int(m.group(1))
+        for c, _zone, _player in card_check.all_cards(state):
+            if c.get("attacking") and c.get("highlight"):
+                return c.get("id")
+        return None
+
+    def _must_block_move(self, state, me, mem, cid, ids, said):
+        """Round SB3 (soak of 19-20 Oct, game 58): "Spirit Token (319) must block an attacker, but has not been assigned to
+        block any." AI 1 attacked with nine creatures; Priest of the Crossing carried The Masamune ("must be blocked if
+        able"), and the soak seat's flying Spirit Token was the only creature able to block it. The block question was on
+        Woe Strider. Forge's CombatUtil.canBlock: "if the attacker has no lure effect, but the blocker can block another
+        attacker with lure, the blocker can't block the former" - so clicking the token while Woe Strider was the current
+        attacker did nothing (InputBlock.onCardSelected adds a blocker only when canBlock is true). The old rule clicked a
+        named creature once, against whichever attacker was current, then only pressed OK: 41 commands on one question and
+        the 120 s stall. Forge's message names the blocker, not the attacker it has to block.
+
+        Now each refusal that names a creature of mine gets one plan: the creature comes off any attacker it blocks now
+        (make that attacker current, click the creature), then the next attacker not tried yet becomes current and the
+        creature is clicked. Attackers are tried in this order: one the message names ("must still block X"), the ones the
+        snapshot says the creature can block ("canBlock", Round BLK1's field, when the bridge sends it), the current one,
+        then the rest in Forge's combat order. Each refusal is acted on once (said = how many messages so far); with every
+        attacker tried it gives up (OK then goes on being refused - as before, but only after every attacker was tried)."""
+        queue = mem.setdefault("soak_block_queue", [])
+        if queue:
+            return ("click", queue.pop(0))
+        plans = mem.setdefault("soak_must_block", {})
+        plan = plans.setdefault(cid, {"tried": [], "said": None})
+        if plan["said"] == said:
+            return None                                         # this refusal has had its clicks: let OK be pressed again
+        plan["said"] = said
+        mine = {c["id"]: c for c in (me.get("zones") or {}).get("battlefield") or []}
+        me_key = "p%s" % me.get("id")
+        combat = state.get("combat") or []
+
+        def defends(entry):                                     # an attacker coming at me or at one of my permanents
+            d = str(entry.get("defender") or "")
+            return d == me_key or (d.startswith("c") and d[1:].isdigit() and int(d[1:]) in mine)
+
+        attackers = [e.get("card") for e in combat if e.get("card") is not None and defends(e)]
+        if not combat:                                          # a snapshot without "combat" (older recordings): the cards
+            attackers = [c.get("id") for c, _z, owner in card_check.all_cards(state)    # marked attacking that aren't mine
+                         if c.get("attacking") and owner != me.get("id")]
+        blocks_now = [e.get("card") for e in combat if cid in (e.get("blockers") or [])]
+        current = self._current_attacker(state)
+        if not attackers and not plan["tried"]:
+            plan["tried"].append(current)
+            return ("click", cid)                               # nothing to choose between: the old one click
+        allowed = mine.get(cid, {}).get("canBlock")
+        order = [a for a in ids if a in attackers]
+        order += [a for a in (allowed or []) if a in attackers]
+        if current in attackers:
+            order.append(current)
+        order += attackers
+        if allowed is not None:                                 # the bridge says exactly which: never try one it rules out
+            order = [a for a in order if a in allowed]
+        target = next((a for a in order if a not in plan["tried"] and a not in blocks_now), None)
+        if target is None:
+            return None
+        plan["tried"].append(target)
+        for wrong in blocks_now:                                # off the attacker it blocks now (click it again there)
+            queue.extend([wrong, cid])
+        if not blocks_now and target == current:
+            return ("click", cid)                               # already the current attacker: just the creature
+        queue.extend([target, cid])
+        return ("click", queue.pop(0))
 
     def _block_count_move(self, state, me, mem, attacker_id, said):
         """Round 29a (soak night 10, game 83): "Agent Venom (401) cannot be blocked with 1 creatures you've assigned". The bot

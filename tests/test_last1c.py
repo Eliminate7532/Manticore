@@ -221,9 +221,11 @@ class LiveTests(unittest.TestCase):
         s = self.checker()
         self.setup_board(s, BOARD)
         self.assertEqual(s.setup_failures, [])
-        self.assertTrue(wait(s, lambda: "The Monarch" in command_names(s.state, 0)), command_names(s.state, 0))
-        self.assertIn("City's Blessing", command_names(s.state, 0))
-        self.assertIn("The Initiative", command_names(s.state, 1))
+        # all three, not one then the others at once: the designations arrive in separate snapshots (merged main, 23 Oct: under
+        # the full suite's load the snapshot had The Monarch and not yet the City's Blessing)
+        self.assertTrue(wait(s, lambda: {"The Monarch", "City's Blessing"} <= set(command_names(s.state, 0))
+                             and "The Initiative" in command_names(s.state, 1)),
+                        (command_names(s.state, 0), command_names(s.state, 1)))
         self.assertTrue(wait(s, lambda: (s.state.get("asking") is True
                                          and (s.state.get("prompt") or {}).get("message", "").startswith("Priority:"))))
         path = os.path.join(tmp, "saved.state")
@@ -248,9 +250,9 @@ class LiveTests(unittest.TestCase):
         self.assertIsNone(s2.state_load_failed)
         self.assertEqual(s2.setup_failures, [])
         self.assertTrue(wait(s2, lambda: s2.state.get("turn") == 5))
-        self.assertTrue(wait(s2, lambda: "The Monarch" in command_names(s2.state, 0)), command_names(s2.state, 0))
-        self.assertIn("City's Blessing", command_names(s2.state, 0))
-        self.assertIn("The Initiative", command_names(s2.state, 1))
+        self.assertTrue(wait(s2, lambda: {"The Monarch", "City's Blessing"} <= set(command_names(s2.state, 0))
+                             and "The Initiative" in command_names(s2.state, 1)),
+                        (command_names(s2.state, 0), command_names(s2.state, 1)))     # all three (see above)
         self.assertNotIn("The Monarch", command_names(s2.state, 1))
         bf = [c["name"] for c in s2.state["players"][0]["zones"]["battlefield"]]
         self.assertNotIn("Wayward Swordtooth", bf)

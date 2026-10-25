@@ -1,0 +1,72 @@
+name: The Ashfen outskirts
+region: 1
+backdrop: forest
+darkness: 0.5
+lantern: 3.5
+music: music.rpg_outskirts
+ambience: amb.graveyard
+outdoor: true
+dungeon: false
+event_rate: 500
+[markers]
+X = exit map=lantern_hollow spawn=from_outskirts on =
+1 = spawn from_town on =
+M = exit map=warrens_1 spawn=entrance on >
+9 = spawn mill_door on w
+W = town town=town_2 on =
+7 = spawn town_2 on =
+Z = town town=town_3 on =
+8 = spawn town_3 on =
+E = encounter kind=ember_bandit on =
+O = encounter kind=grave_robber on .
+F = encounter kind=thornback on :
+Y = encounter kind=zealot when=!phase:night on .
+[more markers]
+a = encounter kind=grave_robber spot=night_graves when=phase:night on .
+d = encounter kind=grave_robber spot=night_chapel when=phase:night on +
+q = encounter kind=plague_rat encounter=dungeon once=false spot=night_rocks when=phase:night,flag:warrens_entered,!flag:grave_priest_beaten home=Up_from_the_mill's_cellar on :
+u = encounter kind=plague_rat encounter=dungeon once=false spot=night_mill when=phase:night,flag:warrens_entered,!flag:grave_priest_beaten home=Up_from_the_mill's_cellar on .
+G = rare id=old_gorsehide on :
+S = rare id=red_sash on .
+N = rare id=mother_of_rats on .
+[map]
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TTTTTTTTT.........TTTTTTT...~~......................TTTTTTTT
+TTTTTTTTT.........TTTTTTT...~~...........HHHHHHHHHH.TTTTTTTT
+TTTTTTTTT.......t.TTTTTTT...~~...........HwxxwwwwoH.TTTTTTTT
+TTTTTTTTT...................~~..:::::::::HwwwMMwwoH.......TT
+TTTTTTTTT...................~~..:::::::::HwwwwwwwwH.......TT
+TT..........................~~..:::::::::Hwww9wwwwH...N...TT
+TT........::::::............~~..::::F::::HxwwwwwwwH.......TT
+TT........::::::............~~..:::::::::HHHHDDHHHH.......TT
+TT..."....::G:::..........y.~~..:::::::q:....==...........TT
+TT........::::::............~~..:::::::::....==...........TT
+TT...."...::::::....".......~~...............==...........TT
+TT..........................~~...............==..."..u....TT
+TT......t...................~~....y......."..==...........TT
+TT......................."..~~...............==...........TT
+TT..........................~~....S..........==........t..TT
+TT............t.............~~........t......==...........TT
+TT........p.................~~...............==p..........TT
+X=1=====================E===vv===========================7=W
+X===========================vv==========E==================W
+TT..........==..............~~."..................p==.....TT
+TT........".=E........t.....~~..........t..........==.....TT
+TT..........==..............~~.....................==."...TT
+TT..........==..............~~..................y..==.....TT
+TT........Y.==..............~~.......".............==.....TT
+TT..........==..........bbbbbbbbbbb.........:::::::==.....TT
+TT....######++#####.....bbbbbbbbbbb.........:::::::==.....TT
+TT....#+++++++++++#.....bbbbbbbbbbb.t.......:::::::==.....TT
+TT....#+!+++++++!++.R.R.Rbbbbbbbbbb.........::::F::==.....TT
+TTTTT.#+++nnnnn+++#..a..bbbbbbbbbbb........."::::::==.TTTTTT
+TTTTT.++++++++d+++#.R.R.bbbbbbbbbbb.........:::::::==.TTTTTT
+TTTTT.++++++++++++#.....bbbbbbbbbbb.........:::::::==.TTTTTT
+TTTTT.#++++++++z++#.R.R.R...bbb.............:::::::==.TTTTTT
+TTTTT.#+j+++++++++#.........bbb.....TTTTTTTTTTT....==.TTTTTT
+TTTTT.#+++++++++++#....O....bbb.....TTTTTTTTTTT....==.TTTTTT
+TTTTT.####++###+###.................TTTTTTTTTTT....==.TTTTTT
+TTTTT...............................TTTTTTTTTTT....8=.TTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTZZTTTTTTT

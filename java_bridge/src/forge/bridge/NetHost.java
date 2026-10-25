@@ -160,6 +160,18 @@ public class NetHost {
                 case "--upnp": upnp = true; break;
                 case "--dev": Main.dev = true; break;
                 case "--ai-timeout": Main.aiTimeout = Integer.parseInt(args[++i]); break;
+                case "--forge-undo": {                                 // round FB2, as in Main
+                    String v = args[++i];
+                    if (!Main.FORGE_UNDO.containsKey(v)) throw new IllegalArgumentException("--forge-undo must be off, single or free");
+                    Main.forgeUndo = v;
+                    break;
+                }
+                case "--threat-ai": Threats.on = !"off".equalsIgnoreCase(args[++i]); break;     // round AI2
+                case "--plan-cache": {                                                             // round AIT2
+                    String m = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (PlanCache.MODES.contains(m)) PlanCache.mode = m;
+                    break;
+                }
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;
                 case "--block-seconds": blockSeconds = Integer.parseInt(args[++i]); break;           // tests
                 case "--stall-seconds": RemoteWire.stallSeconds = Integer.parseInt(args[++i]); break; // tests
@@ -803,6 +815,7 @@ public class NetHost {
         ready.addProperty("online", true);
         ready.addProperty("aiTimeout", Main.aiTimeout);
         ready.addProperty("loopCap", LoopGuard.cap);
+        ready.addProperty("threatAi", Threats.on);           // round AI2
         ready.addProperty("grace", graceSeconds);
         if (spectator) {
             ready.addProperty("spectator", true);

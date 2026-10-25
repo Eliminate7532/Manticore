@@ -1,7 +1,7 @@
 {
  "kind": "wild_elf",
  "name": "Wild Elf",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -18,11 +18,43 @@
    "index": 9,
    "main": [
     [
+     "Survivors' Encampment",
+     4
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Timberwatch Elf",
+     2
+    ],
+    [
      "Forest",
-     22
+     21
     ],
     [
      "Jaspera Sentinel",
+     4
+    ],
+    [
+     "Spidersilk Armor",
+     3
+    ],
+    [
+     "Wildheart Invoker",
+     4
+    ],
+    [
+     "Fyndhorn Elves",
+     4
+    ],
+    [
+     "Sylvan Ranger",
+     3
+    ],
+    [
+     "Elvish Vanguard",
      4
     ],
     [
@@ -30,49 +62,17 @@
      4
     ],
     [
-     "Elvish Vanguard",
-     4
-    ],
-    [
-     "Ivy Lane Denizen",
-     2
-    ],
-    [
-     "Timberwatch Elf",
-     3
-    ],
-    [
-     "Fyndhorn Elves",
-     3
-    ],
-    [
-     "Lead the Stampede",
-     4
-    ],
-    [
-     "Llanowar Elves",
-     3
-    ],
-    [
-     "Lys Alana Huntmaster",
-     4
-    ],
-    [
-     "Survivors' Encampment",
-     3
-    ],
-    [
      "Priest of Titania",
-     4
+     3
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 22,
-    "2": 5,
-    "3": 26,
-    "4": 4,
-    "5": 3
+    "0": 21,
+    "1": 4,
+    "2": 10,
+    "3": 21,
+    "4": 4
    }
   },
   {
@@ -81,12 +81,16 @@
    "index": 9,
    "main": [
     [
-     "Forest",
-     21
+     "Survivors' Encampment",
+     4
     ],
     [
-     "Lys Alana Huntmaster",
+     "Jaspera Sentinel",
      4
+    ],
+    [
+     "Forest",
+     21
     ],
     [
      "Lead the Stampede",
@@ -97,23 +101,7 @@
      4
     ],
     [
-     "Essence Warden",
-     2
-    ],
-    [
-     "Survivors' Encampment",
-     4
-    ],
-    [
-     "Llanowar Elves",
-     4
-    ],
-    [
-     "Elvish Vanguard",
-     2
-    ],
-    [
-     "Wellwisher",
+     "Wildheart Invoker",
      4
     ],
     [
@@ -121,7 +109,19 @@
      3
     ],
     [
-     "Elvish Mystic",
+     "Ivy Lane Denizen",
+     3
+    ],
+    [
+     "Sylvan Ranger",
+     1
+    ],
+    [
+     "Elvish Vanguard",
+     4
+    ],
+    [
+     "Wellwisher",
      4
     ],
     [
@@ -132,9 +132,10 @@
    "sideboard": [],
    "tiers": {
     "0": 21,
-    "2": 6,
-    "3": 25,
-    "5": 8
+    "1": 4,
+    "2": 8,
+    "3": 23,
+    "4": 4
    }
   },
   {
@@ -143,78 +144,19 @@
    "index": 9,
    "main": [
     [
-     "Forest",
-     21
-    ],
-    [
      "Survivors' Encampment",
      4
     ],
     [
-     "Lead the Stampede",
-     4
+     "Wrap in Vigor",
+     2
     ],
     [
      "Timberwatch Elf",
-     4
-    ],
-    [
-     "Jaspera Sentinel",
      3
-    ],
-    [
-     "Essence Warden",
-     3
-    ],
-    [
-     "Wellwisher",
-     3
-    ],
-    [
-     "Priest of Titania",
-     3
-    ],
-    [
-     "Fyndhorn Elves",
-     4
-    ],
-    [
-     "Lys Alana Huntmaster",
-     3
-    ],
-    [
-     "Elvish Vanguard",
-     4
-    ],
-    [
-     "Elvish Mystic",
-     4
-    ]
-   ],
-   "sideboard": [],
-   "tiers": {
-    "0": 21,
-    "2": 7,
-    "3": 25,
-    "4": 3,
-    "5": 4
-   }
-  },
-  {
-   "name": "Wild Elf 4",
-   "archetype": "Elves Elfos Ug",
-   "index": 9,
-   "main": [
-    [
-     "Forest",
-     22
     ],
     [
      "Lead the Stampede",
-     4
-    ],
-    [
-     "Timberwatch Elf",
      4
     ],
     [
@@ -222,7 +164,86 @@
      2
     ],
     [
-     "Llanowar Elves",
+     "Spidersilk Armor",
+     4
+    ],
+    [
+     "Wildheart Invoker",
+     3
+    ],
+    [
+     "Forest",
+     21
+    ],
+    [
+     "Sylvan Ranger",
+     3
+    ],
+    [
+     "Elvish Vanguard",
+     4
+    ],
+    [
+     "Wellwisher",
+     4
+    ],
+    [
+     "Lys Alana Huntmaster",
+     2
+    ],
+    [
+     "Priest of Titania",
+     4
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 21,
+    "1": 5,
+    "2": 11,
+    "3": 21,
+    "4": 2
+   }
+  },
+  {
+   "name": "Wild Elf 4",
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "main": [
+    [
+     "Lead the Stampede",
+     3
+    ],
+    [
+     "Timberwatch Elf",
+     4
+    ],
+    [
+     "Forest",
+     22
+    ],
+    [
+     "Spidersilk Armor",
+     3
+    ],
+    [
+     "Nettle Sentinel",
+     4
+    ],
+    [
+     "Fyndhorn Elves",
+     3
+    ],
+    [
+     "Viridian Longbow",
+     1
+    ],
+    [
+     "Elvish Vanguard",
+     4
+    ],
+    [
+     "Wellwisher",
      4
     ],
     [
@@ -230,42 +251,25 @@
      4
     ],
     [
-     "Survivors' Encampment",
-     3
-    ],
-    [
-     "Elvish Vanguard",
-     3
-    ],
-    [
-     "Fyndhorn Elves",
-     4
-    ],
-    [
-     "Priest of Titania",
-     4
-    ],
-    [
      "Elvish Mystic",
-     3
+     2
     ],
     [
      "Essence Warden",
      3
-    ]
-   ],
-   "sideboard": [
+    ],
     [
-     "Survivors' Encampment",
-     1
+     "Priest of Titania",
+     3
     ]
    ],
+   "sideboard": [],
    "tiers": {
     "0": 22,
-    "2": 6,
-    "3": 23,
-    "4": 2,
-    "5": 7
+    "2": 7,
+    "3": 25,
+    "4": 4,
+    "5": 2
    }
   }
  ],
@@ -356,7 +360,7 @@
   },
   {
    "archetype": "Elves Elfos Ug",
-   "index": 12,
+   "index": 9,
    "reasons": [
     "Forge's AI is told to leave these out: Distant Melody (Random)"
    ]
@@ -448,6 +452,27 @@
   {
    "archetype": "Elves Elfos Ug",
    "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "Elves Elfos Ug",
+   "index": 12,
+   "reasons": [
+    "Forge's AI is told to leave these out: Distant Melody (Random)"
+   ]
+  },
+  {
+   "archetype": "(5-0) Elves Ug",
+   "index": 54,
    "reasons": [
     "Forge's AI is told to leave these out: Distant Melody (Random)"
    ]
@@ -552,31 +577,31 @@
   }
  ],
  "soak": {
-  "run": "rpg_enemies3",
-  "when": "2026-10-12 14:09",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Wild Elf 2": {
-    "games": 10,
-    "game_over": 10,
-    "as_ai": 5,
-    "failed": []
-   },
-   "Wild Elf 3": {
-    "games": 11,
-    "game_over": 11,
-    "as_ai": 6,
+   "Wild Elf 1": {
+    "games": 6,
+    "game_over": 6,
+    "as_ai": 2,
     "failed": []
    },
    "Wild Elf 4": {
-    "games": 11,
-    "game_over": 11,
-    "as_ai": 5,
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 2,
     "failed": []
    },
-   "Wild Elf 1": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 4,
+   "Wild Elf 3": {
+    "games": 1,
+    "game_over": 1,
+    "as_ai": 0,
+    "failed": []
+   },
+   "Wild Elf 2": {
+    "games": 2,
+    "game_over": 2,
+    "as_ai": 2,
     "failed": []
    }
   },

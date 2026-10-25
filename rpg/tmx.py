@@ -20,6 +20,15 @@ probability, x, y, width, height) are not kept among its properties, so a custom
 Kept as RPG5 read them (a review of the round found PyTMX did otherwise): image layers are left out before PyTMX reads the map; a
 property type PyTMX doesn't know is a string; an empty string property is ""; a tile object keeps the y Tiled wrote and only its
 own properties.
+
+Round RPG10 (the Adventure remaster's art, 23 Oct 2026): tiles move.
+  - Tiled's own tile animations (a tile's <animation> frames, made in Tiled's tile animation editor) are kept:
+    Tileset.anims {local tile id: [(local frame tile id, milliseconds), ...]}.
+  - DawnLike animates by pairs of sheets instead (Pit0.png / Pit1.png, Humanoid0.png / Humanoid1.png: the same tile in the same
+    place on both), which one Tiled tileset can't say. A tileset property "frame2" names the second sheet (relative to the .tsx
+    file, or to the map for a tileset inside it), and "frame_ms" how long each sheet shows (FRAME_MS when not given).
+  - TiledMap.frame_at(gid, ms) says what to draw at a moment: (the tile id, 0 for the tileset's own image or 1 for its frame2).
+  - A tileset's own properties are kept as Tileset.tprops.
 """
 import os
 import xml.etree.ElementTree as ET
@@ -34,6 +43,7 @@ FLIP_V = 0x40000000
 FLIP_D = 0x20000000
 ROTATE_HEX = 0x10000000
 GID_MASK = 0x0FFFFFFF
+FRAME_MS = 500                   # Round RPG10: how long each of a pair of sheets shows (DawnLike's 2-frame tiles) - my estimate
 PYTMX_TILE_KEYS = frozenset(("id", "type", "class", "probability", "x", "y", "width", "height", "frames", "source", "trans",
                              "colliders", "path"))     # what PyTMX puts beside a tile's own properties
 
@@ -44,11 +54,15 @@ class TmxError(Exception):
 
 class Tileset:
     __slots__ = ("firstgid", "name", "tilewidth", "tileheight", "tilecount", "columns", "margin", "spacing", "image",
-                 "imagewidth", "imageheight", "props", "source")
+                 "imagewidth", "imageheight", "props", "source", "tprops", "anims", "image2", "frame_ms")
 
     def __init__(self):
         self.props = {}               # local tile id -> {name: value}
         self.source = None            # the .tsx file, when the tileset is outside the map
+        self.tprops = {}              # Round RPG10: the tileset's own properties
+        self.anims = {}               # Round RPG10: local tile id -> [(local frame tile id, ms), ...] (Tiled's tile animations)
+        self.image2 = None            # Round RPG10: the second sheet of a pair (tileset property "frame2"), or None
+        self.frame_ms = FRAME_MS
 
     def local(self, gid):
         return gid - self.firstgid
@@ -92,6 +106,23 @@ class TiledMap:
             if ts.firstgid <= gid:
                 found = ts
         return found
+
+    def frame_at(self, gid, ms):
+        """Round RPG10: what to draw for tile `gid` at `ms` milliseconds: (tile id, 0 = the tileset's image or 1 = its frame2).
+        A Tiled animation picks the frame; a pair of sheets switches every frame_ms; a tile with neither is (gid, 0)."""
+        ts = self.tileset_for(gid)
+        if ts is None:
+            return gid, 0
+        seq = ts.anims.get(gid - ts.firstgid)
+        if seq:
+            t = int(ms) % sum(d for _f, d in seq)
+            for f, d in seq:
+                if t < d:
+                    gid = ts.firstgid + f
+                    break
+                t -= d
+        sheet = (int(ms) // ts.frame_ms) % 2 if ts.image2 else 0
+        return gid, sheet
 
     def tile_props(self, gid):
         ts = self.tileset_for(gid)
@@ -247,13 +278,36 @@ def read_map(path):
             rows = (ts.imageheight - 2 * ts.margin + ts.spacing) // (ts.tileheight + ts.spacing)
             ts.tilecount = rows * ts.columns
         ts.source = tsx.get(ts.firstgid)
+        ts.tprops = _props(getattr(pts, "properties", None) or {})
         for local in range(ts.tilecount):
             mapped = pm.gidmap.get(ts.firstgid + local)
             if not mapped:
                 continue
-            props = {k: v for k, v in _props(pm.tile_properties.get(mapped[0][0]) or {}).items() if k not in PYTMX_TILE_KEYS}
+            raw = pm.tile_properties.get(mapped[0][0]) or {}
+            props = {k: v for k, v in _props(raw).items() if k not in PYTMX_TILE_KEYS}
             if props:
                 ts.props[local] = props
+            frames = raw.get("frames") or []
+            if frames:
+                seq = []
+                for fr in frames:
+                    f = (pm.tiledgidmap.get(fr.gid, 0) & GID_MASK) - ts.firstgid
+                    if not 0 <= f < ts.tilecount or int(fr.duration) <= 0:
+                        raise TmxError(f"{where}: tileset {ts.name!r} tile {local}'s animation has a frame that isn't one of its "
+                                       f"tiles, or lasts no time (tile {f}, {fr.duration} ms)")
+                    seq.append((f, int(fr.duration)))
+                ts.anims[local] = seq
+        pair = ts.tprops.get("frame2")
+        if pair:
+            ts.image2 = os.path.normpath(os.path.join(os.path.dirname(ts.source) if ts.source else folder, str(pair)))
+            if not os.path.exists(ts.image2):
+                raise TmxError(f"{where}: tileset {ts.name!r}'s frame2 picture {pair!r} isn't there")
+        try:
+            ts.frame_ms = int(ts.tprops.get("frame_ms") or FRAME_MS)
+        except (TypeError, ValueError):
+            raise TmxError(f"{where}: tileset {ts.name!r}'s frame_ms {ts.tprops.get('frame_ms')!r} is not a number")
+        if ts.frame_ms <= 0:
+            raise TmxError(f"{where}: tileset {ts.name!r}'s frame_ms must be above 0")
         m.tilesets.append(ts)
     flags_of = {v[0]: v[1] for v in pm.imagemap.values() if isinstance(v, tuple) and v[0]}     # PyTMX's tile -> its flips
     groups = [layer for layer in pm.layers if isinstance(layer, pytmx.TiledObjectGroup)]

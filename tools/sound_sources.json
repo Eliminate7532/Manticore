@@ -1108,6 +1108,76 @@
    "licence": "CC0-1.0",
    "title": "Wind",
    "prefer_lossless": true
+  },
+  "mus3-moonlit-lullaby-for-the-lost": {
+   "url": "https://opengameart.org/sites/default/files/moonlit_lullaby_for_the_lost_loop.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/moonlit-lullaby-for-the-lost",
+   "author": "Tsorthan Grove",
+   "licence": "CC0-1.0",
+   "title": "Moonlit Lullaby for the Lost",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-kokopellis-graveyard-theme": {
+   "url": "https://opengameart.org/sites/default/files/kokopellis_graveyard_theme.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/kokopellis-graveyard-theme",
+   "author": "CleytonKauffman",
+   "licence": "CC0-1.0",
+   "title": "Kokopelli's Graveyard Theme",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-dark-cavern-ambient": {
+   "url": "https://opengameart.org/sites/default/files/dark_cavern_ambient_002.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/dark-cavern-ambient",
+   "author": "Paul Wortmann",
+   "licence": "CC0-1.0",
+   "title": "Dark Cavern Ambient",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-boss-battle-music": {
+   "url": "https://opengameart.org/sites/default/files/Juhani%20Junkala%20-%20Epic%20Boss%20Battle%20%5BSeamlessly%20Looping%5D.wav",
+   "kind": "file",
+   "page": "https://opengameart.org/content/boss-battle-music",
+   "author": "SubspaceAudio",
+   "licence": "CC0-1.0",
+   "title": "Boss Battle Music",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-victory-fanfare": {
+   "url": "https://opengameart.org/sites/default/files/fanfare1_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/victory-fanfare",
+   "author": "ARoachIFoundOnMyPillow",
+   "licence": "CC0-1.0",
+   "title": "Victory Fanfare",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-game-over-theme": {
+   "url": "https://opengameart.org/sites/default/files/GameOver-Music.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/game-over-theme",
+   "author": "CleytonKauffman",
+   "licence": "CC0-1.0",
+   "title": "Game Over Theme",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus3-string-and-piano-horror-stings": {
+   "url": "https://opengameart.org/sites/default/files/abyss_0.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/string-and-piano-horror-stings",
+   "author": "congusbongus",
+   "licence": "CC0-1.0",
+   "title": "String and piano horror stings (strings sting \"abyss\")",
+   "prefer_lossless": true,
+   "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
   }
  }
 }

@@ -1,0 +1,577 @@
+{
+ "_note": "Soak run of 19-20 Oct 2026 (0.28.53.11, 5ebc555), game 58: the first block state of question 263 (record line 2957), trimmed to what soak_bot reads, and Forge's refusal after OK. Priest of the Crossing (138) carries The Masamune (108): it must be blocked if able, and only the soak seat's flying Spirit Token (319) can; Woe Strider (133) is the current attacker.",
+ "refusal": {
+  "_seq": 263,
+  "t": "message",
+  "text": "Spirit Token (319) must block an attacker, but has not been assigned to block any.",
+  "title": "Forge"
+ },
+ "state": {
+  "activePlayer": 1,
+  "asking": true,
+  "combat": [
+   {
+    "blockers": [],
+    "card": 147,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 133,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 117,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 311,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 201,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 138,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 332,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 334,
+    "defender": "p0"
+   },
+   {
+    "blockers": [],
+    "card": 111,
+    "defender": "p0"
+   }
+  ],
+  "input": "InputBlock",
+  "inputSeq": 263,
+  "me": 0,
+  "phase": "COMBAT_DECLARE_BLOCKERS",
+  "players": [
+   {
+    "id": 0,
+    "life": 36,
+    "lost": false,
+    "name": "Soak",
+    "zones": {
+     "battlefield": [
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 75,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 82,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 17,
+       "isCreature": false,
+       "isLand": false,
+       "name": "Pearl Medallion",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Artifact"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 99,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Terramorphic Expanse",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Land"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 73,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 65,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Myriad Landscape",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Land"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 319,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Flying"
+       ],
+       "name": "Spirit Token",
+       "power": 3,
+       "selectable": false,
+       "tapped": false,
+       "token": true,
+       "toughness": 3,
+       "type": "Creature - Spirit",
+       "weak": 1
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 322,
+       "isCreature": true,
+       "isLand": false,
+       "name": "Soldier Token",
+       "power": 3,
+       "selectable": false,
+       "tapped": false,
+       "token": true,
+       "toughness": 3,
+       "type": "Creature - Soldier",
+       "weak": 1
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 50,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Castle Ardenvale",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Land"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 76,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 26,
+       "isCreature": false,
+       "isLand": false,
+       "name": "Felidar Retreat",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Enchantment"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 87,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 0,
+       "id": 51,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Bonders' Enclave",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Land"
+      }
+     ],
+     "hand": []
+    }
+   },
+   {
+    "id": 1,
+    "life": 27,
+    "lost": false,
+    "name": "AI 1 (opp1)",
+    "zones": {
+     "battlefield": [
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 157,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Swamp",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Swamp"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 189,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 163,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Swamp",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Swamp"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "highlight": true,
+       "id": 133,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Escape\u2014{3}{B}{B}, Exile four other cards from your graveyard"
+       ],
+       "name": "Woe Strider",
+       "power": 4,
+       "selectable": false,
+       "tapped": true,
+       "token": false,
+       "toughness": 3,
+       "type": "Creature - Horror"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 311,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Vigilance",
+        "Lifelink"
+       ],
+       "name": "Goat Token",
+       "power": 1,
+       "selectable": false,
+       "tapped": false,
+       "token": true,
+       "toughness": 2,
+       "type": "Creature - Goat"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 159,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Swamp",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Swamp"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 160,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Swamp",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Swamp"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 138,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Flying",
+        "First Strike"
+       ],
+       "name": "Priest of the Crossing",
+       "power": 4,
+       "selectable": false,
+       "tapped": true,
+       "token": false,
+       "toughness": 4,
+       "type": "Creature - Zombie Bird Cleric"
+      },
+      {
+       "attachedTo": 138,
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 108,
+       "isCreature": false,
+       "isLand": false,
+       "keywords": [
+        "Equip {2}"
+       ],
+       "name": "The Masamune",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Legendary Artifact - Equipment"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 184,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Plains",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Plains"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 111,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Flying"
+       ],
+       "name": "Falkenrath Noble",
+       "power": 3,
+       "selectable": false,
+       "tapped": true,
+       "token": false,
+       "toughness": 3,
+       "type": "Creature - Vampire Noble"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 201,
+       "isCreature": true,
+       "isLand": false,
+       "name": "Teysa Karlov",
+       "power": 3,
+       "selectable": false,
+       "tapped": true,
+       "token": false,
+       "toughness": 5,
+       "type": "Legendary Creature - Human Advisor"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 104,
+       "isCreature": false,
+       "isLand": false,
+       "name": "Open the Graves",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Enchantment"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 117,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Vigilance",
+        "Afterlife 1"
+       ],
+       "name": "Imperious Oligarch",
+       "power": 3,
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "toughness": 2,
+       "type": "Creature - Human Cleric"
+      },
+      {
+       "attacking": false,
+       "blocking": false,
+       "controller": 1,
+       "id": 155,
+       "isCreature": false,
+       "isLand": true,
+       "name": "Swamp",
+       "selectable": false,
+       "tapped": false,
+       "token": false,
+       "type": "Basic Land - Swamp"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 147,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Flying"
+       ],
+       "name": "Butcher of Malakir",
+       "power": 6,
+       "selectable": false,
+       "tapped": true,
+       "token": false,
+       "toughness": 5,
+       "type": "Creature - Vampire Warrior"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 332,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Vigilance",
+        "Lifelink"
+       ],
+       "name": "Zombie Token",
+       "power": 3,
+       "selectable": false,
+       "tapped": false,
+       "token": true,
+       "toughness": 3,
+       "type": "Creature - Zombie"
+      },
+      {
+       "attacking": true,
+       "blocking": false,
+       "controller": 1,
+       "id": 334,
+       "isCreature": true,
+       "isLand": false,
+       "keywords": [
+        "Vigilance",
+        "Lifelink"
+       ],
+       "name": "Zombie Token",
+       "power": 3,
+       "selectable": false,
+       "tapped": false,
+       "token": true,
+       "toughness": 3,
+       "type": "Creature - Zombie"
+      }
+     ],
+     "hand": []
+    }
+   },
+   {
+    "id": 2,
+    "life": 0,
+    "lost": true,
+    "name": "AI 2 (opp2)",
+    "zones": {
+     "battlefield": [],
+     "hand": []
+    }
+   }
+  ],
+  "prompt": {
+   "cancel": {
+    "enabled": false,
+    "label": "Cancel"
+   },
+   "message": "Select creatures to block Woe Strider (133) or select another attacker to declare blockers for.",
+   "ok": {
+    "enabled": true,
+    "focus": true,
+    "label": "OK"
+   },
+   "selecting": false
+  },
+  "t": "state",
+  "turn": 36
+ }
+}

@@ -1,7 +1,7 @@
 {
  "kind": "grave_robber",
  "name": "Grave Robber",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -20,6 +20,26 @@
    "main": [
     [
      "Chainer's Edict",
+     3
+    ],
+    [
+     "Polluted Mire",
+     4
+    ],
+    [
+     "Disfigure",
+     4
+    ],
+    [
+     "Chittering Rats",
+     4
+    ],
+    [
+     "Swamp",
+     11
+    ],
+    [
+     "Barren Moor",
      4
     ],
     [
@@ -27,27 +47,15 @@
      2
     ],
     [
-     "Unearth",
-     4
-    ],
-    [
-     "Barren Moor",
-     3
-    ],
-    [
-     "Swamp",
-     17
-    ],
-    [
-     "Disfigure",
-     2
-    ],
-    [
-     "Victim of Night",
-     4
-    ],
-    [
      "Tendrils of Corruption",
+     4
+    ],
+    [
+     "Sign in Blood",
+     4
+    ],
+    [
+     "Corrupt",
      4
     ],
     [
@@ -55,23 +63,15 @@
      4
     ],
     [
-     "Gurmag Angler",
-     2
-    ],
-    [
      "Phyrexian Rager",
      4
     ],
     [
-     "Polluted Mire",
-     3
+     "Gurmag Angler",
+     4
     ],
     [
-     "Sign in Blood",
-     3
-    ],
-    [
-     "Chittering Rats",
+     "Bojuka Bog",
      4
     ]
    ],
@@ -79,18 +79,14 @@
     [
      "Swamp",
      4
-    ],
-    [
-     "Cradle of the Accursed",
-     4
     ]
    ],
    "tiers": {
-    "0": 17,
+    "0": 11,
     "1": 2,
-    "2": 11,
-    "3": 21,
-    "4": 9
+    "2": 12,
+    "3": 23,
+    "4": 12
    }
   },
   {
@@ -99,39 +95,31 @@
    "index": 8,
    "main": [
     [
-     "Swamp",
-     15
+     "Chainer's Edict",
+     4
+    ],
+    [
+     "Polluted Mire",
+     4
     ],
     [
      "Disfigure",
      3
     ],
     [
-     "Polluted Mire",
+     "Chittering Rats",
      2
     ],
     [
      "Victim of Night",
-     3
+     4
+    ],
+    [
+     "Swamp",
+     13
     ],
     [
      "Barren Moor",
-     4
-    ],
-    [
-     "Tendrils of Corruption",
-     4
-    ],
-    [
-     "Gray Merchant of Asphodel",
-     4
-    ],
-    [
-     "Chainer's Edict",
-     4
-    ],
-    [
-     "Phyrexian Rager",
      4
     ],
     [
@@ -139,40 +127,48 @@
      4
     ],
     [
-     "Gurmag Angler",
+     "Gray Merchant of Asphodel",
+     4
+    ],
+    [
+     "Phyrexian Rager",
      3
     ],
     [
-     "Corrupt",
+     "Unearth",
+     4
+    ],
+    [
+     "Geth's Verdict",
+     4
+    ],
+    [
+     "Gurmag Angler",
      3
     ],
     [
      "Bojuka Bog",
      4
-    ],
-    [
-     "Chittering Rats",
-     3
     ]
    ],
    "sideboard": [
     [
-     "Desert of the Glorified",
-     2
+     "Swamp",
+     3
     ],
     [
      "Cradle of the Accursed",
      3
     ],
     [
-     "Swamp",
-     3
+     "Desert of the Glorified",
+     4
     ]
    ],
    "tiers": {
-    "0": 15,
-    "2": 12,
-    "3": 22,
+    "0": 13,
+    "2": 8,
+    "3": 28,
     "4": 11
    }
   },
@@ -183,38 +179,42 @@
    "main": [
     [
      "Chainer's Edict",
-     3
-    ],
-    [
-     "Unearth",
      2
     ],
     [
-     "Swamp",
-     21
+     "Polluted Mire",
+     4
+    ],
+    [
+     "Disfigure",
+     3
     ],
     [
      "Chittering Rats",
      4
     ],
     [
-     "Geth's Verdict",
-     4
-    ],
-    [
-     "Victim of Night",
-     2
+     "Swamp",
+     11
     ],
     [
      "Barren Moor",
+     4
+    ],
+    [
+     "Desert of the Glorified",
      3
     ],
     [
-     "Bojuka Bog",
-     1
+     "Tendrils of Corruption",
+     3
     ],
     [
-     "Tendrils of Corruption",
+     "Sign in Blood",
+     4
+    ],
+    [
+     "Corrupt",
      3
     ],
     [
@@ -226,41 +226,34 @@
      4
     ],
     [
-     "Disfigure",
+     "Crypt Rats",
      4
     ],
     [
      "Gurmag Angler",
-     1
+     4
     ],
     [
-     "Sign in Blood",
-     4
+     "Bojuka Bog",
+     3
     ]
    ],
    "sideboard": [
     [
-     "Desert of the Glorified",
+     "Swamp",
      4
     ],
     [
      "Cradle of the Accursed",
-     3
-    ],
-    [
-     "Swamp",
-     2
-    ],
-    [
-     "Polluted Mire",
      4
     ]
    ],
    "tiers": {
-    "0": 21,
-    "2": 5,
-    "3": 26,
-    "4": 8
+    "0": 11,
+    "1": 3,
+    "2": 14,
+    "3": 21,
+    "4": 11
    }
   },
   {
@@ -269,27 +262,43 @@
    "index": 8,
    "main": [
     [
-     "Swamp",
-     20
-    ],
-    [
      "Chainer's Edict",
-     3
+     4
     ],
     [
-     "Gurmag Angler",
-     2
+     "Polluted Mire",
+     4
     ],
     [
      "Disfigure",
      3
     ],
     [
+     "Chittering Rats",
+     4
+    ],
+    [
+     "Swamp",
+     13
+    ],
+    [
+     "Barren Moor",
+     4
+    ],
+    [
+     "Tendrils of Corruption",
+     4
+    ],
+    [
+     "Sign in Blood",
+     4
+    ],
+    [
      "Gray Merchant of Asphodel",
      4
     ],
     [
-     "Unearth",
+     "Phyrexian Rager",
      4
     ],
     [
@@ -297,31 +306,11 @@
      4
     ],
     [
-     "Victim of Night",
-     2
-    ],
-    [
-     "Barren Moor",
-     4
-    ],
-    [
-     "Phyrexian Rager",
-     2
-    ],
-    [
-     "Chittering Rats",
-     3
-    ],
-    [
-     "Sign in Blood",
+     "Gurmag Angler",
      4
     ],
     [
      "Bojuka Bog",
-     1
-    ],
-    [
-     "Tendrils of Corruption",
      4
     ]
    ],
@@ -331,27 +320,100 @@
      3
     ],
     [
-     "Polluted Mire",
+     "Cradle of the Accursed",
      4
     ],
     [
      "Desert of the Glorified",
      4
-    ],
-    [
-     "Cradle of the Accursed",
-     4
     ]
    ],
    "tiers": {
-    "0": 20,
-    "2": 6,
-    "3": 23,
-    "4": 11
+    "0": 13,
+    "2": 8,
+    "3": 27,
+    "4": 12
    }
   }
  ],
  "rejected": [
+  {
+   "archetype": "Monoblack Mono Monoblack02",
+   "index": 28,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Monoblack Mono Monoblack02",
+   "index": 28,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Monoblack Mono Monoblack02",
+   "index": 28,
+   "reasons": [
+    "above tier 4: Duress (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Black Control Mono",
+   "index": 106,
+   "reasons": [
+    "Forge's AI is told to leave these out: Nihil Spellbomb (Random)"
+   ]
+  },
   {
    "archetype": "Black Control Mono",
    "index": 106,
@@ -368,31 +430,31 @@
   }
  ],
  "soak": {
-  "run": "rpg_enemies2",
-  "when": "2026-10-12 10:44",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Grave Robber 3": {
-    "games": 8,
-    "game_over": 8,
-    "as_ai": 3,
-    "failed": []
-   },
-   "Grave Robber 2": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 3,
-    "failed": []
-   },
-   "Grave Robber 1": {
-    "games": 9,
-    "game_over": 9,
+   "Grave Robber 4": {
+    "games": 4,
+    "game_over": 4,
     "as_ai": 2,
     "failed": []
    },
-   "Grave Robber 4": {
-    "games": 6,
-    "game_over": 6,
-    "as_ai": 3,
+   "Grave Robber 2": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 2,
+    "failed": []
+   },
+   "Grave Robber 1": {
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 0,
+    "failed": []
+   },
+   "Grave Robber 3": {
+    "games": 2,
+    "game_over": 2,
+    "as_ai": 1,
     "failed": []
    }
   },
@@ -405,14 +467,10 @@
    "halves": [
     "JMP Vampires 3",
     "J22 Boneyard 2",
-    "J22 Rats"
+    "J22 Holy 2"
    ],
    "handicap": 9,
    "swapped": [
-    [
-     "Chittering Rats",
-     1
-    ],
     [
      "Gifted Aetherborn",
      1
@@ -426,7 +484,7 @@
      1
     ],
     [
-     "Ogre Slumlord",
+     "Lyra Dawnbringer",
      1
     ],
     [
@@ -438,11 +496,15 @@
      1
     ],
     [
-     "Ashcoat of the Shadow Swarm",
+     "Sangromancer",
      1
     ],
     [
-     "Sangromancer",
+     "Silversmote Ghoul",
+     1
+    ],
+    [
+     "Starnheim Aspirant",
      1
     ]
    ],
@@ -457,10 +519,6 @@
     ],
     [
      "Vampire Neonate",
-     1
-    ],
-    [
-     "Silversmote Ghoul",
      1
     ],
     [
@@ -481,11 +539,11 @@
     ],
     [
      "Thriving Moor",
-     3
+     2
     ],
     [
      "Swamp",
-     30
+     20
     ],
     [
      "Graveblade Marauder",
@@ -493,7 +551,7 @@
     ],
     [
      "Ossuary Rats",
-     2
+     1
     ],
     [
      "Liliana's Elite",
@@ -528,43 +586,59 @@
      1
     ],
     [
-     "Nezumi Bone-Reader",
+     "Angelic Cub",
      1
     ],
     [
-     "Crypt Rats",
+     "Emancipation Angel",
      1
     ],
     [
-     "Infiltration Lens",
+     "Defy Death",
      1
     ],
     [
-     "Ulcerate",
+     "Chains of Custody",
      1
     ],
     [
-     "Typhoid Rats",
+     "Pilgrim of the Ages",
      1
     ],
     [
-     "Burglar Rat",
+     "Stalwart Valkyrie",
      1
     ],
     [
-     "Sinuous Vermin",
+     "Dawning Angel",
      1
     ],
     [
-     "Eviscerate",
+     "Anointer of Valor",
      1
+    ],
+    [
+     "Light of Hope",
+     1
+    ],
+    [
+     "Divine Arrow",
+     1
+    ],
+    [
+     "Thriving Heath",
+     1
+    ],
+    [
+     "Plains",
+     10
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 30,
-    "1": 26,
-    "2": 4
+    "1": 29,
+    "2": 1
    }
   },
   {
@@ -573,7 +647,7 @@
    "halves": [
     "J25 Grave Robbers 4",
     "J25 Clerics 1",
-    "JMP Plus One 2"
+    "JMP Milling"
    ],
    "handicap": 9,
    "swapped": [
@@ -582,11 +656,19 @@
      1
     ],
     [
+     "Thought Scour",
+     1
+    ],
+    [
      "Liliana, Death's Majesty",
      1
     ],
     [
-     "Branching Evolution",
+     "Bruvac the Grandiloquent",
+     1
+    ],
+    [
+     "Teferi's Tutelage",
      1
     ],
     [
@@ -598,19 +680,11 @@
      1
     ],
     [
-     "Wildwood Scourge",
-     1
-    ],
-    [
      "Shardless Outlander",
      1
     ],
     [
      "Goremand",
-     1
-    ],
-    [
-     "Revoke Demise",
      1
     ]
    ],
@@ -649,7 +723,7 @@
     ],
     [
      "Revoke Demise",
-     1
+     2
     ],
     [
      "Thriving Moor",
@@ -692,54 +766,54 @@
      1
     ],
     [
-     "Armorcraft Judge",
+     "Belltower Sphinx",
      1
     ],
     [
-     "Nessian Hornbeetle",
+     "Reckless Scholar",
      1
     ],
     [
-     "Fertilid",
+     "Wall of Lost Thoughts",
      1
     ],
     [
-     "Ironshell Beetle",
+     "Selhoff Occultist",
      1
     ],
     [
-     "Trufflesnout",
+     "Vedalken Entrancer",
      1
     ],
     [
-     "Pridemalkin",
+     "Towering-Wave Mystic",
      1
     ],
     [
-     "Hunter's Edge",
+     "Sweep Away",
      1
     ],
     [
-     "Arbor Armament",
+     "Thought Collapse",
      1
     ],
     [
-     "Invigorating Surge",
+     "Capture Sphere",
      1
     ],
     [
-     "Thriving Grove",
+     "Thriving Isle",
      1
     ],
     [
-     "Forest",
-     11
+     "Island",
+     10
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 31,
-    "1": 28,
+    "0": 30,
+    "1": 29,
     "2": 1
    }
   },
@@ -749,7 +823,7 @@
    "halves": [
     "JMP Vampires 1",
     "J25 Vampires 1",
-    "J22 Fiery 1"
+    "J22 Gross 1"
    ],
    "handicap": 9,
    "swapped": [
@@ -762,7 +836,7 @@
      1
     ],
     [
-     "Chandra, Flame's Fury",
+     "Massacre Wurm",
      1
     ],
     [
@@ -778,15 +852,15 @@
      1
     ],
     [
-     "Thrill of Possibility",
-     1
-    ],
-    [
-     "Pillar of Flame",
+     "Eaten Alive",
      1
     ],
     [
      "Vampire of the Dire Moon",
+     1
+    ],
+    [
+     "Gloom Sower",
      1
     ]
    ],
@@ -801,10 +875,6 @@
     ],
     [
      "Nocturnal Feeder",
-     1
-    ],
-    [
-     "Gloom Sower",
      1
     ],
     [
@@ -825,11 +895,11 @@
     ],
     [
      "Thriving Moor",
-     2
+     3
     ],
     [
      "Swamp",
-     21
+     30
     ],
     [
      "Scourge of the Undercity",
@@ -868,54 +938,54 @@
      1
     ],
     [
-     "Chandra's Pyreling",
+     "Skullslither Worm",
      1
     ],
     [
-     "Chandra's Spitfire",
+     "Plaguecrafter",
      1
     ],
     [
-     "Spiteful Prankster",
+     "Leechridden Swamp",
      1
     ],
     [
-     "Coalborn Entity",
+     "Yargle, Glutton of Urborg",
      1
     ],
     [
-     "Chandra's Magmutt",
+     "Infernal Idol",
      1
     ],
     [
-     "Goblin Researcher",
+     "Blight Keeper",
      1
     ],
     [
-     "Wildfire Elemental",
+     "Black Cat",
      1
     ],
     [
-     "Chandra's Pyrohelix",
+     "Durable Coilbug",
      1
     ],
     [
-     "Fiery Intervention",
+     "Devouring Swarm",
      1
     ],
     [
-     "Thriving Bluff",
+     "Grotesque Mutation",
      1
     ],
     [
-     "Mountain",
-     10
+     "Strangling Spores",
+     1
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 31,
-    "1": 29
+    "0": 30,
+    "1": 30
    }
   },
   {
@@ -1096,13 +1166,13 @@
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-14 11:23",
-  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "when": "2026-10-23 09:32",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
   "handicap": 9,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
+  "tuned_by": null
  }
 }

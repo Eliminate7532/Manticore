@@ -1,0 +1,15 @@
+Simple Battles
+==============
+Art by Hyptosis; uploaded to OpenGameArt.org by speveril.
+Page: https://opengameart.org/content/simple-battles
+Licence (as the page states it): CC-BY 3.0 - Creative Commons Attribution 3.0 Unported (licenses/texts/CC-BY-3.0.txt).
+
+The page's own words (read 23 Oct 2026):
+  "16 front-view "battlers", and 3 backgrounds for a simple 1 vs 1 turn-based combat system. These were all drawn by Hyptosis,
+  most of them originally for SimpleQuest; a few of them were previously released. Released with permission."
+  "All of the art uses Dawnbringer's 16-color palette. The scenes are vertical backgrounds, intended to fit the entire height
+  and half the width of a 320x240 screen."
+
+The zip (simple_battles.zip, SHA-256 95cb940450783eb01277ede26b29ee274b5f0c7f972545f1732bf5ece728c6f1) has only the 19 pictures,
+no licence file. Manticore ships them unmodified in assets/rpg/simple_battles/; the game draws them scaled and may draw a
+lighting layer over them on screen.

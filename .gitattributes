@@ -13,3 +13,9 @@ forge_bundle/** binary
 *.cmd text eol=crlf
 START_HERE.txt text eol=crlf
 *.wsb text eol=crlf
+
+# The Adventure's pixel art is kept byte for byte as its packs ship it (assets/rpg/MANIFEST.sha256, Round RPG10).
+assets/rpg/** binary
+
+# Round NETLOG1d: Karl's recorded Windows output, kept byte for byte (a UTF-8 BOM and CRLF line ends, as PowerShell wrote them).
+tests/fixtures/net/*.txt -text

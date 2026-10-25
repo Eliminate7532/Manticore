@@ -41,6 +41,15 @@ LOOP_TRACKS = {"title": "music.title",         # music modes that loop one track
 INTERLUDE_FADE = 1.0                           # patch 49: seconds the game track takes to fade under an interlude (Lament on a big attack)
 
 
+def loop_cue(mode):
+    """The cue a music mode loops: LOOP_TRACKS' for a screen's mode, the cue named by "loop:<cue>" (Round RPG15), else None."""
+    if mode in LOOP_TRACKS:
+        return LOOP_TRACKS[mode]
+    if isinstance(mode, str) and mode.startswith("loop:") and len(mode) > 5:
+        return mode[5:]
+    return None
+
+
 def db(x):
     return 10 ** (x / 20.0)
 
@@ -371,8 +380,8 @@ class AudioDirector:
         self.amb_out = keep
 
     def set_music(self, mode, now):
-        """'title' / 'deck' / 'settings' (that screen's track, looping), 'game' (the game tracks, shuffled, with a gap between), or
-        None. Safe every frame."""
+        """'title' / 'deck' / 'settings' (that screen's track, looping), 'loop:<cue>' (that cue's track, looping - Round RPG15: the
+        Adventure's places), 'game' (the game tracks, shuffled, with a gap between), or None. Safe every frame."""
         if mode == self.music_mode:
             return
         self.music_mode = mode
@@ -382,7 +391,7 @@ class AudioDirector:
         if pygame.mixer.music.get_busy():
             pygame.mixer.music.fadeout(int(MUSIC_FADE * 1000))
         self.music_cue = None
-        if mode in LOOP_TRACKS:
+        if loop_cue(mode):
             self.music_next_at = now + MUSIC_FADE * 0.5
         elif mode == "game":
             self.music_next_at = now + self.rnd.uniform(6.0, 14.0)    # let the table settle before the first track
@@ -411,7 +420,7 @@ class AudioDirector:
         return True
 
     def _loop_track(self, mode):
-        cid = LOOP_TRACKS.get(mode)
+        cid = loop_cue(mode)
         return cid if getattr(self.cues.get(cid), "paths", None) else "music.title"
 
     def _game_tracks(self):
@@ -438,7 +447,7 @@ class AudioDirector:
             self.music_sting = None
             self._start_track(cid, now)
             self.music_next_at = None                                   # after an interlude the playlist rests its gap again
-        elif self.music_mode in LOOP_TRACKS and not busy and self.music_next_at is not None and now >= self.music_next_at:
+        elif loop_cue(self.music_mode) and not busy and self.music_next_at is not None and now >= self.music_next_at:
             self._start_track(self._loop_track(self.music_mode), now, loops=-1)
             self.music_next_at = None
         elif self.music_mode == "game" and not busy:

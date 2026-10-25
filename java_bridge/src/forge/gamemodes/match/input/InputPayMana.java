@@ -1,5 +1,5 @@
 /*
- * This file is a copy of forge-gui's forge/gamemodes/match/input/InputPayMana.java at Forge fb4d809 (Forge, GNU GPL v3, see
+ * This file is a copy of forge-gui's forge/gamemodes/match/input/InputPayMana.java at Forge 9a6f776 (Forge, GNU GPL v3, see
  * forge_bundle/FORGE_LICENSE.txt) with TWO changes, both marked "Manticore". It is packed into forge_bridge.jar, which comes
  * before forge.jar on the class path, so this version is the one Forge loads (as with MulliganService).
  * Modified 2026-10-06 by Manticore (patch 45, the mana-payment race):
@@ -10,6 +10,8 @@
  *      the unlock let a second mana ability start beside the first. The game thread's own refresh when the ability ends
  *      (onStateChanged -> updateMessage) still pushes the highlights and the auto-pay preview.
  *   2. If the ability (or Auto) throws, the payment is still unlocked, so clicks aren't refused as "busy" for good.
+ * Round FB2 (2026-10-23): Forge's own file is byte for byte the same at 9a6f776 as at fb4d809, where it was copied; only the
+ *   commit named above changed.
  */
 package forge.gamemodes.match.input;
 

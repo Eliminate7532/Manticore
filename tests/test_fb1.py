@@ -26,7 +26,7 @@ import setup_forge
 import tests.live as live
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-NEW = "fb4d8091126051b0c579db5f3bfdcb7e03aae63d"
+NEW = "9a6f776b84809522f81287fe962df0aca64a9c73"      # round FB2 (23 Oct 2026): was fb4d809 (FB1)
 OLD = "3a74143aa2a4d1475e929e140865bd0c574adf1c"
 
 # Reality Fracture cards with no script in Forge 3a74143 (checked 2 Oct against the set's edition file); all have one at fb4d809.
@@ -121,14 +121,14 @@ class OutdatedRuntimeTests(unittest.TestCase):
         self.assertIsNone(fc.runtime_outdated(self.rt, self.man))
 
     def test_the_same_build_is_not_outdated_even_with_a_short_commit(self):
-        runtime_with(self.rt, first_line="Forge 2.0.16-SNAPSHOT | commit fb4d809")
+        runtime_with(self.rt, first_line=f"Forge 2.0.16-SNAPSHOT | commit {NEW[:7]}")
         manifest_with(self.man, NEW)
         self.assertIsNone(fc.runtime_outdated(self.rt, self.man))
 
     def test_an_older_runtime_is_outdated(self):
         runtime_with(self.rt, OLD)
         manifest_with(self.man, NEW)
-        self.assertEqual(fc.runtime_outdated(self.rt, self.man), ("3a74143", "fb4d809"))
+        self.assertEqual(fc.runtime_outdated(self.rt, self.man), ("3a74143", NEW[:7]))
 
     def test_the_game_refuses_an_outdated_runtime_in_karls_copy(self):
         runtime_with(self.rt, OLD)
@@ -138,7 +138,7 @@ class OutdatedRuntimeTests(unittest.TestCase):
                 mock.patch.object(fc, "BUNDLE_MANIFEST", self.man):
             problem = fc.runtime_problem(self.rt)
         self.assertIn("3a74143", problem)
-        self.assertIn("fb4d809", problem)
+        self.assertIn(NEW[:7], problem)
         self.assertIn("python setup_forge.py", problem)
 
     def test_an_installed_copy_is_never_judged_by_a_bundle(self):
@@ -169,7 +169,7 @@ class OutdatedRuntimeTests(unittest.TestCase):
         code, calls, text = self.run_setup(OLD)
         self.assertEqual(code, 0)
         self.assertEqual(calls, [("install", NEW), ("bridge", False), ("notes", NEW)])
-        self.assertIn("forge_runtime/ holds Forge 3a74143; forge_bundle/ has Forge fb4d809", text)
+        self.assertIn(f"forge_runtime/ holds Forge 3a74143; forge_bundle/ has Forge {NEW[:7]}", text)
 
     def test_setup_leaves_a_current_runtime_alone(self):
         code, calls, text = self.run_setup(NEW)

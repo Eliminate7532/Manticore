@@ -311,7 +311,7 @@ class SaveTests(Temp):
 
     def test_every_damaged_field_is_refused(self):
         good = started_save().to_dict()
-        cases = [("gold", -1), ("gold", "100"), ("collection", {"Grizzly Bears": 0}), ("collection", []), ("active_deck", 5),
+        cases = [("gold", "100"), ("collection", {"Grizzly Bears": 0}), ("collection", []), ("active_deck", 5),
                  ("decks", [{"name": "", "main": []}]), ("decks", [{"name": "x", "main": [["Bears", -1]]}]), ("seed", "x"),
                  ("rng_counter", -1), ("name", ""), ("world", {"region": 0, "towns_visited": []}),
                  ("shops", {"t": {"restock": 0, "bought": {"1": 0}}}), ("record", {"duels": 0}), ("pending_duel", []),
@@ -322,6 +322,9 @@ class SaveTests(Temp):
             with self.subTest(key=key, value=value), self.assertRaises(sv.SaveError):
                 sv.SaveGame.from_dict(d)
         self.assertEqual(sv.SaveGame.from_dict(copy.deepcopy(good), pool=POOL).to_dict(), good)
+        d = copy.deepcopy(good)
+        d["gold"] = -1                   # Round RPG16d (the RPG16c review's T3): gold below 0 is mended to 0 as the save is read
+        self.assertEqual(sv.SaveGame.from_dict(d, pool=POOL).gold, 0)
 
     def test_names(self):
         self.assertEqual(sv.check_name("  Karl   the   Bold "), "Karl the Bold")
@@ -441,7 +444,7 @@ class NewGameTests(unittest.TestCase):
                                                   "Tree Folk": 4, "Wild Growth": 2})
         self.assertEqual((s.gold, s.slot, s.name), (100, 2, "Karl"))
         self.assertEqual(s.world, {"region": 1, "map": "green_town", "x": None, "y": None, "last_town": "green_town",
-                                   "towns_visited": ["green_town"]})
+                                   "towns_visited": ["green_town"], "hero": "Warrior"})     # Round RPG11: the hero
         self.assertEqual(s.start, {"half_decks": ["TST Cats 1", "TST Elves 1", "TST Elves 2"]})
         self.assertEqual(s.forge, "Forge test")
 

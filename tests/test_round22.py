@@ -485,7 +485,10 @@ class LiveTests(unittest.TestCase):
         s = fc.ForgeSession(me, [opp], name="Karl", seed=5, dev=True).start()
         try:
             self.to_first_priority(s)
-            s.setup(["humanhand=Forest", "activeplayer=human", "activephase=MAIN1"])
+            # Round FB2: Forge's Setup Game State needs a line for every player ("Non-matching number of players, (2 vs. 1)" in the
+            # engine log otherwise). Without "ailife" this setup never ran, on any Forge build: the test passed because seed 5's
+            # opening hand had a Forest at fb4d809, and Forge 9a6f776 deals seed 5 another hand.
+            s.setup(["humanhand=Forest", "ailife=40", "activeplayer=human", "activephase=MAIN1"])
             t0, forest = time.time(), None
             while time.time() - t0 < 20 and forest is None:
                 s.poll()

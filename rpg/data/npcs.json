@@ -1,0 +1,665 @@
+{
+ "version": 1,
+ "npcs": {
+  "innkeeper": {
+   "name": "Marta",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_innkeeper"
+     ],
+     "pages": [
+      "Orrin's student! Look at you, all elbows and ink. Sit down before you fall down.",
+      "The Lantern's beds are dry and the stew is mostly turnip. Rest here and I'll keep your place.",
+      "Lose a duel out there and they'll carry you back to me. They always do. Mind your purse when they do."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "!flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Late, isn't it? The stew's gone to glue and the fire's down to sulking. Sit anyway.",
+      "Hear the dogs? Every night since the hall went dark. They howl at the chapel, never the moor."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "The dogs have stopped. First quiet night in a week, and I can't sleep for listening to it.",
+      "A bed's a bed, scribe. Take one. The road will still be there at dawn."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "The coast, is it? Salt in your boots and fish in every pot. I'll pack you bread that won't drown.",
+      "Bring Orrin home. He owes me for eleven years of suppers, and I mean to collect."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Brann's lit the hall! I saw the windows from my kitchen and burned the bread for staring.",
+      "Hesk's been asking for you. Go on. Then come back and eat something."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "You smell like the mill cellar. I won't ask what you trod in. Boots by the door.",
+      "Rest a while. Whatever's down there has waited this long. It can wait for supper."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "Hesk sent you to the old mill? That man would send his own mother if she had a deck.",
+      "Rest first. A tired scribe draws bad cards. Orrin always said that, and he was always tired."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Fire's lit, stew's on. Rest your bones and I'll mark you down as staying.",
+      "Three nights since the hall went dark. Every night the dogs howl at the chapel."
+     ]
+    }
+   ]
+  },
+  "card_seller": {
+   "name": "Old Wendel",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_card_seller"
+     ],
+     "pages": [
+      "Eh? A customer? Come closer, the light's poor and so are my eyes.",
+      "Singles, all sorted. Well, sorted by how I feel about them. You'll find the counter. Everyone does."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "!flag:grave_priest_beaten",
+      "!flag:warrens_entered"
+     ],
+     "pages": [
+      "Open? I'm always open. Sleep is for people whose cards don't whisper.",
+      "They're louder after dark. Something under the mill talks to them. Buy one. Shut it up."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Quiet night. My cards are asleep. First time in years. I keep checking they're breathing."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "A map of Orrin's? He drew me one once. To his house. I still got lost.",
+      "Off to the coast, then. Buy something with fins on it. They like that sort of thing there."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Hall's lit again. My cards stopped whispering. They whispered, you know. Forget I said so.",
+      "Good for trade, a lit hall. Duelists come back. Duelists buy."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "Under the mill, eh? Echoes go strange in the dark. Take something cheap and stubborn.",
+      "A card that won't die is worth three that hit hard. I learned that at your age. Or Orrin's."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "The Grave Priest? Used to buy black-edged cards from me. Paid in old coin. Smelled of lilies.",
+      "Should've known. Nobody honest smells of lilies."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Mind the stacks. That pile's in order. That one too. Don't touch that one, it bites.",
+      "Every card here has a story. Most of them are about me losing."
+     ]
+    }
+   ]
+  },
+  "pack_seller": {
+   "name": "Ysolde",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_pack_seller"
+     ],
+     "pages": [
+      "Sealed bundles, fresh from Brackwater. Nobody knows what's inside. That's the charm.",
+      "Wendel sells you what you want. I sell you hope. Hope costs a little more."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "!flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Night trade. Same packs, same prices, worse lighting. Some say the luck's better after dark.",
+      "I say that. I'm some."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Still up? Me too. A shopkeeper who sleeps misses the customers who can't."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "Saltmere has a pack shop. Small, damp, dear. Say Ysolde sent you. They'll charge double.",
+      "Kidding. Mostly. Bring me back a coastal bundle and we'll call it even."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "You beat the Priest? Then your luck's running hot. Never waste a hot hand. Open something.",
+      "I'm not saying that because I sell packs. I'm saying it because it's true and I sell packs."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "Back in one piece. Good. Dead customers don't come back, whatever the Priest says.",
+      "A fresh bundle before you go down again? You never know what's sleeping in the wrappers."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "Going after the Priest on the cards you've got? Brave. Or broke. Usually both.",
+      "A bundle or two might find you an answer. Might not. I don't do refunds on fate."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Packs, sealed and honest. The wrappers are honest, anyway.",
+      "Somebody opened three in a row last week and found the same card thrice. Swore at me. Not my fault."
+     ]
+    }
+   ]
+  },
+  "hall_keeper": {
+   "name": "Keeper Brann",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_hall_keeper",
+      "!flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Who's there? Ah. Orrin's scribe. Mind the benches. I can't light the candles.",
+      "Three nights now. Strike a flame in here and it dies before it catches. Like the hall forgot how.",
+      "By the Accord, no quarrel here can be settled while this hall is dark. Think on that."
+     ]
+    },
+    {
+     "when": [
+      "!flag:met_hall_keeper"
+     ],
+     "pages": [
+      "Orrin's scribe. You're the one who lit my candles, then, by beating that wretch.",
+      "The hall is open again. Come back when you want a duel. I keep the old challengers' decks."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "!flag:grave_priest_beaten",
+      "!flag:warrens_entered"
+     ],
+     "pages": [
+      "Night or day, it's all one in here now. I sit with the benches so they don't feel forgotten."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "The candles burn all night now. This hall won't forget again. Not while I live."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "The hall stands lit, and the Accord with it. Any quarrel can be settled here again.",
+      "Want a rematch? I'll play you any foe you've beaten, deck for deck. Practice before the coast."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Look at it. Every candle, at once, the moment he fell. I wept. Don't tell Marta.",
+      "The hall is yours to use. And Hesk will want to see whatever you took off that Priest."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "You've been below. I can tell. The dark sticks to a duelist like wet wool.",
+      "The Priest's Echoes are hollow. Hushed. They hit hard but they don't remember why. Outlast them."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "Hesk sent you after the Priest. Good. The old fool is right for once.",
+      "Bring his Echoes to silence and I'll light this hall for you myself. If it lets me."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Dark as a well in here. Sit if you like. Mind the third bench, it's cracked.",
+      "Talk to Elder Hesk in the square. If anyone knows what put out these candles, it's him."
+     ]
+    }
+   ]
+  },
+  "gate_guard": {
+   "name": "Gate Guard",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_gate_guard"
+     ],
+     "pages": [
+      "Halt. Who goes. Oh, it's you. Sorry. I say that to everyone. The sergeant likes it.",
+      "East road runs to the moor and the old mill. Bandits on it, thorn-beasts off it. Stay on it. Mostly."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "Heard you're for the coast. Lucky. Nobody's for anywhere from this gate. I'm for this gate.",
+      "If you see my cousin in Saltmere, tell him he still owes me a hat."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "No dead on the road last night. First time in a week. I nearly slept. On duty. Don't tell.",
+      "Whatever you did down there, the graveyard's gone quiet. Thanks for that."
+     ]
+    },
+    {
+     "when": [
+      "quest:lamplighters_debt=active"
+     ],
+     "pages": [
+      "Bandits? Ember lot, red sashes, by the bridge and the gallows trees. I count them, I don't chase them.",
+      "Three of them, last I counted. Count's my job. Fighting's yours, apparently."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "You came back up out of the mill. People don't, lately. You look awful. Good. Means you're alive.",
+      "Rats in the Warrens, they say. Big ones. Smart ones. Rats with decks. I hate this job."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "The old mill's east, past the chapel. Stairs go down under the wheel. Never been. Never will.",
+      "Good luck. I mean it. Mostly I mean please don't make me go and find you."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Gate's open. Moor's out there. Mind the bog and anything that smiles at you.",
+      "Not much happens at this gate. That's how I like it. That's how nobody else likes it."
+     ]
+    }
+   ]
+  },
+  "lamplighter": {
+   "name": "Pell",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_lamplighter"
+     ],
+     "pages": [
+      "Oh! Sorry. I'm Pell. I light the lamps. Well. I light them when I have oil. Which I don't.",
+      "The road's full of Ember Bandits. They take my oil carts. They drink it, I think. Can you drink oil?"
+     ]
+    },
+    {
+     "when": [
+      "phase:dusk|night",
+      "quest:lamplighters_debt=done"
+     ],
+     "pages": [
+      "Evening round. Twenty-six lamps, one ladder, one Pell. I do the square first so people see me.",
+      "The oil's flowing again, thanks to you. Every one of these lamps is a little bit yours."
+     ]
+    },
+    {
+     "when": [
+      "quest:lamplighters_debt=active",
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "Before you go to the coast, could you... the bandits? Still three on the road. Still my oil."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "The coast! Do they have lamps there? Do they need a lamplighter? I'm only asking. I'm not asking.",
+      "Every lamp in the square is lit tonight. I did that. You helped. Mostly you did that."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "The hall's alight! I lit the square's lamps to match. Wasted half my oil. Worth it."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "Elder Hesk sent you to the mill? Take a lamp. Take two. The Warrens eat light.",
+      "I'd come with you. I won't. But I'd like you to know I thought about it."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Dark nights are the worst for a lamplighter. People bump into things. Into me, mostly.",
+      "Master Orrin said each lamp is a small Accord with the dark. I don't get it. I like it."
+     ]
+    }
+   ]
+  },
+  "elder": {
+   "name": "Elder Hesk",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_elder",
+      "quest:the_dark_hall=none"
+     ],
+     "pages": [
+      "So. Orrin's scribe. You have his frown and none of his patience. Good. Patience is wasted on me.",
+      "I am Hesk. I keep this town's quarrels and its secrets. Lately the secrets keep me."
+     ]
+    },
+    {
+     "when": [
+      "phase:night",
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "You knock at this hour? Orrin did that. Always a question that couldn't wait for morning.",
+      "Mine can. Saltmere, scribe. Sleep first. The ferry won't sail any sooner for a tired face."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=ready"
+     ],
+     "pages": [
+      "You're back, and the hall is lit. Sit. Show me what you carried up from that place."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=done"
+     ],
+     "pages": [
+      "Saltmere is three days by road, two if you don't stop to argue. Orrin always stopped to argue.",
+      "The Hush is moving. So should you. Lantern Hollow will keep a lamp lit for you."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered",
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "You've been under the mill. Did you see him? The Priest? No? Then go deeper.",
+      "The dead walk because he tells them a story. Beat his Echoes and the story ends."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "The old mill is east, past the chapel. Its cellar stairs go down to the Warrens.",
+      "Take your best deck. Take a spare. The Priest does not play fair. He plays forever."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "The well's water has gone grey this week. Everything goes grey near the Hush.",
+      "Orrin rode north-east a season ago. He promised to write. He wrote once. Then nothing."
+     ]
+    }
+   ]
+  },
+  "platino": {
+   "name": "Platino",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_platino"
+     ],
+     "pages": [
+      "Oh! You found me. Nobody finds me. I was told to hide very well.",
+      "Don't tell the artist. Here, have a wave. It's all I've got."
+     ]
+    },
+    {
+     "when": [
+      "phase:night"
+     ],
+     "pages": [
+      "Shh. Even hidden people sleep. I sleep hidden. It's very restful until somebody finds me."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "The hall's lit, I hear. I'm staying put. The forest's edge is a lovely place to be missed."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Still here. Still hidden. You're very bad at not finding me."
+     ]
+    }
+   ]
+  },
+  "night_watch": {
+   "name": "Watchman Bertil",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_night_watch"
+     ],
+     "pages": [
+      "Evening. Or morning. One of those. I'm Bertil, the night watch. The day lad's asleep.",
+      "Gate stays open all night. Orders. Nobody said I had to like what comes through it."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "Quiet out there now. I almost miss the groaning. Almost."
+     ]
+    },
+    {
+     "when": [
+      "quest:lamplighters_debt=active"
+     ],
+     "pages": [
+      "Ember lot? Red sashes, by the bridge and the gallows trees. They camp out there all night.",
+      "Three of them, the day lad says. He counts. I just listen for the singing."
+     ]
+    },
+    {
+     "when": [
+      "flag:warrens_entered"
+     ],
+     "pages": [
+      "You've been down the mill? Then you know what's been crossing my road at night. Rats. Big ones."
+     ]
+    },
+    {
+     "when": [
+      "quest:the_dark_hall=active"
+     ],
+     "pages": [
+      "The old mill's east, past the chapel. Stairs go down under the wheel. I'd wait for light.",
+      "You won't, will you. Nobody does."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Brazier's warm, if you want it. Out there it's just the moor and whatever the moor has got."
+     ]
+    }
+   ]
+  },
+  "mourner": {
+   "name": "Wenna",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_mourner"
+     ],
+     "pages": [
+      "I'm Wenna. I sit by the well at night. My brother drew water here, before the Hush.",
+      "The dead walk the moor now. I keep hoping one of them is him. Then I hope it isn't."
+     ]
+    },
+    {
+     "when": [
+      "flag:took_the_offering"
+     ],
+     "pages": [
+      "You took the card from the well. It was my brother's. Keep it. Win something with it."
+     ]
+    },
+    {
+     "when": [
+      "flag:left_the_offering"
+     ],
+     "pages": [
+      "You left my brother's card where it lay. Thank you. Some things are owed to the dead."
+     ]
+    },
+    {
+     "when": [
+      "flag:grave_priest_beaten"
+     ],
+     "pages": [
+      "The dead lie still now. I came anyway. Habit is a kind of grief, I think."
+     ]
+    },
+    {
+     "when": [
+      "flag:heard_the_bell"
+     ],
+     "pages": [
+      "You heard the chapel bell? It rings for the ones who won't lie down. Nobody rings it."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "The water's grey. Hesk says it's the Hush. I say it's tired, like the rest of us."
+     ]
+    }
+   ]
+  }
+ }
+}

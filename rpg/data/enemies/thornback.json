@@ -1,7 +1,7 @@
 {
  "kind": "thornback",
  "name": "Thornback",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -18,15 +18,11 @@
    "index": 3,
    "main": [
     [
-     "Rancor",
+     "Elephant Guide",
      4
     ],
     [
-     "Mountain",
-     4
-    ],
-    [
-     "River Boa",
+     "Hunger of the Howlpack",
      3
     ],
     [
@@ -34,15 +30,11 @@
      21
     ],
     [
-     "Hunger of the Howlpack",
+     "Nettle Sentinel",
      4
     ],
     [
-     "Nettle Sentinel",
-     3
-    ],
-    [
-     "Silhana Ledgewalker",
+     "Mountain",
      4
     ],
     [
@@ -50,7 +42,11 @@
      4
     ],
     [
-     "Burning-Tree Emissary",
+     "River Boa",
+     4
+    ],
+    [
+     "Silhana Ledgewalker",
      4
     ],
     [
@@ -58,24 +54,25 @@
      3
     ],
     [
-     "Vines of Vastwood",
-     1
-    ],
-    [
-     "Elephant Guide",
+     "Treetop Ambusher",
      4
     ],
     [
      "Bayou Groff",
-     1
+     2
+    ],
+    [
+     "Burning-Tree Emissary",
+     3
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 25,
-    "2": 5,
-    "3": 23,
-    "4": 7
+    "1": 4,
+    "2": 6,
+    "3": 21,
+    "4": 4
    }
   },
   {
@@ -84,11 +81,15 @@
    "index": 3,
    "main": [
     [
-     "Rancor",
+     "Swamp",
+     2
+    ],
+    [
+     "Vault Skirge",
      3
     ],
     [
-     "Vines of Vastwood",
+     "Elephant Guide",
      3
     ],
     [
@@ -97,19 +98,15 @@
     ],
     [
      "Hunger of the Howlpack",
-     2
-    ],
-    [
-     "Burning-Tree Emissary",
-     4
-    ],
-    [
-     "Nettle Sentinel",
-     4
+     3
     ],
     [
      "Forest",
-     21
+     19
+    ],
+    [
+     "Nettle Sentinel",
+     3
     ],
     [
      "Nest Invader",
@@ -117,27 +114,40 @@
     ],
     [
      "River Boa",
-     3
+     2
+    ],
+    [
+     "Silhana Ledgewalker",
+     2
     ],
     [
      "Savage Swipe",
      4
     ],
     [
-     "Elephant Guide",
-     4
+     "Vines of Vastwood",
+     1
+    ],
+    [
+     "Treetop Ambusher",
+     2
     ],
     [
      "Skarrgan Pit-Skulk",
+     4
+    ],
+    [
+     "Burning-Tree Emissary",
      4
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 25,
-    "2": 4,
-    "3": 24,
-    "4": 7
+    "1": 2,
+    "2": 3,
+    "3": 27,
+    "4": 3
    }
   },
   {
@@ -146,16 +156,20 @@
    "index": 3,
    "main": [
     [
-     "Vines of Vastwood",
+     "Rancor",
+     2
+    ],
+    [
+     "Swamp",
+     3
+    ],
+    [
+     "Vault Skirge",
      4
     ],
     [
      "Elephant Guide",
      4
-    ],
-    [
-     "Forest",
-     21
     ],
     [
      "Mountain",
@@ -166,41 +180,40 @@
      4
     ],
     [
-     "Nettle Sentinel",
-     4
+     "Forest",
+     18
     ],
     [
-     "Nest Invader",
-     4
+     "Nettle Sentinel",
+     3
     ],
     [
      "River Boa",
      3
     ],
     [
+     "Nest Invader",
+     4
+    ],
+    [
      "Savage Swipe",
+     3
+    ],
+    [
+     "Skarrgan Pit-Skulk",
      4
     ],
     [
      "Burning-Tree Emissary",
      4
-    ],
-    [
-     "Treetop Ambusher",
-     3
-    ],
-    [
-     "Bayou Groff",
-     1
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 25,
-    "1": 3,
-    "2": 5,
-    "3": 23,
-    "4": 4
+    "2": 4,
+    "3": 26,
+    "4": 5
    }
   },
   {
@@ -209,31 +222,31 @@
    "index": 3,
    "main": [
     [
-     "Elephant Guide",
+     "Swamp",
+     3
+    ],
+    [
+     "Rancor",
      4
+    ],
+    [
+     "Vault Skirge",
+     4
+    ],
+    [
+     "Elephant Guide",
+     3
     ],
     [
      "Forest",
-     22
-    ],
-    [
-     "Vines of Vastwood",
-     4
-    ],
-    [
-     "Mountain",
-     3
-    ],
-    [
-     "Hunger of the Howlpack",
-     3
+     19
     ],
     [
      "Nettle Sentinel",
-     4
+     3
     ],
     [
-     "Silhana Ledgewalker",
+     "Mountain",
      3
     ],
     [
@@ -245,29 +258,29 @@
      4
     ],
     [
-     "Treetop Ambusher",
-     4
-    ],
-    [
-     "River Boa",
-     2
-    ],
-    [
      "Burning-Tree Emissary",
      2
     ],
     [
-     "Rancor",
-     1
+     "Silhana Ledgewalker",
+     4
+    ],
+    [
+     "Treetop Ambusher",
+     3
+    ],
+    [
+     "Hunger of the Howlpack",
+     4
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 25,
-    "1": 4,
-    "2": 4,
+    "1": 3,
+    "2": 3,
     "3": 22,
-    "4": 5
+    "4": 7
    }
   }
  ],
@@ -276,86 +289,166 @@
    "archetype": "Stompy Green Mono",
    "index": 59,
    "reasons": [
-    "Forge built another archetype instead ('Sadistic The Golgari Generated Deck', not 'Stompy Green Mono Generated Deck')"
+    "Forge built another archetype instead ('Mono Green Stompy Generated Deck', not 'Stompy Green Mono Generated Deck')"
    ]
   },
   {
-   "archetype": "Mono Green Stompy",
-   "index": 29,
+   "archetype": "Stompy Green Mono",
+   "index": 59,
    "reasons": [
-    "Forge built another archetype instead ('Boros Metalcraft Synthesizer Generated Deck', not 'Mono Green Stompy Generated Deck')",
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Mono Green Stompy",
-   "index": 29,
-   "reasons": [
-    "Forge built another archetype instead ('Tortex Tortured Existence Generated Deck', not 'Mono Green Stompy Generated Deck')"
-   ]
-  },
-  {
-   "archetype": "Mono Green Stompy",
-   "index": 29,
-   "reasons": [
-    "Forge built another archetype instead ('Fadas Faeries Ub Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge built another archetype instead ('Skred Ur Izzet Generated Deck', not 'Stompy Green Mono Generated Deck')",
     "Restricted to one copy (Vintage's list): Brainstorm x2.",
+    "Forge's AI is told to leave these out: Skred (Random)",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Stompy Green Mono",
+   "index": 59,
+   "reasons": [
+    "Forge built another archetype instead ('Bant Control Ephemerate Generated Deck', not 'Stompy Green Mono Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Stompy Green Mono",
+   "index": 59,
+   "reasons": [
+    "Forge built another archetype instead ('Walls Combo Defender Generated Deck', not 'Stompy Green Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Axebane Guardian (Random)",
+    "above tier 4: Llanowar Elves (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Stompy Green Mono",
+   "index": 59,
+   "reasons": [
+    "Forge built another archetype instead ('Skred Ur Izzet Generated Deck', not 'Stompy Green Mono Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x4.",
+    "Forge's AI is told to leave these out: Skred (Random)",
     "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Preordain (tier 5)"
    ]
   },
   {
    "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Bg Sacrifice Golgari Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Ub Terror Serpent Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge's AI is told to leave these out: Mental Note (Random)",
+    "above tier 4: Counterspell (tier 5), Spell Pierce (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 29,
+   "reasons": [
+    "Forge built another archetype instead ('Control Grixis Land Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
    "index": 76,
    "reasons": [
-    "Forge built another archetype instead ('Fadas Orig Rebe Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge built another archetype instead ('Delver Mono U Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "above tier 4: Delver of Secrets (tier 5), Ponder (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Boros Ephemerate Mardu Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "above tier 4: Counterspell (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Control Grixis Land Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "above tier 4: Spell Pierce (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Faeries Ub Ur Generated Deck', not 'Mono Green Stompy Generated Deck')",
+    "Forge's AI is told to leave these out: Relic of Progenitus (Random)",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Gates Azorius Caw Generated Deck', not 'Mono Green Stompy Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Mono Green Stompy",
+   "index": 76,
+   "reasons": [
+    "Forge built another archetype instead ('Gates Azorius Caw Generated Deck', not 'Mono Green Stompy Generated Deck')",
     "Restricted to one copy (Vintage's list): Brainstorm x3.",
-    "Forge's AI is told to leave these out: Court Hussar (Random)",
-    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Ephemerate (tier 5), Preordain (tier 5)"
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Preordain (tier 5), Spell Pierce (tier 5)"
    ]
   },
   {
    "archetype": "Mono Green Stompy",
    "index": 76,
    "reasons": [
-    "Forge built another archetype instead ('Jeskai Ephemerate Midrange Generated Deck', not 'Mono Green Stompy Generated Deck')",
-    "above tier 4: Counterspell (tier 5), Ephemerate (tier 5), Preordain (tier 5)"
-   ]
-  },
-  {
-   "archetype": "Mono Green Stompy",
-   "index": 76,
-   "reasons": [
-    "Forge built another archetype instead ('Poison Infect Sultai Generated Deck', not 'Mono Green Stompy Generated Deck')",
-    "Forge's AI is told to leave these out: Hickory Woodlot (Random)"
+    "Forge built another archetype instead ('Boros Flashback Gates Generated Deck', not 'Mono Green Stompy Generated Deck')"
    ]
   }
  ],
  "soak": {
-  "run": "rpg_enemies2",
-  "when": "2026-10-12 10:44",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Thornback 1": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 4,
-    "failed": []
-   },
    "Thornback 2": {
-    "games": 6,
-    "game_over": 6,
+    "games": 5,
+    "game_over": 5,
     "as_ai": 2,
     "failed": []
    },
-   "Thornback 3": {
-    "games": 8,
-    "game_over": 8,
-    "as_ai": 4,
+   "Thornback 4": {
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 1,
     "failed": []
    },
-   "Thornback 4": {
-    "games": 6,
-    "game_over": 6,
-    "as_ai": 4,
+   "Thornback 1": {
+    "games": 4,
+    "game_over": 4,
+    "as_ai": 3,
+    "failed": []
+   },
+   "Thornback 3": {
+    "games": 2,
+    "game_over": 2,
+    "as_ai": 1,
     "failed": []
    }
   },
@@ -366,22 +459,22 @@
    "name": "Thornback 1",
    "archetype": "Jumpstart",
    "halves": [
-    "J25 Beasts 2",
-    "JMP Tree Hugging 2",
-    "J25 Stoked 1"
+    "J25 Beasts 1",
+    "JMP Tree Hugging 1",
+    "J25 Vampires 4"
    ],
    "handicap": 9,
    "swapped": [
     [
+     "Vampire Nighthawk",
+     1
+    ],
+    [
      "Explore",
-     1
+     2
     ],
     [
-     "Kiln Fiend",
-     1
-    ],
-    [
-     "Garruk, Caller of Beasts",
+     "Blood Fountain",
      1
     ],
     [
@@ -389,11 +482,11 @@
      1
     ],
     [
-     "Slinza, the Spiked Stampede",
+     "Rodolf Duskbringer",
      1
     ],
     [
-     "Frontline Heroism",
+     "Slinza, the Spiked Stampede",
      1
     ],
     [
@@ -401,17 +494,17 @@
      1
     ],
     [
-     "Roil Eruption",
-     1
-    ],
-    [
-     "Wall of Blossoms",
+     "Exsanguinate",
      1
     ]
    ],
    "main": [
     [
      "Hungry Megasloth",
+     1
+    ],
+    [
+     "Spined Tyrranax",
      1
     ],
     [
@@ -423,15 +516,7 @@
      1
     ],
     [
-     "Baloth Gorger",
-     1
-    ],
-    [
      "Brushstrider",
-     1
-    ],
-    [
-     "Garruk's Packleader",
      1
     ],
     [
@@ -439,11 +524,15 @@
      1
     ],
     [
+     "Obstinate Baloth",
+     1
+    ],
+    [
      "Predator's Strike",
      1
     ],
     [
-     "Bushwhack",
+     "Gift of the Gargantuan",
      1
     ],
     [
@@ -457,6 +546,10 @@
     [
      "Forest",
      20
+    ],
+    [
+     "Wall of Blossoms",
+     1
     ],
     [
      "Ambassador Oak",
@@ -483,89 +576,93 @@
      1
     ],
     [
+     "Aggressive Urge",
+     1
+    ],
+    [
      "Crushing Canopy",
      1
     ],
     [
-     "Wildsize",
+     "Scourge of the Undercity",
      1
     ],
     [
-     "Scholar of Combustion",
+     "Nazar, the Velvet Fang",
      1
     ],
     [
-     "Cleon, Merry Champion",
+     "Blood Burglar",
      1
     ],
     [
-     "Arena Athlete",
+     "Epicure of Blood",
      1
     ],
     [
-     "Resistance Skywarden",
+     "Gluttonous Guest",
      1
     ],
     [
-     "Satyr Hoplite",
+     "Vampire of the Dire Moon",
      1
     ],
     [
-     "Hearts on Fire",
+     "Bleed Dry",
      1
     ],
     [
-     "Titan's Strength",
+     "Moment of Craving",
      1
     ],
     [
-     "Twinferno",
+     "Thriving Moor",
      1
     ],
     [
-     "Uncaged Fury",
-     1
-    ],
-    [
-     "Thriving Bluff",
-     1
-    ],
-    [
-     "Mountain",
+     "Swamp",
      10
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 30,
-    "1": 27,
-    "2": 3
+    "1": 26,
+    "2": 4
    }
   },
   {
    "name": "Thornback 2",
    "archetype": "Jumpstart",
    "halves": [
-    "J25 Dinosaurs 2",
-    "J25 Landfall 3",
-    "JMP Plus One 2"
+    "J25 Dinosaurs 1",
+    "J25 Landfall 2",
+    "JMP Milling"
    ],
    "handicap": 9,
    "swapped": [
+    [
+     "Giant Growth",
+     1
+    ],
+    [
+     "Thought Scour",
+     1
+    ],
     [
      "Ghalta, Primal Hunger",
      1
     ],
     [
-     "Branching Evolution",
+     "Ancient Greenwarden",
      1
     ],
     [
-     "Harrow",
+     "Bruvac the Grandiloquent",
      1
     ],
     [
-     "Topiary Stomper",
+     "Teferi's Tutelage",
      1
     ],
     [
@@ -573,19 +670,11 @@
      1
     ],
     [
-     "Scythecat Cub",
-     1
-    ],
-    [
-     "Wildwood Scourge",
+     "Krosan Tusker",
      1
     ],
     [
      "Thundering Spineback",
-     1
-    ],
-    [
-     "Colossal Dreadmaw",
      1
     ]
    ],
@@ -595,7 +684,15 @@
      1
     ],
     [
-     "Cherished Hatchling",
+     "Armored Kincaller",
+     1
+    ],
+    [
+     "Colossal Dreadmaw",
+     1
+    ],
+    [
+     "Drover of the Mighty",
      1
     ],
     [
@@ -607,24 +704,20 @@
      1
     ],
     [
-     "Predator's Strike",
-     1
-    ],
-    [
-     "Tail Swipe",
-     1
-    ],
-    [
      "Commune with Dinosaurs",
      1
     ],
     [
+     "Savage Stomp",
+     1
+    ],
+    [
      "Thriving Grove",
-     3
+     2
     ],
     [
      "Forest",
-     31
+     20
     ],
     [
      "Sutina, Speaker of the Tajuru",
@@ -635,11 +728,11 @@
      1
     ],
     [
-     "Kazandu Stomper",
+     "Kazandu Nectarpot",
      1
     ],
     [
-     "Murasa Ranger",
+     "Kazandu Stomper",
      1
     ],
     [
@@ -655,11 +748,11 @@
      1
     ],
     [
-     "Retreat to Kazandu",
+     "Bond of Flourishing",
      1
     ],
     [
-     "Cliffhaven Kitesail",
+     "Retreat to Kazandu",
      1
     ],
     [
@@ -667,46 +760,54 @@
      1
     ],
     [
-     "Armorcraft Judge",
+     "Belltower Sphinx",
      1
     ],
     [
-     "Nessian Hornbeetle",
+     "Reckless Scholar",
      1
     ],
     [
-     "Fertilid",
+     "Wall of Lost Thoughts",
      1
     ],
     [
-     "Ironshell Beetle",
+     "Selhoff Occultist",
      1
     ],
     [
-     "Trufflesnout",
+     "Vedalken Entrancer",
      1
     ],
     [
-     "Pridemalkin",
+     "Towering-Wave Mystic",
      1
     ],
     [
-     "Hunter's Edge",
+     "Sweep Away",
      1
     ],
     [
-     "Arbor Armament",
+     "Thought Collapse",
      1
     ],
     [
-     "Invigorating Surge",
+     "Capture Sphere",
      1
+    ],
+    [
+     "Thriving Isle",
+     1
+    ],
+    [
+     "Island",
+     10
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 31,
-    "1": 25,
+    "0": 30,
+    "1": 26,
     "2": 3,
     "3": 1
    }
@@ -715,26 +816,22 @@
    "name": "Thornback 3",
    "archetype": "Jumpstart",
    "halves": [
-    "J22 Landfall 1",
-    "J22 Elves 4",
-    "J22 Landfall 2"
+    "J22 Multi-Headed 2",
+    "J22 Elves 3",
+    "J22 Treasure 1"
    ],
    "handicap": 9,
    "swapped": [
+    [
+     "Lys Alana Huntmaster",
+     1
+    ],
     [
      "Dwynen's Elite",
      1
     ],
     [
-     "Groundswell",
-     1
-    ],
-    [
-     "Avenger of Zendikar",
-     1
-    ],
-    [
-     "Rampaging Baloths",
+     "Wolverine Riders",
      1
     ],
     [
@@ -742,70 +839,70 @@
      1
     ],
     [
-     "Courser of Kruphix",
+     "Benevolent Hydra",
      1
     ],
     [
-     "Presence of Gond",
+     "Primordial Hydra",
      1
     ],
     [
-     "Wildborn Preserver",
+     "Ripscale Predator",
      1
     ],
     [
-     "Adventuring Gear",
+     "Clockwork Hydra",
+     1
+    ],
+    [
+     "Rapacious Dragon",
      1
     ]
    ],
    "main": [
     [
-     "Turntimber Basilisk",
-     2
-    ],
-    [
-     "Primeval Herald",
-     2
-    ],
-    [
-     "Zendikar's Roil",
+     "Domesticated Hydra",
      1
     ],
     [
-     "Rampaging Growth",
-     2
-    ],
-    [
-     "Oashra Cultivator",
-     2
-    ],
-    [
-     "Snapping Gnarlid",
-     2
-    ],
-    [
-     "Canopy Baloth",
-     2
-    ],
-    [
-     "Khalni Heart Expedition",
-     2
-    ],
-    [
-     "Master's Rebuke",
+     "Ordeal of Nylea",
      1
     ],
     [
-     "Evolving Wilds",
-     2
+     "Hydra's Growth",
+     1
+    ],
+    [
+     "Servant of the Scale",
+     1
+    ],
+    [
+     "Kujar Seedsculptor",
+     1
+    ],
+    [
+     "Ilysian Caryatid",
+     1
+    ],
+    [
+     "Pridemalkin",
+     1
+    ],
+    [
+     "Titanic Brawl",
+     1
+    ],
+    [
+     "Hunter's Edge",
+     1
     ],
     [
      "Thriving Grove",
-     3
+     2
     ],
     [
      "Forest",
-     28
+     20
     ],
     [
      "Woodland Champion",
@@ -816,7 +913,7 @@
      1
     ],
     [
-     "Overcome",
+     "Instruments of War",
      1
     ],
     [
@@ -824,11 +921,11 @@
      1
     ],
     [
-     "Dutiful Replicator",
+     "Elderleaf Mentor",
      1
     ],
     [
-     "Elderleaf Mentor",
+     "Might of the Masses",
      1
     ],
     [
@@ -840,24 +937,59 @@
      1
     ],
     [
-     "Baloth Woodcrasher",
+     "Captain Lannery Storm",
      1
     ],
     [
-     "Fertilid",
+     "Sokenzan Smelter",
      1
     ],
     [
-     "Broken Bond",
+     "Blood Aspirant",
      1
+    ],
+    [
+     "Trove of Temptation",
+     1
+    ],
+    [
+     "Goldhound",
+     1
+    ],
+    [
+     "Dutiful Replicator",
+     1
+    ],
+    [
+     "Brazen Freebooter",
+     1
+    ],
+    [
+     "Sudden Breakthrough",
+     1
+    ],
+    [
+     "Goldvein Pick",
+     1
+    ],
+    [
+     "Welding Sparks",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     1
+    ],
+    [
+     "Mountain",
+     10
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 28,
-    "1": 27,
-    "2": 3,
-    "3": 2
+    "0": 30,
+    "1": 28,
+    "2": 2
    }
   },
   {
@@ -865,13 +997,13 @@
    "archetype": "Jumpstart",
    "halves": [
     "JMP Dinosaurs 2",
-    "JMP Lands 1",
+    "JMP Elves 2",
     "JMP Above the Clouds 1"
    ],
    "handicap": 9,
    "swapped": [
     [
-     "Cultivate",
+     "Dwynen's Elite",
      1
     ],
     [
@@ -879,7 +1011,7 @@
      1
     ],
     [
-     "Ulvenwald Hydra",
+     "Allosaurus Shepherd",
      1
     ],
     [
@@ -887,11 +1019,15 @@
      1
     ],
     [
-     "Selvala, Heart of the Wilds",
+     "Llanowar Visionary",
      1
     ],
     [
-     "Sylvan Ranger",
+     "Presence of Gond",
+     1
+    ],
+    [
+     "Selvala, Heart of the Wilds",
      1
     ],
     [
@@ -900,10 +1036,6 @@
     ],
     [
      "Colossal Dreadmaw",
-     1
-    ],
-    [
-     "Roaming Ghostlight",
      1
     ]
    ],
@@ -953,19 +1085,15 @@
      20
     ],
     [
-     "Awakener Druid",
+     "Silhana Wayfinder",
      1
     ],
     [
-     "Feral Hydra",
+     "Wren's Run Vanquisher",
      1
     ],
     [
-     "Fa'adiyah Seer",
-     1
-    ],
-    [
-     "Fertilid",
+     "Leaf Gilder",
      1
     ],
     [
@@ -973,15 +1101,15 @@
      1
     ],
     [
-     "Elemental Uprising",
+     "Skyway Sniper",
      1
     ],
     [
-     "Zendikar's Roil",
+     "Hunter's Edge",
      1
     ],
     [
-     "Vastwood Zendikon",
+     "Titanic Growth",
      1
     ],
     [
@@ -994,6 +1122,10 @@
     ],
     [
      "Keen Glidemaster",
+     1
+    ],
+    [
+     "Roaming Ghostlight",
      1
     ],
     [
@@ -1038,13 +1170,13 @@
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-14 11:23",
-  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "when": "2026-10-23 09:32",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
   "handicap": 9,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
+  "tuned_by": null
  }
 }

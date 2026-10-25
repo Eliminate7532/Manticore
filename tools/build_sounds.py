@@ -620,6 +620,20 @@ MUSIC = {                                      # cue -> (source, start, length o
 MUSIC_QUALITY = {"music.game6": 3, "music.settings": 3}         # long tracks: Vorbis q3 to stay inside test_au1's 32 MB budget
 MUSIC_LUFS = -21
 
+# Round RPG15: the Adventure's places (Karl's decision 10; the candidates page and its doc claude/RPG_MUSIC_CANDIDATES_2026-10-23.md;
+# my provisional picks, Karl 23 Oct 18:51: "Those music choices are fine for now"). cue -> (source, start, length or None, fade-out,
+# loops): a loop is written whole - its own first sample to its last, no fades, the recordist's silence kept - so it repeats cleanly.
+RPG_MUSIC = {
+    "music.rpg_town": ("mus3-moonlit-lullaby-for-the-lost", 0, None, 0.0, True),      # page: a separate loop file (this one)
+    "music.rpg_outskirts": ("mus3-kokopellis-graveyard-theme:Kokopelli", 0, None, 0.0, True),   # page: "Loops seamlessly: Yes"
+    "music.rpg_warrens": ("mus3-dark-cavern-ambient", 0, None, 0.0, True),            # page: "2 is a continuous loop"
+    "music.rpg_boss": ("mus3-boss-battle-music", 0, None, 0.0, True),                 # page: "Loops seamlessly!"
+    "music.rpg_victory": ("mus3-victory-fanfare", 0, None, 1.0, False),               # 6.9 s, played once
+    "music.rpg_defeat": ("mus3-game-over-theme:No Hope", 0, 8.0, 2.5, False),         # its first 8 s, faded
+}
+RPG_MUSIC_QUALITY = 3                                           # Vorbis q3, as the long table tracks
+RPG_STING = ("rpg.encounter", "mus3-string-and-piano-horror-stings", 3.5, 1.2, -18)   # cue, source, seconds kept, fade, LUFS
+
 
 # ---- the manifest ---------------------------------------------------------------------------------------------------------------------
 
@@ -636,6 +650,7 @@ CUE_SETTINGS = {         # bus, gain_db, cooldown_ms, max_voices (+ duck)
     "phase.turn_mine": ("stinger", 0, 1000, 1, {"sfx": -4, "music": -4}), "phase.turn_theirs": ("stinger", 0, 1000, 1),
     "game.win": ("stinger", 0, 0, 1, {"sfx": -12, "ambience": -10}), "game.lose": ("stinger", 0, 0, 1, {"sfx": -12, "ambience": -10}),
     "rewind": ("stinger", 0, 0, 1), "vs.reveal": ("stinger", 0, 500, 1, {"music": -8}), "boot.splash": ("stinger", 0, 1000, 1),
+    "rpg.encounter": ("stinger", 0, 500, 1, {"music": -8}),        # Round RPG15: the Adventure's encounter sting
 }
 
 
@@ -733,6 +748,21 @@ def main(argv=None):
             write_ogg(x, os.path.join(SOUNDS, f"music/{cid[6:]}.ogg"), MUSIC_QUALITY.get(cid, 4))
             print(f"{cid:22s} {len(x) / SR:6.1f}s")
         cues[cid] = {"bus": "music", "gain_db": 0, "stream": True, "files": [f"music/{cid[6:]}.ogg"]}
+    for cid, (ref, start, length, fo, loops) in RPG_MUSIC.items():        # Round RPG15
+        if wanted(cid) and not a.no_music:
+            x = cut(L(ref, raw=loops), start, length)
+            x = x if loops else fade(x, 0.01, fo)
+            x = level(x, MUSIC_LUFS, -1.0)
+            write_ogg(x, os.path.join(SOUNDS, f"music/{cid[6:]}.ogg"), RPG_MUSIC_QUALITY)
+            print(f"{cid:22s} {len(x) / SR:6.1f}s {'loop' if loops else ''}")
+        cues[cid] = {"bus": "music", "gain_db": 0, "stream": True, "files": [f"music/{cid[6:]}.ogg"]}
+    cid, ref, keep, fo, lufs = RPG_STING
+    if wanted(cid):
+        x = level(fade(cut(L(ref), 0, keep), 0.003, fo), lufs, -1.0)
+        write_ogg(x, os.path.join(SOUNDS, f"sfx/{cid}.1.ogg"), 5)
+        print(f"{cid:22s} 1 x {len(x) / SR:4.2f}s  {loudness(x):6.1f} LUFS")
+    s = settings_for(cid)
+    cues[cid] = {"bus": s[0], "gain_db": s[1], "files": [f"sfx/{cid}.1.ogg"], "cooldown_ms": s[2], "max_voices": s[3], "duck": s[4]}
     manifest["version"] = 3
     manifest["_comment"] = ("Every cue plays real recordings (CC0, built by tools/build_sounds.py from tools/sound_sources.json); 'synth' is "
                             "only the fallback if a file is missing. 'stream' cues (ambience, music) are played by the director's ambience/music "

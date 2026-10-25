@@ -22,11 +22,13 @@ shown and must come out the same).
 """
 import hashlib
 import json
+import math
 import os
 import random
 import shutil
 import time
 
+from rpg import notes
 from rpg.collection import Collection
 
 FORMAT = "manticore-rpg-save"
@@ -43,6 +45,8 @@ def _v1_to_v2(d):
 
 MIGRATIONS = {1: _v1_to_v2}   # {old version: function(dict) -> dict of the next version}
 NAME_MAX = 24
+HEROES = ("Warrior", "Paladin", "Rogue", "Mage", "Engineer")   # Round RPG11: who you walk the map as (DawnLike's
+                                                                   # five class sheets); an older save has none: the first
 KNOWN = ("format", "version", "slot", "name", "created", "updated", "seed", "rng_counter", "gold", "collection", "decks",
          "active_deck", "start", "world", "shops", "record", "pending_duel", "forge", "basics_free")
 
@@ -88,6 +92,19 @@ def _is_int(v, lo=None):
     return isinstance(v, int) and not isinstance(v, bool) and (lo is None or v >= lo)
 
 
+def _finite(v):
+    try:
+        return math.isfinite(v)
+    except OverflowError:                        # a whole number past what a float can hold
+        return False
+
+
+def _repaired(slot, what, text):
+    """Round RPG16d: a value an older copy of the game could write, mended as the save is read - said once a run in crash_log.txt
+    (the next write keeps the mended value)."""
+    notes.once(f"save:{slot}:{what}", f"save slot {slot}: {text}")
+
+
 def _card_list(v, what):
     _need(isinstance(v, list), what)
     out = []
@@ -122,6 +139,11 @@ class SaveGame:
         r = random.Random(_seed_int(self.seed, self.rng_counter, purpose))
         self.rng_counter += 1
         return r
+
+    def peek_rng(self, purpose):
+        """Round RPG13: the generator the next rng(purpose) call will give, without using it up (the encounter screen's "See its
+        deck" shows the deck the duel will then play)."""
+        return random.Random(_seed_int(self.seed, self.rng_counter, purpose))
 
     def stable_rng(self, *parts):
         return random.Random(_seed_int(self.seed, "stable", *parts))
@@ -170,8 +192,12 @@ class SaveGame:
         s.created, s.updated = float(d["created"]), float(d["updated"])
         _need(_is_int(d.get("rng_counter"), 0), "rng_counter")
         s.rng_counter = d["rng_counter"]
-        _need(_is_int(d.get("gold"), 0), "gold")
-        s.gold = d["gold"]
+        gold = d.get("gold")
+        if _is_int(gold) and gold < 0:              # Round RPG16d (review T3): RPG16c gave an event's toll whatever its sign
+            _repaired(d["slot"], "gold", f"gold was {gold}; it is 0 now (an event took more than there was)")
+            gold = 0
+        _need(_is_int(gold, 0), "gold")
+        s.gold = gold
         coll = d.get("collection")
         _need(isinstance(coll, dict), "collection")
         for n, k in coll.items():
@@ -197,6 +223,22 @@ class SaveGame:
         _need(isinstance(w.get("towns_visited"), list) and all(isinstance(t, str) for t in w["towns_visited"]), "world")
         for k in ("cleared", "beaten", "seen"):    # Round RPG5: encounters won on the map; RPG6: the rooms seen (rpg.explore)
             _need(w.get(k) is None or (isinstance(w[k], list) and all(isinstance(t, str) for t in w[k])), "world")
+        _need(w.get("facing") in (None, "down", "left", "right", "up"), "world")     # Round RPG11: which way the walker faces
+        _need(w.get("hero") in (None,) + HEROES, "world")                             # Round RPG11: the hero picked
+        dg = w.get("danger")                         # Round RPG13: steps to the next random fight (rpg.encounters)
+        if isinstance(dg, (int, float)) and not isinstance(dg, bool) and not _finite(dg):    # Round RPG16d (review T10): json's
+            # Infinity / NaN, or a whole number no float can hold (the walk subtracts a float from it) - a new gap
+            _repaired(d["slot"], "danger", f"the steps to the next random fight were {dg!r}; a new number is drawn")
+            w.pop("danger")
+            dg = None
+        _need(dg is None or (isinstance(dg, (int, float)) and not isinstance(dg, bool) and dg >= 0), "world")
+        fl = w.get("flags")                          # Round RPG14: the story's flags (rpg.talk); Round RPG16d (review T2):
+        if fl is not None:                           # ... only words - RPG16c let an event's list in, and set() of it raised
+            good = [f for f in fl if isinstance(f, str) and f] if isinstance(fl, list) else []
+            if not isinstance(fl, list) or len(good) != len(fl):
+                bad = [f for f in fl if not (isinstance(f, str) and f)] if isinstance(fl, list) else fl
+                _repaired(d["slot"], "flags", f"flags that aren't words were dropped: {bad!r}"[:300])
+                w["flags"] = good
         s.world = w
         shops = d.get("shops")
         _need(isinstance(shops, dict), "shops")

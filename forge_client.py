@@ -34,6 +34,7 @@ from collections import deque
 import formats
 import forge_net
 import java_crash
+import net_log
 import paths
 
 BASE_DIR = paths.program_dir()      # Round 29: for a frozen build this is _MEIPASS, not wherever this module's __file__ claims to be
@@ -194,8 +195,9 @@ def sync_bridge(runtime=None, source=None):
 
 
 def class_path(runtime):
-    """The bridge comes BEFORE forge.jar: it carries two patched Forge classes (MulliganService: the free first mulligan;
-    patch 45's InputPayMana: the payment waits while a mana ability is being paid), and the first jar on the class path wins."""
+    """The bridge comes BEFORE forge.jar: it carries patched Forge classes (MulliganService: the free first mulligan;
+    patch 45's InputPayMana: the payment waits while a mana ability is being paid; round AIT2's PumpAllAi, ComputerUtilCard and ComputerUtil:
+    the AI's combat predictions keep what doesn't change while it thinks), and the first jar on the class path wins."""
     return os.path.join(runtime, "forge_bridge.jar") + os.pathsep + os.path.join(runtime, "forge.jar")
 
 
@@ -582,7 +584,7 @@ class ForgeSession:
 
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
                  java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
-                 classic_stops=False, rules=None):
+                 classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None):
         import formats
         import house_rules
         self.deck_path = deck_path
@@ -639,6 +641,13 @@ class ForgeSession:
         self.loop_cap = loop_cap            # round 28e: the AI loop guard's limit for tests (needs dev=True; None = the bridge's own 10, 0 = off)
         self.loop_guards = []               # round 28e: {"t": "ai_loop_guard", ...} - the bridge stopped an AI repeating one ability
         self.loop_cap_used = None           # round 28e: the limit the bridge's "ready" line reports
+        self.threat_ai = threat_ai          # round AI2: False = Forge's AI alone (--threat-ai off, the AI1 baseline; needs dev=True)
+        self.threat_ai_used = None          # round AI2: what the bridge's "ready" line reports (None: a bridge from before AI2)
+        self.plan_cache = plan_cache        # round AIT2: "off" (Forge's own AI planning) or "compare" (both, logged; needs dev=True)
+        self.plan_cache_used = None         # round AIT2: what the bridge's "ready" line reports (None: a bridge from before AIT2)
+        self.forge_undo = forge_undo        # round FB2: Forge's own undo, "off" (the bridge's default), "single" or "free" (needs dev=True)
+        self.forge_undo_used = None         # round FB2: what the bridge's "ready" line reports (None: a bridge from before FB2)
+        self.threat_moves = []              # round AI2: {"t": "ai_threat", ...} - an AI answered a threat Forge's own choice missed
         self.last_state_ok = False          # round LAST1: the bridge's "ready" says it can save and load a game (an older forge_bridge.jar cannot)
         self.state_saves = []               # round LAST1: the bridge's {"t":"state_saved"} answers, oldest first
         self.state_load_failed = None       # round LAST1: why the bridge could not load a saved game, or None
@@ -768,6 +777,12 @@ class ForgeSession:
                 args += ["--fault", f]
             if self.loop_cap is not None:
                 args += ["--loop-cap", str(int(self.loop_cap))]
+            if self.threat_ai is False:
+                args += ["--threat-ai", "off"]            # round AI2: the baseline, for tools/ai_bench.py and tests
+            if self.plan_cache:
+                args += ["--plan-cache", str(self.plan_cache)]   # round AIT2: "off" = Forge's own AI planning, for comparison
+            if self.forge_undo:
+                args += ["--forge-undo", str(self.forge_undo)]   # round FB2: try Forge 9a6f776's own undo
         return args
 
     def _child_env(self):
@@ -867,6 +882,9 @@ class ForgeSession:
             self.protocol = m.get("protocol", 1)
             self.ai_timeout = m.get("aiTimeout")
             self.loop_cap_used = m.get("loopCap")
+            self.threat_ai_used = m.get("threatAi")       # round AI2
+            self.plan_cache_used = m.get("planCache")     # round AIT2
+            self.forge_undo_used = m.get("forgeUndo")     # round FB2
             self.last_state_ok = bool(m.get("lastState"))
             self.last_state_marks = bool(m.get("lastStateMarks"))
             self.format_used = m.get("format", "commander")
@@ -893,6 +911,9 @@ class ForgeSession:
                 del self.setup_failures[:-20]
         elif t == "ai_loop_guard":
             self._note_loop_guard(m)
+        elif t == "ai_threat":
+            self.threat_moves.append(m)           # round AI2: see Threats.java
+            del self.threat_moves[:-200]
         elif t == "state_saved":
             self.state_saves.append(m)           # round LAST1: see Main.saveState
             del self.state_saves[:-20]
@@ -1222,6 +1243,66 @@ class _SocketProc:
         forge_net.close_socket(self.sock)
 
 
+def _version_code():
+    try:
+        import version
+        return version.code_fingerprint()
+    except Exception:
+        return "unknown"
+
+
+def _log_online_message(a, m, session):
+    """Round NETLOG1: the online messages that say how a host or join attempt is going, into its connection-log block.
+    Only names, reasons, seats, ports and counts: no message here carries a password or token (and net_log redacts anyway)."""
+    t = m.get("t")
+    if t == "state" and not session._logged_start:
+        session._logged_start = True
+        a.step("game start", True, detail="first board from the host's engine (turn %s)" % (m.get("turn"),))
+    elif t == "ready" and session.online == "host":
+        a.step("engine ready", True, detail="protocol %s" % m.get("protocol", 1))
+    elif t == "hosting":
+        a.step("listen", True, detail="NetHost listening on %s port %s" % (m.get("bind") or "?", m.get("port")))
+    elif t == "host_failed":
+        a.step("listen", False, detail="NetHost could not host: %s" % (m.get("reason") or "?"), error=m.get("text") or "")
+        a.end("FAILED: " + str(m.get("reason") or "host_failed"))
+    elif t == "upnp":
+        text = m.get("text")            # round NETLOG1b (review R3): the router's own words (Upnp.java's "text")
+        a.step("upnp", bool(m.get("ok")), detail="router: %s%s%s" % (
+               m.get("reason") or ("port opened" if m.get("ok") else "?"),
+               (" - %s" % (text,)) if text and text != m.get("reason") else "",
+               (", says its internet address is %s" % m["external_ip"]) if m.get("external_ip") else ""))
+    elif t == "guest_joined":
+        code = m.get("code")
+        same = code == _version_code()
+        a.step("accept + hello", True, detail="%r joined (seat %s, %s of %s)" % (m.get("name"), m.get("seat"), m.get("joined"),
+                                                                              m.get("wanted")))
+        a.step("version check", True if (code and same) else None,
+               detail="guest's code %s, mine %s%s" % (code or "(not sent)", _version_code(),
+                                                      "" if same else " - different copies (a warning only: the protocol matched)"))
+    elif t == "join_refused":
+        a.step("join refused", False, detail="someone tried to join and was turned away: %s" % (m.get("reason"),))
+    elif t == "guest_left_lobby":
+        a.step("lobby", None, detail="%r left before the game started" % (m.get("name"),))
+    elif t == "hosting_cancelled":
+        a.end("cancelled by the host")
+    elif t in ("peer_dropped", "net_dropped"):
+        a.step("drop", False, detail="%s%s, grace %s s" % ((repr(m.get("name")) + ": ") if m.get("name") else "",
+                                                           m.get("why") or "connection dropped", m.get("grace")))
+    elif t == "peer_back":
+        a.step("back", True, detail="%r reconnected" % (m.get("name"),))
+    elif t == "peer_left":
+        a.step("left", None, detail="%s %r left (%s)" % (m.get("who"), m.get("name"),
+                                                         "expired" if m.get("expired") else ("left" if m.get("left") else
+                                                                                             m.get("why") or "")))
+    elif t == "game_over":
+        a.step("game over", True)
+    elif t == "fatal":
+        a.step("engine", False, error=str(m.get("text") or "Forge stopped"))
+    elif t == "_exit" and session.online == "host":
+        session._harvest_nethost()
+        a.end("the host's engine stopped")
+
+
 class NetSession(ForgeSession):
     """The guest's side of an online game: the same messages as a local game, from the host's engine over the network. The
     table treats it like any ForgeSession. start() connects, checks the host's certificate against the invite code's
@@ -1245,8 +1326,12 @@ class NetSession(ForgeSession):
     FINAL_REFUSALS = ("rejoin", "gone", "fingerprint", "version", "password", "full", "watch_full", "not_started", "deck")
 
     def __init__(self, address, port, name, password, deck_name, dck_text, fingerprint=None, code=None,
-                 connect_timeout=None, welcome_timeout=None, record_path=None, watch=False, silence_seconds=None, room=None):
+                 connect_timeout=None, welcome_timeout=None, record_path=None, watch=False, silence_seconds=None, room=None,
+                 fingerprint_from="invite"):
         super().__init__("", [], name=name, record_path=record_path)
+        # round NETLOG1b (review G2): where `fingerprint` came from, for the connection log - "invite" (the invite code) or
+        # "remembered" (an earlier game with this address: a join typed by hand, forge_table.make_guest_session)
+        self.fingerprint_from = fingerprint_from
         self.room = room                        # round MP2d: the host's room at a relay (address and port are the relay's)
         self.address, self.port = address, int(port)
         self.deck_name, self.dck_text = deck_name, dck_text
@@ -1267,52 +1352,104 @@ class NetSession(ForgeSession):
         self._closing = False
         self._ended = False                     # the game is over or the host left: a drop now is not reconnected
         self._wlock = threading.Lock()
+        self._attempt = None                    # round NETLOG1: this join's block in connection_log.txt
+        self._logged_start = False
 
     def __repr__(self):
         return "NetSession(%s:%s%s, %r)" % (self.address, self.port, " via relay" if self.room else "", self.name)
 
     # ---- connecting ----
     def _handshake(self, line):
-        """Connect, send one line, read the host's answer. (sock, rfile, welcome) or NetRefused."""
-        sock = self._connect(self.address, self.port, self._peer_fp or self.fingerprint, timeout=self.connect_timeout,
-                             **({"room": self.room} if self.room else {}))
+        """Connect, send one line, read the host's answer. (sock, rfile, welcome) or NetRefused.
+        Round NETLOG1: every step goes into this join's block of connection_log.txt (the line sent is never logged: it
+        holds the password or the rejoin token)."""
+        log = self._attempt
+        if log is not None:                     # round NETLOG1b (G2): what connect_tls's fingerprint step compares against
+            log.fingerprint_from = ("this game's first connection" if self._peer_fp else self._fingerprint_words())
+        kind = (json.loads(line).get("c") if line.startswith("{") else None) or "hello"
+        t = time.monotonic()
+        try:
+            with net_log.active(log):
+                sock = self._connect(self.address, self.port, self._peer_fp or self.fingerprint, timeout=self.connect_timeout,
+                                     **({"room": self.room} if self.room else {}))
+        except forge_net.NetRefused as e:
+            if log:
+                log.step("connection", False, (time.monotonic() - t) * 1000, "gave up: %s" % e.reason, str(e))
+            raise
+        except Exception as e:
+            if log:
+                log.step("connection", False, (time.monotonic() - t) * 1000, "", e)
+            raise
+        t = time.monotonic()
+
+        def fail(reason, detail, error=None):
+            if log:
+                log.step(kind, False, (time.monotonic() - t) * 1000, detail, error)
+            forge_net.close_socket(sock)
+            return forge_net.NetRefused(*reason)
+
         rfile = None
         try:
             sock.settimeout(self.welcome_timeout)
             rfile = sock.makefile("rb")
             sock.sendall(line.encode("utf-8"))
             reply_line = rfile.readline(forge_net.REPLY_MAX_BYTES)
-        except socket.timeout:
-            forge_net.close_socket(sock)
-            raise forge_net.NetRefused("no_answer") from None
-        except OSError:
-            forge_net.close_socket(sock)
-            raise forge_net.NetRefused("closed") from None
+        except socket.timeout as e:
+            raise fail(("no_answer",), "sent, no answer within %s s" % self.welcome_timeout, e) from None
+        except OSError as e:
+            raise fail(("closed",), "the connection broke while waiting for the host's answer", e) from None
         if not reply_line:
-            forge_net.close_socket(sock)
-            raise forge_net.NetRefused("closed")
+            raise fail(("closed",), "the host closed the connection without answering")
         try:
             reply = json.loads(reply_line.decode("utf-8", "replace"))
         except ValueError:
             reply = {}
         if reply.get("t") == "refused":
-            forge_net.close_socket(sock)
             reason = reply.get("reason") or "unknown"
             if self.spectator and reason == "full":
                 reason = "watch_full"
-            raise forge_net.NetRefused(reason, reply.get("text", ""))
+            raise fail((reason, reply.get("text", "")), "the host refused: %s %s" % (reason, reply.get("text", ""))) from None
         if reply.get("t") != "welcome":
-            forge_net.close_socket(sock)
-            raise forge_net.NetRefused("unknown", "the host sent something this program doesn't understand")
+            raise fail(("unknown", "the host sent something this program doesn't understand"),
+                       "an answer this program doesn't understand (t=%r)" % (reply.get("t"),)) from None
+        if log:
+            log.step(kind, True, (time.monotonic() - t) * 1000,
+                     "welcome: seat %s, host %r, %s players, protocol %s, grace %s s, rejoin token %s"
+                     % (reply.get("seat"), reply.get("host"), reply.get("players") or 2, reply.get("v", "?"),
+                        reply.get("grace", "?"), "given" if reply.get("token") else "none"))
+            mine = _version_code()
+            theirs = reply.get("code")
+            if kind != "rejoin":
+                log.step("version check", True if (theirs and theirs == mine) else None,
+                         detail="host's code %s, mine %s%s" % (theirs or "(not sent)", mine, "" if theirs == mine else
+                                                               " - different copies (a warning only: the protocol matched)"))
         return sock, rfile, reply
+
+    def _fingerprint_words(self):
+        """Round NETLOG1b (review G2): the source of the expected host certificate, in the log's words."""
+        if self.fingerprint_from == "remembered":
+            return "this table's memory of %s:%s from an earlier game" % (self.address, self.port)
+        return "the invite code"
 
     def start(self):
         password, self._password = self._password, None
+        self._attempt = net_log.Attempt(
+            "watch" if self.spectator else "join", address_as_typed=repr(self.address), port=self.port,
+            relay="yes (the address is the relay's; room given)" if self.room else "no",
+            name=repr(self.name), fingerprint=("from %s (%s...)" % (self._fingerprint_words(), self.fingerprint[:16]))
+            if self.fingerprint else "none (typed by hand, first time)", protocol=forge_net.PROTOCOL_V)
         if self.spectator:
             line = forge_net.watch_line(self.name, password, self.code)
         else:
             line = forge_net.hello_line(self.name, password, self.code, self.deck_name, self.dck_text)
-        sock, rfile, reply = self._handshake(line)
+        try:
+            sock, rfile, reply = self._handshake(line)
+        except forge_net.NetRefused as e:
+            self._attempt.end("FAILED: " + e.reason, str(e))
+            raise
+        except Exception as e:
+            self._attempt.end("FAILED", net_log.error_text(e))
+            raise
         self.peer_name, self.peer_code, self.seat = reply.get("host"), reply.get("code"), reply.get("seat")
         self.watched_guest = reply.get("guest")
         self.players = int(reply.get("players") or 2)           # round MP2c: the whole table, AI seats included
@@ -1366,17 +1503,24 @@ class NetSession(ForgeSession):
                 if t in ("peer_left", "game_over"):
                     self._ended = True
                 self.inbox.put(m)
-            return "the host closed the connection"
+            why = "the host closed the connection"
         except TimeoutError:
-            return "nothing from the host for %d s" % self.silence_seconds
+            why = "nothing from the host for %d s" % self.silence_seconds
         except (OSError, ValueError) as e:
-            return "the connection failed (%s)" % (e.__class__.__name__,)
+            why = "the connection failed (%s)" % (e.__class__.__name__,)
+            if self._attempt and not self._closing:
+                self._attempt.step("connection", False, error=e, detail="ended while playing")
         finally:
             proc.kill()
+        if self._attempt and not self._closing:
+            self._attempt.step("connection", None, detail="ended: " + why + ("" if not self._ended else " (game over / host left)"))
+        return why
 
     def _reconnect(self, why):
         """Connect again with the rejoin token until the grace period runs out. True when the game goes on."""
         self.inbox.put({"t": "net_dropped", "why": why, "grace": self.grace})
+        if self._attempt:
+            self._attempt.note("reconnecting for up to %s s (%s)" % (self.grace + forge_net.RECONNECT_EXTRA, why))
         deadline = time.monotonic() + self.grace + forge_net.RECONNECT_EXTRA
         attempt = 0
         while not self._closing:
@@ -1386,9 +1530,12 @@ class NetSession(ForgeSession):
             except forge_net.NetRefused as e:
                 if e.reason in self.FINAL_REFUSALS:
                     self.inbox.put({"t": "net_lost", "reason": e.reason, "text": str(e)})
+                    if self._attempt:
+                        self._attempt.end("LOST: " + e.reason, str(e))
                     return False
-            except Exception:                              # anything else: the network isn't back yet
-                pass
+            except Exception as e:                         # anything else: the network isn't back yet
+                if self._attempt:
+                    self._attempt.step("reconnect", False, error=e)
             else:
                 sock.settimeout(self.silence_seconds)
                 with self._wlock:
@@ -1398,6 +1545,8 @@ class NetSession(ForgeSession):
                     self.proc = _SocketProc(sock, rfile)
                 self.reconnects += 1
                 self.inbox.put({"t": "net_back", "attempts": attempt})
+                if self._attempt:
+                    self._attempt.step("reconnect", True, detail="back after %d attempt(s)" % attempt)
                 return True
             wait = forge_net.reconnect_wait(attempt)
             if time.monotonic() + wait > deadline:
@@ -1407,6 +1556,8 @@ class NetSession(ForgeSession):
                 self._sleep(0.1)
         if not self._closing:
             self.inbox.put({"t": "net_lost", "reason": "lost", "text": forge_net.join_message("lost")})
+            if self._attempt:
+                self._attempt.end("LOST", "no connection again within %s s" % (self.grace + forge_net.RECONNECT_EXTRA))
         return False
 
     # ---- writing ----
@@ -1429,6 +1580,12 @@ class NetSession(ForgeSession):
         with self._wlock:
             return super().send(**cmd)
 
+    def handle(self, m):
+        super().handle(m)
+        a = self._attempt
+        if a is not None:
+            _log_online_message(a, m, self)
+
     def connected(self):
         """Round MP2: the connection is up right now (False while reconnecting)."""
         return self.alive() and self.net_state == "connected"
@@ -1446,6 +1603,8 @@ class NetSession(ForgeSession):
         if proc is not None and not proc.closed:
             self._write_line(proc, json.dumps({"c": "leave"}), timeout=1)        # round MP2: no grace period, I'm going
             proc.kill()
+        if self._attempt is not None:
+            self._attempt.end("closed by this table" + (" after the game" if self._ended else ""))
         self._log_shapes()
         if self._record:
             self._record.close()
@@ -1456,6 +1615,8 @@ class HostSession(ForgeSession):
     """The host's side of an online game: an ordinary ForgeSession whose bridge is NetHost (the host's seat, plus a TLS port
     for the friend's table). The game password and the keystore's password reach Java through its environment, never its
     command line (any program on the PC can read a command line)."""
+
+    HARVEST_SECONDS = 1.0                   # round NETLOG1b: how often poll() copies NetHost's own lines into the log
 
     def __init__(self, deck_path, name, port, password, cert, guest_deck_path, upnp=True, bind="0.0.0.0", code="",
                  seed=None, runtime=None, java=None, memory_mb=None, record_path=None, dev=False, block_seconds=None,
@@ -1491,6 +1652,13 @@ class HostSession(ForgeSession):
         self.grace_seconds, self.heartbeat_seconds, self.silence_seconds = grace_seconds, heartbeat_seconds, silence_seconds
         self.drop_notice_delay_ms = drop_notice_delay_ms   # tests only (round MP2e)
         self.online = "host"
+        self._attempt = None                # round NETLOG1: this host attempt's block in connection_log.txt
+        self._logged_start = False
+        self._engine_pos = 0                # how much of forge_engine.log's "nethost:" lines has been copied into it (bytes)
+        self._harvest_lock = threading.Lock()   # round NETLOG1b: poll(), handle() and close() all copy
+        self._next_harvest = 0.0            # round NETLOG1b (review R4): poll() copies NetHost's lines every HARVEST_SECONDS
+        self._harvest_mono = time.monotonic()   # when the last copy was made (to tell a late copy)
+        self._harvested_at = 0.0            # ... and that time as the attempt's "+s"
 
     def __repr__(self):
         return "HostSession(port %s, %r)" % (self.port, self.name)
@@ -1527,6 +1695,69 @@ class HostSession(ForgeSession):
                 args += ["--resume-guest", "%d|%s|%s" % (int(seat), name, deck)]
         return args
 
+    def start(self):
+        """Round NETLOG1: the attempt's header (port, bind, UPnP, relay, seats; this PC's addresses) before NetHost starts."""
+        self._harvest_mono = time.monotonic()
+        self._attempt = net_log.Attempt(
+            "host", with_interfaces="background",            # round NETLOG1b (review R2): this runs on the window's thread
+            port=self.port, bind=self.bind, upnp="on" if self.upnp_wanted else "off",
+            relay=("%s:%s" % self.relay) if self.relay else "no", friends_wanted=self.guests_wanted,
+            ai_seats=len(self.opponent_paths), resuming_a_saved_game="yes" if self.resume else None,
+            protocol=forge_net.PROTOCOL_V)
+        t = time.monotonic()
+        try:
+            super().start()
+        except Exception as e:
+            self._attempt.step("start engine", False, (time.monotonic() - t) * 1000, "NetHost (java) did not start", e)
+            self._attempt.end("FAILED")
+            if self._err:
+                self._err.close()
+                self._err = None
+            raise
+        # round NETLOG1b (review R9): the program that listens - firewall rules are per program, and a PC can have several java
+        args = getattr(self.proc, "args", None)
+        program = args[0] if isinstance(args, (list, tuple)) and args else args
+        self._attempt.step("start engine", True, (time.monotonic() - t) * 1000,
+                           "NetHost started (pid %s): %s" % (getattr(self.proc, "pid", None), program))
+        self._next_harvest = time.monotonic() + self.HARVEST_SECONDS
+        return self
+
+    def poll(self, limit=200):
+        """Round NETLOG1b (review R4): NetHost's own lines are copied every HARVEST_SECONDS too - a friend's failed TLS
+        handshake ("handshake with ... failed", "no hello from ...") sends the host's table no message, so waiting for the
+        next message left them out of the log (and out of an F8 report made meanwhile)."""
+        n = super().poll(limit)
+        if self._attempt is not None and time.monotonic() >= self._next_harvest:
+            self._harvest_nethost()
+        return n
+
+    def _harvest_nethost(self, final=False):
+        """Round NETLOG1: copy NetHost's own "nethost:" lines (accept failures, handshakes, wrong passwords and the address
+        they came from, UPnP) from forge_engine.log into the connection log - that file is rewritten when Forge next starts.
+        Round NETLOG1b: whole lines only (a line NetHost is still writing waits for the next copy, except at the end), and a
+        line copied more than 2 x HARVEST_SECONDS after the previous copy says when it was written (NetHost's lines carry no
+        time of their own; a log line's "+s" is when it was copied)."""
+        if self._attempt is None or not self.stderr_path:
+            return
+        with self._harvest_lock:
+            now = time.monotonic()
+            self._next_harvest = now + self.HARVEST_SECONDS
+            try:
+                with open(self.stderr_path, "rb") as f:
+                    f.seek(self._engine_pos)
+                    chunk = f.read()
+            except (OSError, ValueError):
+                return
+            cut = len(chunk) if final else chunk.rfind(b"\n") + 1
+            self._engine_pos += cut
+            since, self._harvested_at = self._harvested_at, self._attempt._elapsed()
+            keep = [x.strip() for x in chunk[:cut].decode("utf-8", "replace").splitlines() if "nethost:" in x]
+            late = ("  (copied late: written between +%.1f s and +%.1f s)" % (since, self._harvested_at)
+                    if now - self._harvest_mono > 2 * self.HARVEST_SECONDS else "")
+            self._harvest_mono = now
+            for line in keep[-200:]:
+                self._attempt.note("engine: " + line[line.index("nethost:"):] + late)
+
     def _child_env(self):
         env = _clean_env()
         env["MANTICORE_NET_PASSWORD"] = self._password or ""
@@ -1535,6 +1766,10 @@ class HostSession(ForgeSession):
 
     def handle(self, m):
         t = m.get("t")
+        if self._attempt is not None and t not in ("request", "event", "log", "shape"):
+            if t in ONLINE_MESSAGES or t in ("ready", "game_over", "fatal", "_exit"):
+                self._harvest_nethost()
+            _log_online_message(self._attempt, m, self)
         if self.resuming and t in ("request", "event"):
             return                  # round MP2b: the play-back answers these itself; what is still asked comes again at the end
         super().handle(m)
@@ -1562,12 +1797,20 @@ class HostSession(ForgeSession):
             return None
         if a is None:
             return ("connecting", None, None)
+        seen = (a.status, a.error)
+        if self._attempt is not None and seen != getattr(self, "_relay_logged", None):    # round NETLOG1 (never the room)
+            self._relay_logged = seen
+            self._attempt.step("relay", {"ready": True, "failed": False, "lost": False}.get(a.status),
+                               detail="%s:%s %s" % (self.relay[0], self.relay[1], a.status), error=a.error)
         return (a.status, a.room, a.error)
 
     def close(self):
         if self.relay_agent is not None:
             self.relay_agent.close()
         super().close()
+        if self._attempt is not None:
+            self._harvest_nethost(final=True)
+            self._attempt.end("closed by the host's table")
 
     def cancel_host(self):
         """Stop waiting for the friend (the Cancel button on the Host screen)."""

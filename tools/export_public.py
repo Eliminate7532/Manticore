@@ -49,6 +49,8 @@ TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_
                    ".worktrees", ".sessions"}              # Round PAR1: the sessions' desks (whole copies) and their board
 ANYWHERE_SKIP = {"__pycache__", ".git", ".pytest_cache"}
 SKIP_FILES = {"forge_engine.log", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
+              "connection_log.txt", "connection_log.1.txt", "connection_log.2.txt", "connection_log.3.txt",   # round NETLOG1
+              "connection_log.rotating.txt",                    # round NETLOG1b (net_log.SPARE_NAME)
               "bug_report_config.json", "bug_report_config.bundled.json", "settings.json", "backup_settings.json",
               "session.json", "backup_status.json", "test_results.txt", "quick_results.txt", "card_check_report.txt"}
 # Round PUB1: top-level files that are Karl's own (working notes; scripts that cd into his folder).

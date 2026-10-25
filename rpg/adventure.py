@@ -4,7 +4,8 @@ Adventure > new game > walk the map > duel an enemy on the real table > gold and
 save). No pygame: rpg_screens.py draws; everything it decides is here, where a test can reach it.
 
     slot_rows(folder)              what the slot screen lists (rpg.save.slots for numbers.json's save_slots)
-    Game.load(slot, folder)        an opened save, and the notes to show (a backup used, a duel that didn't finish)
+    Game.load(slot, folder)        an opened save, and the notes to show (a backup used, a duel that didn't finish, a save
+                                   from before RPG12's maps moved to the inn)
     Game.create(flow, slot, ...)   a new game from a finished NewGameFlow, written at once
     Game.write()                   the save, written safely (rpg.save.write)
     fight_text(game, trigger)      the lines the fight question shows (who, what a win gives, what a loss costs)
@@ -55,8 +56,54 @@ def kind_names():
         return {}
 
 
+def _rare_table():
+    from rpg import rare
+    try:
+        return rare.spawns()
+    except (OSError, ValueError):
+        return {}
+
+
+def rare_entry(trigger):
+    """Round RPG16: the rare_spawns.json entry of a rare foe's trigger (one with a `rare` id), else None."""
+    rid = getattr(trigger, "rare", None)
+    e = _rare_table().get(rid) if isinstance(rid, str) else None
+    return e if isinstance(e, dict) and e.get("name") else None
+
+
+def deck_source(game, trigger):
+    """Round RPG17: the deck list ("jumpstart" / "archetype") a rare with its own "decks" plays (rpg.rare.deck_encounter), or
+    None - the duel's own rule (the region's list for the trigger's encounter)."""
+    entry = rare_entry(trigger)
+    if not entry or "decks" not in entry:
+        return None
+    from rpg import rare as rpg_rare
+    return duel.region_source(game.save, rpg_rare.deck_encounter(trigger.rare, entry))
+
+
+def reward_words(reward):
+    """"40 gold" / "a rare card" / "40 gold and a rare card" for a reward dict (rpg.rare), "" for none."""
+    reward = reward if isinstance(reward, dict) else {}      # Round RPG16d: a hand-edited reward that isn't a table says nothing
+    parts = []
+    if isinstance(reward.get("gold"), int) and reward["gold"] > 0:
+        parts.append(f"{reward['gold']} gold")
+    if reward.get("card") == "rare_from_band":
+        parts.append("a rare card")
+    return " and ".join(parts)
+
+
 def enemy_name(kind_id):
     return kind_names().get(kind_id) or (kind_id or "?").replace("_", " ").title()
+
+
+def _move_old_save(game):
+    """Round RPG12: rpg.explore.move_old_save for an opened game; a map folder that can't be read moves nothing (the map screen
+    says so when it opens)."""
+    try:
+        from rpg import explore
+        return explore.move_old_save(game.save.world, game.world.start_town)
+    except Exception:                                # a damaged map, PyTMX missing: the map screen says it
+        return None
 
 
 class Game:
@@ -100,6 +147,10 @@ class Game:
         pending = duel.settle_pending(game.save)
         if pending:
             notes.append(pending)
+        moved = _move_old_save(game)                 # Round RPG12: a save from before the new maps goes on at the inn
+        if moved:
+            notes.append(moved)
+        if pending or moved:
             game.write()
         return game, notes
 
@@ -143,9 +194,20 @@ class Game:
 
 # ---- duels ------------------------------------------------------------------------------------------------------------------
 
+def inn_town(game, map_name):
+    """Round RPG15b: the name of the town whose map the inn is on (the map's town property), or None."""
+    try:
+        from rpg import explore
+        town = explore.load_area(map_name).town
+        return game.town_name(town) if town else None
+    except Exception:                                    # a map that won't load says nothing here; the loss itself still works
+        return None
+
+
 def fight_text(game, trigger):
     """(title, [lines]) for the question asked when you walk into a foe."""
-    name = enemy_name(trigger.enemy)
+    entry = rare_entry(trigger)                          # Round RPG16: a rare foe has its own name, reward and cooldown
+    name = entry["name"] if entry else enemy_name(trigger.enemy)
     what = ENCOUNTER_WORDS.get(trigger.encounter, "")
     title = f"{name}" + (f" - {what}" if what else "")
     n = game.numbers
@@ -153,12 +215,24 @@ def fight_text(game, trigger):
     cards = n.reward_cards(trigger.encounter)
     gold = f"{lo} gold" if lo == hi else f"{lo}-{hi} gold"
     win = f"Win: {gold}" + (f" and {cards} card{'s' if cards != 1 else ''}" if cards else "") + "."
+    if entry:
+        extra = reward_words(entry.get("reward"))
+        if extra:
+            win = win[:-1] + f", and {extra}."
     town = game.town_name(game.save.world.get("last_town") or game.world.start_town)
+    where = f"back to {town}"
+    inn = game.save.world.get("inn")                     # Round RPG15b: a loss wakes you at the inn you last rested at (rpg.duel)
+    if isinstance(inn, dict) and inn.get("map"):
+        where = f"you wake at {inn_town(game, inn['map'])}'s inn" if inn_town(game, inn["map"]) else "you wake at the inn"
     cost = n.loss_cost(game.save.gold)
-    lose = (f"Lose: {cost} of your {game.save.gold} gold, and back to {town}." if cost
-            else f"Lose: back to {town}.")
+    lose = (f"Lose: {cost} of your {game.save.gold} gold, and {where}." if cost
+            else f"Lose: {where[0].upper() + where[1:]}.")
     lines = [win, lose]
-    if not trigger.once:
+    if entry:
+        from rpg import rare
+        days = rare.cooldown_of(trigger.rare, entry)        # Round RPG16d (review T1): a hand-edited "three" never reaches :g
+        lines.append(f"Beaten, it stays away for {days:g} day{'s' if days != 1 else ''}." if days else "Beaten, it may come back.")
+    elif not trigger.once and not getattr(trigger, "random", False):   # Round RPG13: a random foe has no spot to come back to
         lines.append("Beaten, it comes back after your next visit to a town.")
     wrong = game.deck_problems()
     if wrong:
@@ -166,17 +240,56 @@ def fight_text(game, trigger):
     return title, lines
 
 
-def start_duel(game, trigger, now=None):
-    """Mark the duel as going on and write the save; returns the rpg.duel.Duel. DuelError (a sentence) when it can't start."""
+def start_duel(game, trigger, now=None, index=None):
+    """Mark the duel as going on and write the save; returns the rpg.duel.Duel. DuelError (a sentence) when it can't start.
+    trigger: a map's encounter (rpg.explore.Trigger) or, Round RPG13, a random one (rpg.encounters.RandomFoe: no spot). index: the
+    enemy deck the encounter screen showed (rpg.duel.peek), so the duel plays exactly that one."""
     d = duel.start(game.save, trigger.enemy, trigger.encounter, pool=game.pool, lists=game.lists(), now=now, spot=trigger.spot,
-                   once=trigger.once)
+                   once=trigger.once, index=index, source=deck_source(game, trigger))      # RPG17: a rare's own deck lists
     d.enemy_name = enemy_name(trigger.enemy) or d.enemy_name
+    entry = rare_entry(trigger)
+    if entry and isinstance(game.save.pending_duel, dict):          # Round RPG16: the result names it and pays its reward
+        game.save.pending_duel["rare"] = trigger.rare
+        d.enemy_name = entry["name"]
     try:
         game.write()
     except OSError:
         game.save.pending_duel = None           # not written: not going on (else every later Fight says one is)
         raise
     return d
+
+
+def give_reward(game, reward):
+    """Round RPG14: a quest's reward (rpg.talk) into the save: {"gold": n} and {"card": "rare_from_band"} (a rare or mythic from the
+    region's tier band, any colour, drawn with the save's rng; the band's best tier first). The flag is already set by the talk.
+    Returns the lines that say what was given."""
+    from rpg.shop import candidates
+    s, lines = game.save, []
+    reward = reward if isinstance(reward, dict) else {}      # Round RPG16d: a hand-edited reward that isn't a table gives nothing
+    if reward.get("gold"):
+        try:                                     # Round RPG16d (review T3): a reward only gives - the save's gold never goes
+            n = int(reward["gold"]) if not isinstance(reward["gold"], bool) else 0      # below 0 (a save below 0 won't load)
+        except (TypeError, ValueError, OverflowError):
+            n = 0
+        if n > 0:
+            s.gold += n
+            lines.append(f"+{n} gold.")
+        else:
+            from rpg import notes
+            notes.once(f"reward:gold:{reward['gold']!r}"[:200], f"a reward's gold {reward['gold']!r} is not a number above 0 - "
+                                                               "nothing is given or taken")
+    if reward.get("card") == "rare_from_band":
+        lo, hi = game.world.band(s.world.get("region") or 1)
+        rng = s.rng("quest_reward")
+        for t in range(hi, lo - 1, -1):
+            names = [n for n in candidates(t, "", game.pool, game.tiers(), game.lists(), game.numbers.shop_skip_prefixes)
+                     if (game.pool.get(n).rarity or "C") in ("R", "M")]
+            if names:
+                pick = rng.choice(names)
+                s.collection.add(pick, 1)
+                lines.append(f"New card: {pick}.")
+                break
+    return lines
 
 
 def cancel_duel(game):
@@ -220,8 +333,17 @@ def finish_loaded(game, result):
         return None
     before = game.save.to_dict()
     kind = game.save.pending_duel.get("kind")
+    encounter = game.save.pending_duel.get("encounter")
+    rid = game.save.pending_duel.get("rare")
+    entry = _rare_table().get(rid) if isinstance(rid, str) else None
     out = duel.finish(game.save, result, game.numbers, game.world, pool=game.pool, tier_table=game.tiers(), lists=game.lists())
-    out["enemy"] = enemy_name(kind)
+    out.update(enemy=enemy_name(kind), kind=kind, encounter=encounter)     # Round RPG14: the kind, for the boss's last words
+    if entry:                                                               # Round RPG16: a rare foe
+        out.update(enemy=entry["name"], rare=rid)
+        if out.get("result") == "won":
+            from rpg import rare
+            rare.on_beaten(game.save.world, rid)
+            out["extra_lines"] = give_reward(game, entry.get("reward"))
     try:
         game.write()
     except OSError:
@@ -242,7 +364,7 @@ def outcome_lines(out, world_=None):
         cards = [n for n, _src in out.get("cards") or []]
         if cards:
             lines.append(f"New card{'s' if len(cards) != 1 else ''}: " + ", ".join(cards) + ".")
-        return lines
+        return lines + list(out.get("extra_lines") or ())
     if r in ("lost", "conceded"):
         town = out.get("moved_to")
         if town:
@@ -252,6 +374,9 @@ def outcome_lines(out, world_=None):
                 pass
         lost = -int(out.get("gold") or 0)
         first = f"You conceded to the {enemy}." if r == "conceded" else f"The {enemy} beat you."
+        if out.get("inn"):                       # Round RPG14: you wake at the inn you last rested at (rpg.talk); the
+            return [first, (f"You lost {lost} gold" if lost else "You had no gold to lose") +      # innkeeper's words follow
+                    " and woke at the inn."]                                                   # in her box (rpg_screens)
         second = (f"You lost {lost} gold" if lost else "You had no gold to lose") + (f" and are back in {town}." if town else ".")
         return [first, second]
     if r == "draw":

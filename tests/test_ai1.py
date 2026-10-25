@@ -47,7 +47,10 @@ def trial(board="C1", ai_cast=(), zones=None, at_my_turn=None):
 class BoardTests(unittest.TestCase):
     def test_there_are_ten_boards_with_the_keys_of_the_round_doc(self):
         self.assertEqual([b.key for b in ai_bench.BOARDS], ["C1", "C2", "C3", "C4", "F1", "F2", "R1", "R2", "R3", "I1"])
-        self.assertEqual(set(ai_bench.BOARD_BY_KEY), set(b.key for b in ai_bench.BOARDS))
+        # Round AI2 added five boards of other cards (X1-X5, run with --boards extra); the ten stay the default set.
+        self.assertEqual(set(ai_bench.BOARD_BY_KEY),
+                         set(b.key for b in ai_bench.BOARDS + ai_bench.EXTRA_BOARDS + ai_bench.POD_BOARDS))   # AI2, AI2b
+        self.assertEqual(ai_bench.board_keys(), [b.key for b in ai_bench.BOARDS])
 
     def test_every_card_on_my_side_is_in_the_kinnan_list(self):
         commanders, deck = deck_loader.load_deck(ai_bench.KINNAN_DECK)
@@ -335,7 +338,9 @@ class SummaryTests(unittest.TestCase):
             self.assertEqual(len(data["trials"]), 6)
             self.assertEqual(data["trials"][0], {"board": "C1", "index": 0, "verdict": True,
                                                  "ai_entries": ["Counterspell (1): Counter target spell."], "ai_cast": ["Counterspell"],
-                                                 "zones": {}, "at_my_turn": None, "stack_end": [], "error": "", "seconds": 0.0})
+                                                 "zones": {}, "at_my_turn": None, "stack_end": [], "error": "", "seconds": 0.0,
+                                         "ai2": [],                                   # round AI2: what its rules changed
+                                         "casts": [], "boards": None})                # round AI2b: who cast it; every board
 
     def test_unknown_boards_are_refused_before_forge_starts(self):
         with self.assertRaises(ValueError) as cm:

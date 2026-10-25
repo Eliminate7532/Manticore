@@ -11,7 +11,7 @@
   {
    "id": "forge",
    "name": "Forge",
-   "version": "2.0.16-SNAPSHOT (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+   "version": "2.0.16-SNAPSHOT (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
    "license": "GPL-3.0-or-later",
    "copyright": "Copyright (C) Forge Team and contributors",
    "url": "https://github.com/Card-Forge/forge",
@@ -179,6 +179,33 @@
    "shipped": "always",
    "group": "Sounds and music",
    "notice_file": "../sounds/CREDITS.txt",
+   "status": "verified"
+  },
+  {
+   "id": "rpg-art-dawnlike",
+   "name": "DawnLike 16x16 Universal Rogue-like tileset v1.81 (Adventure maps, people and windows)",
+   "version": "v1.81, DawnLike_5.zip sha256 3ef8819e38ccef1b543a3d74b4bbf31022a95e22fafd8115e89694d8ccf2c179 (unmodified; assets/rpg/MANIFEST.sha256)",
+   "license": "CC-BY-4.0",
+   "copyright": "DragonDePlatino; the DawnBringer 16-colour palette by DawnBringer",
+   "url": "https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181",
+   "used_for": "The Adventure mode's map tiles, characters, windows and pixel font (assets/rpg/dawnlike/)",
+   "shipped": "always",
+   "group": "Artwork",
+   "notice_file": "../assets/rpg/dawnlike/README.txt",
+   "status": "verified",
+   "note": "The pack's page and README ask that DawnBringer be credited for the palette. The README also asks every game that uses it to hide its Platino sprite somewhere; the Adventure hides one in Lantern Hollow."
+  },
+  {
+   "id": "rpg-art-simple-battles",
+   "name": "Simple Battles (Adventure encounter backdrops and foes)",
+   "version": "simple_battles.zip sha256 95cb940450783eb01277ede26b29ee274b5f0c7f972545f1732bf5ece728c6f1 (unmodified; assets/rpg/MANIFEST.sha256)",
+   "license": "CC-BY-3.0",
+   "copyright": "Hyptosis (uploaded to OpenGameArt by speveril, released with permission)",
+   "url": "https://opengameart.org/content/simple-battles",
+   "used_for": "The Adventure mode's encounter screen: 3 backdrops and 16 foes (assets/rpg/simple_battles/)",
+   "shipped": "always",
+   "group": "Artwork",
+   "notice_file": "notices/rpg-art-simple-battles.txt",
    "status": "verified"
   },
   {
@@ -855,6 +882,11 @@
    "id": "grok-art",
    "title": "Game art",
    "text": "Some of Manticore's artwork was Created with Grok: the table backgrounds, the studio splash, the title screen and the window icon."
+  },
+  {
+   "id": "adventure-art",
+   "title": "Adventure art",
+   "text": "The Adventure's map tiles, people, windows and pixel font are DawnLike by DragonDePlatino, on the DawnBringer palette by DawnBringer (CC-BY 4.0); its encounter backdrops and foes are Simple Battles by Hyptosis (CC-BY 3.0). Both come from OpenGameArt.org and are included unchanged; their licences are under Artwork."
   },
   {
    "id": "mpc-autofill",

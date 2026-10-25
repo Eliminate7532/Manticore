@@ -52,6 +52,17 @@ class Bot:
             return False
         pr = st.get("prompt", {})
         msg = pr.get("message", "")
+        if pr.get("selecting") and not pr.get("ok", {}).get("enabled") and st.get("asking") is not False:
+            # Round FB2: the cleanup discard ("Select 1 card(s) to discard ...") has OK and Cancel greyed until a card is picked,
+            # and this bot only ever clicked battlefield cards, so it waited for good. Forge 9a6f776 plays a seed differently
+            # (another game), and round UNDO1's live test reached a discard for the first time. Pick a marked hand card.
+            picks = [c for c in s.me()["zones"].get("hand", []) if c.get("selectable")]
+            seen = getattr(s, "state_version", None)
+            if picks and seen != getattr(self, "last_pick", None):      # once per new state: a second click would un-pick it
+                self.last_pick = seen
+                self.note(f"T{st['turn']} picked {picks[0]['name']} ({msg[:40]})")
+                s.click_card(picks[0]["id"])
+                return True
         if not pr.get("ok", {}).get("enabled") and not pr.get("cancel", {}).get("enabled"):
             return False
         me = s.me()

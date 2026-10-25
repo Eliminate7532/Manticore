@@ -1,0 +1,504 @@
+{
+ "_comment": "Round RPG15c (review R5): every object id of the four maps as RPG15b shipped them (git show round-rpg15b:rpg/maps/*.tmx). A save names spots as '<map>#<id>', so each id here must keep its meaning in every later build (tests/test_rpg15c.py IdTests).",
+ "maps": {
+  "ashfen_outskirts": {
+   "1": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "warrens_1",
+     "spawn": "entrance"
+    }
+   },
+   "10": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "ember_bandit"
+    }
+   },
+   "11": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "zealot"
+    }
+   },
+   "12": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "thornback"
+    }
+   },
+   "13": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "grave_robber"
+    }
+   },
+   "14": {
+    "class": "spawn",
+    "name": "town_3",
+    "props": {}
+   },
+   "15": {
+    "class": "town",
+    "name": "",
+    "props": {
+     "town": "town_3"
+    }
+   },
+   "16": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "17": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "2": {
+    "class": "spawn",
+    "name": "mill_door",
+    "props": {}
+   },
+   "3": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "thornback"
+    }
+   },
+   "4": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "lantern_hollow",
+     "spawn": "from_outskirts"
+    }
+   },
+   "5": {
+    "class": "spawn",
+    "name": "from_town",
+    "props": {}
+   },
+   "6": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "ember_bandit"
+    }
+   },
+   "7": {
+    "class": "spawn",
+    "name": "town_2",
+    "props": {}
+   },
+   "8": {
+    "class": "town",
+    "name": "",
+    "props": {
+     "town": "town_2"
+    }
+   },
+   "9": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "kind": "ember_bandit"
+    }
+   }
+  },
+  "lantern_hollow": {
+   "1": {
+    "class": "npc",
+    "name": "Marta the innkeeper",
+    "props": {
+     "cell": "0,9",
+     "id": "innkeeper",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "10": {
+    "class": "npc",
+    "name": "Gate guard",
+    "props": {
+     "cell": "3,4",
+     "id": "gate_guard",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "11": {
+    "class": "npc",
+    "name": "Elder Hesk",
+    "props": {
+     "cell": "2,16",
+     "id": "elder",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "12": {
+    "class": "spawn",
+    "name": "town_1_packs",
+    "props": {}
+   },
+   "13": {
+    "class": "town",
+    "name": "",
+    "props": {
+     "spawn": "town_1_packs",
+     "tab": "packs",
+     "town": "town_1"
+    }
+   },
+   "14": {
+    "class": "npc",
+    "name": "Ysolde",
+    "props": {
+     "cell": "3,9",
+     "id": "pack_seller",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "15": {
+    "class": "npc",
+    "name": "Keeper Brann",
+    "props": {
+     "cell": "0,12",
+     "id": "hall_keeper",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "16": {
+    "class": "platino",
+    "name": "Platino",
+    "props": {
+     "id": "platino"
+    }
+   },
+   "17": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "radius": "4",
+     "strength": "0.75"
+    }
+   },
+   "18": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "radius": "4",
+     "strength": "0.75"
+    }
+   },
+   "19": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "radius": "4",
+     "strength": "0.75"
+    }
+   },
+   "2": {
+    "class": "npc",
+    "name": "Old Wendel",
+    "props": {
+     "cell": "2,9",
+     "id": "card_seller",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "20": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "radius": "4",
+     "strength": "0.75"
+    }
+   },
+   "21": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "radius": "4",
+     "strength": "0.75"
+    }
+   },
+   "22": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "4.0",
+     "strength": "0.9"
+    }
+   },
+   "23": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "4.0",
+     "strength": "0.9"
+    }
+   },
+   "24": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "4.0",
+     "strength": "0.9"
+    }
+   },
+   "25": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "4.0",
+     "strength": "0.9"
+    }
+   },
+   "26": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flag": "grave_priest_beaten",
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "27": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flag": "grave_priest_beaten",
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "28": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flag": "grave_priest_beaten",
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "29": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flag": "grave_priest_beaten",
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "3": {
+    "class": "town",
+    "name": "",
+    "props": {
+     "spawn": "town_1",
+     "tab": "singles",
+     "town": "town_1"
+    }
+   },
+   "4": {
+    "class": "spawn",
+    "name": "inn",
+    "props": {}
+   },
+   "5": {
+    "class": "spawn",
+    "name": "town_1",
+    "props": {}
+   },
+   "6": {
+    "class": "spawn",
+    "name": "start",
+    "props": {}
+   },
+   "7": {
+    "class": "npc",
+    "name": "Pell the lamplighter",
+    "props": {
+     "cell": "1,9",
+     "id": "lamplighter",
+     "sprite": "Characters/Humanoid"
+    }
+   },
+   "8": {
+    "class": "spawn",
+    "name": "from_outskirts",
+    "props": {}
+   },
+   "9": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "ashfen_outskirts",
+     "spawn": "from_town"
+    }
+   }
+  },
+  "warrens_1": {
+   "1": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "ashfen_outskirts",
+     "spawn": "mill_door"
+    }
+   },
+   "2": {
+    "class": "spawn",
+    "name": "entrance",
+    "props": {}
+   },
+   "3": {
+    "class": "spawn",
+    "name": "stairs_down",
+    "props": {}
+   },
+   "4": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "warrens_2",
+     "spawn": "stairs_top"
+    }
+   },
+   "5": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "6": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   }
+  },
+  "warrens_2": {
+   "1": {
+    "class": "encounter",
+    "name": "",
+    "props": {
+     "encounter": "boss",
+     "kind": "grave_priest"
+    }
+   },
+   "10": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "11": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "2": {
+    "class": "spawn",
+    "name": "stairs_top",
+    "props": {}
+   },
+   "3": {
+    "class": "exit",
+    "name": "",
+    "props": {
+     "map": "warrens_1",
+     "spawn": "stairs_down"
+    }
+   },
+   "4": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "5": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "6": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "7": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "8": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   },
+   "9": {
+    "class": "light",
+    "name": "",
+    "props": {
+     "flicker": "true",
+     "radius": "2.5",
+     "strength": "0.7"
+    }
+   }
+  }
+ }
+}

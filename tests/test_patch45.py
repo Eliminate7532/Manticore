@@ -36,9 +36,10 @@ import tests.live as live
 
 SRC = os.path.join(BASE, "java_bridge", "src", "forge", "gamemodes", "match", "input", "InputPayMana.java")
 CLASS = "forge/gamemodes/match/input/InputPayMana.class"
-# sha256 of forge-gui/src/main/java/forge/gamemodes/match/input/InputPayMana.java at Forge fb4d809 (git show, LF endings)
+# sha256 of forge-gui/src/main/java/forge/gamemodes/match/input/InputPayMana.java at Forge 9a6f776 (git show, LF endings;
+# round FB2: the same as at fb4d809, where patch 45 copied it)
 UPSTREAM_SHA256 = "fd11c0ad585c0dd380bc62fc3f3e890fb3ccec90fa030c9e77ad1ad99119e938"
-UPSTREAM_COMMIT = "fb4d809"
+UPSTREAM_COMMIT = "9a6f776"
 
 # The two changes, exactly as they stand in the copy, and what Forge has in their place.
 CHANGES = [

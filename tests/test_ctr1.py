@@ -4,9 +4,9 @@ Forge names them (mapping is assumed, unchecked)").
 
 The bridge sends CounterType.toString() - for Forge's CounterEnumType that is the Java constant ("M0M1", "ACQUIREDTASTE"). The card's
 badge showed str.title() of it ("M0M1", "Acquiredtaste") and the floating "+2" showed no word at all for most counters. Now both use
-counter_names, which gives Forge's own getName() (tests/fixtures/ctr1/counter_enum_fb4d809.json, read from Forge's source at fb4d809).
+counter_names, which gives Forge's own getName() (tests/fixtures/ctr1/counter_enum_9a6f776.json, read from Forge's source at 9a6f776; round FB2 added SIN).
 
-  NameTests    every one of Forge's 237 constants, keyword counters, a script's own counter, nothing
+  NameTests    every one of Forge's 238 constants (237 at fb4d809), keyword counters, a script's own counter, nothing
   JarTests     the fixture lists exactly the constants in forge_runtime/forge.jar (needs javap and the runtime)
   TableTests   the badge on a card and the floating number say the words
   LiveTests    what the bridge really sends for an M0M1, an ACQUIREDTASTE and a keyword counter put on a card (real Forge)
@@ -33,7 +33,7 @@ from tests import live
 from tests.test_forge_table import make_gui
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FIXTURE = os.path.join(HERE, "fixtures", "ctr1", "counter_enum_fb4d809.json")
+FIXTURE = os.path.join(HERE, "fixtures", "ctr1", "counter_enum_9a6f776.json")
 
 
 def forge_counters():
@@ -48,7 +48,7 @@ def beat(kind, **data):
 class NameTests(unittest.TestCase):
     def test_every_forge_counter_reads_as_forge_names_it(self):
         counters = forge_counters()
-        self.assertEqual(len(counters), 237)
+        self.assertEqual(len(counters), 238)                              # 237 at fb4d809; round FB2: + SIN at 9a6f776
         for e in counters:
             with self.subTest(counter=e["enum"]):
                 want = e["name"][0].upper() + e["name"][1:]          # Forge's getName(), its first letter capital

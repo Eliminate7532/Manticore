@@ -391,7 +391,7 @@ class BuildToolTests(unittest.TestCase):
     def test_au1_sources_keep_their_old_file_order(self):
         """An AU1 source never says prefer_lossless, so a rebuild of a Keep reads the file it always read."""
         for k, s in self.sources.items():
-            if not k.startswith(("oga2-", "mus2-")):
+            if not k.startswith(("oga2-", "mus2-", "mus3-")):      # Round RPG15 (expected change): the Adventure's new tracks
                 self.assertNotIn("prefer_lossless", s, k)
 
 

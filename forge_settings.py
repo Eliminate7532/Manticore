@@ -11,6 +11,7 @@ import time
 import pygame
 
 import gfx
+import osk
 import reporting
 from forge_dialogs import Dialog
 from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, WHITE, clip_text, draw_text, round_rect, wrap_text
@@ -622,9 +623,14 @@ class ReportDialog(Dialog):
             label = "Save idea file" if self.idea else "Save report file"
             sw = max(gui.button_width(label), int(190 * fs))
             self.button(gui, pygame.Rect(right - sw, by, sw, bh), label, "save", ready, True, ready)
+        kw = osk.button_width(gui)
+        hx = x
+        if x + kw + 12 <= right - sw - 12:                      # round PEN1: no keyboard on a pen-only tablet - tap this one
+            osk.toggle_button(self, gui, pygame.Rect(x, by, kw, bh))
+            hx = x + kw + 12
         if not ready:
             hint = "Say what you'd like first." if self.idea else "Say what happened first."
-            draw_text(scr, clip_text(hint, sf, max(10, right - sw - 12 - x)), x, by + bh // 2, sf, ORANGE, "midleft")
+            draw_text(scr, clip_text(hint, sf, max(10, right - sw - 12 - hx)), hx, by + bh // 2, sf, ORANGE, "midleft")
 
     def draw_result(self, gui):
         L, scr = gui.L, gui.screen
@@ -684,7 +690,9 @@ class ReportDialog(Dialog):
     def click(self, gui, pos, button):
         name = self.button_at(pos)
         if self.phase == self.FORM:
-            if name == "cancel":
+            if name == "keyboard":                                # round PEN1
+                gui.toggle_keyboard(self)
+            elif name == "cancel":
                 self.done = True
             elif name in ("tab_" + self.BUG, "tab_" + self.IDEA):
                 self.switch_tab(name[4:])

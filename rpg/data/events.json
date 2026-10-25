@@ -1,0 +1,134 @@
+{
+ "version": 1,
+ "about": "Round RPG16: random events (claude/SPEC_RPG16_DAYNIGHT_2026-10-23.md 3.5, the spec lane's draft, unchanged). Every word, weight and cooldown is a placeholder for Karl to edit (Q3, Q7).",
+ "events": {
+  "stuck_cart": {
+   "title": "On the road",
+   "map": "ashfen_outskirts",
+   "where": [
+    0,
+    17,
+    59,
+    22
+   ],
+   "when": [
+    "phase:dawn|day"
+   ],
+   "weight": 3,
+   "cooldown_days": 1,
+   "pages": [
+    "A carter's wagon sits in the ditch, one wheel sunk to the hub. He waves both arms at you."
+   ],
+   "choice": [
+    "Help him push",
+    "Walk on"
+   ],
+   "yes": {
+    "pages": [
+     "You push, he pulls. The wheel comes free with a noise like a boot leaving a bog.",
+     "He presses coins on you and won't take them back. It took the best part of an hour."
+    ],
+    "gold": 15,
+    "minutes": 45
+   },
+   "no": {
+    "pages": [
+     "He shouts something about scribes. It isn't kind."
+    ]
+   }
+  },
+  "the_wisp": {
+   "title": "Over the bog",
+   "map": "ashfen_outskirts",
+   "where": [
+    20,
+    22,
+    40,
+    37
+   ],
+   "when": [
+    "phase:night"
+   ],
+   "weight": 2,
+   "cooldown_days": 2,
+   "pages": [
+    "A pale light bobs over the bog, low and slow, as if it wants to be followed."
+   ],
+   "choice": [
+    "Follow it",
+    "Let it go"
+   ],
+   "yes": {
+    "pages": [
+     "It leads you a long, wet way round and goes out over a drowned purse. Somebody's loss.",
+     "Your boots are full of fen, and the night is older than it was."
+    ],
+    "gold": 25,
+    "minutes": 90
+   },
+   "no": {
+    "pages": [
+     "You stay where you are. The light waits a while, then goes out."
+    ]
+   }
+  },
+  "chapel_bell": {
+   "title": "A bell",
+   "map": "ashfen_outskirts",
+   "when": [
+    "phase:night",
+    "!flag:grave_priest_beaten"
+   ],
+   "weight": 2,
+   "cooldown_days": 1,
+   "pages": [
+    "Across the moor, the ruined chapel's bell rings once. The chapel has no rope.",
+    "Somewhere near the graves, a spade is dropped and a man swears."
+   ],
+   "effect": {
+    "flag": "heard_the_bell"
+   }
+  },
+  "well_offering": {
+   "title": "By the well",
+   "map": "lantern_hollow",
+   "where": [
+    13,
+    10,
+    26,
+    19
+   ],
+   "when": [
+    "phase:night"
+   ],
+   "weight": 1,
+   "once": true,
+   "pages": [
+    "A card lies face down on the well's edge, under a pebble. Beside it burns a stub of candle."
+   ],
+   "choice": [
+    "Take the card",
+    "Leave it be"
+   ],
+   "yes": {
+    "pages": [
+     "You turn it over. A good card, and an old one. The candle gutters out as you pocket it."
+    ],
+    "card": "rare_from_band",
+    "flag": "took_the_offering"
+   },
+   "no": {
+    "pages": [
+     "You leave it lying. Someone left it for someone. It isn't you, tonight."
+    ],
+    "flag": "left_the_offering"
+   }
+  }
+ },
+ "phase_notes": {
+  "dawn": "Dawn. The moor goes grey.",
+  "day": "Morning.",
+  "dusk": "Dusk. The lamps are lit.",
+  "night": "Night falls."
+ }
+}

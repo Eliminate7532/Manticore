@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Round RPG6, for the tests: walk an Explorer to a tile the way a player would - pressing one direction at a time, 1/60 s a
-frame - along the shortest way round the walls (a breadth-first search over the map's tiles). Rooms, slides and wandering foes
-are left to the engine; this only chooses which key to hold."""
+frame - along the shortest way round the walls (a breadth-first search over the map's tiles). Wandering foes are left to the
+engine; this only chooses which key to hold. (Round RPG11: no rooms, so no slide to wait for.)"""
 from collections import deque
 
 FRAME = 1 / 60
@@ -59,15 +59,8 @@ def walk_to_tile(ex, goal, limit=6000, stop_at_event=True):
     while frames < limit:
         target = goal() if callable(goal) else goal
         here = area.tile_at(ex.walker.x, ex.walker.y)
-        if ex.sliding():
-            e = ex.step(0, 0, FRAME)
-            frames += 1
-            if e:
-                events.append(e)
-                if stop_at_event or e[0] == "map":
-                    return events, frames
-            continue
-        route = tile_route(area, here, target, avoid=trigger_tiles(area) - {target})
+        walls = set(getattr(ex.walker, "blockers", ()))          # Round RPG16: the people who come and go, there now
+        route = tile_route(area, here, target, avoid=(trigger_tiles(area) - {target}) | walls)
         if route is None:
             raise AssertionError(f"no way from {here} to {target} on {area.name}")
         mx, my = middle(area, here)
@@ -98,13 +91,12 @@ def walk_to_tile(ex, goal, limit=6000, stop_at_event=True):
 def next_press(ex, goal):
     """Round RPG8: the key walk_to_tile would hold now on the way to tile `goal` ((col, row), or a function returning one), as
     (dx, dy) - for driving the Adventure's screen (rpg_screens.AdventureFlow.walk_tick), which does the stepping itself. None
-    once the walker stands in the goal tile's middle; (0, 0) while the view slides to the next room."""
-    if ex.sliding():
-        return (0, 0)
+    once the walker stands in the goal tile's middle. (Round RPG11: no rooms, so no slide to wait for.)"""
     area = ex.area
     target = goal() if callable(goal) else goal
     here = area.tile_at(ex.walker.x, ex.walker.y)
-    route = tile_route(area, here, target, avoid=trigger_tiles(area) - {target})
+    walls = set(getattr(ex.walker, "blockers", ()))              # Round RPG16: the people who come and go, there now
+    route = tile_route(area, here, target, avoid=(trigger_tiles(area) - {target}) | walls)
     if route is None:
         raise AssertionError(f"no way from {here} to {target} on {area.name}")
     mx, my = middle(area, here)

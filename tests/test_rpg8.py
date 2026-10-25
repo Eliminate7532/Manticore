@@ -34,6 +34,7 @@ from rpg import save as sv
 from tests import live, rpg_route
 from tests.forge_fake import FakeSession, StubStore
 from tests.test_forge_table import click, frame, key, load_log, load_state
+from tests.rpg_fixture_maps import FIXTURE_MAPS, setUpModule, tearDownModule  # noqa: F401  (Round RPG12: the placeholder maps)
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNTIME = os.environ.get("FORGE_RUNTIME") or os.path.join(BASE, "forge_runtime")
@@ -127,6 +128,10 @@ class Base(unittest.TestCase):
         return g.modal
 
     def press(self, g, name):
+        enc = getattr(g.modal, "encounter", None)
+        if getattr(g.modal, "sub", None) == "fight" and enc is not None and not enc.ready(time.monotonic()):
+            enc.skip_transition()                 # Round RPG13: the way into a fight takes its time; these tests click past it
+            frame(g)
         for rect, n in reversed(g.modal.buttons):
             if n == name:
                 click(g, rect.center)
@@ -165,7 +170,7 @@ class Base(unittest.TestCase):
 
     def foe_goal(self, f, kind=None):
         ex = f.explorer
-        foes = [fo for fo in ex.room_foes() + ex.encounters() if kind is None or fo.t.enemy == kind]
+        foes = [fo for fo in ex.encounters() if kind is None or fo.t.enemy == kind]
         foe = sorted(foes, key=lambda fo: abs(fo.x - ex.walker.x) + abs(fo.y - ex.walker.y))[0]
         return foe, (lambda: f.explorer.area.tile_at(foe.x, foe.y))
 
@@ -208,7 +213,7 @@ class LogicTests(Base):
         self.assertEqual(title, adv.enemy_name(t.enemy))
         lo, hi = g.numbers.rewards["regular"]["gold"]
         self.assertIn(f"Win: {lo}-{hi} gold and 1 card.", lines)
-        self.assertIn(f"Lose: {g.numbers.loss_cost(g.save.gold)} of your {g.save.gold} gold, and back to Town 1.", lines)
+        self.assertIn(f"Lose: {g.numbers.loss_cost(g.save.gold)} of your {g.save.gold} gold, and back to Lantern Hollow.", lines)
         self.assertTrue(any("comes back" in ln for ln in lines))                    # a regular foe isn't "once"
         boss = self.trigger(g, "boss")
         title, lines = adv.fight_text(g, boss)
@@ -249,7 +254,7 @@ class LogicTests(Base):
                 self.assertEqual((disk["gold"], disk["record"]["losses"]), (gold - cost, 1))
                 self.assertEqual((disk["world"]["map"], disk["world"]["x"]), (g.world.start_town, None))
                 lines = adv.outcome_lines(out, g.world)
-                self.assertEqual(lines[1], f"You lost {cost} gold and are back in Town 1.")
+                self.assertEqual(lines[1], f"You lost {cost} gold and are back in Lantern Hollow.")
                 self.assertTrue(lines[0].startswith("You conceded" if result == "conceded" else "The "))
 
     def test_an_unfinished_duel_is_not_settled_and_nothing_is_settled_twice(self):

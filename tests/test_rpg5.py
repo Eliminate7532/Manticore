@@ -23,9 +23,10 @@ from rpg import duel, explore, tmx
 from rpg import save as sv
 from tests import rpg_route as route
 from tests import test_rpg4 as r4
+from tests.rpg_fixture_maps import FIXTURE_MAPS, setUpModule, tearDownModule  # noqa: F401  (Round RPG12: the placeholder maps)
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MAPS = os.path.join(BASE, "rpg", "maps")
+MAPS = FIXTURE_MAPS                    # Round RPG12: the placeholder maps are test fixtures
 
 
 # ---- writing small maps -------------------------------------------------------------------------------------------------------
@@ -487,7 +488,7 @@ class ShippedMapTests(unittest.TestCase):
     def test_the_tool_makes_the_same_files_again(self):
         tmp = tempfile.mkdtemp(prefix="rpg5_maps_")
         self.addCleanup(shutil.rmtree, tmp, True)
-        r = subprocess.run([sys.executable, os.path.join(BASE, "tools", "rpg_make_maps.py"), "--out", tmp],
+        r = subprocess.run([sys.executable, os.path.join(BASE, "tools", "rpg_make_placeholder_maps.py"), "--out", tmp],
                            capture_output=True, text=True, timeout=120, env=dict(os.environ, SDL_VIDEODRIVER="dummy",
                                                                                   SDL_AUDIODRIVER="dummy"))
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -581,7 +582,7 @@ class DrawTests(Temp):
     def test_the_developers_window_walks_and_takes_a_picture(self):
         out = os.path.join(self.tmp, "walk.png")
         r = subprocess.run([sys.executable, os.path.join(BASE, "tools", "rpg_walk.py"), "--walk", "up 0.3",
-                            "--screenshot", out, "--size", "640x400"], capture_output=True, text=True, timeout=120,
+                            "--screenshot", out, "--size", "640x400", "--maps", FIXTURE_MAPS], capture_output=True, text=True, timeout=120,
                            env=dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy"))
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("You reach town_1", r.stdout)                    # Round RPG6's map: the gate is just above

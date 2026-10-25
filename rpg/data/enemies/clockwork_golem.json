@@ -1,7 +1,7 @@
 {
  "kind": "clockwork_golem",
  "name": "Clockwork Golem",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -19,32 +19,28 @@
    "index": 25,
    "main": [
     [
-     "Great Furnace",
-     3
-    ],
-    [
-     "Mountain",
-     4
+     "Makeshift Munitions",
+     2
     ],
     [
      "Spare Supplies",
      4
     ],
     [
-     "Kor Skyfisher",
-     2
+     "Rustvale Bridge",
+     4
     ],
     [
-     "Plains",
-     7
+     "Galvanic Blast",
+     3
     ],
     [
      "Ancient Den",
-     4
+     3
     ],
     [
-     "Oblivion Ring",
-     4
+     "Kor Skyfisher",
+     2
     ],
     [
      "Glint Hawk",
@@ -55,58 +51,54 @@
      4
     ],
     [
-     "Inspiring Overseer",
-     1
-    ],
-    [
      "Golden Egg",
      4
     ],
     [
-     "Galvanic Blast",
-     2
-    ],
-    [
-     "Journey to Nowhere",
-     2
-    ],
-    [
-     "Boros Garrison",
+     "Wind-Scarred Crag",
      4
+    ],
+    [
+     "Thraben Inspector",
+     3
     ],
     [
      "Seeker of the Way",
      3
     ],
     [
-     "Wind-Scarred Crag",
+     "Plains",
+     6
+    ],
+    [
+     "Mountain",
+     5
+    ],
+    [
+     "Boros Garrison",
      3
     ],
     [
-     "Makeshift Munitions",
-     2
+     "Foundry Helix",
+     3
     ],
     [
-     "Foundry Helix",
+     "Journey to Nowhere",
      4
     ]
    ],
    "sideboard": [
     [
-     "Lorehold Campus",
-     3
-    ],
-    [
      "Radiant Fountain",
      4
     ],
     [
-     "Secluded Steppe",
-     3
+     "Lorehold Campus",
+     4
     ],
     [
-     "Cabaretti Courtyard",
-     1
+     "Great Furnace",
+     3
     ],
     [
      "Forgotten Cave",
@@ -115,9 +107,9 @@
    ],
    "tiers": {
     "0": 11,
-    "2": 12,
+    "2": 11,
     "3": 32,
-    "4": 5
+    "4": 6
    }
   },
   {
@@ -126,35 +118,19 @@
    "index": 25,
    "main": [
     [
-     "Boros Garrison",
-     4
-    ],
-    [
-     "Kor Skyfisher",
-     4
-    ],
-    [
      "Spare Supplies",
-     2
+     4
     ],
     [
      "Inspiring Overseer",
-     2
-    ],
-    [
-     "Mountain",
      3
     ],
     [
-     "Angelic Purge",
-     3
+     "Rustvale Bridge",
+     4
     ],
     [
-     "Plains",
-     5
-    ],
-    [
-     "Wind-Scarred Crag",
+     "Ancient Den",
      4
     ],
     [
@@ -163,10 +139,10 @@
     ],
     [
      "Glint Hawk",
-     4
+     2
     ],
     [
-     "Rustvale Bridge",
+     "Kor Skyfisher",
      4
     ],
     [
@@ -174,28 +150,40 @@
      4
     ],
     [
-     "Galvanic Blast",
+     "Wind-Scarred Crag",
      4
     ],
     [
-     "Great Furnace",
-     3
+     "Angelic Purge",
+     4
     ],
     [
      "Seeker of the Way",
      3
     ],
     [
-     "Kabira Crossroads",
-     2
+     "Plains",
+     7
+    ],
+    [
+     "Mountain",
+     3
+    ],
+    [
+     "Boros Garrison",
+     3
+    ],
+    [
+     "Palace Sentinels",
+     1
     ],
     [
      "Foundry Helix",
      3
     ],
     [
-     "Thraben Inspector",
-     2
+     "Journey to Nowhere",
+     3
     ]
    ],
    "sideboard": [
@@ -204,24 +192,23 @@
      4
     ],
     [
-     "Lorehold Campus",
+     "Great Furnace",
      3
-    ],
-    [
-     "Secluded Steppe",
-     4
     ],
     [
      "Forgotten Cave",
-     3
+     4
+    ],
+    [
+     "Kabira Crossroads",
+     4
     ]
    ],
    "tiers": {
-    "0": 8,
-    "1": 3,
+    "0": 10,
+    "1": 4,
     "2": 11,
-    "3": 29,
-    "4": 9
+    "3": 35
    }
   },
   {
@@ -230,23 +217,15 @@
    "index": 25,
    "main": [
     [
-     "Plains",
+     "Spare Supplies",
      4
     ],
     [
-     "Kor Skyfisher",
-     3
+     "Galvanic Blast",
+     1
     ],
     [
-     "Spare Supplies",
-     2
-    ],
-    [
-     "Ancient Den",
-     3
-    ],
-    [
-     "Rustvale Bridge",
+     "Radiant Fountain",
      4
     ],
     [
@@ -255,47 +234,59 @@
     ],
     [
      "Glint Hawk",
-     2
+     4
+    ],
+    [
+     "Kor Skyfisher",
+     3
+    ],
+    [
+     "Forgotten Cave",
+     3
+    ],
+    [
+     "Rustvale Bridge",
+     3
     ],
     [
      "Golden Egg",
      4
     ],
     [
-     "Palace Sentinels",
-     4
-    ],
-    [
-     "Mountain",
+     "Oblivion Ring",
      3
     ],
     [
-     "Makeshift Munitions",
-     2
+     "Plains",
+     5
     ],
     [
-     "Inspiring Overseer",
-     4
-    ],
-    [
-     "Boros Garrison",
-     4
+     "Wedding Invitation",
+     1
     ],
     [
      "Seeker of the Way",
      4
     ],
     [
-     "Militia Bugler",
+     "Wind-Scarred Crag",
+     4
+    ],
+    [
+     "Mountain",
      2
+    ],
+    [
+     "Lorehold Campus",
+     1
     ],
     [
      "Foundry Helix",
      4
     ],
     [
-     "Wind-Scarred Crag",
-     4
+     "Journey to Nowhere",
+     3
     ],
     [
      "Great Furnace",
@@ -304,27 +295,19 @@
    ],
    "sideboard": [
     [
-     "Radiant Fountain",
-     4
-    ],
-    [
-     "Kabira Crossroads",
+     "Secluded Steppe",
      3
     ],
     [
-     "Lorehold Campus",
-     4
-    ],
-    [
-     "Forgotten Cave",
+     "Cabaretti Courtyard",
      4
     ]
    ],
    "tiers": {
     "0": 7,
-    "2": 12,
-    "3": 38,
-    "4": 3
+    "2": 14,
+    "3": 35,
+    "4": 4
    }
   },
   {
@@ -333,24 +316,32 @@
    "index": 25,
    "main": [
     [
-     "Plains",
-     7
+     "Makeshift Munitions",
+     4
+    ],
+    [
+     "Spare Supplies",
+     4
+    ],
+    [
+     "Rustvale Bridge",
+     4
+    ],
+    [
+     "Galvanic Blast",
+     1
+    ],
+    [
+     "Ancient Den",
+     4
     ],
     [
      "Kor Skyfisher",
      3
     ],
     [
-     "Great Furnace",
-     4
-    ],
-    [
-     "Galvanic Blast",
-     4
-    ],
-    [
      "Glint Hawk",
-     3
+     4
     ],
     [
      "Experimental Synthesizer",
@@ -358,6 +349,10 @@
     ],
     [
      "Golden Egg",
+     4
+    ],
+    [
+     "Oblivion Ring",
      1
     ],
     [
@@ -365,45 +360,33 @@
      4
     ],
     [
-     "Mountain",
-     3
-    ],
-    [
-     "Inspiring Overseer",
-     3
-    ],
-    [
-     "Boros Garrison",
-     4
-    ],
-    [
-     "Ancient Den",
-     3
-    ],
-    [
-     "Militia Bugler",
-     4
-    ],
-    [
-     "Palace Sentinels",
-     3
-    ],
-    [
      "Seeker of the Way",
      3
     ],
     [
-     "Oblivion Ring",
+     "Plains",
+     7
+    ],
+    [
+     "Mountain",
+     6
+    ],
+    [
+     "Reckless Fireweaver",
      3
     ],
     [
-     "Angelic Purge",
+     "Journey to Nowhere",
      4
     ]
    ],
    "sideboard": [
     [
-     "Radiant Fountain",
+     "Boros Garrison",
+     4
+    ],
+    [
+     "Great Furnace",
      3
     ],
     [
@@ -411,24 +394,16 @@
      4
     ],
     [
-     "Lorehold Campus",
-     2
-    ],
-    [
-     "Secluded Steppe",
-     4
-    ],
-    [
      "Kabira Crossroads",
-     2
+     4
     ]
    ],
    "tiers": {
-    "0": 10,
-    "1": 4,
-    "2": 5,
-    "3": 33,
-    "4": 8
+    "0": 13,
+    "1": 3,
+    "2": 8,
+    "3": 35,
+    "4": 1
    }
   }
  ],
@@ -437,6 +412,34 @@
    "archetype": "Affinity Grixis Afinity",
    "index": 4,
    "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 4,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 4,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 4,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 4,
+   "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
   },
@@ -465,48 +468,6 @@
    "archetype": "Affinity Grixis Afinity",
    "index": 4,
    "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random), Relic of Progenitus (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 4,
-   "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
   },
@@ -528,7 +489,7 @@
    "archetype": "Affinity Grixis Afinity",
    "index": 4,
    "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
    ]
   },
   {
@@ -547,28 +508,14 @@
   },
   {
    "archetype": "Affinity Grixis Afinity",
-   "index": 14,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 14,
+   "index": 4,
    "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
   },
   {
    "archetype": "Affinity Grixis Afinity",
-   "index": 14,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Affinity Grixis Afinity",
-   "index": 14,
+   "index": 4,
    "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
@@ -640,6 +587,34 @@
    "archetype": "Affinity Grixis Afinity",
    "index": 14,
    "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 14,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 14,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 14,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Affinity Grixis Afinity",
+   "index": 14,
+   "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
    ]
   },
@@ -653,6 +628,13 @@
   {
    "archetype": "Affinity Grixis Afinity",
    "index": 14,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+   ]
+  },
+  {
+   "archetype": "Boros Metalcraft Synthesizer",
+   "index": 13,
    "reasons": [
     "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
@@ -669,7 +651,8 @@
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Affinity Aggro Afinty Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
+    "Forge built another archetype instead ('Faeries Fadas Ub Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')",
+    "above tier 4: Brainstorm (tier 5), Preordain (tier 5)"
    ]
   },
   {
@@ -683,28 +666,7 @@
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Bw Monarch Pestilence Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
-   ]
-  },
-  {
-   "archetype": "Boros Metalcraft Synthesizer",
-   "index": 13,
-   "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
-   ]
-  },
-  {
-   "archetype": "Boros Metalcraft Synthesizer",
-   "index": 13,
-   "reasons": [
-    "Forge built another archetype instead ('Stompy Mono Green Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
-   ]
-  },
-  {
-   "archetype": "Boros Metalcraft Synthesizer",
-   "index": 13,
-   "reasons": [
-    "Forge built another archetype instead ('Burn Madness Rakdos Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
+    "Forge built another archetype instead ('Black Sacrifice Mono Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
    ]
   },
   {
@@ -719,23 +681,22 @@
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Boros Ephemerate Mardu Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
   },
   {
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Black Cycling Storm Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')",
-    "Forge's AI is told to leave these out: Cabal Ritual (Random)",
-    "above tier 4: Dark Ritual (tier 5)"
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
    ]
   },
   {
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Bg Sacrifice Golgari Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
    ]
   },
   {
@@ -749,17 +710,8 @@
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge built another archetype instead ('Control Ub Triggers Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')",
-    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
-   ]
-  },
-  {
-   "archetype": "Boros Metalcraft Synthesizer",
-   "index": 13,
-   "reasons": [
-    "Forge built another archetype instead ('Control Izzet Ur Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')",
-    "Forge's AI is told to leave these out: Fling (Random)",
-    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
    ]
   },
   {
@@ -773,13 +725,29 @@
    "archetype": "Boros Metalcraft Synthesizer",
    "index": 13,
    "reasons": [
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+    "Forge built another archetype instead ('Gates Sacrifice Cat Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
    ]
   },
   {
-   "archetype": "Boros Synthesizer Metalcraft",
-   "index": 25,
+   "archetype": "Boros Metalcraft Synthesizer",
+   "index": 13,
    "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Boros Metalcraft Synthesizer",
+   "index": 13,
+   "reasons": [
+    "Forge built another archetype instead ('Black Sacrifice Mono Generated Deck', not 'Boros Metalcraft Synthesizer Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Boros Metalcraft Synthesizer",
+   "index": 13,
+   "reasons": [
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)",
     "above tier 4: Lightning Bolt (tier 5)"
    ]
   },
@@ -794,64 +762,46 @@
    "archetype": "Boros Synthesizer Metalcraft",
    "index": 25,
    "reasons": [
-    "above tier 4: Lightning Bolt (tier 5)"
+    "Forge built another archetype instead ('Acid Uw Repeat Generated Deck', not 'Boros Synthesizer Metalcraft Generated Deck')",
+    "above tier 4: Preordain (tier 5)"
    ]
   },
   {
    "archetype": "Boros Synthesizer Metalcraft",
    "index": 25,
    "reasons": [
-    "above tier 4: Lightning Bolt (tier 5)"
-   ]
-  },
-  {
-   "archetype": "Boros Synthesizer Metalcraft",
-   "index": 25,
-   "reasons": [
-    "above tier 4: Lightning Bolt (tier 5)"
-   ]
-  },
-  {
-   "archetype": "Boros Synthesizer Metalcraft",
-   "index": 25,
-   "reasons": [
-    "above tier 4: Lightning Bolt (tier 5)"
-   ]
-  },
-  {
-   "archetype": "Boros Synthesizer Metalcraft",
-   "index": 25,
-   "reasons": [
-    "above tier 4: Lightning Bolt (tier 5)"
+    "Forge built another archetype instead ('Combo Tribe Tireless Generated Deck', not 'Boros Synthesizer Metalcraft Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x4.",
+    "above tier 4: Brainstorm (tier 5), Ponder (tier 5)"
    ]
   }
  ],
  "soak": {
-  "run": "rpg_enemies3",
-  "when": "2026-10-12 14:09",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Clockwork Golem 3": {
-    "games": 10,
-    "game_over": 10,
-    "as_ai": 5,
+   "Clockwork Golem 1": {
+    "games": 5,
+    "game_over": 5,
+    "as_ai": 3,
     "failed": []
    },
    "Clockwork Golem 2": {
-    "games": 7,
-    "game_over": 7,
+    "games": 3,
+    "game_over": 3,
     "as_ai": 2,
     "failed": []
    },
    "Clockwork Golem 4": {
-    "games": 9,
-    "game_over": 9,
-    "as_ai": 5,
+    "games": 6,
+    "game_over": 6,
+    "as_ai": 4,
     "failed": []
    },
-   "Clockwork Golem 1": {
-    "games": 9,
-    "game_over": 9,
-    "as_ai": 4,
+   "Clockwork Golem 3": {
+    "games": 5,
+    "game_over": 5,
+    "as_ai": 2,
     "failed": []
    }
   },

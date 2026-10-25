@@ -12,6 +12,7 @@ EVERY zone of every player first - so each seat's library, hand, battlefield and
 
 No Forge and no pygame needed to BUILD the lines (tests check them offline); only applying them needs the engine.
 """
+import os
 import random
 import re
 
@@ -96,6 +97,11 @@ def board_lines(deck_files, rng=None, runtime=None, fmt=None):
     placed = {}
     for seat, path in enumerate(deck_files):
         cards = DeckCards(path, runtime)
+        if not cards.cards:
+            # Round SB3: a deck none of whose cards Forge's scripts know (a runtime without cards, a deck of misspelt names)
+            # gave an all-empty seat: Forge's set-up cleared that player's zones and every card the game named afterwards was
+            # "not found in any zone" (the 19 Oct cloud soak A, 18 findings). tools/soak.py plays such a game from turn 1.
+            raise ValueError("seat %d: no card of %s is in Forge's card scripts" % (seat + 1, os.path.basename(path)))
         battlefield, hand, library = seat_board(cards, rng)
         key = "p%d" % seat
         lines += ["%slife=%d" % (key, rng.randint(*LIFE_BY_FORMAT.get(fmt or "commander", LIFE))),

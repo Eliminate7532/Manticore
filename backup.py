@@ -45,6 +45,8 @@ TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_
                   "build", "dist", "installer_out", "net", ".worktrees"}       # .worktrees: the sessions' desks (Round PAR1, tools/desk.py) - each a whole copy of the project; their work reaches GitHub as their own branches; rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
 ANYWHERE_SKIP = {"__pycache__", ".git"}
 SKIP_FILES = {"forge_engine.log", "forge_engine.prev.log", "forge_engine.crashed.log", "forge_engine.rewind.log", "forge_engine.rewind.prev.log", "session.json", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
+              "connection_log.txt", "connection_log.1.txt", "connection_log.2.txt", "connection_log.3.txt",   # round NETLOG1: IP addresses
+              "connection_log.rotating.txt",                    # round NETLOG1b: the same file for the moment of a rotation
               "bug_report_config.json", "bug_report_config.bundled.json", STATUS_FILE}          # both hold the Discord webhook address: a secret
 SKIP_SUFFIXES = (".pyc", ".tmp", ".jsonl", ".partial")
 NO_PROMPTS = False                                # True for --auto: nobody is there to answer a question, so git must not wait for one
@@ -549,7 +551,8 @@ def backup(folder, message=None, auto=False, name=None, email=None):
         raise BackupError(explain_push_failure(out, url))
     head = git(["rev-parse", "--short", "HEAD"], folder)[1].strip()
     say(f"Backed up. Latest version {head} is on {url}")
-    push_desk_branches(folder)
+    desks = push_desk_branches(folder)
+    push_round_branches(folder, skip=desks)
     return 0
 
 
@@ -584,6 +587,65 @@ def push_desk_branches(folder):
             say(f"Desk branch {branch} pushed too.")
         else:
             say(f"Desk branch {branch} could NOT be pushed (the folder's own backup is fine):\n{out.strip()}")
+    return results
+
+
+ROUND_BRANCHES = "refs/heads/round-*"
+
+
+def unpushed_round_branches(folder, skip=()):
+    """Round BKP2: the local round-* branches that are not merged into HEAD and whose tip GitHub doesn't have yet, as far as
+    this copy knows (the origin/round-* tracking refs, which every push and fetch updates; no network). A round fetched from a
+    delivered bundle, or made by hand, lived only on this PC until it was merged (18 Oct: nine such branches). Branches in
+    `skip` (the desks', pushed by push_desk_branches) are left out. Returns [(branch, sha)], sorted by name."""
+    code, out = git(["for-each-ref", "--no-merged=HEAD", "--format=%(refname:short) %(objectname)", ROUND_BRANCHES],
+                    folder, check=False)
+    if code != 0:
+        return []
+    _c, tracked = git(["for-each-ref", "--format=%(refname:short) %(objectname)", "refs/remotes/origin/round-*"],
+                      folder, check=False)
+    remote = {}
+    for line in tracked.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0].startswith("origin/"):
+            remote[parts[0][len("origin/"):]] = parts[1]
+    found = []
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0] not in skip and remote.get(parts[0]) != parts[1]:
+            found.append((parts[0], parts[1]))
+    return sorted(found)
+
+
+def push_round_branches(folder, skip=()):
+    """Round BKP2: push every unmerged round-* branch GitHub doesn't have yet (unpushed_round_branches), in ONE push, never
+    forced: a branch GitHub has a different version of is refused by git and said here, not overwritten. Like the desks'
+    branches, a failure is said, never raised - the folder's own backup has already succeeded. Returns {branch: True/False}."""
+    todo = []
+    try:
+        todo = unpushed_round_branches(folder, skip)
+        if not todo:
+            return {}
+        refspecs = [f"refs/heads/{b}:refs/heads/{b}" for b, _sha in todo]
+        _code, out = git(["push", "--porcelain", "origin"] + refspecs, folder, check=False, timeout=300)
+    except Exception as e:                       # git too slow, or anything unexpected: said, never raised (the backup is done)
+        names = ", ".join(b for b, _sha in todo) or "(the list could not be read)"
+        say(f"Round branches could NOT be pushed (the folder's own backup is fine): {names}\n{e}")
+        return {b: False for b, _sha in todo}
+    results = {b: False for b, _sha in todo}
+    for line in out.splitlines():                                # "<flag>\t<from>:<to>\t<summary>", one line per branch
+        parts = line.split("\t")
+        if len(parts) >= 3 and parts[1].startswith("refs/heads/round-") and ":" in parts[1]:
+            branch = parts[1].split(":", 1)[0][len("refs/heads/"):]
+            if branch in results:
+                results[branch] = parts[0].strip() in ("", "*", "=")      # fast-forward, new, already there
+    pushed = sorted(b for b, ok in results.items() if ok)
+    failed = sorted(b for b, ok in results.items() if not ok)
+    if pushed:
+        say(f"Round branch{'es' if len(pushed) != 1 else ''} pushed too: {', '.join(pushed)}.")
+    if failed:
+        say(f"Round branch{'es' if len(failed) != 1 else ''} could NOT be pushed (the folder's own backup is fine): "
+            f"{', '.join(failed)}\n{out.strip()}")
     return results
 
 

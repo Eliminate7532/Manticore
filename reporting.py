@@ -59,7 +59,8 @@ IDEA_AREAS = ("Table", "Deck screen", "Cards & rules", "AI", "Online", "Look & s
 DISCORD_CAP = 1900                           # characters in one Discord message (its limit is 2000)
 
 CONTENTS = ["a screenshot of the table", "the board and the game log", "your last clicks", "the decks in the game",
-            "the version of the program and of Forge", "your Windows / Python / Java versions", "the error logs, if any"]
+            "the version of the program and of Forge", "your Windows / Python / Java versions", "the error logs, if any",
+            "your online connection attempts of the last 7 days, if any"]     # round NETLOG1; NETLOG1c: 7 days (Karl, G3)
 
 _last_send = [0.0]
 
@@ -252,12 +253,14 @@ def _lines(seq, count):
 
 # ---- the zip -----------------------------------------------------------------------------------------------------------------------
 
-def report_text(info, state, env, when):
+def report_text(info, state, env, when, connections=None):
+    """connections: round NETLOG1c - one line on what the report carries of the connection log (net_log.Recent.summary)."""
     who = (info.get("name") or "").strip() or "(no name given)"
     fmt = (info.get("format") or "commander").strip().lower()
     game = ([f"Format:   {fmt.title()}"] if fmt != "commander" else []) + [f"Game:     {game_line(state)}"]     # round FMT1
+    online = [f"Online:   {connections}"] if connections else []
     out = ["Manticore bug report", "=" * 20, f"Sent by:  {who}", f"When:     {when} (this computer's clock)",
-           f"Program:  {version.describe()}", f"Seed:     {info.get('seed')}"] + game + ["",
+           f"Program:  {version.describe()}", f"Seed:     {info.get('seed')}"] + game + online + ["",
            "WHAT HAPPENED", "-------------", (info.get("happened") or "").strip() or "(nothing written)", "",
            "WHAT I EXPECTED", "---------------", (info.get("expected") or "").strip() or "(nothing written)", "",
            "COMPUTER", "--------"] + env
@@ -327,12 +330,18 @@ def build_report(info, state=None, log_lines=None, commands=None, screenshot=Non
     text_log = _lines(log_lines, LOG_LINES)
     engine = _lines(crashlog.engine_tail(folder, ENGINE_LINES), ENGINE_LINES)
     crash = _tail_file(crash_path, 250)
+    try:                                                     # round NETLOG1: every online host / join attempt, kept across runs
+        import net_log                                       # round NETLOG1c (Karl, 24 Oct, G3): only the last 7 days' attempts,
+        connections = net_log.recent(folder, now=now)        # whole, from every file of the log - not the newest 500 lines
+        connections_line = connections.summary() + (" - in connection_log.txt" if connections.kept else "")
+    except Exception as e:
+        connections, connections_line = None, "the connection log could not be read (%s)" % type(e).__name__
     complete = len(commands or []) <= COMMAND_LINES
     cmds = [{"t": round(t, 2), **c} if isinstance(c, dict) else {"t": round(t, 2), "cmd": c} for t, c in (commands or [])][-COMMAND_LINES:]
     decks = [(n, _tail_file(p, 400)) for n, p in _deck_files_in(deck_dir)]
 
-    def assemble(shot_width, log_n, engine_n, crash_n, with_state, with_commands):
-        files = [("report.txt", scrub(report_text(info, state, env, when)))]
+    def assemble(shot_width, log_n, engine_n, crash_n, with_state, with_commands, conn_n):
+        files = [("report.txt", scrub(report_text(info, state, env, when, connections_line)))]
         if screenshot and shot_width:
             try:
                 shot = screenshot(shot_width)
@@ -352,14 +361,20 @@ def build_report(info, state=None, log_lines=None, commands=None, screenshot=Non
             files.append(("forge_engine.log.txt", scrub("\n".join(engine[-engine_n:])) + "\n"))
         if crash and crash_n:
             files.append(("crash_log.txt", scrub("\n".join(crash[-crash_n:])) + "\n"))
+        if connections is not None and connections.kept:     # round NETLOG1 (net_log has already left out every secret)
+            head = "# A bug report's copy of the connection log: %s." % connections.summary()     # round NETLOG1c
+            files.append(("connection_log.txt", scrub("\n".join([head] + connections.lines(conn_n))) + "\n"))
         for name, text in extra_files or []:                  # round 28d: e.g. a crashed run's Forge log (last_session.py)
             files.append((name, scrub(text)))
         return files
 
-    # try the full report, then smaller and smaller until it fits
-    attempts = [(SHOT_WIDTHS[0], LOG_LINES, ENGINE_LINES, 250, True, True), (SHOT_WIDTHS[1], LOG_LINES, ENGINE_LINES, 250, True, True),
-                (SHOT_WIDTHS[2], 200, 100, 120, True, True), (SHOT_WIDTHS[3], 100, 60, 60, True, True),
-                (SHOT_WIDTHS[3], 60, 30, 30, False, False), (0, 40, 20, 20, False, False)]
+    # try the full report, then smaller and smaller until it fits. The last number: the connection log's lines (round
+    # NETLOG1c) - None = every attempt of the last 7 days (the log's files hold about 1.25 MB at most: KEEP_OLD + 1 files of
+    # MAX_BYTES, and a spare), then the newest whole attempts that fit (NETLOG1's 2 x crash_n, which it cut mid-attempt)
+    attempts = [(SHOT_WIDTHS[0], LOG_LINES, ENGINE_LINES, 250, True, True, None),
+                (SHOT_WIDTHS[1], LOG_LINES, ENGINE_LINES, 250, True, True, None),
+                (SHOT_WIDTHS[2], 200, 100, 120, True, True, 240), (SHOT_WIDTHS[3], 100, 60, 60, True, True, 120),
+                (SHOT_WIDTHS[3], 60, 30, 30, False, False, 60), (0, 40, 20, 20, False, False, 40)]
     data = b""
     for args in attempts:
         data = _zip_bytes(assemble(*args))

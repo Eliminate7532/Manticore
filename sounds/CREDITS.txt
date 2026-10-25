@@ -28,6 +28,13 @@ mus-victory: by RandomMind - https://opengameart.org/content/medieval-victory-th
 mus-wastelands: by SubspaceAudio - https://opengameart.org/content/horror-atmosphere - CC0 1.0
 mus2-bittersweet: "Bittersweet" by Emma_MA - https://opengameart.org/content/bittersweet - CC0 1.0
 mus2-war-horns: "War Horns" by Eldritch Grim - https://opengameart.org/content/war-horns - CC0 1.0
+mus3-boss-battle-music: "Boss Battle Music" by SubspaceAudio - https://opengameart.org/content/boss-battle-music - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-dark-cavern-ambient: "Dark Cavern Ambient" by Paul Wortmann - https://opengameart.org/content/dark-cavern-ambient - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-game-over-theme: "Game Over Theme" by CleytonKauffman - https://opengameart.org/content/game-over-theme - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-kokopellis-graveyard-theme: "Kokopelli's Graveyard Theme" by CleytonKauffman - https://opengameart.org/content/kokopellis-graveyard-theme - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-moonlit-lullaby-for-the-lost: "Moonlit Lullaby for the Lost" by Tsorthan Grove - https://opengameart.org/content/moonlit-lullaby-for-the-lost - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-string-and-piano-horror-stings: "String and piano horror stings (strings sting "abyss")" by congusbongus - https://opengameart.org/content/string-and-piano-horror-stings - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
+mus3-victory-fanfare: "Victory Fanfare" by ARoachIFoundOnMyPillow - https://opengameart.org/content/victory-fanfare - CC0 1.0 - Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md
 oga-boulder: by themightyglider - https://opengameart.org/content/moving-boulder - CC0 1.0
 oga-breaking: by rubberduck - https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx - CC0 1.0
 oga-drain: by qubodup - https://opengameart.org/content/energy-drain - CC0 1.0

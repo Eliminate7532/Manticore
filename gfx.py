@@ -50,6 +50,9 @@ DEFEAT = (196, 52, 42)                  # DEFEAT (dried blood, brighter than PAN
 CLEAR = (0, 0, 0, 0)                    # a fully transparent hole (the tour's spotlight in its dimming layer)
 KEYCAP_BG = (24, 14, 6)                 # a key name drawn as a key cap in the tour's captions ("Space", "F8")
 KEYCAP_EDGE = (162, 145, 125)
+# Round UI8: a scroll bar you can grab (scrollbar.py)
+SCROLL_TRACK = (24, 15, 8)              # the groove the handle runs in (a little darker than the panels it sits on)
+SCROLL_HANDLE_HOT = (176, 150, 112)     # the handle under the mouse or being dragged (SCROLLBAR is its colour at rest)
 BADGE_DARK = (25, 19, 15)                   # was (20, 20, 26)
 BADGE_EFFECTS_BG = (50, 38, 29)             # was (34, 40, 56)
 BADGE_EFFECTS_FG = (159, 143, 126)          # was (130, 146, 180)
@@ -223,6 +226,16 @@ TAG_ORANGE = (214, 122, 50)
 DRAFT_TAG = (124, 86, 168)                  # round CD2: the deck list's DRAFT tag (a Commander Draft deck)
 TICK_INK = (20, 20, 20)
 TRAY_BG = (30, 22, 8)
+# Round RPG13: the Adventure's pixel screens (rpg_ui.py, rpg_encounter.py) - the DawnBringer 16 palette DawnLike is drawn in
+# (DawnLike's README credits the palette to DawnBringer); WINDOW_BG is GUI0.png's own window fill
+DB_BG = (20, 12, 28)                        # #140c1c, also the dark bars round the 640 x 480 screen
+DB_TEXT = (222, 238, 214)                   # #deeed6
+DB_GOLD = (218, 212, 94)                    # #dad45e
+RARE_RING = (218, 212, 94)                  # Round RPG16: the gold ring under a rare foe on the map (DB_GOLD)
+DB_DIM = (133, 149, 161)                    # #8595a1
+DB_RED = (208, 70, 72)                      # #d04648
+DB_ORANGE = (210, 125, 44)                  # #d27d2c
+DB_GREEN = (109, 170, 44)                   # #6daa2c
 
 FONT_NAMES = "segoeui,helveticaneue,helvetica,arial,dejavusans,freesans"
 

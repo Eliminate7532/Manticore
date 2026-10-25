@@ -1,5 +1,5 @@
 {
- "_source": "Forge fb4d809 forge-game/src/main/java/forge/game/card/CounterEnumType.java (sha256 c1342c350d4e33163e554b72e0a42b0556fceb7bafccf3b8905f67e63eead126): every constant and what CounterEnumType.getName() returns for it (the three-string constructor's name, else the constant with only its first letter capital).",
+ "_source": "Forge 9a6f776 forge-game/src/main/java/forge/game/card/CounterEnumType.java (sha256 0e57ac4b3bff1403b6cf347c2f58127cb325e1462d136cb81779cde4c8b7be1f): every constant and what CounterEnumType.getName() returns for it (the three-string constructor's name, else the constant with only its first letter capital).",
  "counters": [
   {
    "enum": "M1M1",
@@ -768,6 +768,10 @@
   {
    "enum": "SHY",
    "name": "Shy"
+  },
+  {
+   "enum": "SIN",
+   "name": "Sin"
   },
   {
    "enum": "SILVER",

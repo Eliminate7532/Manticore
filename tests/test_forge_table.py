@@ -40,7 +40,9 @@ def frame(gui, n=1):
 
 
 def click(gui, pos, button=1):
+    # Round PEN1: a whole click, down and up - a press on a list that scrolls waits for the release (it may be a drag)
     gui.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=pos, button=button))
+    gui.handle_event(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=pos, button=button))
     frame(gui)
 
 
@@ -820,12 +822,14 @@ class SearchDialogTests(unittest.TestCase):
     def test_library_wording_and_buttons(self):
         gui = make_gui("main1_start")
         self.library_request(gui)
-        labels = {n: gui.modal.done_label() if n == "done" else gui.modal.skip_label() for _r, n in gui.modal.buttons}
+        labels = {n: gui.modal.done_label() if n == "done" else gui.modal.skip_label() for _r, n in gui.modal.buttons
+                  if not n.startswith("zoom")}                       # round UI8: Card size - / + are there too
         self.assertEqual(labels, {"skip": "Find nothing"})          # round 27b: Take card stays greyed out until a card is picked
         self.assertEqual(gui.modal.done_label(), "Take card")
         gui.modal.toggle(0)
         frame(gui)
-        labels = {n: gui.modal.done_label() if n == "done" else gui.modal.skip_label() for _r, n in gui.modal.buttons}
+        labels = {n: gui.modal.done_label() if n == "done" else gui.modal.skip_label() for _r, n in gui.modal.buttons
+                  if not n.startswith("zoom")}
         self.assertEqual(labels, {"skip": "Find nothing", "done": "Take card"})
         gui.modal.toggle(0)
         frame(gui)

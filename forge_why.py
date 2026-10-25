@@ -96,16 +96,44 @@ def _must_still_block(m, find_card):
                        % (b, a, b, a), int(m.group("b_id")))
 
 
+def _which_attackers(b, b_id, find_card):
+    """Round BLK1 (the soak of 19-20 Oct, game 58): the attackers the blocker may block right now, from the snapshot's
+    "canBlock" (the bridge asks Forge's CombatUtil.canBlock, which applies "must be blocked if able" and lure), as a line that
+    says which to click: "Right now Spirit Token can block only Priest of the Crossing: click Priest of the Crossing, then
+    Spirit Token, then OK." None when the snapshot doesn't say (an older bridge) or says nothing can be blocked."""
+    card = find_card(b_id) or {}
+    ids = card.get("canBlock")
+    if not ids:
+        return None
+    names, counts = [], {}
+    for a in ids:
+        n = (find_card(a) or {}).get("name")
+        if n:
+            counts[n] = counts.get(n, 0) + 1
+            if counts[n] == 1:
+                names.append(n)
+    if not names:
+        return None
+    shown = [("a %s" % n if counts[n] > 1 else n) for n in names]
+    if len(shown) == 1:
+        return "Right now %s can block only %s: click %s, then %s, then OK." % (b, shown[0], shown[0], b)
+    listed = ", ".join(shown[:-1]) + " or " + shown[-1]
+    return "Right now %s can block %s. Click one of them, then %s, then OK." % (b, listed, b)
+
+
 def _must_block_attacker(m, find_card):
     b = m.group("b")
     which = "the attacker that requires it" if m.group("which") == "the right ones." else "an attacker"
+    hint = _which_attackers(b, int(m.group("b_id")), find_card)
+    todo = hint or "Assign %s to block %s, then press OK." % (b, which)
     return Explanation(TITLE_BLOCK, "%s is forced to block (an attacker says all creatures able to block it must do so, or "
-                       "another effect requires it).\nAssign %s to block %s, then press OK." % (b, b, which), int(m.group("b_id")))
+                       "another effect requires it).\n%s" % (b, todo), int(m.group("b_id")))
 
 
 def _blocks_each_combat(m, find_card):
     b = m.group("b")
-    return Explanation(TITLE_BLOCK, "%s blocks each combat if able.\nAssign it to block an attacker, then press OK." % b,
+    hint = _which_attackers(b, int(m.group("b_id")), find_card)
+    return Explanation(TITLE_BLOCK, "%s blocks each combat if able.\n%s" % (b, hint or "Assign it to block an attacker, then press OK."),
                        int(m.group("b_id")))
 
 

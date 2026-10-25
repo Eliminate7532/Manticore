@@ -1,0 +1,17 @@
+{
+ "about": "Round RPG11: which DawnLike sprite stands for whom on the map (assets/rpg/dawnlike/, CC-BY 4.0). The walker is one of DawnLike's commissioned class sheets: 4 rows (down, left, right, up; read in Warrior.png) of 4 walking frames. A foe kind is a 16 x 16 cell of a character sheet pair (<sheet>0.png and <sheet>1.png: DawnLike's 2-frame idle). Which cell for which kind is Claude's choice (23 Oct 2026), for Karl to change.",
+ "walker": {"sheet": "Commissions/Warrior.png", "rows": {"down": 0, "left": 1, "right": 2, "up": 3}, "frames": 4},
+ "classes": ["Warrior", "Paladin", "Rogue", "Mage", "Engineer"],
+ "kinds": {
+  "grave_robber": {"sheet": "Characters/Humanoid", "cell": [0, 7]},
+  "ember_bandit": {"sheet": "Characters/Humanoid", "cell": [1, 12]},
+  "thornback": {"sheet": "Characters/Quadraped", "cell": [4, 0]},
+  "drowned_cultist": {"sheet": "Characters/Humanoid", "cell": [6, 2]},
+  "zealot": {"sheet": "Characters/Humanoid", "cell": [0, 16]},
+  "wild_elf": {"sheet": "Characters/Humanoid", "cell": [1, 8]},
+  "hive_spawn": {"sheet": "Characters/Pest", "cell": [2, 2]},
+  "clockwork_golem": {"sheet": "Characters/Elemental", "cell": [1, 1]},
+  "grave_priest": {"sheet": "Characters/Undead", "cell": [7, 2]},
+  "plague_rat": {"sheet": "Characters/Rodent", "cell": [3, 1]}
+ }
+}

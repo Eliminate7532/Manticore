@@ -4,6 +4,7 @@ fetching). A modal like Help: while it is open the table waits, and a question F
 import pygame
 
 import gfx
+import panning
 import judge_text as jt
 import rulings as rul
 from forge_dialogs import Dialog
@@ -131,6 +132,12 @@ class JudgeDialog(Dialog):
     # ---- input ---------------------------------------------------------------------------------------------------------
     def wheel(self, gui, dy):
         self.scroll = max(0, min(self.max_scroll, self.scroll - dy * SCROLL_STEP))
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the rulings with the pen."""
+        if not self.max_scroll or not self.viewport.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=lambda v: setattr(self, "scroll", max(0, min(int(v), self.max_scroll))))
 
     def click(self, gui, pos, button):
         if self.button_at(pos) == "close":

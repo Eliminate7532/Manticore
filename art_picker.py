@@ -31,6 +31,7 @@ import file_chooser
 import forge_dialogs as dlg
 import gfx
 import mpc_art
+import panning
 from deck_importer import DeckImportError
 from gfx import DIM, GOLD, GREEN, ORANGE, RED, WHITE, clip_text, draw_text, round_rect, wrap_text
 
@@ -412,6 +413,13 @@ class ArtPicker(dlg.Dialog):
             return
         step = int(60 * max(1.0, gui.L.fs))
         self.scroll = max(0, min(self.scroll - dy * step, max(0, self.content_h - self.area.h)))
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the pictures with the pen (a press that doesn't move is still a click)."""
+        top = max(0, getattr(self, "content_h", 0) - self.area.h)
+        if not top or not self.area.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=lambda v: setattr(self, "scroll", max(0, min(int(v), top))))
 
     # ---- drawing
     def draw(self, gui):

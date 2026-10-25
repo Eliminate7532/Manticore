@@ -4,12 +4,12 @@
   - basic lands are bought, 1 gold each (numbers.json basic_lands_free false, basic_land_price 1): every shop sells the six plain
     basics, packs and the starting deck give them, shops don't buy them back, a save keeps the rule it was made under;
   - the walker stops dead at a wall (explore.CORNER_HELP off - no slide across to a gap, no drift onto the grid while stopped);
-  - the slide to the next room takes 0.3 s;
+  - the slide to the next room takes 0.3 s (Round RPG11 took the rooms out, and with them this rule and its test);
   - only a dungeon is dark (map property dungeon, or a dungeon / boss encounter); light on another map is left out and said;
   - PyTMX reads the Tiled maps (rpg/tmx.py turns what it read into the RPG's own objects), checked against the files themselves.
 
   EconomyTests, ShopTests, SaveTests, NewGameTests   the basic lands
-  WallTests, SlideTests, DarkTests                     the map
+  WallTests, DarkTests                                 the map
   PyTmxTests                                           the reader, the licence, requirements.txt
 """
 import copy
@@ -25,6 +25,7 @@ from rpg import collection, economy, explore, newgame, shop, tmx
 from rpg import save as sv
 from tests import test_rpg4 as r4
 from tests.test_rpg5 import BASE, Temp, area_of, layer_xml, obj, room, write_map
+from tests.rpg_fixture_maps import FIXTURE_MAPS, setUpModule, tearDownModule  # noqa: F401  (Round RPG12: the placeholder maps)
 
 TILE = 16
 PAID = {"basic_lands_free": False, "basic_land_price": 1}
@@ -243,16 +244,9 @@ class WallTests(Temp):
         ex = explore.Explorer(s, start_town="town_1")
         s.world["beaten"] = [t.spot for t in ex.area.triggers if t.kind == "encounter"]
         route.walk_to_tile(ex, (15, 5))
-        for _ in range(60):
+        for _ in range(20):
             ex.step(1, 0, 1 / 60)
-            if ex.sliding():
-                break
-        self.assertEqual(ex.room, (1, 0))
-
-
-class SlideTests(unittest.TestCase):
-    def test_the_slide_takes_three_tenths_of_a_second(self):
-        self.assertEqual(explore.ROOM_SLIDE_SECONDS, 0.3)
+        self.assertGreaterEqual(ex.walker.x, 256)                   # on past RPG6's room edge (Round RPG11: no rooms)
 
 
 class DarkTests(Temp):
@@ -264,11 +258,13 @@ class DarkTests(Temp):
                   map_props=f"<properties>{props}</properties>" if props else "")
         return explore.load_area("m", self.tmp)
 
-    def test_light_on_a_map_that_is_not_a_dungeon_is_left_out_and_said(self):
+    def test_light_on_a_map_that_is_not_a_dungeon_is_kept(self):
+        # Round RPG15 (expected change): RPG7 left the light out of a map that isn't a dungeon; Karl's day and night (23 Oct)
+        # gives every map its darkness, so it is kept - and a map with only RPG6's "light" is as dark as RPG6 drew it
         a = self.area(self.LIGHT, obj(1, "encounter", 32, 32, 16, 16, "Rat", {"kind": ("string", "rat")}))
-        self.assertIsNone(a.light)
-        self.assertFalse(a.dungeon)
-        self.assertTrue(any("only dungeons are dark" in p for p in a.problems), a.problems)
+        self.assertEqual((a.light, a.dungeon), (4.5, False))
+        self.assertAlmostEqual(a.darkness, 228 / 255)
+        self.assertFalse(any("dungeons" in p for p in a.problems), a.problems)
 
     def test_a_dungeon_or_boss_encounter_makes_it_a_dungeon(self):
         for kind in ("dungeon", "boss"):
@@ -283,7 +279,7 @@ class DarkTests(Temp):
         self.assertEqual((a.dungeon, a.light), (True, 4.5))
         a = self.area('<property name="dungeon" type="bool" value="false"/>' + self.LIGHT,
                       obj(1, "encounter", 32, 32, 16, 16, "Priest", {"kind": ("string", "p"), "encounter": ("string", "boss")}))
-        self.assertEqual((a.dungeon, a.light), (False, None))
+        self.assertEqual((a.dungeon, a.light), (False, 4.5))         # Round RPG15: the light is kept (expected change)
 
     def test_the_shipped_cave_is_dark_and_the_region_is_not(self):
         explore.forget_areas()
@@ -316,13 +312,13 @@ class PyTmxTests(Temp):
             seen.append(a[0])
             return real(*a, **k)
         with mock.patch.object(pytmx, "TiledMap", spy):
-            tmx.read_map(os.path.join(BASE, "rpg", "maps", "sample_region.tmx"))
+            tmx.read_map(os.path.join(FIXTURE_MAPS, "sample_region.tmx"))
         self.assertEqual(len(seen), 1)
 
     def test_the_shipped_maps_read_as_the_files_say(self):
         for name in ("sample_region", "sample_dungeon"):
             with self.subTest(name=name):
-                path = os.path.join(BASE, "rpg", "maps", name + ".tmx")
+                path = os.path.join(FIXTURE_MAPS, name + ".tmx")
                 m = tmx.read_map(path)
                 raw = csv_layers(path)
                 self.assertEqual([l.name for l in m.layers], list(raw))
@@ -332,7 +328,7 @@ class PyTmxTests(Temp):
                 root = ET.parse(path).getroot()
                 objs = [(int(o.get("id")), o.get("class") or o.get("type"), o.get("name", "")) for o in root.iter("object")]
                 self.assertEqual([(o.id, o.kind, o.name) for o in m.objects], objs)
-                tsx = ET.parse(os.path.join(BASE, "rpg", "maps", "placeholder_tiles.tsx")).getroot()
+                tsx = ET.parse(os.path.join(FIXTURE_MAPS, "placeholder_tiles.tsx")).getroot()
                 solid = {int(t.get("id")) for t in tsx.iter("tile") for p in t.iter("property")
                          if p.get("name") == "solid" and p.get("value") == "true"}
                 ts = m.tilesets[0]

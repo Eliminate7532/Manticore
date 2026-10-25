@@ -1,0 +1,10 @@
+﻿
+
+InterfaceAlias  : Ethernet
+NetworkCategory : Public
+
+InterfaceAlias  : Tailscale
+NetworkCategory : Private
+
+
+

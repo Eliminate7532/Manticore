@@ -1,7 +1,7 @@
 {
  "kind": "ember_bandit",
  "name": "Ember Bandit",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -20,31 +20,31 @@
    "index": 30,
    "main": [
     [
-     "Staggershock",
-     3
-    ],
-    [
      "Mountain",
-     21
+     24
     ],
     [
      "Keldon Marauders",
-     4
-    ],
-    [
-     "Incinerate",
      3
     ],
     [
-     "Lightning Strike",
+     "Forgotten Cave",
+     1
+    ],
+    [
+     "Fireblast",
      2
     ],
     [
      "Rift Bolt",
-     3
+     2
     ],
     [
-     "Fireblast",
+     "Incinerate",
+     4
+    ],
+    [
+     "Searing Blaze",
      4
     ],
     [
@@ -52,37 +52,41 @@
      3
     ],
     [
-     "Flame Rift",
-     3
+     "Needle Drop",
+     4
     ],
     [
-     "Forgotten Cave",
-     4
+     "Flame Rift",
+     2
+    ],
+    [
+     "Staggershock",
+     1
+    ],
+    [
+     "Shard Volley",
+     2
     ],
     [
      "Lava Spike",
      4
     ],
     [
-     "Searing Blaze",
-     3
-    ],
-    [
      "Chain Lightning",
-     3
+     4
     ]
    ],
    "sideboard": [
     [
-     "Mountain",
+     "Forgotten Cave",
      2
     ]
    ],
    "tiers": {
-    "0": 21,
-    "2": 10,
-    "3": 10,
-    "4": 19
+    "0": 24,
+    "2": 8,
+    "3": 12,
+    "4": 16
    }
   },
   {
@@ -92,38 +96,30 @@
    "main": [
     [
      "Mountain",
-     21
-    ],
-    [
-     "Forgotten Cave",
-     4
-    ],
-    [
-     "Flame Rift",
-     2
-    ],
-    [
-     "Incinerate",
-     4
-    ],
-    [
-     "Rift Bolt",
-     4
-    ],
-    [
-     "Needle Drop",
-     4
+     22
     ],
     [
      "Keldon Marauders",
      3
     ],
     [
+     "Forgotten Cave",
+     3
+    ],
+    [
      "Fireblast",
+     3
+    ],
+    [
+     "Rift Bolt",
      4
     ],
     [
-     "Chain Lightning",
+     "Incinerate",
+     4
+    ],
+    [
+     "Searing Blaze",
      4
     ],
     [
@@ -131,11 +127,19 @@
      4
     ],
     [
-     "Shard Volley",
-     2
+     "Needle Drop",
+     4
+    ],
+    [
+     "Flame Rift",
+     1
     ],
     [
      "Lava Spike",
+     4
+    ],
+    [
+     "Chain Lightning",
      4
     ]
    ],
@@ -146,10 +150,10 @@
     ]
    ],
    "tiers": {
-    "0": 21,
-    "2": 7,
-    "3": 16,
-    "4": 16
+    "0": 22,
+    "2": 4,
+    "3": 15,
+    "4": 19
    }
   },
   {
@@ -158,74 +162,14 @@
    "index": 30,
    "main": [
     [
-     "Fireblast",
-     4
-    ],
-    [
      "Mountain",
-     23
-    ],
-    [
-     "Chain Lightning",
-     3
-    ],
-    [
-     "Incinerate",
-     4
-    ],
-    [
-     "Forgotten Cave",
-     2
+     21
     ],
     [
      "Keldon Marauders",
      4
     ],
     [
-     "Rift Bolt",
-     2
-    ],
-    [
-     "Curse of the Pierced Heart",
-     4
-    ],
-    [
-     "Needle Drop",
-     4
-    ],
-    [
-     "Flame Rift",
-     4
-    ],
-    [
-     "Goblin Fireslinger",
-     2
-    ],
-    [
-     "Lava Spike",
-     4
-    ]
-   ],
-   "sideboard": [
-    [
-     "Mountain",
-     1
-    ]
-   ],
-   "tiers": {
-    "0": 23,
-    "1": 2,
-    "2": 8,
-    "3": 14,
-    "4": 13
-   }
-  },
-  {
-   "name": "Ember Bandit 4",
-   "archetype": "Deck Red Wins",
-   "index": 30,
-   "main": [
-    [
      "Forgotten Cave",
      4
     ],
@@ -234,11 +178,19 @@
      4
     ],
     [
-     "Mountain",
-     21
+     "Rift Bolt",
+     4
     ],
     [
-     "Rift Bolt",
+     "Incinerate",
+     1
+    ],
+    [
+     "Searing Blaze",
+     4
+    ],
+    [
+     "Curse of the Pierced Heart",
      3
     ],
     [
@@ -246,36 +198,20 @@
      3
     ],
     [
-     "Arc Lightning",
+     "Staggershock",
      3
-    ],
-    [
-     "Searing Blaze",
-     2
-    ],
-    [
-     "Curse of the Pierced Heart",
-     4
-    ],
-    [
-     "Chain Lightning",
-     4
     ],
     [
      "Shard Volley",
      1
     ],
     [
-     "Staggershock",
-     4
-    ],
-    [
      "Lava Spike",
      4
     ],
     [
-     "Keldon Marauders",
-     3
+     "Chain Lightning",
+     4
     ]
    ],
    "sideboard": [
@@ -286,10 +222,76 @@
    ],
    "tiers": {
     "0": 21,
-    "1": 3,
     "2": 8,
     "3": 11,
-    "4": 17
+    "4": 20
+   }
+  },
+  {
+   "name": "Ember Bandit 4",
+   "archetype": "Deck Red Wins",
+   "index": 30,
+   "main": [
+    [
+     "Mountain",
+     21
+    ],
+    [
+     "Keldon Marauders",
+     4
+    ],
+    [
+     "Forgotten Cave",
+     4
+    ],
+    [
+     "Fireblast",
+     3
+    ],
+    [
+     "Rift Bolt",
+     4
+    ],
+    [
+     "Incinerate",
+     3
+    ],
+    [
+     "Searing Blaze",
+     3
+    ],
+    [
+     "Needle Drop",
+     4
+    ],
+    [
+     "Flame Rift",
+     2
+    ],
+    [
+     "Shard Volley",
+     4
+    ],
+    [
+     "Lava Spike",
+     4
+    ],
+    [
+     "Chain Lightning",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Mountain",
+     1
+    ]
+   ],
+   "tiers": {
+    "0": 21,
+    "2": 10,
+    "3": 11,
+    "4": 18
    }
   }
  ],
@@ -298,16 +300,74 @@
    "archetype": "Kuldotha Red Mono",
    "index": 27,
    "reasons": [
-    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "above tier 4: Counterspell (tier 5)"
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 27,
    "reasons": [
-    "Forge built another archetype instead ('Faeries Ub Ur Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "Forge's AI is told to leave these out: Relic of Progenitus (Random)",
+    "Forge built another archetype instead ('Madness Rakdos Muuchan Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)",
+    "above tier 4: Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Stompy Green Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Combo Tribe Tireless Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x2.",
+    "above tier 4: Brainstorm (tier 5), Ponder (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Madness Rakdos Muuchan Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Zombies Sacrifice Rakdos Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Shepherd of Rot (Random), Unknown Shores (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Bg Sacrifice Golgari Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Control Ub Triggers Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
     "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
    ]
   },
@@ -315,47 +375,276 @@
    "archetype": "Kuldotha Red Mono",
    "index": 27,
    "reasons": [
-    "Forge built another archetype instead ('Burn Red Deck Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+    "Forge built another archetype instead ('Combo Persist Rakdos Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random)",
+    "above tier 4: Duress (tier 5)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 27,
    "reasons": [
-    "Forge built another archetype instead ('Bant Control Ephemerate Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "above tier 4: Preordain (tier 5)"
+    "Forge built another archetype instead ('Boros Bully Flashback Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Infect G Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Hickory Woodlot (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Walls Combo Defender Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Axebane Guardian (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 27,
+   "reasons": [
+    "Forge built another archetype instead ('Control Ub Triggers Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 49,
    "reasons": [
-    "Forge built another archetype instead ('Blue Faeries Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "above tier 4: Counterspell (tier 5)"
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 49,
    "reasons": [
-    "Forge built another archetype instead ('Rakdos Metalcraft Jund Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+    "Forge built another archetype instead ('Tron Ephemerate Flicker Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Mystical Teachings (Random), Urza's Mine (Random), Urza's Power Plant (Random), Urza's Tower (Random)",
+    "above tier 4: Ephemerate (tier 5), Expedition Map (tier 5), Urza's Mine (tier 5), Urza's Power Plant (tier 5), Urza's Tower (tier 5)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 49,
    "reasons": [
-    "Forge built another archetype instead ('Zoo Domain Naya Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
-    "Forge's AI is told to leave these out: Matca Rioters (Random), Meria's Outrider (Random)"
+    "Forge built another archetype instead ('Fadas Orig Rebe Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Restricted to one copy (Vintage's list): Brainstorm x4.",
+    "Forge's AI is told to leave these out: Court Hussar (Random)",
+    "above tier 4: Brainstorm (tier 5), Counterspell (tier 5), Ephemerate (tier 5), Preordain (tier 5)"
    ]
   },
   {
    "archetype": "Kuldotha Red Mono",
    "index": 49,
    "reasons": [
-    "Forge's AI is told to leave these out: Implement of Combustion (Random), Kuldotha Rebirth (Random)",
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Affinity Mardu Metalcraft Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Ichor Wellspring (Random), Nihil Spellbomb (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)",
     "above tier 4: Lightning Bolt (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Gates Azorius Caw Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Court Hussar (Random)",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5), Spell Pierce (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Ub Terror Serpent Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Mental Note (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Black Cycling Storm Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Restricted to one copy (Vintage's list): Lotus Petal x2.",
+    "Forge's AI is told to leave these out: Cabal Ritual (Random), Lotus Petal (Random)",
+    "above tier 4: Lotus Petal (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Control Izzet Ur Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Fling (Random)",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge's AI is told to leave these out: Implement of Combustion (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Fiend Red Mono Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "Forge's AI is told to leave these out: Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Delve Reanimator Rakdos Generated Deck', not 'Kuldotha Red Mono Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Kuldotha Red Mono",
+   "index": 49,
+   "reasons": [
+    "Forge built another archetype instead ('Bw Ephemerate Orzhov Generated Deck', not 'Kuldotha Red Mono Generated Deck')",
+    "above tier 4: Ephemerate (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge built another archetype instead ('Rg Madness Gruul Generated Deck', not 'Goblins Goblins! Red Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge built another archetype instead ('Black Cycling Storm Generated Deck', not 'Goblins Goblins! Red Generated Deck')",
+    "Forge's AI is told to leave these out: Cabal Ritual (Random)",
+    "above tier 4: Dark Ritual (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge built another archetype instead ('Black Control Mono Generated Deck', not 'Goblins Goblins! Red Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Goblins Goblins! Red",
+   "index": 23,
+   "reasons": [
+    "Forge's AI is told to leave these out: Sparksmith (Random)"
    ]
   },
   {
@@ -373,46 +662,71 @@
    ]
   },
   {
-   "archetype": "Goblins Goblins! Red",
-   "index": 23,
+   "archetype": "Burn Red Deck",
+   "index": 0,
    "reasons": [
-    "Forge built another archetype instead ('Aggro Mono Red Generated Deck', not 'Goblins Goblins! Red Generated Deck')"
+    "Forge built another archetype instead ('Control Mono U Generated Deck', not 'Burn Red Deck Generated Deck')",
+    "above tier 4: Counterspell (tier 5), Delver of Secrets (tier 5), Preordain (tier 5)"
    ]
   },
   {
-   "archetype": "Goblins Goblins! Red",
-   "index": 23,
+   "archetype": "Burn Red Deck",
+   "index": 0,
    "reasons": [
-    "Forge's AI is told to leave these out: Sparksmith (Random), Teetering Peaks (Random)"
+    "Forge built another archetype instead ('Control Izzet Ur Generated Deck', not 'Burn Red Deck Generated Deck')",
+    "Forge's AI is told to leave these out: Fling (Random)",
+    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+   ]
+  },
+  {
+   "archetype": "Burn Red Deck",
+   "index": 0,
+   "reasons": [
+    "Forge built another archetype instead ('Boros Uw Affinity Generated Deck', not 'Burn Red Deck Generated Deck')"
+   ]
+  },
+  {
+   "archetype": "Burn Red Deck",
+   "index": 0,
+   "reasons": [
+    "Forge built another archetype instead ('Fiend Red Mono Generated Deck', not 'Burn Red Deck Generated Deck')",
+    "Forge's AI is told to leave these out: Teetering Peaks (Random)"
+   ]
+  },
+  {
+   "archetype": "Burn Red Deck",
+   "index": 2,
+   "reasons": [
+    "Forge built another archetype instead ('Abzan Sisters Soul Generated Deck', not 'Burn Red Deck Generated Deck')"
    ]
   }
  ],
  "soak": {
-  "run": "rpg_enemies2",
-  "when": "2026-10-12 10:44",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
    "Ember Bandit 3": {
-    "games": 4,
-    "game_over": 4,
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 1,
+    "failed": []
+   },
+   "Ember Bandit 4": {
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 2,
+    "failed": []
+   },
+   "Ember Bandit 2": {
+    "games": 3,
+    "game_over": 3,
     "as_ai": 2,
     "failed": []
    },
    "Ember Bandit 1": {
-    "games": 10,
-    "game_over": 10,
-    "as_ai": 4,
-    "failed": []
-   },
-   "Ember Bandit 4": {
     "games": 5,
     "game_over": 5,
-    "as_ai": 4,
-    "failed": []
-   },
-   "Ember Bandit 2": {
-    "games": 4,
-    "game_over": 4,
-    "as_ai": 3,
+    "as_ai": 2,
     "failed": []
    }
   },
@@ -423,194 +737,26 @@
    "name": "Ember Bandit 1",
    "archetype": "Jumpstart",
    "halves": [
-    "JMP Seismic",
-    "J22 Fiery 1",
-    "J25 Ne'er-do-wells 2"
+    "JMP Minotaurs 1",
+    "J22 Speedy",
+    "J25 Wizards 2"
    ],
    "handicap": 9,
    "swapped": [
     [
-     "Grim Lavamancer",
+     "Augur of Bolas",
      1
     ],
     [
-     "Thieves' Guild Enforcer",
+     "Faerie Seer",
      1
     ],
     [
-     "Chandra, Flame's Fury",
+     "Fanatical Firebrand",
      1
     ],
     [
-     "Balustrade Spy",
-     1
-    ],
-    [
-     "Rev, Tithe Extractor",
-     1
-    ],
-    [
-     "Volcanic Fallout",
-     1
-    ],
-    [
-     "Magma Jet",
-     1
-    ],
-    [
-     "Magmaquake",
-     1
-    ],
-    [
-     "Thrill of Possibility",
-     1
-    ]
-   ],
-   "main": [
-    [
-     "Cinder Elemental",
-     1
-    ],
-    [
-     "Seismic Elemental",
-     1
-    ],
-    [
-     "Ashmouth Hound",
-     1
-    ],
-    [
-     "Bloodrock Cyclops",
-     1
-    ],
-    [
-     "Molten Ravager",
-     1
-    ],
-    [
-     "Spitting Earth",
-     1
-    ],
-    [
-     "Volcanic Geyser",
-     1
-    ],
-    [
-     "Mana Geode",
-     1
-    ],
-    [
-     "Thriving Bluff",
-     2
-    ],
-    [
-     "Mountain",
-     20
-    ],
-    [
-     "Chandra's Pyreling",
-     1
-    ],
-    [
-     "Chandra's Spitfire",
-     1
-    ],
-    [
-     "Spiteful Prankster",
-     1
-    ],
-    [
-     "Coalborn Entity",
-     1
-    ],
-    [
-     "Chandra's Magmutt",
-     1
-    ],
-    [
-     "Goblin Researcher",
-     1
-    ],
-    [
-     "Wildfire Elemental",
-     1
-    ],
-    [
-     "Pillar of Flame",
-     1
-    ],
-    [
-     "Chandra's Pyrohelix",
-     1
-    ],
-    [
-     "Fiery Intervention",
-     1
-    ],
-    [
-     "Audacious Thief",
-     1
-    ],
-    [
-     "Bloodtithe Collector",
-     1
-    ],
-    [
-     "Expedition Skulker",
-     1
-    ],
-    [
-     "Masked Blackguard",
-     1
-    ],
-    [
-     "Morbid Opportunist",
-     1
-    ],
-    [
-     "Fake Your Own Death",
-     1
-    ],
-    [
-     "Foul Play",
-     1
-    ],
-    [
-     "Grim Bounty",
-     1
-    ],
-    [
-     "Thieves' Tools",
-     1
-    ],
-    [
-     "Thriving Moor",
-     1
-    ],
-    [
-     "Swamp",
-     10
-    ]
-   ],
-   "sideboard": [],
-   "tiers": {
-    "0": 30,
-    "1": 29,
-    "2": 1
-   }
-  },
-  {
-   "name": "Ember Bandit 2",
-   "archetype": "Jumpstart",
-   "halves": [
-    "JMP Minotaurs 2",
-    "J25 Dragons 1",
-    "JMP Doctor 3"
-   ],
-   "handicap": 9,
-   "swapped": [
-    [
-     "Lathliss, Dragon Queen",
+     "Kiki-Jiki, Mirror Breaker",
      1
     ],
     [
@@ -618,37 +764,29 @@
      1
     ],
     [
-     "Dragon Whelp",
+     "Aether Channeler",
      1
     ],
     [
-     "Rhox Faithmender",
+     "Herald's Horn",
      1
     ],
     [
-     "Rageblood Shaman",
+     "Ardoz, Cobbler of War",
      1
     ],
     [
-     "Seize the Spoils",
-     1
-    ],
-    [
-     "Dragon's Fire",
-     1
-    ],
-    [
-     "Dragonlord's Servant",
-     1
-    ],
-    [
-     "Revitalize",
+     "Naban, Dean of Iteration",
      1
     ]
    ],
    "main": [
     [
      "Bloodrage Brawler",
+     1
+    ],
+    [
+     "Warfire Javelineer",
      1
     ],
     [
@@ -672,11 +810,7 @@
      1
     ],
     [
-     "Traitorous Greed",
-     1
-    ],
-    [
-     "Unleash Fury",
+     "Mugging",
      1
     ],
     [
@@ -696,79 +830,79 @@
      20
     ],
     [
-     "Firespitter Whelp",
+     "Bolt Hound",
      1
     ],
     [
-     "Dragon Hatchling",
+     "Warcry Phoenix",
      1
     ],
     [
-     "Rapacious Dragon",
+     "Markov Warlord",
      1
     ],
     [
-     "Sparktongue Dragon",
+     "Fiery Conclusion",
      1
     ],
     [
-     "Bathe in Dragonfire",
+     "Nest Robber",
      1
     ],
     [
-     "Carnelian Orb of Dragonkind",
+     "Mudbutton Torchrunner",
      1
     ],
     [
-     "Forgotten Cave",
+     "Irreverent Revelers",
      1
     ],
     [
-     "Brightmare",
+     "Rush of Adrenaline",
      1
     ],
     [
-     "Angel of Mercy",
+     "Swift Kick",
      1
     ],
     [
-     "Mesa Unicorn",
+     "Academy Journeymage",
      1
     ],
     [
-     "Anointed Chorister",
+     "Expedition Diviner",
      1
     ],
     [
-     "Basri's Acolyte",
+     "Frost Trickster",
      1
     ],
     [
-     "Moment of Heroism",
+     "Shipwreck Dowser",
      1
     ],
     [
-     "Swift Response",
+     "Chilling Trap",
      1
     ],
     [
-     "Griffin Aerie",
+     "Opportunity",
      1
     ],
     [
-     "Light of Promise",
+     "Remand",
      1
     ],
     [
-     "Faith's Fetters",
+     "Starlight Snare",
      1
     ],
     [
-     "Thriving Heath",
+     "Thriving Isle",
      1
     ],
     [
-     "Plains",
+     "Island",
      10
     ]
    ],
@@ -776,108 +910,67 @@
    "tiers": {
     "0": 30,
     "1": 28,
-    "2": 1,
-    "3": 1
+    "2": 2
    }
   },
   {
-   "name": "Ember Bandit 3",
+   "name": "Ember Bandit 2",
    "archetype": "Jumpstart",
    "halves": [
-    "JMP Dragons 1",
-    "J22 Fiery 1",
-    "JMP Enchanted 2"
+    "J25 Goblins 1",
+    "JMP Goblins 4",
+    "J25 Clerics 2"
    ],
    "handicap": 9,
    "swapped": [
     [
-     "Terror of the Peaks",
+     "Battle Cry Goblin",
      1
     ],
     [
-     "Celestial Mantle",
+     "Makeshift Munitions",
      1
     ],
     [
-     "Chandra, Flame's Fury",
+     "Disfigure",
      1
     ],
     [
-     "Ajani's Chosen",
+     "Shock",
      1
     ],
     [
-     "Dragonspeaker Shaman",
+     "Krenko, Mob Boss",
      1
     ],
     [
-     "Dragon Fodder",
+     "Dropkick Bomber",
      1
     ],
     [
-     "Thrill of Possibility",
-     2
+     "Priest of Gix",
+     1
     ],
     [
-     "Pillar of Flame",
+     "Elderfang Disciple",
+     1
+    ],
+    [
+     "Goblin Instigator",
      1
     ]
    ],
    "main": [
     [
-     "Dragonloft Idol",
+     "General Kreat, the Boltbringer",
      1
     ],
     [
-     "Rapacious Dragon",
+     "Volley Veteran",
      1
     ],
     [
-     "Dragon Hatchling",
-     1
-    ],
-    [
-     "Lightning Shrieker",
-     1
-    ],
-    [
-     "Hellkite Punisher",
-     1
-    ],
-    [
-     "Bathe in Dragonfire",
-     1
-    ],
-    [
-     "Draconic Roar",
-     1
-    ],
-    [
-     "Thriving Bluff",
-     2
-    ],
-    [
-     "Mountain",
-     21
-    ],
-    [
-     "Chandra's Pyreling",
-     1
-    ],
-    [
-     "Chandra's Spitfire",
-     1
-    ],
-    [
-     "Spiteful Prankster",
-     1
-    ],
-    [
-     "Coalborn Entity",
-     1
-    ],
-    [
-     "Chandra's Magmutt",
+     "Fissure Wizard",
      1
     ],
     [
@@ -885,155 +978,23 @@
      1
     ],
     [
-     "Wildfire Elemental",
+     "Weaselback Redcap",
      1
     ],
     [
-     "Chandra's Pyrohelix",
+     "Goblin Surprise",
      1
     ],
     [
-     "Fiery Intervention",
+     "Brute Strength",
      1
     ],
     [
-     "Blessed Spirits",
+     "Open Fire",
      1
     ],
     [
-     "Stone Haven Pilgrim",
-     1
-    ],
-    [
-     "Bulwark Giant",
-     1
-    ],
-    [
-     "Trusty Retriever",
-     1
-    ],
-    [
-     "Staunch Shieldmate",
-     1
-    ],
-    [
-     "Face of Divinity",
-     1
-    ],
-    [
-     "Knightly Valor",
-     1
-    ],
-    [
-     "Forced Worship",
-     1
-    ],
-    [
-     "Indomitable Will",
-     1
-    ],
-    [
-     "Faith's Fetters",
-     1
-    ],
-    [
-     "Thriving Heath",
-     1
-    ],
-    [
-     "Plains",
-     10
-    ]
-   ],
-   "sideboard": [],
-   "tiers": {
-    "0": 31,
-    "1": 28,
-    "2": 1
-   }
-  },
-  {
-   "name": "Ember Bandit 4",
-   "archetype": "Jumpstart",
-   "halves": [
-    "J25 Burning",
-    "J22 Raid 1",
-    "JMP Dinosaurs 2"
-   ],
-   "handicap": 9,
-   "swapped": [
-    [
-     "Kari Zev, Skyship Raider",
-     1
-    ],
-    [
-     "Play with Fire",
-     1
-    ],
-    [
-     "Rionya, Fire Dancer",
-     1
-    ],
-    [
-     "Selvala, Heart of the Wilds",
-     1
-    ],
-    [
-     "Thundering Spineback",
-     1
-    ],
-    [
-     "Colossal Dreadmaw",
-     1
-    ],
-    [
-     "Jaya's Firenado",
-     1
-    ],
-    [
-     "Plundering Predator",
-     1
-    ],
-    [
-     "Storm Fleet Pyromancer",
-     1
-    ]
-   ],
-   "main": [
-    [
-     "Firespitter Whelp",
-     1
-    ],
-    [
-     "Fathom Fleet Firebrand",
-     1
-    ],
-    [
-     "Goblin Fireslinger",
-     1
-    ],
-    [
-     "Bloodfire Expert",
-     1
-    ],
-    [
-     "Chandra's Spitfire",
-     1
-    ],
-    [
-     "Firebrand Archer",
-     1
-    ],
-    [
-     "Wildfire Elemental",
-     1
-    ],
-    [
-     "Hearts on Fire",
-     1
-    ],
-    [
-     "Flames of the Firebrand",
+     "Krenko's Command",
      1
     ],
     [
@@ -1045,102 +1006,415 @@
      20
     ],
     [
-     "Rigging Runner",
+     "Goblin Commando",
      1
     ],
     [
-     "War-Name Aspirant",
+     "Boggart Brute",
      1
     ],
     [
-     "Goblin Oriflamme",
+     "Goblin Shortcutter",
      1
     ],
     [
-     "Daring Piracy",
+     "Ornery Goblin",
      1
     ],
     [
-     "Lavastep Raider",
+     "Goblin Arsonist",
      1
     ],
     [
-     "Swaggering Corsair",
+     "Goblin Lore",
      1
     ],
     [
-     "Keldon Raider",
+     "Goblin Rally",
      1
     ],
     [
-     "Raze the Effigy",
+     "Outnumber",
      1
     ],
     [
-     "Firecannon Blast",
+     "Burn Bright",
      1
     ],
     [
-     "Drover of the Mighty",
+     "Taborax, Hope's Demise",
      1
     ],
     [
-     "Orazca Frillback",
+     "Bonecaller Cleric",
      1
     ],
     [
-     "Ornery Dilophosaur",
+     "Archfiend's Vessel",
      1
     ],
     [
-     "Drowsing Tyrannodon",
+     "Entomber Exarch",
      1
     ],
     [
-     "Savage Stomp",
+     "Koma's Faithful",
      1
     ],
     [
-     "Commune with Dinosaurs",
+     "Scion of the Swarm",
      1
     ],
     [
-     "Crushing Canopy",
+     "Dark Bargain",
      1
     ],
     [
-     "New Horizons",
+     "Revoke Demise",
      1
     ],
     [
-     "Garruk's Uprising",
+     "Severed Strands",
      1
     ],
     [
-     "Thriving Grove",
+     "Thriving Moor",
      1
     ],
     [
-     "Forest",
+     "Swamp",
      10
     ]
    ],
    "sideboard": [],
    "tiers": {
     "0": 30,
-    "1": 29,
-    "2": 1
+    "1": 28,
+    "2": 2
+   }
+  },
+  {
+   "name": "Ember Bandit 3",
+   "archetype": "Jumpstart",
+   "halves": [
+    "JMP Dragons 2",
+    "JMP Dragons 1",
+    "J22 Cycling 1"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Terror of the Peaks",
+     1
+    ],
+    [
+     "Yidaro, Wandering Monster",
+     1
+    ],
+    [
+     "Lathliss, Dragon Queen",
+     1
+    ],
+    [
+     "Dragonspeaker Shaman",
+     1
+    ],
+    [
+     "Gadrak, the Crown-Scourge",
+     1
+    ],
+    [
+     "Dragon Fodder",
+     2
+    ],
+    [
+     "Dragonlord's Servant",
+     1
+    ],
+    [
+     "Drannith Stinger",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Rapacious Dragon",
+     2
+    ],
+    [
+     "Furnace Whelp",
+     1
+    ],
+    [
+     "Dragon Hatchling",
+     2
+    ],
+    [
+     "Lightning Shrieker",
+     2
+    ],
+    [
+     "Hellkite Punisher",
+     2
+    ],
+    [
+     "Draconic Roar",
+     2
+    ],
+    [
+     "Sarkhan's Rage",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     3
+    ],
+    [
+     "Mountain",
+     31
+    ],
+    [
+     "Dragonloft Idol",
+     1
+    ],
+    [
+     "Bathe in Dragonfire",
+     1
+    ],
+    [
+     "Thrill of Possibility",
+     1
+    ],
+    [
+     "Flameblade Adept",
+     1
+    ],
+    [
+     "Rooting Moloch",
+     1
+    ],
+    [
+     "Reptilian Reflection",
+     1
+    ],
+    [
+     "Deem Worthy",
+     1
+    ],
+    [
+     "Prickly Marmoset",
+     1
+    ],
+    [
+     "Quakefoot Cyclops",
+     1
+    ],
+    [
+     "Plundering Predator",
+     1
+    ],
+    [
+     "Lava Serpent",
+     1
+    ],
+    [
+     "Go for Blood",
+     1
+    ],
+    [
+     "Shredded Sails",
+     1
+    ],
+    [
+     "Forgotten Cave",
+     1
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 31,
+    "1": 26,
+    "2": 2,
+    "3": 1
+   }
+  },
+  {
+   "name": "Ember Bandit 4",
+   "archetype": "Jumpstart",
+   "halves": [
+    "J25 Goblins 2",
+    "JMP Goblins 1",
+    "J25 Wizards 2"
+   ],
+   "handicap": 9,
+   "swapped": [
+    [
+     "Augur of Bolas",
+     1
+    ],
+    [
+     "Battle Cry Goblin",
+     1
+    ],
+    [
+     "Makeshift Munitions",
+     1
+    ],
+    [
+     "Faerie Seer",
+     1
+    ],
+    [
+     "Shock",
+     2
+    ],
+    [
+     "Goblin Goliath",
+     1
+    ],
+    [
+     "Muxus, Goblin Grandee",
+     1
+    ],
+    [
+     "Aether Channeler",
+     1
+    ]
+   ],
+   "main": [
+    [
+     "Dropkick Bomber",
+     1
+    ],
+    [
+     "General Kreat, the Boltbringer",
+     1
+    ],
+    [
+     "Volley Veteran",
+     2
+    ],
+    [
+     "Goblin Arsonist",
+     2
+    ],
+    [
+     "Mogg Flunkies",
+     1
+    ],
+    [
+     "Goblin Surprise",
+     1
+    ],
+    [
+     "Kindled Fury",
+     1
+    ],
+    [
+     "Open Fire",
+     1
+    ],
+    [
+     "Krenko's Command",
+     1
+    ],
+    [
+     "Thriving Bluff",
+     2
+    ],
+    [
+     "Mountain",
+     20
+    ],
+    [
+     "Beetleback Chief",
+     1
+    ],
+    [
+     "Goblin Commando",
+     1
+    ],
+    [
+     "Boggart Brute",
+     1
+    ],
+    [
+     "Goblin Instigator",
+     1
+    ],
+    [
+     "Goblin Shortcutter",
+     1
+    ],
+    [
+     "Ornery Goblin",
+     1
+    ],
+    [
+     "Outnumber",
+     1
+    ],
+    [
+     "Naban, Dean of Iteration",
+     1
+    ],
+    [
+     "Academy Journeymage",
+     1
+    ],
+    [
+     "Expedition Diviner",
+     1
+    ],
+    [
+     "Frost Trickster",
+     1
+    ],
+    [
+     "Shipwreck Dowser",
+     1
+    ],
+    [
+     "Chilling Trap",
+     1
+    ],
+    [
+     "Opportunity",
+     1
+    ],
+    [
+     "Remand",
+     1
+    ],
+    [
+     "Starlight Snare",
+     1
+    ],
+    [
+     "Thriving Isle",
+     1
+    ],
+    [
+     "Island",
+     10
+    ]
+   ],
+   "sideboard": [],
+   "tiers": {
+    "0": 30,
+    "1": 23,
+    "2": 7
    }
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-14 11:23",
-  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+  "when": "2026-10-23 09:32",
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
   "handicap": 9,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": "14 Oct 2026: tune seed 303 (6 swapped: 57%, 12: 71%), then measure seed 404 at 10 swapped: 70%; a weighted line through the three meets 65% at 8.7"
+  "tuned_by": null
  }
 }

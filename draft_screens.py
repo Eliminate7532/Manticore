@@ -39,6 +39,7 @@ import cube_source as cs
 import draft_builder as db
 import draft_core as dc
 import draft_deck as dd
+import panning
 import draft_pod as dp
 import forge_dialogs as dlg
 import gfx
@@ -592,6 +593,19 @@ class DraftFlow(dlg.Dialog):
         elif self.stage == "decks" and enter:
             self.save_decks(gui)
 
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the pool (deck building) or the picks (the review) with the pen."""
+        if self.stage == "build" and self.build_max_scroll and getattr(self, "build_area", None) is not None \
+                and self.build_area.collidepoint(pos):
+            top = self.build_max_scroll
+            return panning.PanView(get=lambda: self.build_scroll,
+                                   put=lambda v: setattr(self, "build_scroll", max(0, min(int(v), top))))
+        if self.stage == "review" and self.max_scroll and getattr(self, "review_area", None) is not None \
+                and self.review_area.collidepoint(pos):
+            top = self.max_scroll
+            return panning.PanView(get=lambda: self.scroll, put=lambda v: setattr(self, "scroll", max(0, min(int(v), top))))
+        return None
+
     def wheel(self, gui, dy):
         if self.stage == "build":                            # round CD4: the pool scrolls
             step = int(80 * gui.L.fs)
@@ -956,6 +970,7 @@ class DraftFlow(dlg.Dialog):
         picks = pod.draft.review(self.review_seat)
         self.max_scroll = max(0, len(picks) * row_h - area.h)
         self.scroll = min(self.scroll, self.max_scroll)
+        self.review_area = area                                    # round PEN1: a pen can drag it
         prev = scr.get_clip()
         scr.set_clip(area)
         self.hover = None
@@ -1204,6 +1219,7 @@ class DraftFlow(dlg.Dialog):
         rows = -(-len(cards) // per_row) if cards else 0
         self.build_max_scroll = max(0, rows * (h + gap) - area.h)
         self.build_scroll = min(self.build_scroll, self.build_max_scroll)
+        self.build_area = area                                     # round PEN1: a pen can drag it
         prev = scr.get_clip()
         scr.set_clip(area)
         shade = pygame.Surface((w, h), pygame.SRCALPHA)

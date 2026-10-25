@@ -14,10 +14,21 @@ import pygame
 
 import forge_log as flog
 import gfx
+import osk
+import panning
+import scrollbar
 from allocation import Allocation
 from gfx import CYAN, DIM, GOLD, GREEN, RED, WHITE, YELLOW, clip_text, draw_rich, draw_text, round_rect, wrap_text
 
 CARD_ASPECT = 488 / 680
+# Round UI8 (Karl, 22 Oct: "I would like to have the ability to increase the size of cards on boxes like this" - the library search):
+# the card size in the card-picking windows, as the Card art window has it (patch 38). 1.0 = as before (the biggest size that
+# shows every card without scrolling); bigger cards scroll. - / + keys, Ctrl+wheel, the Card size buttons; remembered in
+# settings.json (choose_card_zoom).
+CHOOSE_ZOOM_STEPS = (0.6, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0)
+# Round PEN1 (Karl, 24 Oct, a 300-line "Choose a creature type" on his Surface: "impossible ... to scroll down or type an answer
+# with a stylus"): a list of this many plain choices or more gets a Find box (type, or tap Keyboard for the on-screen keyboard).
+FIND_MIN = 10
 ORANGE_TEXT = gfx.NOTE_ORANGE
 _DIM_LAYERS = {}
 
@@ -153,7 +164,11 @@ class ChooseDialog(Dialog):
         self.tiles = []
         self.content_h = 0
         self.body = pygame.Rect(0, 0, 0, 0)
+        self.bar = scrollbar.ScrollBar()                 # round UI8: drag it, or click its groove for a page
+        self.tile_h = 0                                  # round UI8: the card tiles' height in the last frame drawn
         self.last_click = (None, 0.0)
+        self.find = ""                                   # round PEN1: what is typed in the Find box
+        self.find_rect = None
         low = str(title).lower()
         self.zone = next((z for z in ("library", "graveyard", "exile") if z in low), None)
         # a search through a big pile of identical cards (forty Forests): show each name once with a count
@@ -281,7 +296,8 @@ class ChooseDialog(Dialog):
         """The header text, wrapped: (title lines, instruction lines, 'Selected:' lines)."""
         title = wrap_text(self.title, gui.font("title", True), tw)[:3]
         if self.mode != "choose":
-            return title, [], []
+            hint = self.view_hint()                              # round GY1: say that a glowing card can be clicked
+            return title, (wrap_text(hint, gui.font("small"), tw)[:2] if hint else []), []
         need = wrap_text(self.need_text(), gui.font("small"), tw)[:self.need_lines]
         picked = self.selected_names()
         sb = gui.font("small", True)
@@ -299,7 +315,21 @@ class ChooseDialog(Dialog):
         h = len(title) * (gui.font("title", True).get_height() + 2)
         if self.mode == "choose":
             h += 2 + len(need) * (gui.font("small").get_height() + 2) + 4 + len(sel) * gui.font("small", True).get_height() + 6
+        elif need:                                               # round GY1: the view window's hint line
+            h += 2 + len(need) * (gui.font("small").get_height() + 2) + 4
         return h
+
+    def view_hint(self):
+        """Round GY1: in a look-only window whose glowing cards can be clicked (a graveyard or exile pile), one line saying so -
+        before it nothing in the window said that a click on Frogmite (castable thanks to Emry) would cast it."""
+        if self.mode != "view" or not self.on_pick:
+            return ""
+        cards = [it.get("card") or {} for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip]
+        if any(c.get("selectable") for c in cards):
+            return "Click a glowing card to choose it."
+        if any(c.get("weak") for c in cards):
+            return "Click a glowing card to play it."
+        return ""
 
     def row_labels(self, it_list):
         """Text of the plain choices without Forge's card numbers - unless that would make two choices look the same."""
@@ -312,21 +342,58 @@ class ChooseDialog(Dialog):
         clean = [flog.strip_ids(t) for t in raw]
         return [c if clean.count(c) == 1 else r for c, r in zip(clean, raw)]
 
-    def text_rows(self, gui, width):
-        """[(item index, wrapped lines, row height)] for the plain-text choices. Long choices wrap instead of being cut off."""
+    def text_choices(self):
+        return [i for i, it in enumerate(self.items) if it.get("kind") != "card" and i not in self.skip]
+
+    def has_find(self):
+        """Round PEN1: a long list of plain choices (creature types, card names) can be narrowed down by typing."""
+        return self.mode == "choose" and len(self.text_choices()) >= FIND_MIN
+
+    def matches(self, label):
+        words = self.find.lower().split()
+        low = flog.strip_ids(label).lower()
+        return all(w in low for w in words)
+
+    def text_rows(self, gui, width, filtered=True):
+        """[(item index, wrapped lines, row height)] for the plain-text choices. Long choices wrap instead of being cut off.
+        Round PEN1: only the ones the Find box matches (filtered=False: all of them - the window's height doesn't jump as you type)."""
         f = gui.font("body")
         lh = f.get_height() + 2
         pre = f.size("00.  ")[0] if self.ordered else 0
-        idx = [i for i, it in enumerate(self.items) if it.get("kind") != "card" and i not in self.skip]
+        idx = self.text_choices()
         labels = self.row_labels([self.items[i] for i in idx])
+        if filtered and self.find.strip():
+            kept = [(i, lb) for i, lb in zip(idx, labels) if self.matches(lb) or i in self.sel]
+            idx, labels = [i for i, _l in kept], [lb for _i, lb in kept]
         rows = []
         for i, label in zip(idx, labels):
             lines = wrap_text(label, f, width - 24 - pre) or [""]
             rows.append((i, lines, max(int(38 * gui.L.fs), len(lines) * lh + 14)))
         return rows
 
+    # ---- round UI8: the card size
+    def card_count(self):
+        return sum(1 for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip)
+
+    def zoom(self, gui):
+        z = getattr(gui, "choose_card_zoom", 1.0)
+        return min(CHOOSE_ZOOM_STEPS, key=lambda step: abs(step - (z if isinstance(z, (int, float)) else 1.0)))
+
+    def change_zoom(self, gui, step):
+        """One step bigger (+1) or smaller (-1); remembered in settings.json (choose_card_zoom). The scroll keeps its place."""
+        old = self.zoom(gui)
+        new = CHOOSE_ZOOM_STEPS[max(0, min(len(CHOOSE_ZOOM_STEPS) - 1, CHOOSE_ZOOM_STEPS.index(old) + step))]
+        if new == old:
+            return
+        self.scroll = int(self.scroll * new / old)
+        gui.choose_card_zoom = new
+        save = getattr(gui, "save_settings", None)
+        if save:
+            save()
+
     def wanted_height(self, gui):
-        """Tall enough for the header, every text choice and the card grid; never taller than the window."""
+        """Tall enough for the header, every text choice and the card grid; never taller than the window. Round UI8: with the
+        card size above 100% the window may use the whole height of the screen (the cards scroll inside it)."""
         L = gui.L
         k = self.scale(gui)
         pw = self.panel_width(gui)
@@ -334,13 +401,17 @@ class ChooseDialog(Dialog):
         head = self.head_height(gui, self.head_width(gui, pw))
         if self.source is not None:
             head = max(head, self.thumb_h(gui))
-        text_h = sum(h + 6 for _i, _l, h in self.text_rows(gui, width))
-        cards = sum(1 for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip)
-        tile_h = 300 if cards <= 3 else 240 if cards <= 5 else 200
+        text_h = sum(h + 6 for _i, _l, h in self.text_rows(gui, width, filtered=False))
+        if self.has_find():
+            text_h += self.find_height(gui) + 8                 # round PEN1: the Find box
+        cards = self.card_count()
+        z = self.zoom(gui) if cards else 1.0
+        tile_h = int((300 if cards <= 3 else 240 if cards <= 5 else 200) * z)
         cols = max(1, (width + 10) // (int(tile_h * CARD_ASPECT) + 10))
         rows = math.ceil(cards / cols) if cards else 0
         need = 14 + head + 8 + text_h + rows * (tile_h + 10) + int(52 * L.fs) + 8
-        return int(min(L.H - 40, int(760 * k), max(int(260 * k), need)))
+        cap = L.H - 40 if z > 1.0 else min(L.H - 40, int(760 * k))
+        return int(min(cap, max(int(260 * k), need)))
 
     def draw(self, gui):
         L, scr = gui.L, gui.screen
@@ -366,10 +437,19 @@ class ChooseDialog(Dialog):
                 draw_text(scr, ln, x, y, sb, WHITE if picked else DIM)
                 y += sb.get_height()
             y += 6
+        elif need:                                               # round GY1: "Click a glowing card to play it."
+            y += 2
+            for ln in need:
+                draw_text(scr, ln, x, y, sf, GOLD)
+                y += sf.get_height() + 2
+            y += 4
         if self.zone == "library" and gui.session.me():
             self.draw_library_badge(gui, rect)
         top = max(y, rect.y + 14 + (self.thumb_h(gui) if self.source is not None else 0)) + 8
         footer = int(52 * L.fs)
+        self.find_rect = None
+        if self.has_find():                                    # round PEN1: type to narrow the list down
+            top = self.draw_find(gui, rect, top) + 8
         self.body = pygame.Rect(rect.x + 14, top, rect.w - 28, rect.bottom - footer - top - 8)
         self.draw_items(gui)
         # footer buttons
@@ -377,6 +457,7 @@ class ChooseDialog(Dialog):
         bh = int(40 * L.fs)
         bx = rect.right - 18 - bw
         by = rect.bottom - bh - 12
+        limit = bx                                             # round UI8: where the buttons on the right begin
         if self.mode == "view":
             self.button(gui, pygame.Rect(bx, by, bw, bh), "Close", "close", True, True)
         else:
@@ -384,12 +465,68 @@ class ChooseDialog(Dialog):
             if self.has_skip():
                 sw = max(gui.button_width(self.skip_label()), int(90 * L.fs))
                 self.button(gui, pygame.Rect(bx - sw - 10, by, sw, bh), self.skip_label(), "skip", True)
+                limit = bx - sw - 10
             if self.ordered:
                 cw = gui.button_width("Reset")
                 self.button(gui, pygame.Rect(rect.x + 18, by, cw, bh), "Reset", "reset", bool(self.sel))
                 aw = gui.button_width("Select all")
                 self.button(gui, pygame.Rect(rect.x + 18 + cw + 10, by, aw, bh), "Select all", "select_all",
                             self.can_select_all())
+        self.draw_size_controls(gui, rect, by, bh, limit)
+
+    def find_height(self, gui):
+        return gui.font("small").get_height() + int(14 * gui.L.fs)
+
+    def draw_find(self, gui, rect, top):
+        """Round PEN1: the Find box (and its Keyboard button) above the choices. Returns where it ends."""
+        fs, small = gui.L.fs, gui.font("small")
+        h = self.find_height(gui)
+        kw = osk.button_width(gui)
+        box = pygame.Rect(rect.x + 14, top, rect.w - 28 - kw - 10, h)
+        self.find_rect = box
+        round_rect(gui.screen, box, gfx.SEARCH_BG, 8, 2 if self.find else 1, GOLD if self.find else gfx.MENU_EDGE)
+        tx = box.x + int(10 * fs)
+        right = box.right - 8
+        if self.find:
+            cw = h - 4
+            clear = pygame.Rect(box.right - cw - 2, box.y + 2, cw, cw)
+            self.button(gui, clear, "x", "clear_find", True, fkey="small")
+            right = clear.x - 8
+            draw_text(gui.screen, clip_text("Find: " + self.find, small, right - tx) + "|", tx, box.centery, small, WHITE, "midleft")
+        else:
+            draw_text(gui.screen, clip_text("Type to find one (or tap Keyboard)", small, right - tx), tx, box.centery, small, DIM,
+                      "midleft")
+        osk.toggle_button(self, gui, pygame.Rect(box.right + 10, top, kw, h))
+        return box.bottom
+
+    def size_controls_left(self, gui, rect):
+        """Where the Card size controls start: after Reset and Select all in an ordered list, else at the window's left."""
+        x = rect.x + 18
+        if self.mode != "view" and self.ordered:
+            x += gui.button_width("Reset") + 10 + gui.button_width("Select all") + 16
+        return x
+
+    def draw_size_controls(self, gui, rect, by, bh, limit):
+        """Round UI8: "Card size  -  +" at the bottom left (the - / + keys and Ctrl+wheel do the same). Only with card tiles, and
+        only where they fit left of the buttons on the right (`limit`); without room for the words, the two buttons alone."""
+        self.size_rect = None
+        if not self.card_count():
+            return
+        z = self.zoom(gui)
+        x0 = x = self.size_controls_left(gui, rect)
+        small = gui.font("small")
+        label = "Card size"
+        lw = small.size(label)[0]
+        if x + lw + 10 + 2 * bh + 6 > limit - 16:
+            label, lw = "", 0
+            if x + 2 * bh + 6 > limit - 16:
+                return
+        if label:
+            draw_text(gui.screen, label, x, by + bh // 2, small, gfx.BODY_TEXT, "midleft")
+            x += lw + 10
+        self.button(gui, pygame.Rect(x, by, bh, bh), "\u2212", "zoom_out", z > CHOOSE_ZOOM_STEPS[0])
+        self.button(gui, pygame.Rect(x + bh + 6, by, bh, bh), "+", "zoom_in", z < CHOOSE_ZOOM_STEPS[-1])
+        self.size_rect = pygame.Rect(x0, by, x + 2 * bh + 6 - x0, bh)
 
     def draw_library_badge(self, gui, rect):
         """A little face-down pile in the corner: 'this is your library'."""
@@ -429,11 +566,25 @@ class ChooseDialog(Dialog):
             if rows * (h + pad) <= avail:
                 tile_h = h
                 break
-        tile_w = int(tile_h * CARD_ASPECT)
-        cols = max(1, (body.w + pad) // (tile_w + pad))
+        # round UI8: the card size scales that, but a card is never taller than the list area (one whole card always shows)
+        z = self.zoom(gui)
+        if z != 1.0:
+            tile_h = max(60, min(int(tile_h * z), body.h - pad))
+        grid_w = body.w
+
+        def grid(width):
+            tw = int(tile_h * CARD_ASPECT)
+            c = max(1, (width + pad) // (tw + pad))
+            return tw, c, text_h + (math.ceil(len(cards) / c) if cards else 0) * (tile_h + pad)
+        tile_w, cols, content_h = grid(grid_w)
+        if content_h > body.h:                                   # it scrolls: leave room for the bar at the right
+            grid_w = body.w - scrollbar.ScrollBar.width(gui.L.fs) - 6
+            tile_w, cols, content_h = grid(grid_w)
         rows = math.ceil(len(cards) / cols) if cards else 0
-        self.content_h = text_h + rows * (tile_h + pad)
+        self.tile_h = tile_h
+        self.content_h = content_h
         self.scroll = max(0, min(self.scroll, max(0, self.content_h - body.h)))
+        self.bar.layout(body, self.content_h, self.scroll, gui.L.fs)
         self.tiles = []
         scr.set_clip(body)
         y = body.y - self.scroll
@@ -441,7 +592,7 @@ class ChooseDialog(Dialog):
         lh = f.get_height() + 2
         pre = f.size("00.  ")[0] if self.ordered else 0
         for i, lines, row_h in rows_t:
-            r = pygame.Rect(body.x, y, body.w, row_h)
+            r = pygame.Rect(body.x, y, grid_w, row_h)
             on = i in self.sel
             hot = r.collidepoint(gui.mouse) and self.mode != "view"
             round_rect(scr, r, gfx.CHOICE_ON_BG if on else (gfx.CHOICE_HOT_BG if hot else gfx.CHOICE_BG), 10, 2 if on else 1,
@@ -455,7 +606,7 @@ class ChooseDialog(Dialog):
             self.tiles.append((r, i))
             y += row_h + 6
         total_w = cols * tile_w + (cols - 1) * pad
-        x0 = body.x + max(0, (body.w - total_w) // 2)
+        x0 = body.x + max(0, (grid_w - total_w) // 2)
         for n, (i, it) in enumerate(cards):
             cx = x0 + (n % cols) * (tile_w + pad)
             cy = y + (n // cols) * (tile_h + pad)
@@ -495,13 +646,12 @@ class ChooseDialog(Dialog):
                     gui.hover_card = card
             self.tiles.append((r, i))
         scr.set_clip(None)
-        if self.content_h > body.h:
-            frac = body.h / self.content_h
-            bar_h = max(30, int(body.h * frac))
-            bar_y = body.y + int((body.h - bar_h) * (self.scroll / max(1, self.content_h - body.h)))
-            pygame.draw.rect(scr, gfx.SCROLLBAR, pygame.Rect(body.right - 6, bar_y, 5, bar_h), border_radius=3)
+        self.bar.draw(scr, gui.mouse)                            # round UI8: a groove and a handle you can grab
         if not self.items:
             draw_text(scr, "Nothing here.", body.centerx, body.centery, gui.font("body"), DIM, "center")
+        elif self.find.strip() and not rows_t and not cards:
+            draw_text(scr, clip_text(f'Nothing matches "{self.find.strip()}".', gui.font("body"), body.w - 20), body.centerx,
+                      body.y + int(30 * gui.L.fs), gui.font("body"), DIM, "center")
         # a big look at the hovered card (the preview panel is hidden behind the dialog)
         card = getattr(gui, "hover_card", None)
         gui.hover_card = None
@@ -514,6 +664,20 @@ class ChooseDialog(Dialog):
     # ---- input
     def click(self, gui, pos, button):
         name = self.button_at(pos)
+        if name in ("zoom_in", "zoom_out"):                      # round UI8
+            self.change_zoom(gui, 1 if name == "zoom_in" else -1)
+            return
+        if name == "keyboard":                                   # round PEN1
+            gui.toggle_keyboard(self)
+            return
+        if name == "clear_find":
+            self.set_find("")
+            return
+        if button == 1 and name is None:
+            moved = self.bar.press(pos, self.scroll)             # round UI8: the scroll bar before the cards under it
+            if moved is not None:
+                self.scroll = moved
+                return
         if name == "close":
             self.done = True
         elif name == "done" and self.valid():
@@ -547,7 +711,36 @@ class ChooseDialog(Dialog):
             return
         self.toggle(i)
 
+    def set_find(self, text):
+        self.find = text[:60]
+        self.scroll = 0
+
+    def find_key(self, ev):
+        """Round PEN1: a key for the Find box. True when it was used (typed, deleted, or Esc clearing what was typed)."""
+        if not self.has_find():
+            return False
+        ch = getattr(ev, "unicode", "") or ""
+        mod = getattr(ev, "mod", 0)
+        if ev.key == pygame.K_BACKSPACE:
+            self.set_find(self.find[:-1] if not mod & pygame.KMOD_CTRL else "")
+            return True
+        if ev.key == pygame.K_ESCAPE and self.find:
+            self.set_find("")
+            return True
+        if ch and ch.isprintable() and not mod & (pygame.KMOD_CTRL | pygame.KMOD_ALT) and (ch != " " or self.find):
+            self.set_find(self.find + ch)                        # a first Space is still Done, as before
+            return True
+        return False
+
     def key(self, gui, ev):
+        if self.find_key(ev):
+            return
+        if ev.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS) and self.card_count():     # round UI8: the card size
+            self.change_zoom(gui, 1)
+            return
+        if ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS) and self.card_count():
+            self.change_zoom(gui, -1)
+            return
         if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
             if self.mode == "view":
                 self.done = True
@@ -562,7 +755,29 @@ class ChooseDialog(Dialog):
                 self.finish(gui, [])
 
     def wheel(self, gui, dy):
-        self.scroll -= dy * 70
+        if pygame.key.get_mods() & pygame.KMOD_CTRL and self.card_count():     # round UI8: Ctrl+wheel changes the card size
+            if dy:
+                self.change_zoom(gui, 1 if dy > 0 else -1)
+            return
+        self.scroll -= dy * max(70, int(self.tile_h * 0.5))      # round UI8: bigger cards, bigger steps (half a card)
+
+    def drag_motion(self, gui, pos):
+        """Round UI8: the scroll bar's handle follows the pointer while the left button is held."""
+        moved = self.bar.drag(pos)
+        if moved is not None:
+            self.scroll = moved
+
+    def drag_release(self, gui, pos):
+        self.bar.release()
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: the list can be dragged with the pen when it scrolls (not on its bar: that one drags its handle)."""
+        if not self.bar.needed or not self.body.collidepoint(pos) or self.bar.track.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=self._pan_put)
+
+    def _pan_put(self, v):
+        self.scroll = max(0, min(int(v), max(0, self.content_h - self.body.h)))
 
 
 class OpeningHandDialog(ChooseDialog):
@@ -751,10 +966,15 @@ class InputDialog(Dialog):
         round_rect(gui.screen, box, gfx.FIELD_BG, 8, 2, GOLD)
         blink = "|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""
         draw_text(gui.screen, self.text + blink, box.x + 12, box.centery, gui.font("title", True), WHITE, "midleft")
+        kx = box.right + 10
         if self.numeric:
             sb = box.h
             self.button(gui, pygame.Rect(box.right + 10, box.y, sb, sb), "-", "minus")
             self.button(gui, pygame.Rect(box.right + 10 + sb + 6, box.y, sb, sb), "+", "plus")
+            kx = box.right + 10 + 2 * sb + 16
+        kw = osk.button_width(gui)
+        if kx + kw <= rect.right - 22:                         # round PEN1: no keyboard on a pen-only tablet - tap this one
+            osk.toggle_button(self, gui, pygame.Rect(kx, box.y, kw, box.h))
         y = box.bottom + 14
         bw = int((rect.w - 44 - 20) / 3)
         for n, opt in enumerate(self.options):
@@ -766,7 +986,9 @@ class InputDialog(Dialog):
 
     def click(self, gui, pos, button):
         name = self.button_at(pos)
-        if name == "ok":
+        if name == "keyboard":                                   # round PEN1
+            gui.toggle_keyboard(self)
+        elif name == "ok":
             self.submit(gui)
         elif name == "minus":
             self.step(-1)
@@ -1084,6 +1306,13 @@ class HelpDialog(Dialog):
     def wheel(self, gui, dy):
         self.scroll = max(0, min(self.max_scroll, self.scroll - dy * 40))
 
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the list of keys with the pen."""
+        vp = getattr(self, "viewport", None)
+        if not getattr(self, "max_scroll", 0) or vp is None or not vp.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=lambda v: setattr(self, "scroll", max(0, min(int(v), self.max_scroll))))
+
     def click(self, gui, pos, button):
         if self.button_at(pos) == "close":
             self.done = True
@@ -1379,7 +1608,31 @@ def info_dialog(msg):
     return ChooseDialog(msg.get("title", ""), items, mode="view")
 
 
+class ZoneDialog(ChooseDialog):
+    """A look inside one player's graveyard or exile; a glowing card (Forge's "weak" or "selectable") is clicked as on the table.
+    Round GY1: it reads that zone from the newest snapshot every time it is drawn. Before, it kept the cards as they were when it
+    opened, so a card that became playable while it was open (Emry's ability resolving behind it: Frogmite) never glowed there, and
+    a click on it did nothing (reproduced live, 24 Oct). Clicks use the tiles of the last frame drawn, so they always match the
+    cards on screen."""
+
+    def __init__(self, player, zone, on_pick):
+        cards = player["zones"].get(zone, [])
+        super().__init__(f"{player['name']} - {zone}", [{"kind": "card", "card": c} for c in cards], mode="view", on_pick=on_pick)
+        self.player_id = player.get("id")
+        self.zone_key = zone
+
+    def refresh(self, gui):
+        session = getattr(gui, "session", None)
+        player = session.player(self.player_id) if session is not None and self.player_id is not None else None
+        if player is None:                                       # no game any more (closed, restarted): keep what was shown
+            return
+        self.items = [{"kind": "card", "card": c} for c in (player.get("zones") or {}).get(self.zone_key) or []]
+        self.max = len(self.items)
+
+    def draw(self, gui):
+        self.refresh(gui)
+        super().draw(gui)
+
+
 def zone_dialog(player, zone, on_pick):
-    cards = player["zones"].get(zone, [])
-    title = f"{player['name']} - {zone}"
-    return ChooseDialog(title, [{"kind": "card", "card": c} for c in cards], mode="view", on_pick=on_pick)
+    return ZoneDialog(player, zone, on_pick)

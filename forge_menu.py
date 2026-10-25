@@ -22,7 +22,10 @@ import forge_dialogs as dlg
 import formats
 import gfx
 import legality as lg
+import osk
+import panning
 import reporting
+import scrollbar
 from deck_importer import DeckImportError
 from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, RED, WHITE, clip_text, draw_text, round_rect, wrap_text
 
@@ -167,6 +170,7 @@ class DeckMenu:
         self.rows, self.btns, self.slots = [], [], {}
         self.list_rect = pygame.Rect(0, 0, 0, 0)
         self.content_h = 0
+        self.bar = scrollbar.ScrollBar()                      # round UI8: the deck list's scroll bar (drag it, click its groove)
         self.resume_info = None                               # {"actions", "when"} when an unfinished game can be resumed (round 21)
         self.crash_offer = ""                                   # round 28d: "closed unexpectedly last time - send a report?" (the table sets it)
         self.backup_banner = backup_banner.banner_text(self.base_dir)          # round 27a §2: checked once, when the screen opens
@@ -433,6 +437,10 @@ class DeckMenu:
         for rect, name in reversed(self.btns):
             if rect.collidepoint(pos):
                 return self.press(gui, name)
+        moved = self.bar.press(pos, self.scroll)              # round UI8: the scroll bar first (it sits over the rows' right edge)
+        if moved is not None:
+            self.scroll = moved
+            return None
         for rect, entry in self.rows:
             if rect.collidepoint(pos) and self.list_rect.collidepoint(pos):
                 return self.assign(entry)
@@ -443,7 +451,9 @@ class DeckMenu:
         return None
 
     def press(self, gui, name):
-        if name == "start":
+        if name == "keyboard":                                        # round PEN1
+            gui.toggle_keyboard(self)
+        elif name == "start":
             self.start(gui)
         elif name == "back":
             self.back(gui)
@@ -532,8 +542,28 @@ class DeckMenu:
         self.active = side
 
     def wheel(self, gui, dy):
+        """Round UI8: a whole deck row per wheel notch (it was 30 px x text scale, about a third of a row)."""
         if self.list_rect.collidepoint(gui.mouse):
-            self.scroll = max(0, min(self.scroll - dy * int(50 * _fs(gui) * 0.6), max(0, self.content_h - self.list_rect.h)))
+            step = getattr(self, "row_h_cache", 0) or int(50 * _fs(gui) * 0.6)
+            self.scroll = max(0, min(self.scroll - dy * step, max(0, self.content_h - self.list_rect.h)))
+
+    def drag_motion(self, gui, pos):
+        """Round UI8: the scroll bar's handle follows the pointer while the left button is held."""
+        moved = self.bar.drag(pos)
+        if moved is not None:
+            self.scroll = moved
+
+    def drag_release(self, gui, pos):
+        self.bar.release()
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the deck list with the pen (a press that doesn't move still picks the deck under it)."""
+        if not self.bar.needed or not self.list_rect.collidepoint(pos) or self.bar.track.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=self._pan_put)
+
+    def _pan_put(self, v):
+        self.scroll = max(0, min(int(v), max(0, self.content_h - self.list_rect.h)))
 
     def drop_file(self, gui, path):
         ext = os.path.splitext(path)[1].lower()
@@ -719,13 +749,18 @@ class DeckMenu:
         self.search_rect = box
         round_rect(scr, box, gfx.SEARCH_BG, 8, 2 if self.search else 1, GOLD if self.search else gfx.MENU_EDGE)
         tx = box.x + int(10 * fs)
+        kw = osk.button_width(gui)
+        right = box.right - 2
+        if box.w - kw > int(200 * fs):                          # round PEN1: no keyboard on a pen-only tablet - tap this one
+            osk.toggle_button(self, gui, pygame.Rect(box.right - kw - 2, box.y + 2, kw, sh - 4))
+            right = box.right - kw - 8
         if self.search:
             cw = sh
-            clear = pygame.Rect(box.right - cw - 2, box.y + 2, cw, sh - 4)
+            clear = pygame.Rect(right - cw, box.y + 2, cw, sh - 4)
             self.button(gui, clear, "x", "clear_search", True, False, False, fkey="small")
             draw_text(scr, clip_text(self.search, small, clear.x - tx - 8) + "|", tx, box.centery, small, WHITE, "midleft")
         else:
-            draw_text(scr, clip_text("Type to search: name, commander or style (Typal, Voltron, ...)", small, box.w - 2 * (tx - box.x)),
+            draw_text(scr, clip_text("Type to search: name, commander or style (Typal, Voltron, ...)", small, right - tx - 8),
                       tx, box.centery, small, DIM, "midleft")
         list_top = box.bottom + 6
         self.list_rect = pygame.Rect(rect.x + pad // 2, list_top, rect.w - pad, rect.bottom - foot_h - pad - list_top)
@@ -736,10 +771,12 @@ class DeckMenu:
         self.row_h_cache = row_h + 6
         self.content_h = len(shown) * (row_h + 6)
         self.scroll = max(0, min(self.scroll, max(0, self.content_h - self.list_rect.h)))
+        self.bar.layout(self.list_rect, self.content_h, self.scroll, fs)       # round UI8
+        row_w = self.list_rect.w - (self.bar.track.w + int(6 * fs) if self.bar.needed else int(8 * fs))
         scr.set_clip(self.list_rect)
         y = self.list_rect.y - self.scroll
         for e in shown:
-            r = pygame.Rect(self.list_rect.x, y, self.list_rect.w - int(8 * fs), row_h)
+            r = pygame.Rect(self.list_rect.x, y, row_w, row_h)
             if r.bottom >= self.list_rect.y and r.y <= self.list_rect.bottom:
                 self.draw_row(gui, r, e, body, small, tiny)
                 self.rows.append((r, e))
@@ -752,11 +789,7 @@ class DeckMenu:
                                              f"{formats.name(self.fmt)}.", small, self.list_rect.w - 2 * pad)[:3]):
                 draw_text(scr, ln, self.list_rect.x + pad, self.list_rect.y + pad + i * small.get_height(), small, DIM)
         scr.set_clip(None)
-        if self.content_h > self.list_rect.h:
-            frac = self.list_rect.h / self.content_h
-            bar_h = max(30, int(self.list_rect.h * frac))
-            bar_y = self.list_rect.y + int((self.list_rect.h - bar_h) * (self.scroll / max(1, self.content_h - self.list_rect.h)))
-            pygame.draw.rect(scr, gfx.SCROLLBAR, pygame.Rect(self.list_rect.right - 5, bar_y, 5, bar_h), border_radius=3)
+        self.bar.draw(scr, gui.mouse)                                       # round UI8: a groove and a handle you can grab
         by = rect.bottom - foot_h - pad // 2
         e = self.entry(self.focus_id)
         labels = ["Import a deck", "Remove", "Card art", "Stats"]           # round ALT1: Card art; patch 44: Stats

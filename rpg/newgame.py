@@ -15,12 +15,16 @@ Round RPG9 (Karl, 14 Oct 2026: "Two colours max"): the three picks use at most M
 all_choices() leave out a half-deck that would make a third colour, and pick() refuses one with a sentence saying why. A half-deck's
 colours are those of its non-land cards (products.colours). Karl's deck of 13 Oct (Angels, Beasts, Spirits: white, green and blue,
 7 basic lands of each) is what this stops.
+
+Round RPG11 (the Adventure remaster, Karl 23 Oct 2026; claude/SPEC_RPG_SLICE_2026-10-23.md): the name step also picks the hero you
+walk the map as - one of save.HEROES, DawnLike's five class sheets (set_hero; the Warrior until you pick). finish() puts it in
+save.world["hero"].
 """
 import os
 import time
 
 from rpg import cardpool, economy, products, rules
-from rpg.save import SaveError, SaveGame, check_name
+from rpg.save import HEROES, SaveError, SaveGame, check_name
 
 OFFER_SIZE = 3            # half-decks shown at a time (my estimate: three cards side by side fit any window)
 PICKS = 3                 # decision 11
@@ -38,6 +42,7 @@ class NewGameFlow:
         self.world = world
         self.offer_size = offer_size
         self.name = None
+        self.hero = HEROES[0]            # Round RPG11: picked on the name screen
         self.picks = []                  # HalfDeck
         self.rerolls = 0
         self._offer = None
@@ -74,6 +79,13 @@ class NewGameFlow:
             self.name = check_name(name)
         except SaveError as e:
             return str(e)
+        return None
+
+    def set_hero(self, hero):
+        """Round RPG11: who you walk the map as - one of save.HEROES. None when taken, else the sentence saying why not."""
+        if hero not in HEROES:
+            return f"{hero!r} isn't one of the heroes ({', '.join(HEROES)})."
+        self.hero = hero
         return None
 
     def colours(self):
@@ -171,6 +183,6 @@ class NewGameFlow:
         save.gold = numbers.start_gold
         town = world.start_town
         save.world = {"region": world.town(town).region, "map": town, "x": None, "y": None, "last_town": town,
-                      "towns_visited": [town]}
+                      "towns_visited": [town], "hero": self.hero}
         save.forge = forge or getattr(pool, "forge", "") or ""
         return save

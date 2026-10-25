@@ -5,6 +5,9 @@ tools\\ai_bench.py - does the AI answer the right threat? Ten fixed boards throu
     python tools\\ai_bench.py                              10 boards x 5 trials, seed 7
     python tools\\ai_bench.py --trials 10 --seed 11 --boards C1,C2,R2
     python tools\\ai_bench.py --out C:\\somewhere
+    python tools\\ai_bench.py --boards extra                 round AI2's six other boards (X1-X6); "all" = all sixteen
+    python tools\\ai_bench.py --boards pod                   the boards for 3-4 players (P1-P7)
+    python tools\\ai_bench.py --threat-ai off                Forge's AI alone: the baseline round AI2 is measured against
 
 Writes soak_runs\\ai_bench_<date>_<time>\\ai_bench_summary.txt (the score per board, what the AI did in every miss) and
 ai_bench_results.json (every trial: the AI's stack entries, its casts, where my cards ended). soak_runs\\ is never backed up
@@ -70,7 +73,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Does the AI answer the right threat? Ten fixed boards, played through the real Forge engine.")
     ap.add_argument("--trials", type=int, default=5, help="trials per board (default 5)")
     ap.add_argument("--seed", type=int, default=7, help="Forge's random seed (default 7; the same seed gives the same trials)")
-    ap.add_argument("--boards", default="", help="a comma-separated subset, e.g. C1,C2,R2 (default: all ten)")
+    ap.add_argument("--boards", default="", help="a comma-separated subset, e.g. C1,C2,R2 (default: the ten); "
+                    "'extra' = round AI2's six other boards (X1-X6), 'all' = all sixteen, 'pod' = the boards for "
+                    "3-4 players (P1-P7)")
+    ap.add_argument("--threat-ai", choices=("on", "off"), default="on",
+                    help="round AI2: 'off' measures Forge's AI alone (the baseline); default on, as the game plays")
     ap.add_argument("--out", default=None, help="where the run's folder goes (default: soak_runs\\ next to the program)")
     ap.add_argument("--list", action="store_true", help="print the boards and leave")
     args = ap.parse_args(argv)
@@ -79,16 +86,17 @@ def main(argv=None):
     os.environ["MANTICORE_DATA_DIR"] = folder           # before _load(): see the comment above it
     ab = _load()
     if args.list:
-        for b in ab.BOARDS:
+        for b in ab.ALL_BOARDS + ab.POD_BOARDS:
             print("%-3s %-64s -> %s" % (b.key, b.title, b.right))
         return 0
     boards = [k for k in args.boards.split(",") if k.strip()] or None
     try:
-        results = ab.run(trials=args.trials, seed=args.seed, boards=boards, say=print)
+        threat_ai = None if args.threat_ai == "on" else False
+        results = ab.run(trials=args.trials, seed=args.seed, boards=boards, say=print, threat_ai=threat_ai)
     except ValueError as exc:
         print(str(exc))
         return 2
-    text = ab.write_results(folder, results, args.seed, version_text())
+    text = ab.write_results(folder, results, args.seed, version_text(), threat_ai)
     print()
     print(text)
     print("written to", folder)

@@ -31,7 +31,7 @@ sys.path.insert(0, BASE_DIR)
 
 from backup import RESERVED_NAMES, TOP_LEVEL_SKIP  # noqa: E402  (after sys.path.insert)
 
-WATCHED = ["crash_log.txt", "forge_engine.log", "perf_log.txt", "backup.log", "backup_status.json", "saves"]
+WATCHED = ["crash_log.txt", "forge_engine.log", "perf_log.txt", "connection_log.txt", "backup.log", "backup_status.json", "saves"]
 BACKUP_FILES = ("backup.log", "backup_status.json")   # round QT1: what the scheduled backup itself writes
 STATUS_FILE = "backup_status.json"
 BACKUP_LOG = "backup.log"

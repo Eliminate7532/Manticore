@@ -108,6 +108,16 @@ class NewGameTests(unittest.TestCase):
         self.assertIn("White and Green", f.colour_note())
         self.assertIn("Only half-decks of these colours", f.colour_note())
 
+    def test_a_colourless_first_pick_keeps_the_note_at_most_two_colours(self):
+        """Round RPG17b (Karl 24 Oct, RPG16d's question 0): after a colourless first pick the note stays "At most 2 colours in
+        all." - nothing has been chosen yet, so "So far colourless: one more colour at most." would be wrong (two are still open)."""
+        f = flow()
+        f.pick("TST Thopters 1")
+        self.assertEqual(f.colours(), "")
+        self.assertEqual(f.colour_note(), "At most 2 colours in all.")
+        f.pick("TST Cats 1")                                         # a colour after it: the note moves on as before
+        self.assertEqual(f.colour_note(), "So far White: one more colour at most.")
+
     def test_undo_frees_the_colours_again(self):
         f = flow()
         f.pick("TST Cats 1")
@@ -396,7 +406,22 @@ class ScreenTests(r8.Base):
     """The new-game screen says each offered half-deck's colours and where the rule stands, at every size, without its words
     landing on other words."""
 
-    def to_pick(self, size=(1360, 840), scale=None):
+    # Round RPG17b: the new game's seed is os.urandom's (rpg/newgame.py NewGameFlow.__init__), so a screen test that clicks "the
+    # first offer" got a colourless half-deck on some runs (8 of seeds 0-2999 on the real pool: J22 Urza's) and then failed on
+    # the note it expected. These tests now name the seed: SEED_COLOURED's first offer has colours, SEED_COLOURLESS's has none.
+    SEED_COLOURED = 0
+    SEED_COLOURLESS = 499
+
+    def to_pick(self, size=(1360, 840), scale=None, seed=None):
+        seed = self.SEED_COLOURED if seed is None else seed
+        real_init = newgame.NewGameFlow.__init__
+
+        def init(flow_self, *a, **kw):
+            kw.setdefault("seed", seed)
+            real_init(flow_self, *a, **kw)
+        p = mock.patch.object(newgame.NewGameFlow, "__init__", init)
+        p.start()
+        self.addCleanup(p.stop)
         g = self.gui(size, scale)
         f = self.open(g)
         self.press(g, "new:2")
@@ -428,6 +453,18 @@ class ScreenTests(r8.Base):
         self.assertIn("Your colours: " + products.colour_words(f.flow.colours()), shown)
         for h in f.flow.offer():
             self.assertTrue(set(products.colours(h, self.pool)) <= set(f.flow.colours()), h.code)
+
+    def test_a_colourless_first_pick_keeps_at_most_two_colours_on_the_screen(self):
+        """Round RPG17b (Karl 24 Oct, RPG16d's question 0): the game keeps "At most 2 colours in all." after a colourless first
+        pick; the test that expected "So far colourless" changed, not the game."""
+        g, f = self.to_pick(seed=self.SEED_COLOURLESS)
+        first = f.flow.offer()[0]
+        self.assertEqual(products.colours(first, self.pool), "", "set-up: this seed's first offer should be colourless")
+        r8.click(g, next(r for r, k, d in f.rows if k == "pick" and d == first.code).center)
+        self.assertEqual(len(f.flow.picks), 1)
+        shown = " ".join(s for s, _r in self.words(g))
+        self.assertIn("At most 2 colours in all.", shown)
+        self.assertNotIn("So far", shown)
 
     def test_the_note_fits_and_lands_on_no_other_words(self):
         for size, scale in r8.SIZES:

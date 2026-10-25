@@ -831,6 +831,66 @@
    "files": [
     "music/attack.ogg"
    ]
+  },
+  "music.rpg_town": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_town.ogg"
+   ]
+  },
+  "music.rpg_outskirts": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_outskirts.ogg"
+   ]
+  },
+  "music.rpg_warrens": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_warrens.ogg"
+   ]
+  },
+  "music.rpg_boss": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_boss.ogg"
+   ]
+  },
+  "music.rpg_victory": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_victory.ogg"
+   ]
+  },
+  "music.rpg_defeat": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_defeat.ogg"
+   ]
+  },
+  "rpg.encounter": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/rpg.encounter.1.ogg"
+   ],
+   "cooldown_ms": 500,
+   "max_voices": 1,
+   "duck": {
+    "music": -8
+   }
   }
  }
 }

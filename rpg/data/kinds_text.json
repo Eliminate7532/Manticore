@@ -1,0 +1,64 @@
+{
+ "version": 1,
+ "kinds": {
+  "grave_robber": {
+   "home": "The ruined chapel's graveyard",
+   "plan": "Black control: kills and edicts, then a draining finish",
+   "taunt": "That's a fine deck. Shame you'll be buried with it."
+  },
+  "ember_bandit": {
+   "home": "The east road, by the bridge",
+   "plan": "Red aggression: cheap attackers and burn to the face",
+   "taunt": "Toll's your purse. Or your life. Pick fast, we're fast."
+  },
+  "thornback": {
+   "home": "The moor's thickets and bog edge",
+   "plan": "Green stomp: big creatures early, pumped to hit harder",
+   "taunt": "The bracken stirs. Something heavy shoulders through."
+  },
+  "drowned_cultist": {
+   "home": "The Drowned Coast's sea caves",
+   "plan": "Blue fliers with flash, counterspells and bounce",
+   "taunt": "The tide says no. The tide always says no."
+  },
+  "zealot": {
+   "home": "The moor road's wayside shrines",
+   "plan": "White heroics: one creature, stacked with auras and boons",
+   "taunt": "Kneel, scribe. The light only blesses the kneeling."
+  },
+  "wild_elf": {
+   "home": "The Drowned Coast's kelp woods",
+   "plan": "Green-blue elves: early ramp into a wide, pumped board",
+   "taunt": "One of us is a scout. The rest are behind you."
+  },
+  "hive_spawn": {
+   "home": "The Ironworks' slag hives",
+   "plan": "Slivers: each one makes every other one stronger",
+   "taunt": "The hive hums. Every voice the same voice."
+  },
+  "clockwork_golem": {
+   "home": "The Ironworks of Kael",
+   "plan": "Red-white artifacts: cheap fliers, metalwork, removal",
+   "taunt": "CHALLENGER DETECTED. GEARS ENGAGED. PLEASE HOLD."
+  },
+  "grave_priest": {
+   "home": "The deepest crypt of the Warrens",
+   "plan": "White-black: lifegain feeds a plague that sweeps the board",
+   "taunt": "Hush now. The dead are waiting for one more voice.",
+   "intro": [
+    "Ah. A scribe. Orrin's, by the ink on your fingers. He came this way too, before the Hush took him.",
+    "Look at them. My congregation. No fear, no hunger, no quarrels. The Hush is peace.",
+    "Your Accord is a candle in a gale. I put out one hall. Let me show you how I'll put out the rest."
+   ],
+   "defeated": [
+    "No... the Echoes are going quiet. They're remembering. Why are they remembering?",
+    "He said the Hush would keep us. Your master's map, take it. It never led him home either."
+   ]
+  },
+  "plague_rat": {
+   "home": "The Warrens' flooded cellars",
+   "plan": "Red-black: burn and madness, and sacrifice for value",
+   "taunt": "Squeak of claws in the dark. Many claws. Coming closer."
+  }
+ }
+}

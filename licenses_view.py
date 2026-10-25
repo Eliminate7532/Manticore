@@ -21,6 +21,7 @@ import re
 import pygame
 
 import gfx
+import panning
 import paths
 from gfx import DIM, GOLD, RED, WHITE, YELLOW, clip_text, draw_text, round_rect, wrap_text
 from forge_dialogs import Dialog
@@ -399,6 +400,18 @@ class LicensesDialog(Dialog):
         except Exception:
             pass
         gui.say(f"Licences folder: {LICENSES_DIR}", DIM, 6.0)
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the list or the text with the pen (a press that doesn't move still picks an entry)."""
+        if self.pane_rect.collidepoint(pos) and getattr(self, "pane_max_scroll", 0):
+            top = self.pane_max_scroll
+            return panning.PanView(get=lambda: self.pane_scroll,
+                                   put=lambda v: setattr(self, "pane_scroll", max(0, min(int(v), top))))
+        if self.list_rect.collidepoint(pos) and getattr(self, "list_max_scroll", 0):
+            top = self.list_max_scroll
+            return panning.PanView(get=lambda: self.list_scroll,
+                                   put=lambda v: setattr(self, "list_scroll", max(0, min(int(v), top))))
+        return None
 
     def wheel(self, gui, dy):
         if self.focus == "pane":

@@ -12,6 +12,7 @@ import pygame
 
 import forge_dialogs as dlg
 import gfx
+import panning
 import stats
 from gfx import DIM, GOLD, WHITE, clip_text, draw_text, wrap_text
 
@@ -142,6 +143,13 @@ class StatsPage(dlg.Dialog):
     def wheel(self, gui, dy):
         step = int(60 * max(1.0, gui.L.fs))
         self.scroll = max(0, min(self.scroll - dy * step, max(0, self.content_h - self.area.h)))
+
+    def pan_view(self, gui, pos):
+        """Round PEN1: drag the page with the pen."""
+        top = max(0, getattr(self, "content_h", 0) - self.area.h)
+        if not top or not self.area.collidepoint(pos):
+            return None
+        return panning.PanView(get=lambda: self.scroll, put=lambda v: setattr(self, "scroll", max(0, min(int(v), top))))
 
     # ---- drawing
     def draw(self, gui):

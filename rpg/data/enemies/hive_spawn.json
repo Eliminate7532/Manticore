@@ -1,7 +1,7 @@
 {
  "kind": "hive_spawn",
  "name": "Hive Spawn",
- "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit fb4d8091126051b0c579db5f3bfdcb7e03aae63d)",
+ "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
  "seed": 20261012,
  "source": {
   "format": "Pauper",
@@ -17,36 +17,24 @@
    "index": 6,
    "main": [
     [
-     "Horned Sliver",
+     "Survivors' Encampment",
      4
     ],
     [
-     "Blossoming Sands",
+     "Lead the Stampede",
      3
-    ],
-    [
-     "Muscle Sliver",
-     4
     ],
     [
      "Forest",
-     6
+     5
     ],
     [
-     "Sidewinder Sliver",
+     "Predatory Sliver",
      4
     ],
     [
-     "Plains",
-     6
-    ],
-    [
-     "Thriving Heath",
-     3
-    ],
-    [
-     "Virulent Sliver",
-     3
+     "Holdout Settlement",
+     1
     ],
     [
      "Thriving Grove",
@@ -54,31 +42,51 @@
     ],
     [
      "Sinew Sliver",
+     4
+    ],
+    [
+     "Muscle Sliver",
+     4
+    ],
+    [
+     "Virulent Sliver",
      3
     ],
     [
-     "Metallic Sliver",
-     2
+     "Sidewinder Sliver",
+     4
     ],
     [
-     "Survivors' Encampment",
+     "Plains",
+     4
+    ],
+    [
+     "Gemhide Sliver",
+     4
+    ],
+    [
+     "Thriving Heath",
      4
     ],
     [
      "Plated Sliver",
-     4
-    ],
-    [
-     "Predatory Sliver",
-     4
-    ],
-    [
-     "Lead the Stampede",
      2
     ],
     [
      "Benevolent Bodyguard",
-     4
+     1
+    ],
+    [
+     "Sentinel Sliver",
+     3
+    ],
+    [
+     "Horned Sliver",
+     3
+    ],
+    [
+     "Blossoming Sands",
+     3
     ]
    ],
    "sideboard": [
@@ -87,16 +95,12 @@
      4
     ],
     [
-     "The Hunter Maze",
-     1
+     "Selesnya Guildgate",
+     3
     ],
     [
      "Manor Gate",
      4
-    ],
-    [
-     "Selesnya Guildgate",
-     2
     ],
     [
      "Selesnya Sanctuary",
@@ -104,10 +108,10 @@
     ]
    ],
    "tiers": {
-    "0": 12,
-    "1": 6,
-    "2": 21,
-    "3": 21
+    "0": 9,
+    "1": 3,
+    "2": 23,
+    "3": 25
    }
   },
   {
@@ -116,27 +120,7 @@
    "index": 6,
    "main": [
     [
-     "Benevolent Bodyguard",
-     2
-    ],
-    [
-     "Holdout Settlement",
-     4
-    ],
-    [
-     "Muscle Sliver",
-     4
-    ],
-    [
-     "Predatory Sliver",
-     4
-    ],
-    [
-     "Forest",
-     5
-    ],
-    [
-     "Sidewinder Sliver",
+     "Survivors' Encampment",
      4
     ],
     [
@@ -144,35 +128,55 @@
      4
     ],
     [
-     "Sentinel Sliver",
-     3
-    ],
-    [
      "Lead the Stampede",
      4
     ],
     [
-     "Virulent Sliver",
-     2
-    ],
-    [
-     "Sinew Sliver",
+     "Predatory Sliver",
      4
     ],
     [
-     "Survivors' Encampment",
+     "Holdout Settlement",
+     4
+    ],
+    [
+     "Spinneret Sliver",
+     2
+    ],
+    [
+     "Muscle Sliver",
+     4
+    ],
+    [
+     "Virulent Sliver",
+     4
+    ],
+    [
+     "Sidewinder Sliver",
      3
     ],
     [
      "Thriving Grove",
-     4
+     2
+    ],
+    [
+     "Gemhide Sliver",
+     2
     ],
     [
      "Plated Sliver",
-     4
+     3
     ],
     [
-     "Selesnya Sanctuary",
+     "Sinew Sliver",
+     3
+    ],
+    [
+     "Sentinel Sliver",
+     2
+    ],
+    [
+     "Horned Sliver",
      1
     ],
     [
@@ -180,32 +184,41 @@
      4
     ],
     [
-     "Gemhide Sliver",
-     4
+     "Selesnya Sanctuary",
+     1
+    ],
+    [
+     "Forest",
+     6
+    ],
+    [
+     "Metallic Sliver",
+     3
     ]
    ],
    "sideboard": [
+    [
+     "Tranquil Thicket",
+     3
+    ],
     [
      "Gingerbread Cabin",
      4
     ],
     [
      "Selesnya Guildgate",
-     3
-    ],
-    [
-     "Tranquil Thicket",
      4
     ],
     [
-     "Terramorphic Expanse",
+     "Manor Gate",
      4
     ]
    ],
    "tiers": {
-    "0": 9,
+    "0": 10,
+    "1": 4,
     "2": 23,
-    "3": 28
+    "3": 23
    }
   },
   {
@@ -214,158 +227,47 @@
    "index": 6,
    "main": [
     [
-     "Virulent Sliver",
-     2
-    ],
-    [
-     "Spinneret Sliver",
-     4
-    ],
-    [
-     "Muscle Sliver",
-     4
-    ],
-    [
-     "Sidewinder Sliver",
-     4
-    ],
-    [
-     "Plains",
-     3
-    ],
-    [
-     "Blossoming Sands",
-     3
-    ],
-    [
-     "Forest",
-     5
-    ],
-    [
-     "Sinew Sliver",
-     3
-    ],
-    [
-     "Masked Vandal",
-     2
-    ],
-    [
-     "Predatory Sliver",
-     4
-    ],
-    [
-     "Thriving Heath",
-     3
-    ],
-    [
-     "Selesnya Sanctuary",
-     1
-    ],
-    [
-     "Gemhide Sliver",
-     4
-    ],
-    [
      "Survivors' Encampment",
-     4
-    ],
-    [
-     "Talon Sliver",
-     1
-    ],
-    [
-     "Thriving Grove",
-     4
-    ],
-    [
-     "Plated Sliver",
-     3
+     2
     ],
     [
      "Lead the Stampede",
-     4
+     3
+    ],
+    [
+     "Predatory Sliver",
+     3
     ],
     [
      "Holdout Settlement",
-     2
-    ]
-   ],
-   "sideboard": [
-    [
-     "Gingerbread Cabin",
      3
-    ],
-    [
-     "Manor Gate",
-     4
-    ],
-    [
-     "Tranquil Thicket",
-     4
-    ],
-    [
-     "Selesnya Guildgate",
-     4
-    ]
-   ],
-   "tiers": {
-    "0": 8,
-    "1": 1,
-    "2": 25,
-    "3": 26
-   }
-  },
-  {
-   "name": "Hive Spawn 4",
-   "archetype": "Slivers Sliver Fractius",
-   "index": 6,
-   "main": [
-    [
-     "Sinew Sliver",
-     3
-    ],
-    [
-     "Virulent Sliver",
-     3
-    ],
-    [
-     "Forest",
-     4
     ],
     [
      "Plains",
      3
     ],
     [
-     "Holdout Settlement",
-     4
+     "Sinew Sliver",
+     3
+    ],
+    [
+     "Spinneret Sliver",
+     2
     ],
     [
      "Muscle Sliver",
      4
     ],
     [
-     "Gemhide Sliver",
-     4
-    ],
-    [
-     "Spinneret Sliver",
-     4
-    ],
-    [
-     "Thriving Grove",
-     4
-    ],
-    [
-     "Sidewinder Sliver",
+     "Thriving Heath",
      3
     ],
     [
-     "Thriving Heath",
+     "Sidewinder Sliver",
      4
     ],
     [
-     "Survivors' Encampment",
+     "Forest",
      3
     ],
     [
@@ -373,7 +275,11 @@
      4
     ],
     [
-     "Predatory Sliver",
+     "Gemhide Sliver",
+     4
+    ],
+    [
+     "Thriving Grove",
      4
     ],
     [
@@ -381,19 +287,19 @@
      4
     ],
     [
-     "Lead the Stampede",
-     2
+     "Horned Sliver",
+     4
     ],
     [
-     "Manor Gate",
+     "Selesnya Sanctuary",
      3
+    ],
+    [
+     "Blossoming Sands",
+     4
     ]
    ],
    "sideboard": [
-    [
-     "Tranquil Thicket",
-     4
-    ],
     [
      "The Hunter Maze",
      3
@@ -403,14 +309,122 @@
      4
     ],
     [
+     "Terramorphic Expanse",
+     2
+    ],
+    [
      "Selesnya Guildgate",
+     3
+    ],
+    [
+     "Manor Gate",
+     3
+    ]
+   ],
+   "tiers": {
+    "0": 6,
+    "1": 4,
+    "2": 25,
+    "3": 25
+   }
+  },
+  {
+   "name": "Hive Spawn 4",
+   "archetype": "Slivers Sliver Fractius",
+   "index": 6,
+   "main": [
+    [
+     "Blossoming Sands",
+     3
+    ],
+    [
+     "Sinew Sliver",
+     4
+    ],
+    [
+     "Plains",
+     5
+    ],
+    [
+     "Survivors' Encampment",
+     4
+    ],
+    [
+     "Lead the Stampede",
+     4
+    ],
+    [
+     "Predatory Sliver",
+     4
+    ],
+    [
+     "Holdout Settlement",
+     3
+    ],
+    [
+     "Gemhide Sliver",
+     4
+    ],
+    [
+     "Spinneret Sliver",
+     1
+    ],
+    [
+     "Forest",
+     7
+    ],
+    [
+     "Muscle Sliver",
+     4
+    ],
+    [
+     "Sidewinder Sliver",
+     1
+    ],
+    [
+     "Thriving Grove",
+     4
+    ],
+    [
+     "Plated Sliver",
+     4
+    ],
+    [
+     "Sentinel Sliver",
+     4
+    ],
+    [
+     "Horned Sliver",
+     4
+    ]
+   ],
+   "sideboard": [
+    [
+     "Tranquil Thicket",
+     4
+    ],
+    [
+     "Gingerbread Cabin",
+     2
+    ],
+    [
+     "Selesnya Guildgate",
+     2
+    ],
+    [
+     "Selesnya Sanctuary",
+     3
+    ],
+    [
+     "Manor Gate",
      4
     ]
    ],
    "tiers": {
-    "0": 7,
-    "2": 29,
-    "3": 24
+    "0": 12,
+    "1": 4,
+    "2": 19,
+    "3": 25
    }
   }
  ],
@@ -419,112 +433,115 @@
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Acid Uw Repeat Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
-    "above tier 4: Ephemerate (tier 5), Preordain (tier 5)"
+    "Forge built another archetype instead ('Bg Sacrifice Golgari Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('(5-0) Elves Ug Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
-    "Forge's AI is told to leave these out: Distant Melody (Random)",
-    "above tier 4: Elvish Mystic (tier 5), Llanowar Elves (tier 5)"
+    "Forge built another archetype instead ('Mbc Mono Monoblack Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "above tier 4: Duress (tier 5)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('White Ww Weenie Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Walls Combo Defender Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "Forge's AI is told to leave these out: Axebane Guardian (Random)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Initiative Control Golgari Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
-    "Forge's AI is told to leave these out: Ichor Wellspring (Random)"
+    "Forge built another archetype instead ('Tron Ephemerate Flicker Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "Forge's AI is told to leave these out: Crop Rotation (Random), Mystical Teachings (Random), Urza's Mine (Random), Urza's Power Plant (Random), Urza's Tower (Random)",
+    "above tier 4: Expedition Map (tier 5), Urza's Mine (tier 5), Urza's Power Plant (tier 5), Urza's Tower (tier 5)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Burn Black Mono Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Sadistic The Golgari Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Fiend Mono Red Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Walls Combo Defender Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "Forge's AI is told to leave these out: Axebane Guardian (Random)",
+    "above tier 4: Llanowar Elves (tier 5)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Ponza Cascade Gruul Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Monoblack Mono Monoblack02 Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "above tier 4: Duress (tier 5)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Tokens White Weenie Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Cascade Jund Temur Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "Forge's AI is told to leave these out: Gruul Locket (Random)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Madness Rakdos Muuchan Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Combo Goblins Rakdos Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
+    "above tier 4: Duress (tier 5)"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Boros Uw Affinity Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
+    "Forge built another archetype instead ('Red Burn Mono Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
    ]
   },
   {
    "archetype": "Slivers Sliver Fractius",
    "index": 6,
    "reasons": [
-    "Forge built another archetype instead ('Skred Ur Izzet Generated Deck', not 'Slivers Sliver Fractius Generated Deck')",
-    "Forge's AI is told to leave these out: Skred (Random)",
-    "above tier 4: Counterspell (tier 5), Preordain (tier 5)"
+    "Forge built another archetype instead ('Mono Control Monoblack Generated Deck', not 'Slivers Sliver Fractius Generated Deck')"
    ]
   }
  ],
  "soak": {
-  "run": "rpg_enemies3",
-  "when": "2026-10-12 14:09",
+  "run": "enemy_soak",
+  "when": "2026-10-23 10:28",
   "decks": {
-   "Hive Spawn 1": {
-    "games": 15,
-    "game_over": 15,
-    "as_ai": 7,
-    "failed": []
-   },
    "Hive Spawn 2": {
-    "games": 7,
-    "game_over": 7,
-    "as_ai": 4,
+    "games": 2,
+    "game_over": 2,
+    "as_ai": 1,
     "failed": []
    },
    "Hive Spawn 4": {
-    "games": 11,
-    "game_over": 11,
-    "as_ai": 6,
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 2,
     "failed": []
    },
    "Hive Spawn 3": {
-    "games": 8,
-    "game_over": 8,
-    "as_ai": 5,
+    "games": 3,
+    "game_over": 3,
+    "as_ai": 0,
+    "failed": []
+   },
+   "Hive Spawn 1": {
+    "games": 1,
+    "game_over": 1,
+    "as_ai": 0,
     "failed": []
    }
   },

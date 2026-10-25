@@ -136,6 +136,12 @@ public final class Snapshot {
             o.add("imprinted", ia);
         }
         if (gui != null) {
+            java.util.Map<Integer, java.util.List<Integer>> blocks = gui.blockOptions;   // round BLK1: my block question only
+            if (blocks != null && blocks.containsKey(c.getId())) {
+                JsonArray ca = new JsonArray();
+                for (Integer a : blocks.get(c.getId())) ca.add(a);
+                o.add("canBlock", ca);
+            }
             o.addProperty("selectable", gui.isSelectable(c));
             int weak;
             try {

@@ -66,6 +66,8 @@ import mana_hint as mh
 import motion as mot
 import online_save
 import online_screens as onl
+import osk
+import panning
 import paths
 import perf
 import updater
@@ -763,6 +765,13 @@ class Ghost:
         self.surf, self.start, self.end, self.t0, self.duration, self.tint = surf, pygame.Rect(start), pygame.Rect(end), t0, duration, tint
 
 
+
+def rs_music(name):
+    """Round RPG15: one of rpg_screens' music cue ids (BOSS_MUSIC, VICTORY_STING, DEFEAT_STING). Imported when asked: the Adventure's
+    module is loaded only once the Adventure is opened, as before."""
+    import rpg_screens
+    return getattr(rpg_screens, name)
+
 class ForgeTable:
     def __init__(self, session, store=None, prefetch_names=None, settings_path=None, window_size=None, art=None, deck_names=(),
                  launcher=None, deck_dirs=None, saves_dir=None):
@@ -777,6 +786,8 @@ class ForgeTable:
         self.crash_zip = None                        # round 28d: the report zip about it, once built
         self.crash_job = None                        # round 28d: a reporting.SendJob sending it
         self.overlay = None                          # the settings pop-up or the bug report form: above everything, gets every click first
+        self.keyboard = osk.Keyboard()               # round PEN1: the on-screen keyboard (opened by a window's Keyboard button)
+        self.pan = panning.Panner()                  # round PEN1: a press held over a list that scrolls: a click or a drag
         self.reporter_name = ""                       # who the bug reports say they are from (remembered in settings.json)
         self.cog_rect = None                         # where the settings cog was drawn
         self.report_folder = None                    # where bug reports are written (None: next to the program; tests point it elsewhere)
@@ -792,11 +803,13 @@ class ForgeTable:
         self.card_scale = 1.0                # round UI7: Card size (cog DISPLAY, Ctrl and + / -)
         self.fullscreen = False
         self.animations = True              # rings flash and pulse; off = the same rings, standing still (cog: "Animations")
+        self.rpg_light = True               # Round RPG15: the Adventure's Light (its Menu > Light); off = the maps' plain art
         self.sound = {"on": True, "master": 0.8, "ui": 0.6, "sfx": 0.8, "stinger": 0.8, "music": 0.45, "ambience": 0.6, "hover_tick": True,
                       "music_on": True, "ambience_on": True}        # round AU1: music and ambience, each with its own switch
         self.frames = False                 # round 26: small battlefield cards use an art-crop board frame; default OFF (Karl, OPEN_QUESTIONS A5)
         self.hand_sort_by_type = False      # off = Forge's own hand order (usually draw order); on = grouped by card type (cog: "Sort hand by type")
         self.art_picker_zoom = 1.0          # patch 38: the Card art window's card size (art_picker.ZOOM_STEPS), remembered
+        self.choose_card_zoom = 1.0         # round UI8: the card-picking windows' card size (forge_dialogs.CHOOSE_ZOOM_STEPS), remembered
         self.draft_cube = None              # round CDFIX1: the last cube drafted ({"stock": key} or {"ref": link, "style": ...})
         self.auto_pass = True               # Forge passes for me whenever I have nothing to do (Skip window); remembered between runs
                                             # (patch 43: on by default; a settings file from before patch 43 is switched on once)
@@ -898,6 +911,7 @@ class ForgeTable:
         self.stack_rects = {}               # source card id -> its row in the stack panel this frame
         self.stack_row_rects = {}           # row index (0 = resolves first) -> the visible part of its row this frame
         self.panel_rects = {}               # player id -> that player's panel this frame
+        self.glowing_piles = {}             # round GY1: (player id, zone) -> rect of each graveyard / exile pile drawn glowing this frame
         self.log_scroll = 0
         self.log_rect = pygame.Rect(0, 0, 0, 0)
         self.stack_scroll = 0                                     # pixels the stack panel is scrolled (mouse wheel over it)
@@ -972,6 +986,7 @@ class ForgeTable:
             self.text_scale = min(TEXT_STEPS, key=lambda s: abs(s - scale))
             self.fullscreen = bool(data.get("fullscreen", False))
             self.animations = bool(data.get("animations", True))
+            self.rpg_light = data.get("rpg_light", True) is not False                    # Round RPG15: the Adventure's Light
             if isinstance(data.get("sound"), dict):
                 self.sound.update({k: v for k, v in data["sound"].items() if k in self.sound})
             self.frames = bool(data.get("frames", False))
@@ -980,6 +995,10 @@ class ForgeTable:
                 self.art_picker_zoom = max(0.5, min(3.0, float(data.get("art_picker_zoom", 1.0))))
             except (TypeError, ValueError):
                 self.art_picker_zoom = 1.0
+            try:                                                    # round UI8
+                self.choose_card_zoom = max(0.5, min(3.0, float(data.get("choose_card_zoom", 1.0))))
+            except (TypeError, ValueError):
+                self.choose_card_zoom = 1.0
             dc_ = data.get("draft_cube")                            # round CDFIX1: only plain short strings are kept
             self.draft_cube = ({k: v for k, v in dc_.items() if k in ("stock", "ref", "style") and isinstance(v, str) and len(v) <= 300}
                                or None) if isinstance(dc_, dict) else None
@@ -1027,11 +1046,12 @@ class ForgeTable:
         except (OSError, ValueError):
             pass
         data.update({"text_scale": self.text_scale, "fullscreen": self.fullscreen, "animations": self.animations,
+                     "rpg_light": self.rpg_light,
                      "auto_pass": self.auto_pass, "window_size": list(self.windowed_size), "sound": self.sound,
                      "frames": self.frames, "hand_sort_by_type": self.hand_sort_by_type,
                      "table_background": self.table_background, "table_background_last": self.table_background_last,
                      "log_mode": self.log_mode, "preview_mode": self.preview_mode,
-                     "art_picker_zoom": self.art_picker_zoom, "card_scale": self.card_scale,
+                     "art_picker_zoom": self.art_picker_zoom, "choose_card_zoom": self.choose_card_zoom, "card_scale": self.card_scale,
                      "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop), "speed": self.speed})
         key = screen_key(self.desktop)
         if key:                             # round 27e: each screen size keeps its own window and text size
@@ -1197,6 +1217,8 @@ class ForgeTable:
             amb = f"amb.{self.current_bg}" if f"amb.{self.current_bg}" in getattr(self.audio, "cues", {}) else "amb.plain"
             if self.vs is not None and self.vs.holding(self):
                 return amb, None                                        # the VS screen: the commanders, a bell, quiet
+            if (self.adventure_duel or {}).get("boss") and self.game_in_progress():
+                return amb, "loop:" + rs_music("BOSS_MUSIC")            # Round RPG15: an Adventure boss plays his own music
             return amb, ("game" if self.game_in_progress() else "keep")
         if self.menu is not None or self.title_ok:
             if self.settings_music():
@@ -1349,7 +1371,8 @@ class ForgeTable:
             won = winner is not None and winner in (my_id, my_name)
             if self.audio:
                 self.audio.stop_bus("sfx")                       # cut the table's sounds - not the bell that says who won (round AU1)
-                self.audio.music_sting_after("music.victory" if won else "music.defeat", time.monotonic(), 2.5)
+                stings = (rs_music("VICTORY_STING"), rs_music("DEFEAT_STING")) if self.adventure_duel else ("music.victory", "music.defeat")
+                self.audio.music_sting_after(stings[0] if won else stings[1], time.monotonic(), 2.5)   # Round RPG15: the Adventure's own
             self.play_cue("game.win" if won else "game.lose")
 
     def audio_cues(self):
@@ -2699,6 +2722,8 @@ class ForgeTable:
                 r = pygame.Rect(cx, y, cw, chip_h)
                 hot = n and r.collidepoint(self.mouse)
                 round_rect(scr, r, gfx.CHIP_HOT_BG if hot else gfx.CHIP_BG, chip_h // 2, 1, gfx.CHIP_HOT_EDGE)
+                if zone != "library" and self.pile_actionable(player, zone):
+                    self.draw_pile_glow(r, chip_h // 2, player, zone, width=2)      # round GY1: something in it can be played
                 draw_text(scr, txt, r.centerx, r.centery, tiny, WHITE if n else DIM, "center")
                 if zone == "library":
                     self.add_hit(r, "library", player=player["id"])
@@ -2929,6 +2954,20 @@ class ForgeTable:
         else:
             self.say("Floating mana is spent when Forge asks you to pay for something. It empties at the end of each step.", CYAN, 4.0)
 
+    @staticmethod
+    def pile_actionable(player, zone):
+        """Round GY1: True when Forge marks a card in this pile as one you can act with now - "weak" (you could play it: Emry's
+        "you may cast that card this turn", flashback, a card exiled with "you may play it") or "selectable" (a target or a choice
+        in a graveyard or exile). Karl's report of 23 Oct: Frogmite in his graveyard could be cast, but nothing on the table said
+        so - the pile showed Mishra's Bauble on top, and the prompt's "(glowing cards)" pointed at nothing."""
+        return any(c.get("weak") or c.get("selectable") for c in (player.get("zones") or {}).get(zone) or [])
+
+    def draw_pile_glow(self, r, radius, player, zone, width=3):
+        """Round GY1: the "you can click this" glow (draw_card_flags' yellow) on a graveyard / exile pile or chip."""
+        gfx.glow(self.screen, r, YELLOW, radius, 4, 4)
+        pygame.draw.rect(self.screen, YELLOW, r, width, border_radius=radius)
+        self.glowing_piles[(player["id"], zone)] = pygame.Rect(r)
+
     def draw_zone_tile(self, player, zone, r, label, font, label_h):
         """One pile (library / graveyard / exile): a card-shaped tile with a count, and its name underneath."""
         scr = self.screen
@@ -2950,7 +2989,11 @@ class ForgeTable:
             self.draw_card_at(top, r.x, r.y, r.w, r.h, plate=False, flags=False)
         else:
             round_rect(scr, r, gfx.HOVER_BG, radius, 1, gfx.HOVER_EDGE, alpha=200)
-        if hot:
+        if zone != "library" and n and self.pile_actionable(player, zone):
+            # round GY1: a card in this pile can be played or chosen now (Emry, flashback, a card exiled "you may cast it", a
+            # target in a graveyard). The table's own "you can click this" look, on the pile, since the card is usually not the top one.
+            self.draw_pile_glow(r, radius, player, zone, width=max(3, int(min(r.w, r.h) * 0.035)))
+        elif hot:
             pygame.draw.rect(scr, YELLOW, r.inflate(2, 2), 3, border_radius=radius)
         # count in a dark badge, centred on the library and in the corner of the others
         big = self.font("body", True) if r.w >= 44 else font
@@ -3923,6 +3966,7 @@ class ForgeTable:
         total = sum(h + g.gap for _i, _l, h in L.stack_rows)
         max_scroll = max(0, total - content.h)
         self.stack_scroll = max(0, min(self.stack_scroll, max_scroll))
+        self.stack_overflow = bool(max_scroll)                  # round PEN1: a pen can drag it
         head = (f"Stack ({len(stack)})  -  wheel: more" if max_scroll
                 else f"Stack ({len(stack)})" + ("  -  top resolves first" if len(stack) > 1 else ""))
         jr = self.draw_judge_button(r.right - 8, r.y + 4, g.head - 8) if self.judge_place() == "stack" else None   # round JDG1
@@ -4051,6 +4095,7 @@ class ForgeTable:
         rows = max(1, (r.bottom - top - 6) // lh)
         lines = self._log_lines
         self.log_scroll = clamp(self.log_scroll, 0, max(0, len(lines) - rows))
+        self.log_overflow = len(lines) > rows                   # round PEN1: a pen can drag it
         end = len(lines) - self.log_scroll
         start = max(0, end - rows)
         y = top
@@ -4516,6 +4561,11 @@ class ForgeTable:
             self.tour.draw(self)                # Round UX1: over the table, under the cog pop-up / bug report form
         if self.overlay:
             self.overlay.draw(self)
+        if self.keyboard.open:
+            if self.keyboard.owner is not self.text_owner():
+                self.keyboard.hide()            # round PEN1: the window that opened it went away
+            else:
+                self.keyboard.draw(self)        # round PEN1: over everything, so it is never hidden
         pygame.display.flip()
 
     def draw_frame(self):
@@ -4534,6 +4584,7 @@ class ForgeTable:
             self.prev_card_rects = self.card_rects       # round 25: one frame of history, for departure ghosts
         self.card_rects = {}
         self.stack_rects, self.stack_row_rects, self.panel_rects = {}, {}, {}
+        self.glowing_piles = {}
         scr.blit(gfx.table_background((L.W, L.H), self.current_bg), (0, 0))
         s = self.state
         if self.boot is not None and not self.menu:
@@ -4749,6 +4800,9 @@ class ForgeTable:
         if kind == "library":
             return "Library (face down). Click for details."
         if kind == "zone":
+            player = self.session.player(data.get("player"))
+            if player and self.pile_actionable(player, data["zone"]):        # round GY1
+                return f"Click to look inside the {data['zone']}: a glowing card in it can be used now - click it there."
             return f"Click to look inside the {data['zone']}."
         return ""
 
@@ -4770,6 +4824,8 @@ class ForgeTable:
             draw_text(self.screen, ln, r.x + 10, r.y + 6 + i * f.get_height(), f, WHITE)
 
     def open_zone(self, player_id, zone):
+        """A look inside a graveyard or exile pile (forge_dialogs.ZoneDialog). A glowing card in it is clicked like one on the table.
+        Round GY1: the window follows the game while it is open (a card that becomes playable starts to glow there)."""
         player = self.session.player(player_id)
         if player:
             self.modal = dlg.zone_dialog(player, zone, lambda card: self.session.click_card(card["id"]))
@@ -5010,7 +5066,7 @@ class ForgeTable:
         info = getattr(self.session, "stats_info", None) or {}
         self.adventure_duel = {"slot": g.slot, "folder": g.folder, "kind": duel.kind, "enemy": duel.enemy_name,
                                "stats_id": info.get("id"), "outcome": None, "error": None, "settled": False, "result": None,
-                               "tried": 0.0}
+                               "tried": 0.0, "boss": getattr(duel, "encounter", None) == "boss"}    # Round RPG15: the boss's music
         self.menu = None
         self.boot = None
         self.modal = None
@@ -5530,7 +5586,8 @@ class ForgeTable:
         Round MP2: watch=True (JoinDialog's Watch) needs no deck."""
         if watch:
             session = fc.NetSession(address, port, name, password, "", "", fingerprint=fingerprint,
-                                    code=version.code_fingerprint(), watch=True, room=room)
+                                    code=version.code_fingerprint(), watch=True, room=room,
+                                    fingerprint_from="remembered" if by_hand else "invite")    # round NETLOG1b (review G2)
             session.deck_entry = None
             prefs = {"name": name}
             if by_hand:
@@ -5551,7 +5608,8 @@ class ForgeTable:
         if len(dck.encode("utf-8")) > forge_net.DECK_MAX_BYTES:
             return None, "Your deck is too large to send."
         session = fc.NetSession(address, port, name, password, entry.name or "Deck", dck, fingerprint=fingerprint,
-                                code=version.code_fingerprint(), room=room)
+                                code=version.code_fingerprint(), room=room,
+                                fingerprint_from="remembered" if by_hand else "invite")        # round NETLOG1b (review G2)
         session.deck_entry = entry
         prefs = {"name": name}
         if by_hand:                                    # an invite code's address and port are the host's, not something to keep
@@ -5845,6 +5903,68 @@ class ForgeTable:
         self.concede()
         self.running = False                       # run() ends its loop, and shutdown() closes the engine
 
+    def scroll_drag_owner(self):
+        """Round UI8: the window or screen whose scroll bar is being dragged (the one on top first), or None."""
+        for owner in (self.modal, self.menu):
+            bar = getattr(owner, "bar", None)
+            if bar is not None and bar.dragging and hasattr(owner, "drag_motion"):
+                return owner
+        return None
+
+    # ---- round PEN1: pens, fingers and no keyboard ---------------------------------------------------------------------------
+    def text_owner(self):
+        """The window or screen that gets the keys now (the one on top), or None."""
+        return self.overlay or self.modal or self.menu or None
+
+    def toggle_keyboard(self, owner):
+        """A window's Keyboard button: open the on-screen keyboard for it, or close it."""
+        if self.keyboard.owner is owner:
+            self.keyboard.hide()
+        else:
+            self.keyboard.show(owner)
+
+    def keyboard_send(self, ev):
+        """An on-screen key: straight to the window that opened the keyboard, as if typed there - never to the table's own
+        one-letter shortcuts (H, M, J, + and -)."""
+        owner = self.keyboard.owner
+        if owner is None or owner is not self.text_owner():
+            self.keyboard.hide()
+            return
+        owner.key(self, ev)
+        self._force_draw = True
+
+    def pan_view_at(self, pos):
+        """What a left press at pos could drag: the list under it, when that list scrolls now - else None (clicks as before)."""
+        if self.resuming is not None or self.tour_visible():
+            return None
+        owner = self.text_owner()
+        if owner is None:
+            owner = self if self.state and not self.vs_holding_now() else None
+        fn = getattr(owner, "pan_view", None) if owner is not None else None
+        try:
+            return fn(self, pos) if fn else None
+        except Exception:                                    # a view that can't tell is clicked as before
+            return None
+
+    def vs_holding_now(self):
+        return self.vs is not None and self.vs.holding(self)
+
+    def pan_view(self, gui, pos):
+        """The table's own lists: the stack (pixels) and the game log (wheel notches of three lines)."""
+        L = self.L
+        if L is None or self.boot is not None or self.hosting_wait is not None or self.end_screen is not None:
+            return None
+        if self._log_open and L.log_overlay.collidepoint(pos):
+            return panning.PanView(notch=self._pan_log, step=(self.font("small").get_height() + 2) * 3)
+        if self.state and self.state.get("stack") and L.stack.collidepoint(pos) and getattr(self, "stack_overflow", False):
+            return panning.PanView(get=lambda: self.stack_scroll, put=lambda v: setattr(self, "stack_scroll", max(0, int(v))))
+        if self.log_rect.collidepoint(pos) and getattr(self, "log_overflow", False):
+            return panning.PanView(notch=self._pan_log, step=(self.font("small").get_height() + 2) * 3)
+        return None
+
+    def _pan_log(self, n):
+        self.log_scroll += n * 3
+
     def handle_event(self, ev):
         """Process one pygame event. Returns False when the window should close."""
         if ev.type == pygame.QUIT:
@@ -5853,8 +5973,34 @@ class ForgeTable:
             self.note_modifier(ev)                     # patch 43: Ctrl / Ctrl+Shift taps
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+            owner = self.scroll_drag_owner()
+            if owner is not None:                        # round UI8: a scroll bar's handle follows the pointer
+                if getattr(ev, "buttons", (1,))[0]:
+                    owner.drag_motion(self, ev.pos)
+                else:                                    # the button went up where the window didn't see it (outside it)
+                    owner.drag_release(self, ev.pos)
+            elif self.pan.holding:                       # round PEN1: dragging a list with the pen / a finger / the mouse
+                if getattr(ev, "buttons", (1,))[0]:
+                    self.pan.motion(ev.pos)
+                else:
+                    self.pan.cancel()                    # released outside the window: neither a click nor more drag
+        elif ev.type == pygame.MOUSEBUTTONUP:
+            if ev.button == 1:
+                owner = self.scroll_drag_owner()
+                if owner is not None:
+                    owner.drag_release(self, ev.pos)
+                elif self.pan.holding:
+                    self.pan.motion(ev.pos)
+                    at = self.pan.release()              # round PEN1: no drag - the click happens now, where the press was
+                    if at is not None:
+                        self.on_click(at, 1)
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             self.mouse = ev.pos
+            if ev.button == 1 and not self.keyboard.hit(ev.pos):
+                view = self.pan_view_at(ev.pos)
+                if view is not None:                     # round PEN1: a press on a list that scrolls waits: click or drag?
+                    self.pan.begin(view, ev.pos, self.L.fs if self.L else 1.0)
+                    return True
             if ev.button in (1, 3):
                 self.on_click(ev.pos, ev.button)
         elif ev.type == pygame.MOUSEWHEEL:
@@ -5890,6 +6036,11 @@ class ForgeTable:
 
     def on_click(self, pos, button):
         if self.resuming is not None:                        # nothing to click while the game is being rebuilt
+            return
+        name = self.keyboard.hit(pos)
+        if name is not None:                                 # round PEN1: the on-screen keyboard is on top of everything
+            if button == 1:
+                self.keyboard.press(self, name)
             return
         if self.overlay:
             self.overlay.click(self, pos, button)
@@ -7454,7 +7605,30 @@ def parse_args(argv):
     ap.add_argument("--soak", type=int, default=None, metavar="N",
                     help="play N soak-test games against Forge with the built-in bot (a canary first), write the summary to the soak "
                          "folder, and stop. Used by the installer's checks; exit code 0 means every game was valid")
-    return ap.parse_args(argv[1:])
+    ap.add_argument("--net-selftest", action="store_true",
+                    help="round NETLOG1: can this PC host? Listen on the game's port and join it through each of this PC's "
+                         "addresses, print the result, write it to connection_log.txt, and stop")
+    ap.add_argument("--port", default=None, metavar="N",              # round NETLOG1c (G5): passed on to the self-test
+                    help="with --net-selftest: the port to test (default 36800, the game's own)")
+    ap.add_argument("--timeout", default=None, metavar="SECONDS",
+                    help="with --net-selftest: how long to wait for each address (default 3)")
+    args = ap.parse_args(argv[1:])
+    if not args.net_selftest and (args.port is not None or args.timeout is not None):
+        ap.error("--port and --timeout go with --net-selftest")
+    return args
+
+
+def selftest_argv(args):
+    """Round NETLOG1c (G5, the reviewer's recommendation, taken as Karl's default on 24 Oct): what `--net-selftest` hands to
+    tools.net_selftest.main - its --port and --timeout when given, so `Manticore-cli.exe --net-selftest --port 40000` tests
+    the port the Host screen will use; nothing else, so the self-test's own defaults (36800, 3 s) stay the defaults. The
+    self-test checks the values itself (the same rule for `python tools/net_selftest.py`)."""
+    out = []
+    if args.port is not None:
+        out += ["--port", str(args.port)]
+    if args.timeout is not None:
+        out += ["--timeout", str(args.timeout)]
+    return out
 
 
 def soak_argv(games):
@@ -7497,6 +7671,10 @@ def main(argv):
         ok, message = reporting.send_test(name=args.name)
         print(("OK: " if ok else "NOT SENT: ") + message)
         sys.exit(0 if ok else 1)
+    if args.net_selftest:                             # round NETLOG1: Manticore-cli.exe --net-selftest
+        from tools import net_selftest
+        print(version.describe())
+        sys.exit(net_selftest.main(selftest_argv(args)))
     if args.soak is not None:                         # round 29: Manticore-cli.exe --soak N (the console build; the windowed exe prints nothing)
         from tools import soak
         print(version.describe())
