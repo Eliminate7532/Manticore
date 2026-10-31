@@ -42,6 +42,7 @@ from rpg import adventure as adv
 from rpg import cardpool
 from rpg import duel as rduel
 from rpg import clock, encounters, events, explore, hints, newgame, products, talk
+from rpg import tapwalk
 from rpg import save as rsave
 from rpg import shop as rshop
 
@@ -51,12 +52,18 @@ INTRO = ("Walk the land, duel whatever blocks your way, and build your deck from
          "60-card game at 20 life against the AI, on the same table as your other games.")
 PICK_INTRO = ("Three Jumpstart half-decks make your first 60 cards, in at most two colours. Click the one you want; Show others "
               "offers three more.")
-MAP_KEYS = ("Arrows or WASD: walk", "Enter: talk", "H: hint", "Esc: menu")      # Round RPG14: talk; Round RPG15b: the hint
+MAP_KEYS = ("Tap: walk or act", "Arrows or WASD: walk", "Enter: talk", "H: hint", "Esc: menu")   # RPG14: talk; RPG15b: the hint;
+# Round RPG-TAP (Karl 27 Oct, a pen only on his Surface): a tap walks there, or up to a person, door or foe and acts
+PEN_REPEAT = 0.3                 # Round RPG-TAP: seconds - a second left press this soon after a map tap, at the same place, is the
+PEN_SLOP = 12                    # same pen tap told twice (px x text scale) and is ignored - my estimates
+WALK_KEYS = (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s)
 PAUSE_ITEMS = (("resume", "Back to the map", True), ("hint", "Hint", True), ("deck", "Deck", True), ("collection", "Collection", True),
                ("save", "Save", True), ("light", "Light", True), ("settings", "Settings", True),       # Round RPG14 (the spec's);
                ("leave", "Main menu", True))           # Round RPG15: "light" - its label says "Light: on" or "Light: off"
 # Round RPG15: the music each place asks for when its map names none, and the boss's (audio's "loop:<cue>" mode loops one track)
 BOSS_MUSIC = "music.rpg_boss"
+NIGHT_MUSIC_PHASES = ("dusk", "night")  # Round RPG-NM: the clock phases a map's night_music plays in (rpg.clock.PHASES);
+                                        # RPG18b (Karl 25 Oct): from dusk, 18:00-05:00 (was night only, 20:00)
 VICTORY_STING, DEFEAT_STING = "music.rpg_victory", "music.rpg_defeat"
 WELCOME = ("Your 60 cards are your deck. This town's shop sells single cards, packs and basic lands, and buys cards back. "
            "Leave town to explore; walking into a foe asks before a duel starts.")
@@ -229,6 +236,8 @@ class AdventureFlow(dlg.Dialog):
         self.field = fset.TextField("Name", "", multiline=False, limit=rsave.NAME_MAX, lines=1, hint="Your name")
         self._prefetched = set()
         self.retry = None                # a duel's result the table couldn't write: tried again (open_slot, write)
+        self.tap = None                  # Round RPG-TAP: the rpg.tapwalk.TapWalk a tap on the map started (None: none)
+        self._last_tap = None            # ... (time, pos) of the last left press that was a map tap (a pen tap told twice acts once)
         if slot is not None:
             self.open_slot(gui, slot, outcome=outcome, error=error, retry=retry)
         else:
@@ -247,6 +256,7 @@ class AdventureFlow(dlg.Dialog):
 
     def set_stage(self, stage):
         self.stage = stage
+        self.tap = None                                      # Round RPG-TAP: a walk never carries over to another screen
         self.message = None
         self.hover = None
         self.last = None
@@ -460,13 +470,26 @@ class AdventureFlow(dlg.Dialog):
             amb = a.ambience or ("amb.graveyard" if a.dungeon else "amb.plain")
             if self.sub == "fight" and getattr(self.fight, "encounter", None) == "boss":
                 return amb, "loop:" + BOSS_MUSIC             # the boss's screen: his music (the table keeps it for the duel)
-            if a.music:
-                return amb, "loop:" + a.music
+            music = self.place_music(a)
+            if music:
+                return amb, "loop:" + music
             if self.stage == "map":
                 return amb, "game"
         if self.stage in ("town", "deck", "pack", "collection"):
             return "amb.cathedral", "deck"
         return "amb.title", "title"
+
+    def place_music(self, a):
+        """Round RPG-NM (Karl's night picks, 25 Oct 2026): a map's night_music in the clock's dusk and night phases (18:00-05:00 -
+        Round RPG18b, Karl 25 Oct: "from dusk"; RPG-NM had night only), else its music; dawn keeps the day music. Only an outdoor
+        map follows the clock. A new mode fades the old track out and the new one in
+        (audio.AudioDirector.set_music), so the change at 18:00 and 05:00 is a fade, not a cut."""
+        game, ex = getattr(self, "game", None), getattr(self, "explorer", None)
+        save = game.save if game is not None else getattr(ex, "save", None)    # the same save in play; a bare flow has only the walk's
+        if a.night_music and a.outdoor and save is not None \
+                and clock.phase(clock.now(save.world)) in NIGHT_MUSIC_PHASES:
+            return a.night_music
+        return a.music
 
     def sound_area(self):
         """The map whose music and ambience play: the Explorer's, or - Round RPG15c (review R6) - when a game opens in a shop
@@ -484,6 +507,9 @@ class AdventureFlow(dlg.Dialog):
 
     def walk_tick(self, gui, now, pressed=None):
         """Every tick of the table's loop: walk on the map. pressed: (dx, dy) instead of the keyboard (tests)."""
+        tap = getattr(self, "tap", None)                     # Round RPG-TAP (getattr: a test's stand-in flow has none)
+        if tap is not None and (self.stage != "map" or self.explorer is None):
+            self.tap = tap = None
         if self.stage != "map" or self.sub is not None or self.explorer is None or getattr(gui, "overlay", None) is not None:
             self.last = None                                 # nothing walks behind a window (F8's bug report, the cog)
             return
@@ -498,15 +524,28 @@ class AdventureFlow(dlg.Dialog):
                 dx = dy = 0
         else:
             dx, dy = pressed
+        if (dx or dy) and tap is not None:
+            self.tap = tap = None                            # Round RPG-TAP: any walking key ends a tap's walk
         if not dt:
             return
-        event = self.explorer.step(dx, dy, dt)
+        if tap is not None:                                  # Round RPG-TAP: a tap's walk, through the same Explorer.step
+            self.tap_tick(gui, dt)
+            return
+        AdventureFlow.after_step(self, gui, self.explorer.step(dx, dy, dt), dt)    # (the class's: stand-in flows call this)
+
+    def after_step(self, gui, event, dt):
+        """What follows one Explorer.step of dt seconds (the keys' or a tap's walk): the clock, the notes, and what was walked
+        into. True when something happened (a duel, a town, a map, an event)."""
         if self.explorer.walker.moving:                      # Round RPG15 (Karl's "A"): the clock runs while you walk
             clock.advance(self.game.save.world, dt)
         for note in self.explorer.take_notes():             # Round RPG16: "Night falls.", a rare that came out
             self.say(note, GOLD)
         if event is None:
-            return
+            return False
+        AdventureFlow.walk_event(self, gui, event)
+        return True
+
+    def walk_event(self, gui, event):
         kind, what = event
         if kind == "event":                                  # Round RPG16: a random event (rpg.events), in the dialogue box
             self.start_event(gui, what)
@@ -533,6 +572,38 @@ class AdventureFlow(dlg.Dialog):
             if what.startswith("warrens"):               # Round RPG14: the people of Lantern Hollow know you went down
                 talk.set_flag(self.game.save.world, talk.WARRENS_FLAG)
             self.write()
+
+    # ---- Round RPG-TAP: a tap (a pen, a finger, the mouse) walks there, or up to a person, door or foe and acts -----------------
+    def map_tap(self, gui, pos):
+        """A left press on the map: what is there becomes the walk's goal (rpg.tapwalk.goal_at); no way there says so."""
+        ex = self.explorer
+        if self.camera is None or (self.hud is not None and self.hud.collidepoint(pos)):
+            return
+        mx, my = self.camera.to_map(*pos)
+        goal, why = tapwalk.goal_at(ex, mx, my)
+        if goal is not None and tapwalk.plan(ex, goal)[0] is None:
+            goal, why = None, tapwalk.NO_WAY
+        if goal is None:
+            self.tap = None
+            self.say(why, ORANGE)
+            gui.play_cue("ui.error")
+            return
+        self.tap = tapwalk.TapWalk(goal)
+        if self.message and self.message[0] in (tapwalk.NO_WAY, tapwalk.WALL, tapwalk.BLOCKED):
+            self.message = None
+
+    def tap_tick(self, gui, dt):
+        """Walk a tap's way on by dt seconds (rpg.tapwalk.TapWalk), then talk, stop or say why not."""
+        walk = self.tap
+        status = walk.tick(self.explorer, dt, lambda event, part: self.after_step(gui, event, part))
+        if status == "walking":
+            return
+        if self.tap is walk:
+            self.tap = None
+        if status == "talk" and self.sub is None:
+            self.talk_to(gui)                                # beside them, facing them: as Enter does
+        elif status == "blocked":
+            self.say(tapwalk.BLOCKED, ORANGE)
 
     def fight_go(self, gui):
         trigger, self.fight = self.fight, None
@@ -566,6 +637,8 @@ class AdventureFlow(dlg.Dialog):
         if nid is None:
             return False
         world = self.game.save.world
+        if hasattr(ex, "talked_to"):
+            ex.talked_to(nid)                     # Round RPG18b: a person walking carries on once the talk ends
         try:
             conv = talk.Conversation(nid, world)
         except (talk.TalkError, OSError, ValueError) as e:
@@ -591,7 +664,7 @@ class AdventureFlow(dlg.Dialog):
             self.event_do(gui, result)
             return
         if result == "answer" and conv is not None:
-            more = conv.answer(self.talk_box.answer)
+            more = conv.answer(self.talk_box.answer, getattr(self.talk_box, "picked", None))   # RPG18b: Marta's three answers
             if conv.rest:
                 self.sleep_at_inn(conv.rest_until or "morning")
             self.write()
@@ -1018,11 +1091,22 @@ class AdventureFlow(dlg.Dialog):
                 self.new_game(gui, action[1], sure=True)
 
     def click(self, gui, pos, button):
+        if button == 1 and self._last_tap is not None:       # Round RPG-TAP: a pen tap that comes twice acts once
+            when, at = self._last_tap
+            slop = PEN_SLOP * max(1.0, getattr(self, "fs", 1.0))
+            if time.monotonic() - when < PEN_REPEAT and abs(pos[0] - at[0]) <= slop and abs(pos[1] - at[1]) <= slop:
+                return
+        self._last_tap = None
         name = self.button_at(pos)
         if name:
             self.press(gui, name)
             return
         if self.sub is not None:
+            return
+        if self.stage == "map" and self.explorer is not None:
+            if button == 1:                                  # Round RPG-TAP: walk there, or up to it and act
+                self._last_tap = (time.monotonic(), tuple(pos))
+                self.map_tap(gui, pos)
             return
         for rect, kind, data in reversed(self.rows):
             if not rect.collidepoint(pos):
@@ -1078,6 +1162,8 @@ class AdventureFlow(dlg.Dialog):
             return
         st = self.stage
         if st == "map":
+            if k in WALK_KEYS:
+                self.tap = None                      # Round RPG-TAP: a walking key ends a tap's walk
             if esc:
                 self.press(gui, "pause")
             elif k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
@@ -1623,6 +1709,9 @@ class AdventureFlow(dlg.Dialog):
         ex.view_half = (int(cam.view_w / cam.zoom / ex.area.tw / 2) + 1, int(cam.view_h / cam.zoom / ex.area.th / 2) + 1)
         view.draw(scr, self.camera, ex.walker, ex.encounters(), time.monotonic(),
                   people=[p for p in ex.present_people() if p["when"]] + ex.walking_people())   # RPG17: and those walking
+        self.tap_marker_rect = None
+        if self.tap is not None and self.tap.goal.area == ex.area.name:     # Round RPG-TAP: where the tap's walk is going
+            self.draw_tap_marker(scr, self.tap.marker(ex), ex.area)
         self.hud = self.draw_hud(gui, ex.area.title, dict(g.panel_info(), time=time_text(g.save.world)))
         small = gui.font("small")
         bw = gui.button_width("Menu")
@@ -1633,6 +1722,15 @@ class AdventureFlow(dlg.Dialog):
         mx, my, mw = 8, H - 8 - 4 * small.get_height(), W // 2
         if self.message:
             self.draw_message(gui, mx, my, mw)
+
+    def draw_tap_marker(self, scr, tile, area):
+        """Round RPG-TAP: a small gold ring on the goal's tile (self.tap_marker_rect: where, for the tests)."""
+        cam = self.camera
+        cx, cy = cam.to_screen(*tapwalk.middle(area, tile))
+        r = max(4, int(min(area.tw, area.th) * cam.zoom * 0.32))
+        self.tap_marker_rect = pygame.Rect(cx - r, cy - r, 2 * r, 2 * r)
+        pygame.draw.circle(scr, gfx.DB_BG, (cx, cy), r + 1, max(2, r // 4) + 2)
+        pygame.draw.circle(scr, gfx.DB_GOLD, (cx, cy), r, max(2, r // 4))
 
     def draw_hud(self, gui, title, info):
         """Round RPG11: the corner window - the map's name, gold, the deck and its size. Returns its rect.

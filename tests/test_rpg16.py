@@ -642,7 +642,9 @@ class MapTests(unittest.TestCase):
                 flow = rs.AdventureFlow.__new__(rs.AdventureFlow)
                 flow.explorer, flow.stage, flow.sub, flow.fight = explorer_at(name, at(1, 21), ["warrens_entered"]), "map", None, None
                 amb, music = flow.soundscape()
-                self.assertEqual((amb, music), (a.ambience, "loop:" + a.music))
+                # Round RPG-NM (expected change): at 21:00 the map's night music (Karl's night picks, 25 Oct), was its day music
+                self.assertEqual((amb, music), (a.ambience, "loop:" + a.night_music))
+                self.assertNotEqual(a.night_music, cave.music)
                 self.assertNotEqual(music, "loop:" + cave.music)
 
     def test_everything_is_reachable_at_every_hour(self):
@@ -894,6 +896,14 @@ class IdTests(unittest.TestCase):
             "lantern_hollow#7": ("Pell the lamplighter", {"when": "!phase:dusk|night"}),
             "lantern_hollow#10": ("Gate guard", {"when": "!phase:night"}),
             "lantern_hollow#11": ("Elder Hesk", {"when": "!phase:night"}),
+            # Round RPG18 (expected change, Karl 24 Oct, Plan 2): Pell's three bandits leave once his quest is ready or done
+            # Round RPG18c (expected change, Karl 26 Oct): ... and once one of them is beaten the other flees
+            **{f"ashfen_outskirts#{i}": ("", {"when": "!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done,"
+                                                      "!flag:road_bandits_fled"})
+               for i in (9, 10)},
+            # Round RPG18b (expected change, Karl 25 Oct): the one by the bridge is the bandits' leader - his own name
+            "ashfen_outskirts#6": ("", {"when": "!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done",
+                                        "title": "Ember Bandit Leader"}),
         })
 
     def test_the_tool_keeps_an_id_when_an_object_only_gains_a_property(self):

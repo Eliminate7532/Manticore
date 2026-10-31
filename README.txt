@@ -70,7 +70,8 @@ Opens when you start with no deck on the command line, and any time you choose N
         cards and banned list. Standard: 60 cards or more, at most 4 of a card (basic lands excepted, deck and sideboard
         together), a sideboard of at most 15 (checked, never played), no commander and no command zone, 20 life, the first
         mulligan free only with 2 or 3 opponents, Standard's cards and banned list; a deck shows its most-copied card
-        where a commander would be. Online games are Commander only for now.
+        where a commander would be. Online games play the host's deck's format (any of them; round MP3a): a friend
+        needs a deck of that format (Commander and Commander Draft decks play together, as do Standard and Draft decks).
   Left: the DECK LIBRARY - your imported decks first (A-Z), then the bundled decks. Click a deck to
         choose it. Each row shows the commander and the card count; YOU / AI tags show what is picked
         (with 2 or 3 opponents the tag says which: "AI 1,3").
@@ -631,7 +632,27 @@ CUBE DRAFT (rounds CD1 and CD2, Karl's answers of 9 Oct 2026; the plan: docs/inc
       colours; Suggest lands adds basics to 60; Auto-build makes the best deck your pool has (keeping the commander you chose);
       the counter says "54 / 60". Only a commander problem stops you; anything else is said, and the deck still plays.
     - After a draft game (round CD4): Play again (the same pod, a fresh shuffle - since round ANS1 after every offline game) and
-      Edit deck (the builder on your saved deck, then Save, or Save and play again). Online drafting is later (CD5).
+      Edit deck (the builder on your saved deck, then Save, or Save and play again).
+  DRAFTING TOGETHER ONLINE (round CD5, Karl, 27 Oct 2026: "Draft together, Commander Cube first"; "No timer"; "Everyone waits")
+    - Host: Draft > a Commander cube > Draft with friends: your name, the port, UPnP (the password is made for you). Open the
+      draft, then Copy invite code and send it. Up to three friends join; Start the draft when you want - AI drafters take the
+      empty seats. The engine (NetHost --draft) only carries messages: your PC runs the draft, as offline.
+    - Friend: Join online > paste the invite code > Join: no deck is needed. The same pick screen as offline (two cards a pick,
+      Confirm). You see only your pack and your picks (903.13d); of the others, how many cards each has and who is still
+      picking. There is no timer: everyone waits for the slowest picker.
+    - A friend who drops pauses the draft for everyone ("Waiting for Sam to come back"). Their table reconnects by itself (or
+      they Join again with the same name). The host can press "Let the AI pick for Sam"; Sam takes the seat back from the
+      next pick. A friend who leaves on purpose gives the seat to the AI for good.
+    - After the last pick: the review shows your picks and the AI drafters' (not the other people's). Each person builds their
+      own deck (Auto-build, Edit my deck), then Ready; when all are ready the 4-player Commander Draft game starts on the
+      host's PC (40 life, 21 commander damage). A friend still away by then is an AI player with the AI's Auto-build of their
+      pool. Your deck is saved to your My decks (the host's PC also keeps the AI drafters' decks).
+    - The host's program closing: the draft is kept after every pick. Draft with friends offers "Your online draft isn't
+      finished - Continue it": host again (a new invite code), and each friend Joins with the same name to get their seat,
+      pack and picks back; a friend not back yet keeps a seat that waits for them (or Let the AI pick).
+    - Not yet: the classic draft online (1v1 for two, a pod for more - Karl's choice for later), spectators of a draft.
+    - tools\online_draft_soak.py: bots draft and play through the real connection, again and again (drops, the AI taking a
+      seat over, planted bad picks), and re-judge every pick view against the host's saved draft.
   STOCK CUBES AND THE CLASSIC DRAFT (round CD3, Karl, 12 Oct 2026): the draft window's "Stock cubes" buttons - Commander Cube
   (tritoch), Entry-level Cubing (DeepSky8), MTGO Vintage Cube (Dekkaru), The Cube of Cthulhu (CavsFangelo), Turbo Cube
   (anthonymattox), Lord of the Rings standalone 360 (zarocks), The Devoid Cube (Isticle) and The Spooty Peasant Cube (Spootyone).
@@ -871,7 +892,9 @@ from patch 45, InputPayMana.java (the mana payment waits while a mana ability is
 header of the file and tests/test_patch45.py say what changed and why); from round AIT2, PumpAllAi.java,
 ComputerUtilCard.java and ComputerUtil.java (the AI's combat predictions keep what doesn't change while it
 thinks: one attack plan for identical creatures, one "can it regenerate?" answer per creature; their
-headers and tests/test_ait2.py).
+headers and tests/test_ait2.py); from round AI-ATTACK, AiAttackController.java (the AI's attack planner
+works out what depends only on the board once per plan instead of once per attacker and blocker: its header
+and tests/test_ai_attack.py).
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
@@ -1069,9 +1092,10 @@ FILES - new table and engine
                          mulligan is free), from patch 45 InputPayMana (src/forge/gamemodes/match/input/: the
                          payment waits while a mana ability is still being paid) and, from round AIT2, PumpAllAi,
                          ComputerUtilCard and ComputerUtil (src/forge/ai/: the AI's combat predictions keep what
-                         doesn't change while it thinks); the game puts the bridge jar FIRST on the Java class path
+                         doesn't change while it thinks) and, from round AI-ATTACK, AiAttackController (src/forge/ai/:
+                         the attack planner works out board-only answers once per plan); the game puts the bridge jar FIRST on the Java class path
                          so they replace Forge's own copies. When Forge is updated, re-copy them from the new Forge
-                         and re-apply the marked changes (tests/test_patch45.py and tests/test_ait2.py go red until
+                         and re-apply the marked changes (tests/test_patch45.py, tests/test_ait2.py and tests/test_ai_attack.py go red until
                          they are redone).
                          Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
                          and commit it with the change: the jar carries a stamp of the sources it was built from, and

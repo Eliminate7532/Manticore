@@ -9,6 +9,7 @@
   <property name="lantern" type="float" value="3.5"/>
   <property name="music" value="music.rpg_outskirts"/>
   <property name="name" value="The Ashfen outskirts"/>
+  <property name="night_music" value="music.rpg_outskirts_night"/>
   <property name="outdoor" type="bool" value="true"/>
   <property name="region" type="int" value="1"/>
  </properties>
@@ -411,6 +412,8 @@
   <object id="6" name="" class="encounter" x="384" y="304" width="16" height="16">
    <properties>
     <property name="kind" value="ember_bandit"/>
+    <property name="title" value="Ember Bandit Leader"/>
+    <property name="when" value="!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done"/>
    </properties>
   </object>
   <object id="7" name="town_2" class="spawn" x="912" y="304" width="16" height="16"></object>
@@ -422,11 +425,13 @@
   <object id="9" name="" class="encounter" x="640" y="320" width="16" height="16">
    <properties>
     <property name="kind" value="ember_bandit"/>
+    <property name="when" value="!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done,!flag:road_bandits_fled"/>
    </properties>
   </object>
   <object id="10" name="" class="encounter" x="208" y="352" width="16" height="16">
    <properties>
     <property name="kind" value="ember_bandit"/>
+    <property name="when" value="!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done,!flag:road_bandits_fled"/>
    </properties>
   </object>
   <object id="11" name="" class="encounter" x="160" y="400" width="16" height="16">

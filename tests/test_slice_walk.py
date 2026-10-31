@@ -8,13 +8,15 @@ One long run from a new game, every step asserted before the next one starts:
    3  both shop counters opened and closed;
    4  a rest at the inn (Marta);
    5  out of the east gate to the Ashfen outskirts;
-   6  three Ember Bandits chased down and beaten (a stand-in engine's win, as in RPG14's tests);
+   6  an Ember Bandit chased down and beaten (a stand-in engine's win, as in RPG14's tests) - Round RPG18: one, their leader by
+      the bridge, and the others leave the road once Pell's quest is ready (was three);
    7  back through the gate to Pell: the Lamplighter's Debt handed in, its rare in the collection;
    8  to the old mill, down into the Warrens, floor 1 to its stairs, floor 2 (random fights on the way: the first won, the others
       turned back);
    9  the Grave Priest: his words first, no fleeing him, his duel won, his last words;
-  10  back up both floors and through the outskirts to Lantern Hollow: the duel hall is lit;
-  11  Elder Hesk hands in The Dark Hall (+50 gold, has_orrins_map);
+  10  Round RPG18: up the stair from the Grave Priest's hall into Lantern Hollow (was: back up both floors and through the
+      outskirts): the duel hall is lit;
+  11  Elder Hesk hands in The Dark Hall (+100 gold since RPG18, has_orrins_map);
   12  Keeper Brann's rematch, lost: you wake at Marta's inn with a fifth of your gold gone, and she says so;
   13  saved from the pause window, the program's window closed, a new one opens the slot: everything is where it was.
 The new game's seed is 7 (SLICE_WALK_SEED=<n> for another: the random fights, the foes' wandering and the rewards change with it).
@@ -408,20 +410,21 @@ class SliceWalkTests(r14.WindowBase):
         with self.step(5, "out of the east gate to the outskirts"):
             self.through(g, OUT, "from_town")
 
-        with self.step(6, "three Ember Bandits beaten"):
+        with self.step(6, "the bandits' leader by the bridge beaten, and the rest leave the road"):   # RPG18: was three;
+            # Round RPG18b (expected change, Karl 25 Oct): only the leader by the bridge counts; the hint says where he is
             a = g.modal.explorer.area
             bandits = [t.spot for t in a.triggers if t.kind == "encounter" and t.enemy == "ember_bandit"]
-            self.assertGreaterEqual(len(bandits), 3, "fewer than three Ember Bandits on the outskirts")
-            for i in range(3):
+            self.assertGreaterEqual(len(bandits), 1, "no Ember Bandit on the outskirts")
+            goal = talk.quests()["lamplighters_debt"]["goal"]
+            self.assertEqual(goal["count"], 1)
+            leader = goal["spot"]
+            self.assertIn(leader, bandits)
+            for _round in range(4):                               # the leader, and any other bandit that walks into us first
                 ex = g.modal.explorer
-                left = [fo for fo in ex.encounters() if fo.enemy == "ember_bandit"]
-                self.assertTrue(left, "no Ember Bandit left to fight")
-                foe = min(left, key=lambda fo: math.hypot(fo.x - ex.walker.x, fo.y - ex.walker.y))
-                spot = foe.spot
-                f = self.walk(g, lambda: self.foe_tile(g, spot),
+                self.assertIn(leader, [fo.spot for fo in ex.encounters()], "the bandits' leader isn't on the road")
+                f = self.walk(g, lambda: self.foe_tile(g, leader),
                               until=lambda fl: fl.sub == "fight" and getattr(fl.fight, "enemy", None) == "ember_bandit")
-                if f.fight.spot != spot:                          # another bandit walked into us first: fight that one
-                    spot = f.fight.spot
+                spot = f.fight.spot
                 f = self.duel(g, won=True)
                 self.assertEqual(self.here(g)[0], OUT)
                 self.ok(g)
@@ -429,10 +432,15 @@ class SliceWalkTests(r14.WindowBase):
                 self.assertIn(spot, w.get("beaten") or [], "a beaten bandit isn't marked beaten")
                 self.assertNotIn(spot, [fo.spot for fo in f.explorer.encounters()], "a beaten bandit is still standing")
                 state = talk.quest_state(w, "lamplighters_debt")
-                if i < 2:
-                    self.assertEqual((state, w["quests"]["lamplighters_debt"]["count"]), ("active", i + 1))
-                else:
-                    self.assertEqual(state, "ready")
+                if spot != leader:                                # an ordinary duel: the quest is still open
+                    self.assertEqual(state, "active")
+                    continue
+                self.assertEqual(state, "ready")
+                break
+            else:
+                self.fail("never reached the bandits' leader")
+            self.assertEqual([fo for fo in g.modal.explorer.encounters() if fo.enemy == "ember_bandit"], [],
+                             "Ember Bandits still on the road once Pell's quest is ready")
 
         with self.step(7, "back to Pell: the Lamplighter's Debt handed in"):
             self.through(g, TOWN, "from_outskirts")
@@ -477,10 +485,8 @@ class SliceWalkTests(r14.WindowBase):
             disk = r8.on_disk(self.folder)["world"]
             self.assertIn(talk.BOSS_FLAG, disk["flags"])
 
-        with self.step(10, "back up to Lantern Hollow: the duel hall is lit"):
-            self.through(g, W1, "stairs_down")
-            self.through(g, OUT, "mill_door")
-            self.through(g, TOWN, "from_outskirts")
+        with self.step(10, "up the stair from the Grave Priest's hall to Lantern Hollow: the duel hall is lit"):
+            self.through(g, TOWN, "from_outskirts")      # Round RPG18 (expected change): was W1, the outskirts, then the town
             frame(g)
             self.assertEqual(g.modal.views[TOWN].dark_tiles, [], "the duel hall is still dark after the Grave Priest")
 
@@ -488,9 +494,9 @@ class SliceWalkTests(r14.WindowBase):
             gold = g.modal.game.save.gold
             said, _conv = self.talk_to(g, "elder")
             q = talk.quests()["the_dark_hall"]
-            self.assertEqual(said, q["ready"] + ["+50 gold."] + q["done"])
+            self.assertEqual(said, q["ready"] + ["+100 gold."] + q["done"])   # Round RPG18: 50 -> 100
             w = g.modal.game.save.world
-            self.assertEqual(g.modal.game.save.gold, gold + 50)
+            self.assertEqual(g.modal.game.save.gold, gold + 100)   # Round RPG18: 50 -> 100
             self.assertIn("has_orrins_map", talk.flags(w))
             self.assertEqual(talk.quest_state(w, "the_dark_hall"), "done")
 
@@ -597,7 +603,8 @@ class SliceWalkTests(r14.WindowBase):
         with self.step(2, "Marta by day: Rest until dusk"):
             t0 = clock.now(w)
             said, conv = self.talk_to(g, talk.INNKEEPER, answer=True)
-            self.assertEqual((conv.choice, conv.rest_until, conv.rest), ((talk.REST_DUSK, talk.REST_NO), "dusk", True))
+            self.assertEqual((conv.choice, conv.rest_until, conv.rest),
+                             ((talk.REST_DUSK, talk.REST_YES, talk.REST_NO), "dusk", True))   # RPG18b: three answers by day
             self.assertLess(t0, 18 * 60)
             self.assertEqual(clock.now(w), 18 * 60)
             self.assertEqual(self.hud_clock(g), "Day 1, Dusk 18:00")

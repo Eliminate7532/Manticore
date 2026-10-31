@@ -7,6 +7,8 @@ Every dialog is a small object with draw(gui) / click(gui, pos, button) / key(gu
 When it is finished it sets `done = True`; requests from the engine are answered through the session
 (gui.session.answer), so the Java side is released the moment the player decides.
 """
+import bisect
+import collections
 import math
 import time
 
@@ -142,6 +144,37 @@ def draw_focus_zoom(gui, card):
 # choose from a list of cards / players / plain choices (also the read-only viewers)
 # ---------------------------------------------------------------------------------------
 
+_ADVANCES = {}
+
+
+def _advances(font):
+    """Round CF1: one font's width per character, filled in as characters turn up (kept per font object)."""
+    key = (id(font), font.get_height())
+    adv = _ADVANCES.get(key)
+    if adv is None:
+        if len(_ADVANCES) > 16:
+            _ADVANCES.clear()
+        adv = _ADVANCES[key] = {}
+    return adv
+
+
+def fits_one_line(text, font, width, adv=None):
+    """Round CF1: [text] when it surely fits on one line, else None (then wrap_text decides). Adds up each character's width
+    (no kerning) and leaves 10% to spare, so a plain short label needs no font.size call; a long or close one is measured."""
+    if not text or "\n" in text or "{" in text:
+        return None
+    adv = _advances(font) if adv is None else adv
+    total = 0
+    for ch in text:
+        w = adv.get(ch)
+        if w is None:
+            w = adv[ch] = font.size(ch)[0]
+        total += w
+        if total > width * 0.9:
+            return None
+    return [text]
+
+
 class ChooseDialog(Dialog):
     """mode 'choose': pick between min and max items and press Done (order: click in the order wanted).
     mode 'view': look only (info lists, graveyards); `on_pick(card)` makes cards clickable."""
@@ -168,6 +201,10 @@ class ChooseDialog(Dialog):
         self.tile_h = 0                                  # round UI8: the card tiles' height in the last frame drawn
         self.last_click = (None, 0.0)
         self.find = ""                                   # round PEN1: what is typed in the Find box
+        self._choices_key = self._choices = None         # round CF1: caches for long plain lists (text_layout)
+        self._cards_key = self._cards = None
+        self._labels_key = self._labels_val = None
+        self._rows_cache, self._wrap_key, self._wrapped = {}, None, {}
         self.find_rect = None
         low = str(title).lower()
         self.zone = next((z for z in ("library", "graveyard", "exile") if z in low), None)
@@ -340,10 +377,15 @@ class ChooseDialog(Dialog):
                 label = f"Player: {label}"
             raw.append(label)
         clean = [flog.strip_ids(t) for t in raw]
-        return [c if clean.count(c) == 1 else r for c, r in zip(clean, raw)]
+        seen = collections.Counter(clean)                # round CF1: was clean.count(c) per row - O(n^2), 24 s for 35,291 names
+        return [c if seen[c] == 1 else r for c, r in zip(clean, raw)]
 
     def text_choices(self):
-        return [i for i, it in enumerate(self.items) if it.get("kind") != "card" and i not in self.skip]
+        key = (id(self.items), len(self.items), len(self.skip))
+        if self._choices_key != key:                     # round CF1: the items never change; asked several times a frame
+            self._choices_key = key
+            self._choices = [i for i, it in enumerate(self.items) if it.get("kind") != "card" and i not in self.skip]
+        return self._choices
 
     def has_find(self):
         """Round PEN1: a long list of plain choices (creature types, card names) can be narrowed down by typing."""
@@ -354,26 +396,68 @@ class ChooseDialog(Dialog):
         low = flog.strip_ids(label).lower()
         return all(w in low for w in words)
 
+    def _labels(self):
+        """Round CF1: (indices, labels, lower-case labels without card numbers) of the plain choices, worked out once."""
+        idx = self.text_choices()
+        if self._labels_key is not idx:
+            labels = self.row_labels([self.items[i] for i in idx])
+            self._labels_key = idx
+            self._labels_val = (idx, labels, [flog.strip_ids(lb).lower() for lb in labels])
+        return self._labels_val
+
     def text_rows(self, gui, width, filtered=True):
         """[(item index, wrapped lines, row height)] for the plain-text choices. Long choices wrap instead of being cut off.
         Round PEN1: only the ones the Find box matches (filtered=False: all of them - the window's height doesn't jump as you type)."""
+        return self.text_layout(gui, width, filtered)[0]
+
+    def text_layout(self, gui, width, filtered=True):
+        """Round CF1 (the 32-second freeze on the Surface: Forge's "Choose a card name" list has 35,291 names, and every frame
+        wrapped, measured and drew all of them - about 60 s a frame at 2880x1920): (rows, tops, total height), where tops[k] is
+        where row k starts below the first one. Kept until the width, the font, the Find words or the picks change."""
         f = gui.font("body")
         lh = f.get_height() + 2
+        min_h = int(38 * gui.L.fs)
         pre = f.size("00.  ")[0] if self.ordered else 0
-        idx = self.text_choices()
-        labels = self.row_labels([self.items[i] for i in idx])
-        if filtered and self.find.strip():
-            kept = [(i, lb) for i, lb in zip(idx, labels) if self.matches(lb) or i in self.sel]
-            idx, labels = [i for i, _l in kept], [lb for _i, lb in kept]
-        rows = []
-        for i, label in zip(idx, labels):
-            lines = wrap_text(label, f, width - 24 - pre) or [""]
-            rows.append((i, lines, max(int(38 * gui.L.fs), len(lines) * lh + 14)))
-        return rows
+        base = (width, id(f), lh, min_h, pre)
+        words = tuple(self.find.lower().split()) if filtered else ()
+        key = base + (words, tuple(self.sel) if words else ())
+        hit = self._rows_cache.get(key)
+        if hit is not None:
+            return hit
+        if self._wrap_key != base:                       # a new width or font: every row is wrapped again
+            self._wrap_key, self._wrapped = base, {}
+        wrapped = self._wrapped
+        idx, labels, lows = self._labels()
+        avail = width - 24 - pre
+        adv = _advances(f)
+        rows, tops, y = [], [], 0
+        for i, label, low in zip(idx, labels, lows):
+            if words and not (all(w in low for w in words) or i in self.sel):
+                continue
+            row = wrapped.get(i)
+            if row is None:
+                lines = fits_one_line(label, f, avail, adv) or wrap_text(label, f, avail) or [""]
+                row = wrapped[i] = (i, lines, max(min_h, len(lines) * lh + 14))
+            rows.append(row)
+            tops.append(y)
+            y += row[2] + 6
+        out = (rows, tops, y)
+        if len(self._rows_cache) > 8:
+            self._rows_cache.clear()
+        self._rows_cache[key] = out
+        return out
 
     # ---- round UI8: the card size
     def card_count(self):
-        return sum(1 for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip)
+        return len(self.card_items())
+
+    def card_items(self):
+        """[(index, item)] of the card choices (round CF1: worked out once - a list of 35,291 names was scanned four times a frame)."""
+        key = (id(self.items), len(self.items), len(self.skip))
+        if self._cards_key != key:
+            self._cards_key = key
+            self._cards = [(i, it) for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip]
+        return self._cards
 
     def zoom(self, gui):
         z = getattr(gui, "choose_card_zoom", 1.0)
@@ -401,7 +485,7 @@ class ChooseDialog(Dialog):
         head = self.head_height(gui, self.head_width(gui, pw))
         if self.source is not None:
             head = max(head, self.thumb_h(gui))
-        text_h = sum(h + 6 for _i, _l, h in self.text_rows(gui, width, filtered=False))
+        text_h = self.text_layout(gui, width, filtered=False)[2]
         if self.has_find():
             text_h += self.find_height(gui) + 8                 # round PEN1: the Find box
         cards = self.card_count()
@@ -550,12 +634,11 @@ class ChooseDialog(Dialog):
     def draw_items(self, gui):
         scr = gui.screen
         body = self.body
-        cards = [(i, it) for i, it in enumerate(self.items) if it.get("kind") == "card" and i not in self.skip]
+        cards = list(self.card_items())
         if self.stacks:
             cards.sort(key=lambda t: str((t[1].get("card") or {}).get("name", "")))
-        rows_t = self.text_rows(gui, body.w)
+        rows_t, tops, text_h = self.text_layout(gui, body.w)
         pad = 10
-        text_h = sum(h + 6 for _i, _l, h in rows_t)
         # pick the biggest card size that shows everything without scrolling (never below a readable minimum)
         avail = body.h - text_h
         tile_h = 110
@@ -591,8 +674,12 @@ class ChooseDialog(Dialog):
         f = gui.font("body")
         lh = f.get_height() + 2
         pre = f.size("00.  ")[0] if self.ordered else 0
-        for i, lines, row_h in rows_t:
-            r = pygame.Rect(body.x, y, grid_w, row_h)
+        # round CF1: only the rows that show are drawn (and can be clicked); the rest are skipped by where they start
+        first = max(0, bisect.bisect_right(tops, body.y - y) - 1)
+        last = bisect.bisect_right(tops, body.bottom - y)
+        for i, lines, row_h in rows_t[first:last]:
+            r = pygame.Rect(body.x, y + tops[first], grid_w, row_h)
+            first += 1
             on = i in self.sel
             hot = r.collidepoint(gui.mouse) and self.mode != "view"
             round_rect(scr, r, gfx.CHOICE_ON_BG if on else (gfx.CHOICE_HOT_BG if hot else gfx.CHOICE_BG), 10, 2 if on else 1,
@@ -604,7 +691,7 @@ class ChooseDialog(Dialog):
                 draw_rich(scr, ln, r.x + 12 + pre, ty, f, WHITE)
                 ty += lh
             self.tiles.append((r, i))
-            y += row_h + 6
+        y += text_h
         total_w = cols * tile_w + (cols - 1) * pad
         x0 = body.x + max(0, (grid_w - total_w) // 2)
         for n, (i, it) in enumerate(cards):

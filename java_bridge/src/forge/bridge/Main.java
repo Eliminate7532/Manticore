@@ -119,6 +119,13 @@ public class Main {
                     if (PlanCache.MODES.contains(m)) PlanCache.mode = m;
                     break;
                 }
+                case "--attack-budget": AttackCache.budgetSeconds = Integer.parseInt(args[++i]); break;   // round AI-ATTACK, see AttackCache.declareWithBudget (0 = none)
+                case "--attack-cache": {                                                     // round AI-ATTACK, see AttackCache (off = Forge's own)
+                    String m = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (AttackCache.MODES.contains(m)) AttackCache.mode = m;
+                    break;
+                }
+                case "--attack-cache-plant": AttackCache.plantedError = Integer.parseInt(args[++i]); break;   // tests only (needs --dev)
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
                 case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
                 case "--house-rule": {                                                      // round CD3: a cube's own rule (HouseRules)
@@ -164,6 +171,10 @@ public class Main {
         if (!Checks.faults.isEmpty() && !dev) {
             System.err.println("bridge: --fault ignored (the bridge was not started with --dev)");
         }
+        if (AttackCache.plantedError != 0 && !dev) {
+            AttackCache.plantedError = 0;                    // round AI-ATTACK: a planted error only in a test's dev session
+            System.err.println("bridge: --attack-cache-plant ignored (the bridge was not started with --dev)");
+        }
         initForge(name, seed);
 
 
@@ -201,6 +212,8 @@ public class Main {
         ready.addProperty("loopCap", LoopGuard.cap);         // round 28e
         ready.addProperty("threatAi", Threats.on);           // round AI2
         ready.addProperty("planCache", PlanCache.mode);      // round AIT2
+        ready.addProperty("attackCache", AttackCache.mode);  // round AI-ATTACK
+        ready.addProperty("attackBudget", AttackCache.budgetSeconds);
         ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
         ready.addProperty("lastStateMarks", true);           // round LAST1c: saves keep the Monarch, Initiative and City's Blessing; a failed load says so
         ready.addProperty("format", format);                 // round FMT1: the Python side checks it
@@ -314,6 +327,27 @@ public class Main {
         return false;
     }
 
+    /** Round NET-RESUME (O2): the card is no longer anywhere in the game because a player it belonged to (its controller or
+     *  owner, as the last view says) has left it. Only looked up when such a player has lost, so an ordinary click costs one
+     *  check; if the look-up fails (the game thread changing the zones), the click goes ahead as before. */
+    static boolean leftWithALoser(CardView cv) {
+        try {
+            forge.game.Game g = match != null ? match.getGame() : null;
+            if (g == null) {
+                return false;
+            }
+            boolean loser = false;
+            for (forge.game.player.PlayerView pv : new forge.game.player.PlayerView[]{cv.getController(), cv.getOwner()}) {
+                for (forge.game.player.Player p : g.getRegisteredPlayers()) {       // the players who lost are still registered
+                    loser |= pv != null && p.getId() == pv.getId() && p.hasLost();
+                }
+            }
+            return loser && g.findById(cv.getId()) == null;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     /** Commands that answer "the question Forge is asking now"; with an "at" number they are dropped when it is out of date. */
     static final java.util.Set<String> STALE_CHECKED = java.util.Set.of("ok", "cancel", "card", "player", "mana");
 
@@ -386,6 +420,19 @@ public class Main {
             case "concede": concedeWhenSafe(gui, gc, System.currentTimeMillis()); break;
             case "card": {
                 CardView cv = gui.cardIndex.get(cmd.get("id").getAsInt());
+                if (cv != null && leftWithALoser(cv)) {
+                    // Round NET-RESUME (O2, the online soak of 24 Oct, game 9): a live seat clicked a card that had just left the
+                    // game with the player who conceded (its owner). Forge then looked it up in no zone and logged "[ERROR] Game:
+                    // findByView: id=... not found in any zone". Dropped, visibly, like patch 44's click from a seat that is out.
+                    JsonObject d = new JsonObject();
+                    d.addProperty("t", "dropped");
+                    d.addProperty("c", c);
+                    d.addProperty("reason", "gone");
+                    d.addProperty("id", cv.getId());
+                    d.addProperty("now", gui.inputSeq());
+                    gui.wire.send(d);
+                    break;
+                }
                 if (cv != null) gc.selectCard(cv, null, null);
                 else System.err.println("bridge: unknown card " + cmd.get("id"));
                 break;

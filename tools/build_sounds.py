@@ -49,7 +49,12 @@ UA = {"User-Agent": "Manticore-sound-build/1.0 (+CC0 sources, see tools/sound_so
 def fetch(key, src, cache):
     """The folder holding source `key`, downloading and unpacking it the first time."""
     folder = os.path.join(cache, key)
-    if os.path.isfile(os.path.join(folder, ".done")):
+    want = src.get("sha256")                             # Round RPG-NM: a source with its checksum is checked, cached or fresh
+    done = os.path.join(folder, ".done")
+    if os.path.isfile(done):
+        if want:
+            with open(done, encoding="utf-8") as f:
+                check_sha256(key, f.read().strip(), want)
         return folder
     os.makedirs(folder, exist_ok=True)
     urls = src.get("urls") or [src["url"]]               # AU2: an OpenGameArt page with several files lists them all ("kind": "files")
@@ -58,6 +63,8 @@ def fetch(key, src, cache):
         print(f"  downloading {key}: {url}")
         data = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=600).read()
         digest.update(data)
+        if want and len(urls) == 1:
+            check_sha256(key, hashlib.sha256(data).hexdigest(), want)
         name = urllib.parse.unquote(url.rsplit("/", 1)[1])
         low = name.lower()
         if src["kind"] == "zip" or (src["kind"] == "files" and low.endswith(".zip")):
@@ -71,6 +78,12 @@ def fetch(key, src, cache):
     with open(os.path.join(folder, ".done"), "w") as f:
         f.write(digest.hexdigest())
     return folder
+
+
+def check_sha256(key, got, want):
+    """Round RPG-NM: the file downloaded must be the one Karl picked (its sha256 in tools/sound_sources.json)."""
+    if got.lower() != str(want).lower():
+        raise SystemExit(f"{key}: the download's sha256 is {got}, not the {want} recorded in tools/sound_sources.json")
 
 
 _RAW = {}
@@ -630,7 +643,21 @@ RPG_MUSIC = {
     "music.rpg_boss": ("mus3-boss-battle-music", 0, None, 0.0, True),                 # page: "Loops seamlessly!"
     "music.rpg_victory": ("mus3-victory-fanfare", 0, None, 1.0, False),               # 6.9 s, played once
     "music.rpg_defeat": ("mus3-game-over-theme:No Hope", 0, 8.0, 2.5, False),         # its first 8 s, faded
+    # Round RPG-NM: Karl's night picks (25 Oct 2026 00:11-00:13 UTC; claude/DECISIONS_2026-10-24.md "Night music"). A map's
+    # night_music plays in the clock's night phase (rpg_screens.AdventureFlow.soundscape).
+    "music.rpg_town_night": ("mus4-lonelyhood", 0, None, 0.0, True),                 # town_night_4; fades in and out: RPG_LOOP_XFADE
+    "music.rpg_outskirts_night": ("mus4-when-the-shadows-gather", 0, None, 0.0, True),   # outskirts_night_1; page: "Loops seamlessly"
 }
+# Round RPG-NM: loops whose own ends don't meet. Lonelyhood fades in (about 2.5 s to full level) and out (the last 3 s, -28 -> -38
+# dBFS RMS): its seam's band step is 24.2 dB against a 95th percentile of 15.6 dB between the track's own neighbouring half-seconds,
+# so its last 3 s are blended into its start (loop_seam). When the Shadows Gather's seam is ordinary for the track (band step 5.4
+# dB, at its 67th percentile; level jump 6.7 dB, 77th; no click), so it is written whole. Rule fixed before measuring: blend only a
+# seam that clicks or whose step or level jump is above the track's own 95th percentile. Measured by docs/rounds/RPG-NM.md's script.
+RPG_LOOP_XFADE = {"music.rpg_town_night": 3.0}
+# Karl's mark on the "Night Music Check" page, 25 Oct 2026 21:18 UTC: "Use B, 2 dB quieter" for the moors at night (EBU R128: the
+# night track -19.2 LUFS against the day track's -21.1; with this gain -21.2). A cue gain, not a re-levelled file: the game turns the
+# stream down by it (audio._start_track), exactly as the page's clip B did.
+RPG_MUSIC_GAIN = {"music.rpg_outskirts_night": -2.0}
 RPG_MUSIC_QUALITY = 3                                           # Vorbis q3, as the long table tracks
 RPG_STING = ("rpg.encounter", "mus3-string-and-piano-horror-stings", 3.5, 1.2, -18)   # cue, source, seconds kept, fade, LUFS
 
@@ -752,10 +779,12 @@ def main(argv=None):
         if wanted(cid) and not a.no_music:
             x = cut(L(ref, raw=loops), start, length)
             x = x if loops else fade(x, 0.01, fo)
+            if loops and cid in RPG_LOOP_XFADE:
+                x = loop_seam(x, RPG_LOOP_XFADE[cid])
             x = level(x, MUSIC_LUFS, -1.0)
             write_ogg(x, os.path.join(SOUNDS, f"music/{cid[6:]}.ogg"), RPG_MUSIC_QUALITY)
             print(f"{cid:22s} {len(x) / SR:6.1f}s {'loop' if loops else ''}")
-        cues[cid] = {"bus": "music", "gain_db": 0, "stream": True, "files": [f"music/{cid[6:]}.ogg"]}
+        cues[cid] = {"bus": "music", "gain_db": RPG_MUSIC_GAIN.get(cid, 0), "stream": True, "files": [f"music/{cid[6:]}.ogg"]}
     cid, ref, keep, fo, lufs = RPG_STING
     if wanted(cid):
         x = level(fade(cut(L(ref), 0, keep), 0.003, fo), lufs, -1.0)

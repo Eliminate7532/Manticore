@@ -81,7 +81,8 @@ Formats
   The deck screen's Format buttons (top right) switch between Commander, Brawl (MTG Arena's 100-card
   Brawl: a creature or planeswalker commander, 25 life, 30 with 2-3 opponents, no commander damage) and
   Standard (60 cards or more, up to 4 of a card, no commander, 20 life). Import an Arena deck with its
-  Export button, then Ctrl+V on the deck screen. Online play is Commander only.
+  Export button, then Ctrl+V on the deck screen. Online games play the host's format: bring a deck
+  of that format (the invite code tells your table which).
 
 Cube draft (main menu > Draft)
   Pick one of the eight stock cubes, or paste a Cube Cobra link. Commander Cube is a Commander draft:
@@ -133,6 +134,9 @@ Resume
   If the host screen says the router can't open the way (often "CGNAT"), the simplest fix is Tailscale
   (free) on both PCs; the host screen fills in the address when Tailscale is running.
   An online game can't be saved or resumed yet: if either side closes, the game ends.
+  Drafting together: the host chooses Draft > Commander Cube > Draft with friends and sends the invite code;
+  friends paste it into Join online (no deck needed). Everyone drafts, builds a deck on their own PC, and
+  all four play one Commander game. No timer: the draft waits for whoever is slowest, or away.
 
 
 5. WHEN SOMETHING GOES WRONG: F8

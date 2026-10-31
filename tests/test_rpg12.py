@@ -243,11 +243,15 @@ class MapTests(unittest.TestCase):
                     target = explore.load_area(t.to_map)
                     self.assertIn(t.to_spawn, target.spawns, (name, t))
                     links.setdefault(name, set()).add(t.to_map)
+        one_way = {("warrens_2", "lantern_hollow")}      # Round RPG18: the stair up from the Grave Priest's hall, one way on purpose
         for a, bs in links.items():
             for b in bs:
+                if (a, b) in one_way:
+                    self.assertNotIn(a, links.get(b, set()), f"{b} -> {a} should not exist (the way up is one way)")
+                    continue
                 self.assertIn(a, links.get(b, set()), f"{a} -> {b} has no way back")
         self.assertEqual(links, {"lantern_hollow": {"ashfen_outskirts"}, "ashfen_outskirts": {"lantern_hollow", "warrens_1"},
-                                 "warrens_1": {"ashfen_outskirts", "warrens_2"}, "warrens_2": {"warrens_1"}})
+                                 "warrens_1": {"ashfen_outskirts", "warrens_2"}, "warrens_2": {"warrens_1", "lantern_hollow"}})
 
     def test_the_towns_on_the_maps(self):
         _kinds, towns = data_ids()
@@ -359,7 +363,9 @@ class WalkTests(unittest.TestCase):
                 others = [o.spot for o in ex2.area.triggers if o.kind == "encounter" and o.spot != t.spot]
                 s2.world["beaten"] = others
                 if t.when or t.rare:                       # Round RPG16: a night foe or a rare, walked to at an hour it is out
-                    s2.world.update(flags=["warrens_entered"], quests={"lamplighters_debt": {"state": "done"}})
+                    # Round RPG18: Pell's bandits are out only while his quest isn't ready or done
+                    debt = "active" if t.enemy == "ember_bandit" and not t.rare else "done"   # the Red Sash: done
+                    s2.world.update(flags=["warrens_entered"], quests={"lamplighters_debt": {"state": debt}})
                     s2.world["clock"] = next(clock.DAY + h * 60 for h in (22, 19, 6)
                                              if conditions.all_hold(t.when, s2.world, minutes=clock.DAY + h * 60))
                     s2.stable_rng = lambda *parts: None                      # a save's rolls (the patched roll answers)

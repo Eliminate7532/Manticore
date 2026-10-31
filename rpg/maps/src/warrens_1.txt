@@ -2,7 +2,7 @@ name: The Warrens
 region: 1
 dungeon: true
 backdrop: dungeon
-encounter_rate: 100
+encounter_rate: 200
 encounters: plague_rat 3, grave_robber 1
 darkness: 0.85
 lantern: 4.5

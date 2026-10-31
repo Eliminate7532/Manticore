@@ -247,11 +247,13 @@ def _blit_scaled(screen, surf, s, topleft):
 
 class DialogueBox:
     """A person's words at the bottom of the screen: the name in gold, the page typed out at TYPE_CPS (Enter shows the rest at
-    once), a blinking down-mark when more follows, then - if there is a choice - two answers in a small window above it.
+    once), a blinking down-mark when more follows, then - if there is a choice - its answers (two, or Round RPG18b three) in a
+    small window above it.
 
         advance(now) -> None | "answer" | "close"     Enter / Space / a click on the box
-        key(k, now)  -> the same, for a key (Up / Down move between the answers; Esc closes, or answers the second choice)
+        key(k, now)  -> the same, for a key (Up / Down move between the answers; Esc closes, or answers the last choice)
         answer        True (the first answer) / False, once given
+        picked        Round RPG18b: the index of the answer given (0 the first), once given
     """
 
     def __init__(self, name, pages, now, choice=None, default=0):
@@ -259,9 +261,13 @@ class DialogueBox:
         self.pages = [p for p in pages if str(p).strip()] or ["..."]
         self.page, self.t0 = 0, now
         self.choice, self.choosing, self.cursor = choice, False, 0
-        self.default = 1 if default == 1 else 0             # Round RPG15c: the answer the cursor starts on (Enter picks it)
+        n = len(choice) if choice else 2
+        self.default = default if isinstance(default, int) and not isinstance(default, bool) and 0 <= default < n else 0
+        # ... Round RPG15c: the answer the cursor starts on (Enter picks it)
         self.answer = None
-        self.buttons = []                    # [(screen Rect, name)]: "talk_next", "talk_yes", "talk_no"
+        self.picked = None
+        self.buttons = []                    # [(screen Rect, name)]: "talk_next", "talk_yes", "talk_no" (the last answer),
+        # ... Round RPG18b: "talk_opt<i>" for an answer between the first and the last
 
     def text(self):
         return " ".join(wrap_lines(self.pages[self.page]))
@@ -278,6 +284,7 @@ class DialogueBox:
     def advance(self, now):
         if self.choosing:
             self.answer = self.cursor == 0
+            self.picked = self.cursor
             return "answer"
         if not self.complete(now):
             self.t0 = now - (len(self.text()) + 1) / TYPE_CPS
@@ -292,21 +299,34 @@ class DialogueBox:
 
     def key(self, k, now):
         if self.choosing and k in (pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s):
-            self.cursor = 1 - self.cursor
+            n = len(self.choice)
+            self.cursor = (self.cursor + (-1 if k in (pygame.K_UP, pygame.K_w) else 1)) % n
             return None
         if k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
             return self.advance(now)
         if k == pygame.K_ESCAPE:
             if self.choice is not None:
-                self.choosing, self.cursor = True, 1
+                self.choosing, self.cursor = True, len(self.choice) - 1
                 return self.advance(now)
             return "close"
         return None
 
     def pick(self, name, now):
         """A click: on the box, or on an answer."""
-        if name in ("talk_yes", "talk_no") and self.choosing:
-            self.cursor = 0 if name == "talk_yes" else 1
+        if self.choosing and (name in ("talk_yes", "talk_no") or str(name).startswith("talk_opt")):
+            last = len(self.choice) - 1
+            if name == "talk_yes":
+                self.cursor = 0
+            elif name == "talk_no":
+                self.cursor = last
+            else:
+                try:
+                    i = int(str(name)[len("talk_opt"):])
+                except ValueError:
+                    return None
+                if not 0 < i < last:
+                    return None
+                self.cursor = i
             return self.advance(now)
         if name == "talk_next":
             return self.advance(now)
@@ -337,7 +357,7 @@ class DialogueBox:
         if self.choosing and self.choice:
             labels = list(self.choice)
             cwid = max(len(lb) for lb in labels) * cw + 2 * PAD + 12
-            ch = PAD * 2 + 2 * 14 - 4
+            ch = PAD * 2 + len(labels) * 14 - 4
             win = pygame.Surface((cwid, ch), pygame.SRCALPHA)
             window(win, win.get_rect())
             rows = []
@@ -347,7 +367,8 @@ class DialogueBox:
                 if here:
                     text(win, ">", PAD - 2, yy, gfx.DB_GOLD)
                 text(win, lb, PAD + 10, yy, gfx.DB_GOLD if here else gfx.DB_TEXT)
-                rows.append((pygame.Rect(4, yy - 3, cwid - 8, 14), "talk_yes" if i == 0 else "talk_no"))
+                rows.append((pygame.Rect(4, yy - 3, cwid - 8, 14),
+                             "talk_yes" if i == 0 else ("talk_no" if i == len(labels) - 1 else f"talk_opt{i}")))
             cx, cy = x0 + bw * s - cwid * s, y0 - (ch + 4) * s
             _blit_scaled(screen, win, s, (cx, cy))
             self.buttons += [(pygame.Rect(cx + rr.x * s, cy + rr.y * s, rr.w * s, rr.h * s), n) for rr, n in rows]

@@ -407,7 +407,8 @@ class FingerprintSourceTests(TempFolder):
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         with open(os.path.join(base, "forge_table.py"), encoding="utf-8") as f:
             src = f.read()
-        self.assertEqual(src.count('fingerprint_from="remembered" if by_hand else "invite"'), 2)   # join and watch
+        self.assertEqual(src.count('fingerprint_from="remembered" if by_hand else "invite"'), 3)   # join, watch (round CD5:
+        # and joining a draft)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

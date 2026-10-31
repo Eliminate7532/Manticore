@@ -75,13 +75,14 @@ Format = namedtuple("Format", "key name deck_size life_two life_pod commander_da
 
 FORMATS = {
     "commander": Format("commander", "Commander", 100, 40, 40, True, False, True, None, True, 1, 0, True, "commander"),
-    "brawl": Format("brawl", "Brawl", 100, 25, 30, False, True, False, "Brawl", True, 1, 0, True, "brawl"),
-    "standard": Format("standard", "Standard", 60, 20, 20, False, False, False, "Constructed", False, 4, 15, False, "constructed"),
-    # Round CD2: online off until CD5 (drafting with friends); no Deck Type line (Forge's .dck is a Commander one).
-    "commander_draft": Format("commander_draft", "Commander Draft", 60, 40, 40, True, False, False, None, True, None, 0, False,
+    # Round MP3a (Karl, 27 Oct 2026: "Add brawl, standard, and draft to online play"): every format can be played online.
+    "brawl": Format("brawl", "Brawl", 100, 25, 30, False, True, True, "Brawl", True, 1, 0, True, "brawl"),
+    "standard": Format("standard", "Standard", 60, 20, 20, False, False, True, "Constructed", False, 4, 15, False, "constructed"),
+    # Round CD2: no Deck Type line (Forge's .dck is a Commander one). Round MP3a: online (a drafted deck, drafted offline).
+    "commander_draft": Format("commander_draft", "Commander Draft", 60, 40, 40, True, False, True, None, True, None, 0, False,
                               "commander"),
     # Round CD3: the classic draft's 40-card deck - any number from the pool, no sideboard section, Forge's Constructed game.
-    "draft": Format("draft", "Draft", 40, 20, 20, False, False, False, "Limited", False, None, 0, False, "constructed"),
+    "draft": Format("draft", "Draft", 40, 20, 20, False, False, True, "Limited", False, None, 0, False, "constructed"),
 }
 ORDER = ("commander", "brawl", "standard")          # the order of the deck screen's format buttons
 DEFAULT = "commander"
@@ -147,6 +148,28 @@ def any_copies(key):
     """Round CD2: True when the format allows any number of cards with one name (Commander Draft and - round CD3 - Draft,
     from the pool)."""
     return get(key).copies is None
+
+
+def online_match(game, deck):
+    """Round MP3a: can a deck of format `deck` sit at an online game of format `game`? The offline rule (start_game): the decks
+    listed under the same deck-screen button play together (Commander + Commander Draft; Standard + Draft; Brawl alone).
+    NetHost (OnlineFormats.compatible) applies the same rule to a guest's deck."""
+    return screen(game) == screen(deck)
+
+
+def wanted_words(game):
+    """Round MP3a: the deck an online game of format `game` needs: "a Brawl deck", "a Standard or Draft deck"."""
+    s = screen(game)
+    if s == "commander":
+        return "a Commander or Commander Draft deck"
+    if s == "standard":
+        return "a Standard or Draft deck"
+    return "a %s deck" % name(game)
+
+
+def online_mismatch(game, deck):
+    """Round MP3a: "This is a Brawl game: choose a Brawl deck (yours is a Commander deck)." - the words NetHost uses too."""
+    return "This is a %s game: choose %s (yours is a %s deck)." % (name(game), wanted_words(game), name(deck))
 
 
 def life_note(key, players):

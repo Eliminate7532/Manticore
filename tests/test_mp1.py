@@ -133,7 +133,8 @@ class InviteTests(unittest.TestCase):
         self.assertTrue(code.startswith("MANT1-"))
         self.assertNotIn("=", code)
         self.assertEqual(fn.read_invite(code), {"address": "203.0.113.7", "port": 36800, "fingerprint": self.FP,
-                                                "password": "otter-lamp-river-42"})
+                                                "password": "otter-lamp-river-42",
+                                                "format": "commander", "rules": ()})      # round MP3a: no "g" = Commander
 
     def test_chat_line_breaks_and_spaces_dont_matter(self):
         code = fn.make_invite("my-pc.tailnet.ts.net", 36800, self.FP, "pw-11")
@@ -185,7 +186,7 @@ class HandshakeTests(unittest.TestCase):
             self.assertEqual(s.protocol, 2)
             hello = h.hellos[0]
             self.assertEqual((hello["c"], hello["v"], hello["name"], hello["password"], hello["code"]),
-                             ("hello", 2, "Sam", "pw-12", "guestcode"))         # round MP2: protocol 2
+                             ("hello", fn.PROTOCOL_V, "Sam", "pw-12", "guestcode"))   # round MP2: 2; round MP3a: 3
             self.assertEqual(hello["deck"]["name"], "Veyran")
             self.assertIsNone(s._password)                             # forgotten once sent
             s.ok()                                                     # commands reach the host after the hello
@@ -632,7 +633,9 @@ class SourceTests(unittest.TestCase):
 
     def test_the_match_gets_the_commander_variant_and_tls_13_only(self):
         s = self.src("NetHost.java")
-        self.assertIn("EnumSet.of(GameType.Commander)", s)              # round 27c: without it nobody is asked about the command zone
+        # round 27c: without the Commander variant nobody is asked about the command zone. Round MP3a: the format's variant, as Main
+        self.assertIn("GameType variant = Main.variant();", s)
+        self.assertIn("java.util.EnumSet.of(variant)", s)
         self.assertIn('setEnabledProtocols(new String[]{"TLSv1.3"})', s)
         self.assertIn("MessageDigest.isEqual", s)                         # the password is compared in constant time
         self.assertIn('getenv("MANTICORE_NET_PASSWORD")', s)

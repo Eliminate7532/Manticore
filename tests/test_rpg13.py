@@ -61,7 +61,8 @@ def pace(ex, steps, dt=0.1):
     return out
 
 
-WARRENS_RATE = 100      # Round RPG17 (expected change, Karl 24 Oct: "Warrens encounter_rate 50 -> 100"): the maps' rate
+WARRENS_RATE = 200      # Round RPG17 (expected change, Karl 24 Oct: "Warrens encounter_rate 50 -> 100"): the maps' rate;
+                        # Round RPG18 (expected change, Karl 24 Oct, Plan 2 of the 45-minute slice): 100 -> 200
 
 
 class RateTests(unittest.TestCase):
@@ -79,7 +80,7 @@ class RateTests(unittest.TestCase):
 
     def test_never_two_fights_within_12_steps(self):
         ex = explore.Explorer(save_on("warrens_1", 11))
-        fights = pace(ex, 12_000)                                                # Round RPG17: twice the rate, twice the steps
+        fights = pace(ex, 24_000)                                                # Round RPG17/18: the steps grow with the rate
         gaps = [b - a for (a, _f), (b, _g) in zip(fights, fights[1:])]
         self.assertGreater(len(gaps), 50)
         self.assertGreaterEqual(min(gaps), encounters.MIN_GAP - 1e-6)
@@ -135,7 +136,7 @@ class RateTests(unittest.TestCase):
         ex = explore.Explorer(s)
         pace(ex, 30)
         d = s.world["danger"]
-        self.assertTrue(0 < d <= 88)
+        self.assertTrue(0 < d <= 2 * WARRENS_RATE - encounters.MIN_GAP)       # Round RPG18: was 88 (rate 50)
         back = sv.SaveGame.from_dict(json.loads(json.dumps(s.to_dict())))
         self.assertEqual(back.world["danger"], d)
         for bad in (-1, True, "5"):

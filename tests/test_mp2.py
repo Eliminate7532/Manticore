@@ -42,11 +42,11 @@ TOKEN = "f00dfeed" * 4                     # a rejoin token that must never be w
 # ---------------------------------------------------------------------------------------------------------------------
 class ProtocolTests(unittest.TestCase):
     def test_protocol_two_and_its_lines(self):
-        self.assertEqual(fn.PROTOCOL_V, 2)
-        self.assertEqual(json.loads(fn.hello_line("Sam", "pw", "c", "d", "x"))["v"], 2)
-        self.assertEqual(json.loads(fn.rejoin_line(TOKEN)), {"c": "rejoin", "v": 2, "token": TOKEN})
+        self.assertEqual(fn.PROTOCOL_V, 3)                                # round MP3a: 3 (the format in the welcome)
+        self.assertEqual(json.loads(fn.hello_line("Sam", "pw", "c", "d", "x"))["v"], 3)
+        self.assertEqual(json.loads(fn.rejoin_line(TOKEN)), {"c": "rejoin", "v": 3, "token": TOKEN})
         w = json.loads(fn.watch_line("Ann", "pw", "code"))
-        self.assertEqual((w["c"], w["v"], w["name"], w["password"]), ("watch", 2, "Ann", "pw"))
+        self.assertEqual((w["c"], w["v"], w["name"], w["password"]), ("watch", 3, "Ann", "pw"))
         self.assertNotIn("deck", w)
         self.assertEqual([fn.reconnect_wait(n) for n in (1, 2, 3, 4, 5, 9)], [1, 2, 3, 5, 5, 5])
 

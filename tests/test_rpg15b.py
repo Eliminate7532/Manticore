@@ -89,10 +89,13 @@ class HintDataTests(unittest.TestCase):
             self.assertIn(word, problems)
 
     def test_numbers_are_filled_in_and_never_pass_the_goal(self):
-        w = world(quests={DEBT: ("active", 2)}, flags=["met_elder", "met_lamplighter"])
-        self.assertIn("2 of 3", say(w, OUT)[1])
+        # Round RPG18 (expected change): Pell's goal is one bandit (was three). Round RPG18b (expected change, Karl 25 Oct): the
+        # shipped hints no longer show the count, so the fields are checked on a page of their own
+        page = "{count:lamplighters_debt} of {goal:lamplighters_debt}"
+        w = world(quests={DEBT: ("active", 0)}, flags=["met_elder", "met_lamplighter"])
+        self.assertEqual(hints.fill(page, w), "0 of 1")
         w = world(quests={DEBT: ("ready", 5)}, flags=["met_lamplighter"])
-        self.assertIn("3 of 3", say(w, TOWN)[1])
+        self.assertEqual(hints.fill(page, w), "1 of 1")
 
     def test_map_phase_and_negated_conditions(self):
         w = world(clock=23 * 60)
@@ -114,8 +117,9 @@ class HintStoryTests(unittest.TestCase):
             ("both taken, in town", world(flags=["met_elder", "met_lamplighter"], quests={DARK: ("active", 0), DEBT: ("active", 0)}),
              TOWN, "both_town", "east road"),
             ("both taken, on the moor", world(flags=["met_elder", "met_lamplighter"],
-                                               quests={DARK: ("active", 0), DEBT: ("active", 1)}), OUT, "both_moor", "1 of 3"),
-            ("three bandits beaten", world(flags=["met_elder", "met_lamplighter"], quests={DARK: ("active", 0), DEBT: ("active", 3)}),
+                                               quests={DARK: ("active", 0), DEBT: ("active", 0)}), OUT, "both_moor",
+             "leader waits by the bridge"),                                                   # RPG18b: was "0 of 1"
+            ("their leader beaten", world(flags=["met_elder", "met_lamplighter"], quests={DARK: ("active", 0), DEBT: ("active", 1)}),
              OUT, "debt_report", "Tell Pell"),
             ("the Warrens, floor 1", world(flags=["met_elder", "met_lamplighter", "warrens_entered"],
                                             quests={DARK: ("active", 0), DEBT: ("done", 3)}), W1, "warrens_stairs", "stairs down"),
@@ -211,10 +215,10 @@ class HintWindowTests(r14.WindowBase):
         w = f.game.save.world
         talk.set_flag(w, "met_elder")
         talk.set_flag(w, "met_lamplighter")
-        w.setdefault("quests", {})[DEBT] = {"state": "active", "count": 2}
+        w.setdefault("quests", {})[DEBT] = {"state": "active", "count": 0}      # Round RPG18: one bandit (was 2 of 3)
         self.on_map(g, OUT, "from_town")
         key(g, pygame.K_h)
-        self.assertIn("2 of 3", " ".join(self.hint_said(g)))
+        self.assertIn("leader waits by the bridge", " ".join(self.hint_said(g)))          # Round RPG18b: was "0 of 1"
 
     def test_the_buttons_and_the_box_fit_at_five_sizes(self):
         r8.new_game(None)

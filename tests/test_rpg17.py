@@ -206,8 +206,8 @@ class ClockTests(unittest.TestCase):
 class InnTests(unittest.TestCase):
     def test_by_day_the_innkeeper_offers_a_rest_until_dusk(self):
         c = talk.Conversation(talk.INNKEEPER, {"clock": at(1, 12)})
-        self.assertEqual(c.choice, (talk.REST_DUSK, talk.REST_NO))
-        self.assertEqual((c.rest_until, c.choice_default), ("dusk", 1))
+        self.assertEqual(c.choice, (talk.REST_DUSK, talk.REST_YES, talk.REST_NO))   # Round RPG18b (expected change): three answers
+        self.assertEqual((c.rest_until, c.choice_default), ("dusk", 2))
         self.assertEqual(c.answer(True), talk.inn()["rest"])
         self.assertTrue(c.rest)
 
@@ -305,13 +305,14 @@ class RareTests(r8.Base):
 # ---- 6: the Warrens ------------------------------------------------------------------------------------------------------------
 
 class WarrensTests(unittest.TestCase):
-    def test_the_warrens_rate_is_100_in_the_source_and_the_built_map(self):
+    def test_the_warrens_rate_is_200_in_the_source_and_the_built_map(self):
+        """Round RPG18 (expected change, Karl 24 Oct, Plan 2 of the 45-minute slice): 100 -> 200."""
         explore.forget_areas()
         for name in ("warrens_1", "warrens_2"):
             with self.subTest(map=name):
-                self.assertEqual(explore.load_area(name).fight_rate, 100)
+                self.assertEqual(explore.load_area(name).fight_rate, 200)
                 with open(os.path.join(BASE, "rpg", "maps", "src", name + ".txt"), encoding="utf-8") as fh:
-                    self.assertIn("encounter_rate: 100\n", fh.read())
+                    self.assertIn("encounter_rate: 200\n", fh.read())
         self.assertIsNone(explore.load_area(OUT).fight_rate)
 
 

@@ -15,6 +15,6 @@
  "rewards": {
   "regular": {"gold": [20, 40], "cards": 1},
   "dungeon": {"gold": [50, 80], "cards": 2},
-  "boss": {"gold": [200, 200], "cards": 3}
+  "boss": {"gold": [200, 200], "cards": 5}
  }
 }

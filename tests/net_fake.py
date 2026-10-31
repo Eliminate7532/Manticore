@@ -110,8 +110,9 @@ class SeatHost:
     welcome the `after` messages are sent. `lines` holds every later line from any connection; send() and hang_up() act on the
     newest connection; refuse_rejoins = "gone" makes rejoins fail as if the game had ended."""
 
-    def __init__(self, token="t0k3n-abc", grace=30, after=(), host_name="Karl"):
+    def __init__(self, token="t0k3n-abc", grace=30, after=(), host_name="Karl", welcome_extra=None):
         self.token, self.grace, self.after, self.host_name = token, grace, list(after), host_name
+        self.welcome_extra = dict(welcome_extra or {})        # round MP3a: e.g. {"gameFormat": "brawl", "houseRules": []}
         self.firsts, self.lines, self.conns = [], [], []
         self.refuse_rejoins = None
         self.accepting = True
@@ -153,6 +154,7 @@ class SeatHost:
                 conn.close()
                 return
             welcome = {"t": "welcome", "v": 2, "host": self.host_name, "seat": 2, "code": "hostcode"}
+            welcome.update(self.welcome_extra)
             if c == "watch":
                 welcome.update(watching=True, guest="Sam")
             else:

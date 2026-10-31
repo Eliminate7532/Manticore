@@ -10,6 +10,7 @@ A map is a Tiled map in rpg/maps/<name>.tmx, read by rpg.tmx. What this module t
                  else says where to stand.
       encounter  a rectangle (a point is one tile): property kind = an enemy kind's id (rpg/data/enemy_kinds.json), encounter =
                  regular | dungeon | boss (default regular), once = true/false (default: false for regular, true otherwise).
+                 Round RPG18b: title = the foe's own name, said instead of its kind's (the bandits' leader).
       exit       a rectangle: map = another map's name, spawn = a spawn's name on that map.
       town       a rectangle: town = a town's id (rpg/data/towns.json). The map also needs a spawn named after the town: where you
                  stand when you leave it, after a lost duel, and in a new game.
@@ -94,7 +95,9 @@ FOE_BOX = 0.75                        # a foe's box, as a share of a tile - my e
 ACTIVE_TILES = 12                     # Round RPG11: a foe moves only within this many tiles of the walker - my estimate
 LEASH_TILES = 4                       # Round RPG11: how far from its spot a foe wanders - my estimate
 INN_SPAWN = "inn"                     # Round RPG12: the spawn inside the start town's inn (an old save starts there)
-PERSON_TILES_PER_SECOND = 2.0         # Round RPG17: a person walking between their places - my estimate
+PERSON_TILES_PER_SECOND = 1.5         # Round RPG17: a person walking between their places; RPG18b: 1.5 (Karl 25 Oct, was 2.0)
+PERSON_WAIT_SECONDS = 3.0             # Round RPG18c (Karl 26 Oct): a walking person stopped beside you walks on after this long
+                                      # if you don't talk to them, stepping around you (never onto your tile)
 WALK_ROUTE_MOST = 400                 # ... the longest way a person walks (tiles); longer, they wait out of sight as before
 FACINGS = ("down", "left", "right", "up")
 BACKDROPS = ("cave", "dungeon", "forest")    # Round RPG13: Simple Battles' scenes (assets/rpg/simple_battles/scene_<name>.png)
@@ -128,7 +131,7 @@ class MapError(Exception):
 class Trigger:
     """Something on a map you can walk into."""
     __slots__ = ("kind", "obj", "box", "spot", "enemy", "encounter", "once", "to_map", "to_spawn", "town", "wander", "tab",
-                 "back", "when", "home", "rare")
+                 "back", "when", "home", "rare", "title")
 
     def __init__(self, kind, obj, box, spot, rare=None):
         self.kind, self.obj, self.box, self.spot = kind, obj, box, spot
@@ -142,6 +145,9 @@ class Trigger:
         self.when = conditions.parse_when(p.get("when")) + conditions.parse_when((rare or {}).get("when"))   # RPG16: there only
         # then (RPG16d: the rare's `when` read as the map's are, so a hand-edited 5 can't stop the map from loading)
         self.home = p.get("home") or None                     # Round RPG16: the encounter screen's "where it lives" line
+        title = p.get("title") if kind == "encounter" and not rare else None
+        self.title = title.strip() if isinstance(title, str) and title.strip() else None   # Round RPG18b: a foe's own name (the
+        # bandits' leader by the bridge: "Ember Bandit Leader") - the encounter screen, the fight question and the result say it
         self.to_map = p.get("map") if kind == "exit" else None
         self.to_spawn = p.get("spawn") if kind == "exit" else None
         self.town = p.get("town") if kind == "town" else None
@@ -264,6 +270,8 @@ class Area:
         # Round RPG15: the map's music and ambience (cue ids in sounds/cues.json; rpg_screens.AdventureFlow.soundscape)
         self.music = tiled.props.get("music") or None
         self.ambience = tiled.props.get("ambience") or None
+        # Round RPG-NM (Karl's night picks, 25 Oct 2026): the music of the clock's night phase on an outdoor map (None: `music` all day)
+        self.night_music = tiled.props.get("night_music") or None
         # Round RPG16: random events (rpg.events: event_rate = tiles walked between checks, on average)
         rate = tiled.props.get("event_rate")
         self.event_rate = rate if isinstance(rate, int) and not isinstance(rate, bool) and rate > rpg_events.EVENT_MIN_GAP else None
@@ -778,12 +786,22 @@ def _note_once(what, text):
 class Mover:
     """Round RPG17 (Karl 24 Oct, S1 "(b) people walk off and on, animated"): a person walking from one of their places to another
     (or in from a tile out of sight, or off to one) along `route`, a list of tiles, at PERSON_TILES_PER_SECOND. They wait while the
-    next tile is under the walker's feet. `pos` is where they are drawn, in tiles (the top left of the tile they would stand on)."""
+    next tile is under the walker's feet. `pos` is where they are drawn, in tiles (the top left of the tile they would stand on).
+    Round RPG18b (Karl 25 Oct, "walking people stop and talk"): a person you walk up to (the walker within STOP_REACH tiles of
+    theirs) stops on the next whole tile and can be talked to (Explorer.facing_npc); once talked to (talked) they carry on, and
+    stop again only if you walk away and up to them again.
+    Round RPG18c (Karl 26 Oct): stopped beside you and not talked to, they wait PERSON_WAIT_SECONDS (`waited`) and then walk on
+    (`walk_on`); when the next tile of their way is under your feet they take another way round you (step's `detour`)."""
+
+    STOP_REACH = 1                             # Round RPG18b: next to them (four directions) - my reading of "walk up to them"
 
     def __init__(self, person, group, route):
         self.person, self.group, self.route = person, group, [tuple(t) for t in route]
         self.pos = [float(self.route[0][0]), float(self.route[0][1])]
         self.leg = 1                           # the index of the tile walked to next
+        self.talked = False                    # Round RPG18b: talked to while you stand by them: they carry on
+        self.waited = 0.0                      # Round RPG18c: seconds stopped beside you without a talk
+        self.walk_on = False                   # Round RPG18c: waited long enough - they carry on (round you)
 
     @property
     def done(self):
@@ -792,10 +810,36 @@ class Mover:
     def tile(self):
         return (int(round(self.pos[0])), int(round(self.pos[1])))
 
-    def step(self, dt, feet=()):
-        left = PERSON_TILES_PER_SECOND * max(0.0, float(dt))
+    def at_tile(self):
+        """Round RPG18b: standing on a whole tile (the last one reached), not between two."""
+        last = self.route[self.leg - 1]
+        return self.pos[0] == float(last[0]) and self.pos[1] == float(last[1])
+
+    def near(self, feet):
+        """Round RPG18b: the walker (any tile under its feet) within STOP_REACH tiles of this person's tile."""
+        c, r = self.tile()
+        return any(abs(fc - c) + abs(fr - r) <= self.STOP_REACH for fc, fr in feet)
+
+    def step(self, dt, feet=(), detour=None):
+        """Move on by dt seconds. feet: the tiles under the walker. detour(start, end, avoid): Round RPG18c - a way of tiles from
+        start to end that keeps off `avoid` (explore.route round the walker), or None; without it they wait for you to go."""
+        feet = set(feet)
+        dt = max(0.0, float(dt))
+        if not self.near(feet):
+            self.talked = False                # walked away: walking up again stops them again
+            self.waited, self.walk_on = 0.0, False    # Round RPG18c: ... and the wait starts again
+        halt = bool(feet) and self.near(feet) and not self.talked and not self.walk_on
+        if halt and self.at_tile():
+            self.waited += dt                  # Round RPG18c: stopped beside you, not talked to
+            if self.waited >= PERSON_WAIT_SECONDS:
+                self.walk_on, halt = True, False
+        left = PERSON_TILES_PER_SECOND * dt
         while left > 1e-9 and not self.done:
+            if halt and self.at_tile():
+                break                          # Round RPG18b: you walked up to them - they stop here, to be talked to
             goal = self.route[self.leg]
+            if goal in feet and (self.walk_on or self.talked) and detour is not None and self._go_round(feet, detour):
+                continue                       # Round RPG18c: a new way round you (never onto your tile)
             if goal in feet:
                 break                          # never onto the walker: wait for it to go
             dx, dy = goal[0] - self.pos[0], goal[1] - self.pos[1]
@@ -809,6 +853,20 @@ class Mover:
                 self.pos[1] += left * (dy / d)
                 left = 0.0
         return self.done
+
+    def _go_round(self, feet, detour):
+        """Round RPG18c: from the last whole tile reached, a way to the same end that keeps off the walker's tiles. False (and the
+        way unchanged) when there is none - or the end itself is under the walker: they wait, as before."""
+        end = self.route[-1]
+        start = self.route[self.leg - 1]
+        if end in feet:
+            return False
+        way = detour(start, end, feet)
+        if not way or tuple(way[0]) != start or any(tuple(t) in feet for t in way):
+            return False
+        self.route = [start] + [tuple(t) for t in way]      # back to `start` first when between two tiles, then round
+        self.leg = 1
+        return True
 
     def drawn(self):
         """What rpg_map_view.draw_person needs: the marker's cell, and where to draw it (pos, in tiles)."""
@@ -1049,9 +1107,34 @@ class Explorer:
     def facing_npc(self):
         """Round RPG14: the person the walker faces - on the tile in front of it, or across a counter (Round RPG15b: a counter tile,
         never a wall - the slice walk found Marta, Wendel and Ysolde talked to through walls). None when nobody is there.
-        Round RPG16: only the people there at this hour."""
+        Round RPG16: only the people there at this hour. Round RPG18b: or a person walking between their places, standing on the
+        tile in front of it (they stop when you walk up to them - Mover)."""
         present = self.present_keys() if hasattr(self, "present_keys") else None    # a stand-in (tests): every marker
-        return facing_of(self.walker, self.area, present)[0]
+        nid = facing_of(self.walker, self.area, present)[0]
+        if nid is None and hasattr(self, "facing_mover"):           # a stand-in (tests) has no walking people
+            m = self.facing_mover()
+            if m is not None:
+                nid = m.person.get("id")
+        return nid
+
+    def facing_mover(self):
+        """Round RPG18b: the walking person (a Mover) on the tile in front of the walker (their tile, rounded), or None."""
+        movers = getattr(self, "movers", None)
+        if not movers or self.walker is None:
+            return None
+        w, a = self.walker, self.area
+        dx, dy = {"down": (0, 1), "up": (0, -1), "left": (-1, 0), "right": (1, 0)}[w.facing]
+        col, row = a.tile_at(w.x + dx * (w.hw + a.tw / 2), w.y + dy * (w.hh + a.th / 2))
+        for m in movers.values():
+            if m.tile() == (col, row) and m.person.get("id"):
+                return m
+        return None
+
+    def talked_to(self, nid):
+        """Round RPG18b: a talk with person nid began - if they are walking, they carry on once it ends (Mover.talked)."""
+        for m in (getattr(self, "movers", None) or {}).values():
+            if m.person.get("id") == nid:
+                m.talked = True
 
     def facing_shop(self):
         """Round RPG15b: the shop (a town trigger) on the counter between the walker and the person it faces, or None. Talking to a
@@ -1198,11 +1281,20 @@ class Explorer:
         feet = self._feet()
         done = []
         for g, m in list(self.movers.items()):
-            if m.step(dt, feet):
+            if m.step(dt, feet, detour=self._detour):
                 del self.movers[g]
                 self.presence.arrived(g)
                 done.append(g)
         return done
+
+    def _detour(self, start, end, avoid):
+        """Round RPG18c: Mover's way round the walker - route() on this map with the tiles in `avoid` as walls."""
+        a, avoid = self.area, set(avoid)
+
+        class Round:
+            def blocked(self, c, r):
+                return (c, r) in avoid or a.blocked(c, r)
+        return route(Round(), start, end)
 
     def walking_people(self):
         """Round RPG17: the people walking now, as rpg_map_view.draw_person draws them (their marker with "pos")."""

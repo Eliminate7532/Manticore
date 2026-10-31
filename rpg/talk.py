@@ -7,7 +7,7 @@ byte - their SHA-256 match the lane's), placeholders for Karl to edit:
   npcs.json     {"version": 1, "npcs": {id: {"name", "lines": [{"when": [conditions], "pages": [...]}, ...]}}} - the first entry
                 whose conditions all hold is said; the last has none.
   quests.json   {"version": 1, "quests": {id: {"title", "giver", "goal", "offer", "yes", "no", "accepted", "declined",
-                "progress", "ready", "done", "reward", "journal"}}}; goal {"beat": kind, "count": n} or {"flag": name}; reward
+                "progress", "ready", "done", "reward", "journal"}}}; goal {"beat": kind, "count": n[, "spot": "<map>#<name>"]} or {"flag": name}; reward
                 {"gold": n} / {"card": "rare_from_band"} / {"flag": name}, any of them.
   inn.json      {"version": 1, "rest": [pages], "woke": [pages]}.
 Conditions: rpg.conditions' words - "flag:<name>", "quest:<id>=none|active|ready|done" and (Round RPG16) "phase:<p>[|<p>]",
@@ -16,7 +16,8 @@ each with "!" for "not".
 What the save keeps (save.world): "flags" [names]; "quests" {id: {"state": "active" | "ready" | "done", "count": n}} (a quest not
 there is "none"); "inn" {"map", "spawn"} - where a lost duel wakes you (Round RPG14: the inn you last rested at).
 Flags the game sets: "met_<npc id>" (after the first talk), "warrens_entered" (rpg_screens, the first step into the Warrens),
-"grave_priest_beaten" (on_duel_won: the boss duel won), and any quest reward's flag.
+"grave_priest_beaten" (on_duel_won: the boss duel won), any quest reward's flag, and a goal's "others_flag" (Round RPG18c: on_duel_won,
+a duel of the goal's kind won away from the goal's spot while the quest is active).
 
 Who says what (Conversation):
   - A quest giver whose quest isn't done: the first-meeting words (only the first time), then the quest's offer (with its Yes / No
@@ -26,7 +27,8 @@ Who says what (Conversation):
   - Everyone else, and a giver once the quest is done: their first matching entry.
   - The innkeeper (INNKEEPER): her words, then "Sleep until morning" / "Not now" (Round RPG15c); sleeping says the inn's "rest"
     pages, the clock goes on to 07:00, the game is saved and the inn becomes your return point. Round RPG17 (Karl 24 Oct Q5): by
-    day the choice is "Rest until dusk" / "Not now" instead - the clock goes on to 18:00, the rest the same.
+    day the choice is "Rest until dusk" / "Not now" instead - the clock goes on to 18:00, the rest the same. Round RPG18b (Karl 25
+    Oct): by day three answers - "Rest until dusk" / "Sleep until morning" / "Not now" ("Not now" the default).
   - The duel hall's keeper (HALL_KEEPER), once the boss is beaten: his words, then "A rematch?" - Yes starts a duel against one of
     the kinds you have beaten (the encounter screen; rpg_screens).
 """
@@ -152,16 +154,39 @@ def refresh(world, all_quests=None):
             _quest(world, qid)["state"] = "ready"
 
 
-def on_duel_won(world, kind, encounter, all_quests=None):
-    """A duel won: the boss flag, and one more for every active quest that counts this kind."""
+def counts_for(goal, kind, spot=None):
+    """Round RPG18b: a won duel against `kind` at map spot `spot` counts for a "beat" goal - the kind is the goal's, and a goal that
+    names a spot ("spot": "<map>#<name>", Karl 25 Oct: only the bandits' leader by the bridge counts for Pell) only that spot."""
+    if goal.get("beat") != kind:
+        return False
+    want = goal.get("spot")
+    return not want or want == spot
+
+
+def on_duel_won(world, kind, encounter, all_quests=None, spot=None):
+    """A duel won: the boss flag, and one more for every active quest that counts this kind (Round RPG18b: and, for a goal that
+    names a spot, only a duel at that spot - spot is the duel's map spot, rpg.duel's pending_duel["spot"])."""
     if kind == BOSS_KIND and encounter == "boss":
         set_flag(world, BOSS_FLAG)
     all_quests = all_quests if all_quests is not None else quests()
     for qid, q in all_quests.items():
         goal = q.get("goal") or {}
-        if quest_state(world, qid) == "active" and goal.get("beat") == kind:
+        if quest_state(world, qid) == "active" and counts_for(goal, kind, spot):
             _quest(world, qid)["count"] = int(_quest(world, qid).get("count", 0)) + 1
+        elif quest_state(world, qid) == "active" and others_flee(goal, kind, spot):
+            set_flag(world, goal["others_flag"])
     refresh(world, all_quests)
+
+
+def others_flee(goal, kind, spot):
+    """Round RPG18c (Karl 26 Oct: "the other bandits flee after one win"): a goal that names a spot and an "others_flag" sets that
+    flag when a duel of its kind is won at another spot on the same map while the quest is active (a random duel, with no spot,
+    doesn't count - my reading) - the map's other foes of that kind carry
+    `!flag:<it>` in their `when`, so after one such win they leave (the goal's own foe stays until he is beaten)."""
+    want = goal.get("spot")
+    return (goal.get("beat") == kind and isinstance(want, str) and bool(want) and isinstance(spot, str) and spot != want
+            and spot.partition("#")[0] == want.partition("#")[0]          # on the goal's own map (not a random duel)
+            and isinstance(goal.get("others_flag"), str) and bool(goal.get("others_flag")))
 
 
 def journal(world, all_quests=None):
@@ -198,6 +223,7 @@ class Conversation:
                       R3: before, every word with her was a night's sleep, so a talk at 07:05 slept the whole day away): the
                       clock goes on to the morning, the game is saved and the inn is the return point
         choice_default the answer Enter picks (0 the first): the innkeeper's is Sleep at dusk, night and dawn, Not now by day
+                      (Round RPG18b: by day the choice has three answers, so Not now is 2)
         rematch       set by answer(True) when the hall's keeper's rematch is taken
     The save's world is changed as the talk goes: "met_<id>" at once, a quest taken on Yes, a ready quest done (its reward given)."""
 
@@ -244,8 +270,9 @@ class Conversation:
             self._rest = list(inn_words.get("rest") or ())
             if clock.phase(clock.now(world)) in SLEEPY_PHASES:
                 self.choice, self.choice_default, self.rest_until = (REST_YES, REST_NO), 0, "morning"
-            else:                                                # Round RPG17: by day, a way to wait for night
-                self.choice, self.choice_default, self.rest_until = (REST_DUSK, REST_NO), 1, "dusk"
+            else:                                                # Round RPG17: by day, a way to wait for night; Round RPG18b
+                # (Karl 25 Oct): and "Sleep until morning" by day too - three answers, "Not now" still the default
+                self.choice, self.choice_default, self.rest_until = (REST_DUSK, REST_YES, REST_NO), 2, "dusk"
         if npc_id == HALL_KEEPER and BOSS_FLAG in flags(world):
             self.pages.append(REMATCH_PAGE)
             self.choice = (REMATCH_YES, REMATCH_NO)
@@ -253,8 +280,10 @@ class Conversation:
         if not self.pages:
             self.pages = ["..."]
 
-    def answer(self, yes):
-        """The choice answered: the pages said next."""
+    def answer(self, yes, picked=None):
+        """The choice answered: the pages said next. picked (Round RPG18b): the index of the answer given, for a choice of three
+        (the innkeeper by day: 0 Rest until dusk, 1 Sleep until morning, 2 Not now); None - the first answer when yes, else the
+        last."""
         if self._quest is not None:
             qid, q = self._quest
             self._quest = None
@@ -266,8 +295,15 @@ class Conversation:
             return list(q.get("declined") or ())
         if self._rest is not None:                     # Round RPG15c: the innkeeper's question
             pages, self._rest = self._rest, None
-            self.rest = bool(yes)
-            return pages if yes else []
+            n = len(self.choice or ())
+            if not (isinstance(picked, int) and not isinstance(picked, bool) and 0 <= picked < n):
+                picked = 0 if yes else n - 1
+            self.rest = picked < n - 1                 # the last answer is "Not now"
+            if self.rest and self.choice[picked] == REST_YES:
+                self.rest_until = "morning"            # Round RPG18b: "Sleep until morning" by day
+            elif self.rest and self.choice[picked] == REST_DUSK:
+                self.rest_until = "dusk"
+            return pages if self.rest else []
         if self.choice and self.choice[0] == REMATCH_YES:
             self.rematch = bool(yes)
             return []
@@ -289,6 +325,7 @@ def check(people=None, all_quests=None, inn_words=None, kinds=None, map_npcs=Non
     inn_words = inn_words if inn_words is not None else inn()
     out = []
     known_flags = set(GAME_FLAGS) | {f"met_{n}" for n in people} | {(q.get("reward") or {}).get("flag") for q in all_quests.values()}
+    known_flags |= {(q.get("goal") or {}).get("others_flag") for q in all_quests.values()} - {None}   # Round RPG18c
     from rpg import events                              # Round RPG16: an event can set a flag too (rpg/data/events.json)
     known_flags |= events.flags_set()
 

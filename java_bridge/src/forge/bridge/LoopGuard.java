@@ -13,6 +13,7 @@ import forge.ai.LobbyPlayerAi;
 import forge.ai.PlayerControllerAi;
 import forge.game.Game;
 import forge.game.card.Card;
+import forge.game.combat.Combat;
 import forge.game.player.Player;
 import forge.game.player.PlayerController;
 import forge.game.spellability.SpellAbility;
@@ -130,6 +131,12 @@ final class LoopGuard {
                 }
             }
             return chosen;
+        }
+
+        /** Round AI-ATTACK: the attack declaration with a time budget (see AttackCache.declareWithBudget). */
+        @Override
+        public void declareAttackers(Player attacker, Combat combat) {
+            AttackCache.declareWithBudget(attacker, combat, () -> super.declareAttackers(attacker, combat));
         }
 
         int uses(SpellAbility sa) {

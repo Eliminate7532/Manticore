@@ -22,6 +22,11 @@ The decks: draft_deck.build for every seat - the AIs avoiding the cards Forge's 
 ("# format: commander_draft", formats.py) with a "# draft: <pod id>" line naming this pod (the deck builder, CD4, will need the
 pool back).
 
+Round CD5 (online drafts): a pod's seats may have names and be "remote" (a friend on another PC, draft_core's "a seat may later be
+a person on another PC") - Pod.new(seats=[(name, kind)]); the AI drafters still pick at once, a remote seat waits for its friend
+(online_draft.HostDraft drives it). An online pod's state has "online": {...} and is never offered by unfinished() for an offline
+draft (unfinished(online=True) finds it for the host's Continue it).
+
 Round CD3: a pod has a style - "commander" (above) or "classic" (Karl, 12 Oct 2026: the classic stock cubes; 3 packs of 15, one card
 a pick - draft_core.SHAPES). A classic pod's decks are draft_deck.build_classic's 40-card decks with the cube's own basic lands
 (the pod keeps the cube's basics board), saved as Draft decks ("# format: draft"); a cube with a house rule (Turbo Cube's emblem)
@@ -92,7 +97,7 @@ class Pod:
     """One draft: its cards, its Draft, and where it is kept. Make one with Pod.new or Pod.load."""
 
     def __init__(self, folder, cube_meta, cards, flagged, missing, draft, created, stage="drafting", deck_ids=None,
-                 style="commander", basics=(), rules=()):
+                 style="commander", basics=(), rules=(), online=None):
         self.folder = folder
         self.id = os.path.basename(folder)
         self.cube = dict(cube_meta)                  # {"id", "name", "owner"}
@@ -106,12 +111,13 @@ class Pod:
         self.created = created
         self.stage = stage
         self.deck_ids = list(deck_ids or [])
+        self.online = dict(online) if online else None    # round CD5: {"friends": [[draft seat, name]], ...} for an online draft
         self._z = None
         self._chooser = None
 
     # ---- making and keeping ---------------------------------------------------------------------------------------------
     @classmethod
-    def new(cls, cube, check, seed=None, root=None, now=None, style=None):
+    def new(cls, cube, check, seed=None, root=None, now=None, style=None, seats=None, online=None):
         """A new draft of this cube (cube_source.Cube) with these playable cards (cube_source.ForgeCheck). The AIs make their
         first picks at once. Raises draft_core.DraftError when the cube is too small (its message says so in numbers).
         Round CD3: style "commander" or "classic" (default: the cube's own - a stock cube's, or guess_style's)."""
@@ -120,7 +126,8 @@ class Pod:
         if style not in cs.STYLES:
             raise dc.DraftError(f"There is no draft style called {style!r}.")
         seed = seed if seed is not None else random.SystemRandom().randrange(1, 2 ** 31)
-        seats = [dc.Seat(n, "human" if i == 0 else "ai") for i, n in enumerate(SEAT_NAMES)]
+        seats = ([dc.Seat(str(n), str(k)) for n, k in seats] if seats else       # round CD5: named seats, "remote" friends
+                 [dc.Seat(n, "human" if i == 0 else "ai") for i, n in enumerate(SEAT_NAMES)])
         packs, pack_size, picks = dc.shape(style)
         draft = dc.Draft(len(cards), seats, seed, packs, pack_size, picks)
         now = time.time() if now is None else now
@@ -131,7 +138,8 @@ class Pod:
             folder, n = os.path.join(root, f"{base}_{n}"), n + 1
         os.makedirs(folder)
         pod = cls(folder, {"id": cube.id, "name": cube.name or cube.id, "owner": cube.owner or ""}, cards, check.ai_flagged,
-                  check.missing, draft, now, style=style, basics=getattr(cube, "basics", ()), rules=getattr(cube, "rules", ()))
+                  check.missing, draft, now, style=style, basics=getattr(cube, "basics", ()), rules=getattr(cube, "rules", ()),
+                  online=online)
         _write_json(os.path.join(folder, CARDS_FILE), {"v": POD_VERSION, "fields": list(cs.CubeCard._fields),
                                                        "cards": [list(c) for c in cards]}, gz=True)
         pod.run_ai()
@@ -143,6 +151,7 @@ class Pod:
                     {"v": POD_VERSION, "cube": self.cube, "flagged": sorted(self.flagged), "missing": list(self.missing),
                      "created": self.created, "stage": self.stage, "deck_ids": self.deck_ids,
                      "style": self.style, "basics": list(self.basics), "rules": list(self.rules),      # round CD3
+                     **({"online": self.online} if self.online else {}),                          # round CD5
                      "draft": self.draft.to_dict()})
 
     @classmethod
@@ -166,7 +175,8 @@ class Pod:
             raise PodError("The saved draft's cards don't match its picks.")
         return cls(folder, state.get("cube") or {}, cards, state.get("flagged"), state.get("missing"), draft,
                    state.get("created") or 0, state.get("stage") or "drafting", state.get("deck_ids"),
-                   style=state.get("style") or "commander", basics=state.get("basics") or (), rules=state.get("rules") or ())
+                   style=state.get("style") or "commander", basics=state.get("basics") or (), rules=state.get("rules") or (),
+                   online=state.get("online"))
 
     # ---- the draft --------------------------------------------------------------------------------------------------------
     @property
@@ -197,9 +207,17 @@ class Pod:
             self._chooser = da.chooser(self.cards, self.draft.seed, self.z, self.style, colours)
         return self._chooser
 
-    def run_ai(self):
-        """The AI drafters pick while a pack is in front of them (until it is your turn, or the draft is over)."""
-        return dc.run_ai(self.draft, self.chooser)
+    def run_ai(self, seats=None):
+        """The AI drafters pick while a pack is in front of them (until it is your turn, or the draft is over). Round CD5: `seats`
+        names the seats the AI picks for (an online draft adds a friend's seat the host gave to the AI)."""
+        return dc.run_ai(self.draft, self.chooser, seats=seats)
+
+    def seat_name(self, seat):
+        """Round CD5: a seat's name - "You", "AI 1".. offline; the people's names in an online draft."""
+        try:
+            return self.draft.seats[seat].name
+        except (IndexError, AttributeError):
+            return SEAT_NAMES[seat] if 0 <= seat < len(SEAT_NAMES) else f"Seat {seat + 1}"
 
     @property
     def done(self):
@@ -218,7 +236,7 @@ class Pod:
     def passing(self):
         """(direction word, the seat your pack goes to): ("left", "AI 1") in packs 1 and 3, ("right", "AI 3") in pack 2."""
         d = self.draft.direction()
-        return ("left" if d > 0 else "right"), SEAT_NAMES[self.draft.next_seat(0)]
+        return ("left" if d > 0 else "right"), self.seat_name(self.draft.next_seat(0))
 
     def pick(self, cards):
         """You take these cards (ints) from your pack; the AIs pick on; the pod is saved. Raises draft_core.DraftError."""
@@ -261,9 +279,9 @@ class Pod:
         """"2026-10-10 draft - You - The Scarab God" / "2026-10-10 draft - AI 1 - Urza"."""
         day = datetime.date.fromtimestamp(self.created or time.time()).isoformat()
         if self.classic:                                  # round CD3: "2026-10-12 draft - AI 2 - Blue-Red"
-            return f"{day} draft - {SEAT_NAMES[seat]} - {dd.colour_name(deck.identity)}"
+            return f"{day} draft - {self.seat_name(seat)} - {dd.colour_name(deck.identity)}"
         names = [self.cards[i].name.split(",")[0].split(" // ")[0] for i in deck.commanders]
-        return f"{day} draft - {SEAT_NAMES[seat]} - {' + '.join(names) or 'no commander'}"
+        return f"{day} draft - {self.seat_name(seat)} - {' + '.join(names) or 'no commander'}"
 
     def deck_text(self, seat, deck, by_hand=False):
         """The deck file: the format and draft lines, a note, then Commander and Deck sections (Moxfield's layout). Round CD4:
@@ -274,7 +292,7 @@ class Pod:
             counts[n] = counts.get(n, 0) + 1
         day = datetime.date.fromtimestamp(self.created or time.time()).strftime("%d %b %Y").lstrip("0")
         cube = self.cube.get("name") or self.cube.get("id")
-        who = "you" if seat == 0 else SEAT_NAMES[seat]
+        who = "you" if seat == 0 else self.seat_name(seat)
         if self.classic:                                  # round CD3: a 40-card Draft deck, no Commander section
             lines = [formats.text_line(CLASSIC_FORMAT), f"# draft: {self.id}"]
             if self.rules:
@@ -328,8 +346,9 @@ class Pod:
         self.save()
 
 
-def unfinished(root=None):
-    """The newest pod whose decks aren't saved yet (and that can be read), or None."""
+def unfinished(root=None, online=False):
+    """The newest pod whose decks aren't saved yet (and that can be read), or None. Round CD5: an online draft's pod only with
+    online=True (an offline draft never continues an online one, and the other way round)."""
     root = root or pods_dir()
     try:
         names = sorted((n for n in os.listdir(root) if os.path.isfile(os.path.join(root, n, STATE_FILE))), reverse=True)
@@ -338,10 +357,11 @@ def unfinished(root=None):
     for n in names:
         try:
             with open(os.path.join(root, n, STATE_FILE), "rb") as f:
-                stage = json.loads(f.read()).get("stage")
-        except (OSError, ValueError):
+                state = json.loads(f.read())
+            stage = state.get("stage")
+        except (OSError, ValueError, AttributeError):
             continue
-        if stage in ("saved", "discarded"):
+        if stage in ("saved", "discarded") or bool(state.get("online")) != bool(online):
             continue
         try:
             return Pod.load(os.path.join(root, n))

@@ -55,7 +55,7 @@ class FormatTableTests(unittest.TestCase):
                          (25, 30, 30))                                    # CR 903.12f
         self.assertFalse(b.commander_damage)                              # 903.12h
         self.assertTrue(b.planeswalker_commanders)                        # 903.12c
-        self.assertFalse(b.online)
+        self.assertTrue(b.online)                                       # round MP3a: online too
         self.assertEqual(formats.starting_life("commander", 4), 40)
         self.assertEqual(formats.life_note("commander", 2), "")
         self.assertEqual(formats.life_note("brawl", 2), "25 life each.")
@@ -294,7 +294,9 @@ class EngineTests(unittest.TestCase):
         with open(os.path.join(src, "BridgeGui.java"), encoding="utf-8") as f:
             self.assertIn("hasAppliedVariant(Main.variant())", f.read())
         with open(os.path.join(src, "NetHost.java"), encoding="utf-8") as f:
-            self.assertIn("GameType.Commander", f.read())          # online games stay Commander (MP2's file is not touched)
+            net = f.read()                                         # round MP3a: online games play the host's format, as Main
+        self.assertIn("GameType variant = Main.variant();", net)
+        self.assertNotRegex(net, r"static\s+(final\s+)?GameType\s+\w+\s*=")
 
     def test_the_journal_and_the_bug_report_name_a_brawl_game(self):
         j = gjournal.GameJournal(self.tmp)
@@ -403,15 +405,16 @@ class DeckScreenTests(tds.TempDecks):
         self.assertEqual(msg, "The opponent's deck is a Commander deck, and this is a Brawl game.")
         self.assertEqual(self.launcher.calls, [])
 
-    def test_online_play_stays_commander(self):
+    def test_online_play_is_open_to_this_format(self):
+        # Round MP3a (Karl, 27 Oct 2026: "Add brawl, standard, and draft to online play"): was test_online_play_stays_commander.
         gui = self.gui()
         gui.open_host = mock.Mock(return_value=None)
         click(gui, self.button_point(gui, "fmt_brawl"))
         gui.menu.press(gui, "host_online")
-        gui.open_host.assert_not_called()
-        self.assertIn("Online games are Commander only for now", gui.menu.message[0])
+        gui.open_host.assert_called_once()
         entries = {e.name: e for e in lib.list_decks(*self.dirs)}
-        self.assertIn("Commander only", ft_online_problem(gui, entries["Goblin Union Meeting (Goblins)"]))
+        self.assertNotIn("Commander only", ft_online_problem(gui, entries["Goblin Union Meeting (Goblins)"]))
+        self.assertNotIn("online yet", ft_online_problem(gui, entries["Goblin Union Meeting (Goblins)"]))
 
     def test_the_import_window_saves_the_chosen_format(self):
         gui = self.gui()

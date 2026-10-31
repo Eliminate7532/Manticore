@@ -153,7 +153,8 @@ LEGEND = {
     "R": "grave", "r": "grave2", "!": "candles", "i": "brazier", "j": "bones", "*": "flowers", '"': "tufts", "p": "signpost",
     "^": "cobweb",
 }
-SPACED = ("name", "home")             # Round RPG16: "_" in these words is a space (home= is the encounter screen's line)
+SPACED = ("name", "home", "title")    # Round RPG16: "_" in these words is a space (home= is the encounter screen's line);
+                                      # RPG18b: title= a foe's own name (the bandits' leader)
 MARKER_KINDS = ("spawn", "exit", "town", "encounter", "npc", "platino", "light", "rare")   # Round RPG16: "rare"
 
 # the wall / fence joins: (north, south, east, west) -> piece in the 6 x 3 block (DawnLike's legend, Wall.png and Fence.png rows 0-2)
@@ -563,6 +564,16 @@ def read_ids(path):
     return out
 
 
+def _gained_conditions(old_when, new_when):
+    """Round RPG18c: a `when` that only GAINED conditions (every old one still there; the road's two Ember Bandits gained
+    !flag:road_bandits_fled) - the object keeps its id, as RPG16's rule keeps one that gained a property."""
+    if not isinstance(old_when, str) or not isinstance(new_when, str):
+        return False
+    old_c = {c.strip() for c in old_when.split(",") if c.strip()}
+    new_c = {c.strip() for c in new_when.split(",") if c.strip()}
+    return old_c < new_c
+
+
 def assign_ids(objects, old=()):
     """Round RPG15c (review R5): an id for each object. A saved spot is "<map>#<object id>" (the beaten and cleared foes), and ids
     used to be the place in reading order, so a marker added above an old one renumbered every object after it (RPG16's night
@@ -583,6 +594,7 @@ def assign_ids(objects, old=()):
             taken.add(oid)
     # Round RPG16: an object that only GAINED properties (a `when`, a `home`) where it stood keeps its id too - the same kind and
     # name on the same spot, every old property unchanged (the zealot by day, Pell and Hesk by day, the gate guard off at night).
+    # Round RPG18c: or its `when` only gained conditions (_gained_conditions).
     for i, (kind, props, (x, y, _w, _h), _key) in enumerate(objects):
         if ids[i] is not None:
             continue
@@ -591,7 +603,7 @@ def assign_ids(objects, old=()):
         for oid, (okind, oname, oprops), (ox, oy) in old:
             if oid in taken or (okind, oname, ox, oy) != (kind, name, x, y):
                 continue
-            if all(now.get(k) == v for k, v in oprops):
+            if all(now.get(k) == v or (k == "when" and _gained_conditions(v, now.get(k))) for k, v in oprops):
                 ids[i] = oid
                 taken.add(oid)
                 break

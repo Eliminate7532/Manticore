@@ -164,6 +164,7 @@ public final class PlanCache {
 
     /** The kept answer for this creature in this scope; null = work it out. */
     public static Boolean regenerationKnown(Player ai, Card card) {
+        AttackCache.checkBudget();                     // round AI-ATTACK: the attack declaration's budget, see there
         Scope s = SCOPE.get();
         if (s == null) {
             return null;

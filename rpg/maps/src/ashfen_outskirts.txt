@@ -4,6 +4,7 @@ backdrop: forest
 darkness: 0.5
 lantern: 3.5
 music: music.rpg_outskirts
+night_music: music.rpg_outskirts_night
 ambience: amb.graveyard
 outdoor: true
 dungeon: false
@@ -17,7 +18,8 @@ W = town town=town_2 on =
 7 = spawn town_2 on =
 Z = town town=town_3 on =
 8 = spawn town_3 on =
-E = encounter kind=ember_bandit on =
+E = encounter kind=ember_bandit when=!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done,!flag:road_bandits_fled on =
+L = encounter kind=ember_bandit title=Ember_Bandit_Leader when=!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done on =
 O = encounter kind=grave_robber on .
 F = encounter kind=thornback on :
 Y = encounter kind=zealot when=!phase:night on .
@@ -49,7 +51,7 @@ TT......................."..~~...............==...........TT
 TT..........................~~....S..........==........t..TT
 TT............t.............~~........t......==...........TT
 TT........p.................~~...............==p..........TT
-X=1=====================E===vv===========================7=W
+X=1=====================L===vv===========================7=W
 X===========================vv==========E==================W
 TT..........==..............~~."..................p==.....TT
 TT........".=E........t.....~~..........t..........==.....TT

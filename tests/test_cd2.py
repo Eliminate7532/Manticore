@@ -85,7 +85,7 @@ class FormatTests(unittest.TestCase):
         self.assertEqual(formats.engine("commander_draft"), "commander")         # 903.13g: Forge plays it as Commander
         # Round CDFIX1: a Commander .dck plus one line Forge skips, so a resumed game knows it is a draft (was: [])
         self.assertEqual(formats.dck_lines("commander_draft"), ["Manticore Format=commander_draft"])
-        self.assertFalse(f.online)                                                 # online drafting is CD5
+        self.assertTrue(f.online)          # round MP3a: a drafted deck plays online (drafting together online is CD5)
         self.assertTrue(formats.any_copies("commander_draft"))
         self.assertFalse(formats.any_copies("commander"))
         self.assertTrue(formats.drafted("commander_draft"))

@@ -184,4 +184,7 @@ def describe(meta):
     who_ = who(meta)
     when = time.strftime("%d %b %H:%M", time.localtime(meta.get("saved") or meta.get("started") or 0)).lstrip("0")
     turn = meta.get("turn")
-    return "%swith %s (%s)" % ("turn %s, " % turn if turn else "", who_, when)
+    import formats                                        # round MP3a: "Brawl, turn 12, with Sam" (Commander says nothing new)
+    fmt = formats.normal(meta.get("format"))
+    kind = "" if fmt == formats.DEFAULT else formats.name(fmt) + ", "
+    return "%s%swith %s (%s)" % (kind, "turn %s, " % turn if turn else "", who_, when)

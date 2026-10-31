@@ -35,7 +35,8 @@ import time
 DEFAULT_PORT = 36800                 # Forge's own network play uses 36743; stay clear of it
 DEFAULT_RELAY_PORT = 36900           # round MP2d: relay/manticore_relay.py's default
 INVITE_PREFIX = "MANT1-"
-PROTOCOL_V = 2                       # round MP2: rejoin, watch, heartbeats, leave (NetHost.PROTOCOL_V)
+PROTOCOL_V = 3                       # round MP2: rejoin, watch, heartbeats, leave (NetHost.PROTOCOL_V)
+#                                      round MP3a: 3 - the game's format and house rules in the welcome and the invite
 DECK_MAX_BYTES = 200 * 1024          # the host refuses bigger decks (NetHost.DECK_MAX)
 REPLY_MAX_BYTES = 64 * 1024          # the host's answer to the hello is one short line
 CONNECT_SECONDS = 10
@@ -84,6 +85,8 @@ JOIN_MESSAGES = {
     "relay_version": "The relay is a different version from this game ({text}).",
     "relay_refused": "The relay turned the connection away ({text}).",
     "unknown": "Could not join: {text}",
+    # round CD5: drafting together
+    "draft_full": "{text}",
 }
 
 UPNP_LINES = {
@@ -223,11 +226,19 @@ def tailscale_address():
 
 
 # ---- invite codes ----------------------------------------------------------------------------------------------------
-def make_invite(address, port, fingerprint, password, room=None):
-    """Round MP2d: with `room`, address and port are the relay's (relay/manticore_relay.py) and room is the host's room there."""
+def make_invite(address, port, fingerprint, password, room=None, fmt=None, rules=(), draft=False):
+    """Round MP2d: with `room`, address and port are the relay's (relay/manticore_relay.py) and room is the host's room there.
+    Round MP3a: `fmt` (the game's format, formats.py key) and `rules` (house_rules keys) let the guest's table check its deck
+    before it connects. A Commander game with no rules writes neither, so its code is what it was."""
     data = {"a": address, "p": int(port), "f": fingerprint, "w": password}
     if room:
         data["m"] = room
+    if fmt and fmt != "commander":
+        data["g"] = fmt
+    if rules:
+        data["r"] = list(rules)
+    if draft:
+        data["d"] = 1                                       # round CD5: the host is drafting first (no deck to choose)
     body = json.dumps(data, separators=(",", ":"))
     return INVITE_PREFIX + base64.urlsafe_b64encode(body.encode("utf-8")).decode("ascii").rstrip("=")
 
@@ -262,8 +273,15 @@ def read_invite(code):
     if room is not None and (not isinstance(room, str) or not re.fullmatch(r"[A-Za-z0-9_-]{6,40}", room)):
         raise InviteError("The invite code is damaged (its relay room is wrong). Copy it again, all of it.")
     inv = {"address": address.strip(), "port": port, "fingerprint": fp, "password": pw}
+    import formats                                          # round MP3a: the game's format (none = Commander, as before 3)
+    g = data.get("g")
+    inv["format"] = formats.normal(g) if isinstance(g, str) else formats.DEFAULT
+    r = data.get("r")
+    inv["rules"] = tuple(x for x in r if isinstance(x, str)) if isinstance(r, list) else ()
     if room:
         inv["room"] = room                                  # round MP2d: through a relay
+    if data.get("d") == 1:
+        inv["draft"] = True                                 # round CD5: the host is drafting first (absent for a game)
     return inv
 
 
@@ -480,9 +498,21 @@ def close_socket(sock):
         pass
 
 
-def hello_line(name, password, code, deck_name, dck_text):
+def hello_line(name, password, code, deck_name, dck_text, fmt=None):
+    """Round MP3a: `fmt` is the deck's format, for the connection log only - NetHost reads the format from the .dck text."""
+    deck = {"name": deck_name or "Deck", "dck": dck_text or ""}
+    if fmt:
+        deck["format"] = fmt
+    # round CD5: "drafts" says this copy can join a draft (a host that is drafting takes this hello as a draft join, without
+    # the deck - a copy from before online drafts is told to update instead of waiting for ever)
     return json.dumps({"c": "hello", "v": PROTOCOL_V, "name": clean_name(name) or "Guest", "password": password,
-                       "code": code or "", "deck": {"name": deck_name or "Deck", "dck": dck_text or ""}}) + "\n"
+                       "code": code or "", "deck": deck, "drafts": True}) + "\n"
+
+
+def draft_hello_line(name, password, code):
+    """Round CD5: joining a friend's draft - a hello with no deck (the deck is drafted, and sent at the end, checked by the host)."""
+    return json.dumps({"c": "hello", "v": PROTOCOL_V, "name": clean_name(name) or "Guest", "password": password,
+                       "code": code or "", "draft": True}) + "\n"
 
 
 def rejoin_line(token):

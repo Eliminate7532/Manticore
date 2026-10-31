@@ -339,6 +339,17 @@ def deck_meta(entry):
     return {"id": getattr(entry, "id", None), "name": getattr(entry, "name", "") or ""}
 
 
+def od_names(names):
+    """Round CD5: "Sam", "Sam and Ann", "Sam, Ann and Lee"."""
+    names = list(names)
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1] if names else ""
+
+
+def flow_vs(table, my_commanders):
+    """Round CD5: the VS screen after an online draft - mine now, everyone's from the first snapshot (track_online fills them)."""
+    return flow.VsShow(table.online_vs_seats(my_commanders))
+
+
 def online_stats_id(folder):
     """Patch 44: a hosted game's stats id is its save folder's, so a game continued another day is the same game."""
     return "online-" + os.path.basename(os.path.normpath(folder)) if folder else gstats.new_id()
@@ -890,6 +901,8 @@ class ForgeTable:
         self.current_printings = []         # round ALT1: the printings of the game on screen (Restart plays them again)
         self._art_refused_said = set()      # round ALT1: my_art pictures already toasted as refused
         self.hosting_wait = None            # Round MP1: online_screens.HostWait while hosting and no friend has joined yet
+        self.online_draft = None            # Round CD5: the online draft's window (online_draft_screens.OnlineDraftFlow)
+        self.online_draft_pod = None        # ... and, on the host, its pod (draft_pod.Pod)
         self.invite_code = None             # Round MP2: the hosted game's invite code, kept for Ctrl+I (someone to watch)
         self.online_save_folder = None      # Round MP2b: saves/online/<id>/ of the game being hosted (online_save.py)
         self.online_save_resumed = False    # ... and whether it is a saved game being continued
@@ -1717,6 +1730,11 @@ class ForgeTable:
         if fmt == formats.DEFAULT:
             return extra
         players = 1 + len(getattr(self.session, "opponent_paths", None) or [])
+        online = getattr(self.session, "online", None)                     # round MP3a: online seats count too
+        if online == "host":
+            players += int(getattr(self.session, "guests_wanted", 1) or 1)
+        elif online == "guest":
+            players = int(getattr(self.session, "players", 2) or 2)
         f = formats.get(fmt)
         damage = "" if (f.commander_damage or not f.commander) else ", no commander damage"     # CON1: Standard has no commander
         return f"{f.name} - {formats.starting_life(fmt, players)} life each{damage}." + (" " + extra if extra else "")
@@ -2258,14 +2276,34 @@ class ForgeTable:
 
     # ---- battlefield layout ----------------------------------------------------------------
 
-    def group_key(self, c):
-        if not (c.get("isLand") or c.get("token")) or c.get("counters") or c.get("attacking") or c.get("blocking"):
+    @staticmethod
+    def combat_roles(state):
+        """tokens-0027: card id -> its place in combat, from the snapshot's combat list: ("att", defender) for an attacker nobody
+        blocks, ("blk", attacker) for a blocker. A blocked attacker gets None (it keeps a slot of its own)."""
+        roles = {}
+        for a in (state or {}).get("combat") or []:
+            blockers = a.get("blockers") or []
+            roles[a.get("card")] = None if blockers else ("att", a.get("defender"))
+            for b in blockers:
+                roles[b] = ("blk", a.get("card"))
+        return roles
+
+    def group_key(self, c, roles=None):
+        if not (c.get("isLand") or c.get("token")) or c.get("counters"):
             return None
+        role = None
+        if c.get("attacking") or c.get("blocking"):
+            # tokens-0027: identical tokens attacking the same defender unblocked (or blocking the same attacker) share a slot, so
+            # a 1,000-token attack is a few stacks, not 1,000 cards and 1,000 arrows (1.4 s a frame before). Lossless: every card
+            # in such a stack would have the same line to the same place. A blocked attacker still has a slot of its own.
+            role = (roles or {}).get(c.get("id"))
+            if role is None or not c.get("token"):
+                return None
         if c.get("isCreature") and not c.get("token"):
             return None
         return (c.get("name"), c.get("tapped"), c.get("sick"), c.get("token"), bool(c.get("selectable")),
                 bool(c.get("weak")), bool(c.get("highlight")), c.get("damage") or 0, c.get("power"), c.get("toughness"),
-                c.get("controller"))
+                c.get("controller"), role)
 
     def build_slots(self, player):
         """Split a battlefield into two rows of slots: (nonland permanents, lands)."""
@@ -2279,11 +2317,12 @@ class ForgeTable:
         hosted = {a["id"] for lst in attached.values() for a in lst}
         rows = ([], [])
         groups = {}
+        roles = self.combat_roles(self.state)
         for c in cards:
             if c["id"] in hosted:
                 continue
             row = rows[1] if c.get("isLand") and not c.get("isCreature") else rows[0]
-            key = self.group_key(c) if c["id"] not in attached else None
+            key = self.group_key(c, roles) if c["id"] not in attached else None
             if key is not None and key in groups and groups[key][1] is row:
                 groups[key][0].cards.append(c)
                 continue
@@ -3529,7 +3568,7 @@ class ForgeTable:
                     L.hand.collidepoint(self.mouse):
                 raw_hovered = pos
                 break
-        hovered = self.hover_hand_target(raw_hovered, time.monotonic())        # round 23: 60 ms hysteresis before it switches
+        hovered = self.hover_hand_target(raw_hovered, time.monotonic(), len(positions))   # round 23: 60 ms hysteresis
         if hovered != self._last_hover_cue_index:
             self._last_hover_cue_index = hovered
             if hovered is not None and self.sound.get("hover_tick", True) and \
@@ -4278,9 +4317,13 @@ class ForgeTable:
         for cid in dead:
             del self.motion[cid]
 
-    def hover_hand_target(self, raw_hovered, now):
+    def hover_hand_target(self, raw_hovered, now, count=None):
         """The hand index to actually treat as hovered: `raw_hovered` (from the mouse position, this frame) only takes effect once
-        the mouse has sat over that (different) card for HOVER_DWELL seconds, or at once if it left the hand entirely (round 23)."""
+        the mouse has sat over that (different) card for HOVER_DWELL seconds, or at once if it left the hand entirely (round 23).
+        `count` is the hand's size this frame: a kept index the hand no longer reaches (a card was played or discarded during the
+        dwell) is dropped, never kept - it raised IndexError in draw_hand (Karl's Surface, 23 Oct, round hand-idx)."""
+        if count is not None and self.hover_hand_index is not None and not 0 <= self.hover_hand_index < count:
+            self.hover_hand_index = None
         if raw_hovered != self._raw_hover_idx:
             self._raw_hover_idx = raw_hovered
             self._raw_hover_since = now
@@ -5391,8 +5434,8 @@ class ForgeTable:
         entry.load()
         if not entry.ok:
             return f"Could not read your deck: {entry.error or 'no commander found'}"
-        if not formats.get(getattr(entry, "format", None)).online:          # round FMT1: online games are Commander only
-            return f"Online games are Commander only for now, and {entry.name} is a {formats.name(entry.format)} deck."
+        if not formats.get(getattr(entry, "format", None)).online:          # round FMT1 (round MP3a: every format is online)
+            return f"{formats.name(entry.format)} decks can't be played online yet ({entry.name})."
         for text, blocking in entry.problems(self.launcher.runtime):
             if blocking:
                 return f"Your deck ({entry.name}): {text}"
@@ -5423,6 +5466,11 @@ class ForgeTable:
                 e.load()
                 if not e.ok:
                     return f"AI {i + 1}'s deck can't be read: {e.error or 'no commander found'}"
+                if not formats.online_match(entry.format, getattr(e, "format", None)):     # round MP3a: as start_game
+                    return (f"AI {i + 1}'s deck is a {formats.name(getattr(e, 'format', None))} deck, and this is a "
+                            f"{formats.name(entry.format)} game.")
+        fmt = formats.normal(getattr(entry, "format", None))                 # round MP3a: the game plays my deck's format
+        rules = house_rules.of_entries([entry] + ai_entries)                # round MP3a: e.g. Turbo Cube's emblem, as offline
         runtime = self.launcher.runtime
         java = fc.find_java()
         try:
@@ -5431,9 +5479,10 @@ class ForgeTable:
             return str(e)
         os.makedirs(DECK_DIR, exist_ok=True)
         my_path = fc.write_deck_file(os.path.join(DECK_DIR, "player.dck"), entry.commanders, entry.deck, entry.name or "Player",
-                                     runtime)
+                                     runtime, fmt, rules=rules)
         ai_paths = [fc.write_deck_file(os.path.join(DECK_DIR, "online_ai_%d.dck" % (i + 1)), e.commanders, e.deck,
-                                       e.name or "AI", runtime) for i, e in enumerate(ai_entries)]
+                                       e.name or "AI", runtime, getattr(e, "format", None) or fmt, rules=rules)
+                    for i, e in enumerate(ai_entries)]
         try:
             folder = online_save.new_folder(SAVES_DIR)               # Round MP2b: NetHost's journal of this game goes here
         except OSError:
@@ -5460,7 +5509,7 @@ class ForgeTable:
         self.deck_names = set(entry.commanders) | set(entry.deck)
         if self.art:
             self.art.add_names(self.deck_names)
-        session.stats_info = {"id": online_stats_id(folder), "format": formats.DEFAULT, "online": "host",      # patch 44
+        session.stats_info = {"id": online_stats_id(folder), "format": fmt, "online": "host",      # patch 44 (MP3a: the format)
                               "deck": deck_meta(entry)}
         self.hosting_wait = onl.HostWait(session, password, port, upnp)
         self.online_save_folder, self.online_save_resumed, self.online_save_turn = folder, False, None
@@ -5468,6 +5517,171 @@ class ForgeTable:
                               **({"relay": "%s:%d" % tuple(relay)} if relay else {}))
         self.set_title()
         return None
+
+    # ---- Round CD5: drafting together online ------------------------------------------------------------------------------
+    def open_online_draft(self, job, from_title=False):
+        """The draft window's "Draft with friends": the host's online draft window, on the cube already loaded."""
+        import online_draft_screens as odscr
+        if self.launcher is None or job is None or not job.done or job.error:
+            return
+        self.end_adventure_duel()
+        self.modal = self.online_draft = odscr.OnlineDraftFlow(self, "host", job=job, from_title=from_title,
+                                                               prefs=self.online_defaults())
+
+    def host_draft(self, name, port, password, upnp):
+        """The online draft window's "Open the draft": NetHost --draft on this PC, friends join without decks. (session, None)
+        or (None, a message). The window stays open (it is the lobby now)."""
+        runtime = self.launcher.runtime if self.launcher else None
+        java = fc.find_java()
+        try:
+            cert = forge_net.ensure_host_cert(paths.user_dir(), java)
+        except forge_net.CertError as e:
+            return None, str(e)
+        os.makedirs(DECK_DIR, exist_ok=True)
+        try:
+            folder = online_save.new_folder(SAVES_DIR)               # Round MP2b: the game after the draft can be continued
+        except OSError:
+            folder = None
+        session = fc.HostSession(os.path.join(DECK_DIR, "draft_host.dck"), name, port, password, cert,
+                                 os.path.join(DECK_DIR, "guest.dck"), upnp=upnp, code=version.code_fingerprint(), runtime=runtime,
+                                 draft=True, guests=3, **({"journal_path": online_save.journal_path(folder)} if folder else {}))
+        try:
+            self.session.close()
+            session.start()
+        except Exception as e:
+            self.session = fc.ForgeSession("", [])
+            return None, f"Could not start hosting: {e}"
+        modal = self.modal
+        self.session = session
+        self._hook_session(journal=False)
+        self.reset_game()
+        self.modal = modal                                           # reset_game closes dialogs: the draft window stays
+        self.vs = None
+        self.current_decks = None
+        session.stats_info = {"id": online_stats_id(folder), "format": "commander_draft", "online": "host",
+                              "deck": {"id": None, "name": ""}}
+        self.online_save_folder, self.online_save_resumed, self.online_save_turn = folder, False, None
+        self._remember_online(name=name, port=port, upnp=bool(upnp))
+        self.set_title()
+        return session, None
+
+    def begin_online_draft_guest(self, session):
+        """A friend's table, once the host's draft welcomed it: the draft window (the table comes with the game)."""
+        import online_draft_screens as odscr
+        old = self.session
+        try:
+            old.close()
+        except Exception:
+            pass
+        self.session = session
+        self._hook_session(journal=False)
+        self.reset_game()
+        self.vs = None
+        self.modal = self.online_draft = odscr.OnlineDraftFlow(self, "guest", session=session,
+                                                               from_title=bool(getattr(self, "title_ok", False)))
+        self._note_known_host(session)
+        self.check_peer_version()
+        self.set_title()
+
+    def start_online_draft_game(self, flow):
+        """The host, every deck in: the game's .dck files, the host's and the AI drafters' decks to My decks, then NetHost starts
+        the 4-player game with the friends who are here. None, or what went wrong."""
+        import online_draft as od
+        hd, pod, s = flow.hd, flow.pod, self.session
+        runtime = self.launcher.runtime if self.launcher else None
+        try:
+            host_path, friends, ai, labels = od.write_game_decks(hd, os.path.join(DECK_DIR, "online_draft"), runtime)
+        except (OSError, ValueError) as e:
+            return f"The decks couldn't be written: {e}"
+        library, _samples, base = self.deck_dirs
+        keep = [hd.decks.get(0)] + [hd.decks.get(seat) if pod.draft.seats[seat].kind == "ai" else None
+                                    for seat in range(1, pod.draft.n)]
+        try:
+            entries = pod.save_decks(keep, library, base, by_hand=(0,) if 0 in hd.by_hand else ())
+        except OSError as e:
+            return f"Your deck couldn't be saved: {e}"
+        mine = entries[0]
+        hd.to_game()
+        if not s.draft_game(host_path, friends, ai):
+            return "The host's engine isn't running any more."
+        self.current_deck_labels = (getattr(mine, "name", "") or labels.get(0, ""), [])
+        self.deck_names = set(getattr(mine, "commanders", []) or []) | set(getattr(mine, "deck", []) or [])
+        if self.art:
+            self.art.add_names(self.deck_names)
+        s.stats_info = dict(s.stats_info or {}, deck=deck_meta(mine))
+        s.draft_entry = mine
+        return None
+
+    def track_online_draft(self):
+        """Every tick while drafting online: the window's messages, then - once the host's engine started the game - the table.
+        True while the draft is on (the game's own online handling waits until then)."""
+        flow = self.online_draft
+        if flow is None:
+            return False
+        s = self.session
+        try:
+            flow.tick(self)
+        except Exception as e:                                    # a bad message must not take the window down
+            crashlog.record(e, "ERROR in the online draft")
+        if flow.done and self.modal is not flow:
+            self.online_draft = None
+            return False
+        if s is not None and s.ready and flow.ended is None:
+            self._online_draft_game_ready(flow)
+            return False
+        return True
+
+    def _online_draft_game_ready(self, flow):
+        s = self.session
+        flow.done = True
+        self.online_draft = None
+        self.menu = None
+        if getattr(s, "online", None) == "host":
+            mine = getattr(s, "draft_entry", None)
+            self.reset_game()
+            self.start_background()
+            try:
+                self.invite_code = flow.invite()
+            except Exception:
+                self.invite_code = None
+            self.begin_online_save()
+            cmds = list(getattr(mine, "commanders", []) or [])
+            self.vs = flow_vs(self, cmds)
+            who = list(getattr(s, "guests_joined", []) or [])
+            self.say("The draft is done: the game starts." + (" With %s." % od_names(who) if who else ""), GREEN, 7.0)
+            self.set_title()
+            return
+        entry = None
+        try:
+            library, _samples, base = self.deck_dirs
+            entry = flow.pod.save_my_deck(flow.my_deck, library, base, by_hand=flow.by_hand) if flow.my_deck else None
+        except OSError as e:
+            self.say(f"Your deck couldn't be saved to My decks: {e}", ORANGE, 6.0)
+        s.deck_entry = entry
+        self.begin_online_game(s)
+        if entry is not None:
+            self.say(f"Your drafted deck is in My decks: {entry.name}.", DIM, 6.0)
+
+    def end_online_draft(self, stopped=False):
+        """The online draft window closed before the game: the engine (host) or the connection (friend) goes; back to where
+        Draft was opened."""
+        flow, s = self.online_draft, self.session
+        self.online_draft = None
+        if getattr(s, "online", None) == "host" and s.alive() and not s.ready:
+            s.cancel_host()
+        try:
+            s.close()
+        except Exception:
+            pass
+        self.session = fc.ForgeSession("", [])
+        if not self.online_save_resumed:
+            online_save.forget_unstarted(self.online_save_folder)
+        self.online_save_folder = None
+        self.set_title()
+        if flow is not None and getattr(flow, "from_title", False) and hasattr(self, "open_title"):
+            self.open_title()
+        else:
+            self.open_menu()
 
     # ---- Round MP2b: saved online games ----------------------------------------------------------------------------------
     def online_saved(self):
@@ -5520,7 +5734,7 @@ class ForgeTable:
         self.current_decks = None
         self.current_deck_labels = ((meta.get("labels") or {}).get("mine") or "", [])
         self.deck_names = set()
-        session.stats_info = {"id": online_stats_id(folder), "format": formats.DEFAULT, "online": "host", "resumed": True,
+        session.stats_info = {"id": online_stats_id(folder), "format": session.fmt, "online": "host", "resumed": True,
                               "deck": dict(meta.get("stats_deck") or {"id": None, "name": self.current_deck_labels[0]})}
         self.hosting_wait = onl.HostWait(session, password, port, upnp)
         self.online_save_folder, self.online_save_resumed, self.online_save_turn = folder, True, meta.get("turn")
@@ -5541,6 +5755,7 @@ class ForgeTable:
             decks["ai_%d.dck" % i] = path
             ai.append("ai_%d.dck" % i)
         meta = {"seed": s.seed, "host": s.name, "players": 1 + len(guests) + len(ai), "guests": guests, "ai": ai,
+                "format": getattr(s, "fmt", formats.DEFAULT), "rules": list(getattr(s, "rules", ()) or ()),     # round MP3a
                 "mine": "host.dck", "replay": self.replay_key(), "code": version.code_fingerprint(),
                 "labels": {"mine": (self.current_deck_labels or ("", []))[0] or ""},
                 "stats_deck": (getattr(s, "stats_info", None) or {}).get("deck")}           # patch 44: the deck the stats count
@@ -5581,9 +5796,17 @@ class ForgeTable:
         self.set_title()
         self.open_menu()
 
-    def make_guest_session(self, entry, name, address, port, password, fingerprint, by_hand=False, watch=False, room=None):
+    def make_guest_session(self, entry, name, address, port, password, fingerprint, by_hand=False, watch=False, room=None,
+                           draft=False):
         """JoinDialog's Join: a NetSession with my deck, not started yet (a JoinJob starts it). (session, None) or (None, why).
         Round MP2: watch=True (JoinDialog's Watch) needs no deck."""
+        if draft:                                  # Round CD5: joining a friend's draft - the deck is drafted there
+            session = fc.NetSession(address, port, name, password, "", "", fingerprint=fingerprint,
+                                    code=version.code_fingerprint(), room=room, draft=True,
+                                    fingerprint_from="remembered" if by_hand else "invite")
+            session.deck_entry = None
+            self._remember_online(name=name, **({"address": address, "port": port} if by_hand else {}))
+            return session, None
         if watch:
             session = fc.NetSession(address, port, name, password, "", "", fingerprint=fingerprint,
                                     code=version.code_fingerprint(), watch=True, room=room,
@@ -5599,7 +5822,7 @@ class ForgeTable:
             return None, problem
         os.makedirs(DECK_DIR, exist_ok=True)
         path = fc.write_deck_file(os.path.join(DECK_DIR, "online_mine.dck"), entry.commanders, entry.deck,
-                                  entry.name or "Deck", self.launcher.runtime)
+                                  entry.name or "Deck", self.launcher.runtime, getattr(entry, "format", None))    # round MP3a
         try:
             with open(path, "r", encoding="utf-8") as f:
                 dck = f.read()
@@ -5618,8 +5841,11 @@ class ForgeTable:
         return session, None
 
     def begin_online(self, session):
-        """The friend's game accepted me (JoinJob finished): show its table."""
+        """The friend's game accepted me (JoinJob finished): show its table. Round CD5: a draft's welcome opens the draft window
+        first; the table comes when the host starts the game (track_online_draft -> begin_online_game)."""
         self.end_adventure_duel()                                   # Round RPG8
+        if getattr(session, "draft", False) and not session.ready:
+            return self.begin_online_draft_guest(session)
         old = self.session
         try:
             old.close()
@@ -5627,13 +5853,18 @@ class ForgeTable:
             pass
         self.session = session
         self._hook_session(journal=False)
+        self.begin_online_game(session)
+
+    def begin_online_game(self, session):
+        """The guest's table, from the game's first message on (begin_online's second half; Round CD5: also after a draft)."""
         self.reset_game()
         self.start_background()
         self.menu = None
         self.current_decks = None
         entry = getattr(session, "deck_entry", None)
         if not getattr(session, "spectator", False):           # patch 44: a separate record for online games
-            session.stats_info = {"id": gstats.new_id(), "format": formats.DEFAULT, "online": "guest", "deck": deck_meta(entry)}
+            session.stats_info = {"id": gstats.new_id(), "format": getattr(session, "fmt", formats.DEFAULT), "online": "guest",
+                                  "deck": deck_meta(entry)}                                       # round MP3a: the format
         mine = (list(entry.commanders), list(entry.deck)) if entry else ([], [])
         self.deck_names = set(mine[0]) | set(mine[1])
         if self.art:
@@ -7313,6 +7544,8 @@ class ForgeTable:
                 self.running = False
         if self.rewind_prestart is not None and not isinstance(self.modal, dlg.RewindDialog) and self.resuming is None:
             self.close_rewind_prestart()                       # round UNDO1: the Undo window went away without a choice
+        if self.track_online_draft():                         # Round CD5: drafting together - the game's online handling waits
+            return n
         if self.track_online():                               # Round MP1: the other table left - before any other dialog
             return n
         if self.modal or self.menu:

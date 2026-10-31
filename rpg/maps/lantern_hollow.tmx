@@ -10,6 +10,7 @@
   <property name="lantern" type="float" value="3"/>
   <property name="music" value="music.rpg_town"/>
   <property name="name" value="Lantern Hollow"/>
+  <property name="night_music" value="music.rpg_town_night"/>
   <property name="outdoor" type="bool" value="true"/>
   <property name="region" type="int" value="1"/>
   <property name="town" value="town_1"/>

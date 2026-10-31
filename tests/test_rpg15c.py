@@ -140,7 +140,8 @@ class InnTests(r14.WindowBase):
 
     def test_by_day_enter_says_not_now_and_nothing_changes(self):
         g, _l = self.setup_game()
-        f, box = self.open_talk(g, at(2, 12), (talk.REST_DUSK, talk.REST_NO))   # Round RPG17: by day she offers a rest until dusk
+        f, box = self.open_talk(g, at(2, 12), (talk.REST_DUSK, talk.REST_YES, talk.REST_NO))   # RPG17: a rest until dusk by day;
+        # ... Round RPG18b (expected change, Karl 25 Oct): and Sleep until morning - three answers
         self.assertEqual(box.choice[box.cursor], talk.REST_NO)
         key(g, pygame.K_RETURN)
         self.assertEqual(f.sub, None)
@@ -152,8 +153,8 @@ class InnTests(r14.WindowBase):
         """Round RPG17 (expected change, Karl 24 Oct Q5): by day the first answer is "Rest until dusk" (to 18:00); before it was
         "Sleep until morning" (to 07:00 the next day)."""
         g, _l = self.setup_game()
-        f, box = self.open_talk(g, at(2, 12), (talk.REST_DUSK, talk.REST_NO))
-        key(g, pygame.K_DOWN)                                         # up to Rest until dusk
+        f, box = self.open_talk(g, at(2, 12), (talk.REST_DUSK, talk.REST_YES, talk.REST_NO))   # RPG18b: three answers
+        key(g, pygame.K_DOWN)                                         # round to Rest until dusk
         self.assertEqual(box.choice[box.cursor], talk.REST_DUSK)
         key(g, pygame.K_RETURN)
         self.say_all(g)
@@ -161,7 +162,8 @@ class InnTests(r14.WindowBase):
 
 
 class IdTests(unittest.TestCase):
-    ADDED_LATER = {"when"}               # Round RPG16: an object may gain a `when` (the zealot by day); nothing it had may change
+    ADDED_LATER = {"when", "title"}      # Round RPG16: an object may gain a `when` (the zealot by day); nothing it had may change;
+    # ... Round RPG18b (expected change): or a `title` (the bandits' leader by the bridge, object 6 of the outskirts)
 
     def test_every_id_rpg15b_shipped_keeps_its_meaning(self):
         with open(FIXTURE, encoding="utf-8") as fh:

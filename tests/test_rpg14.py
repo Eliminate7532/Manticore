@@ -179,23 +179,25 @@ class ConversationTests(unittest.TestCase):
         self.assertEqual(talk.quest_state(w, "the_dark_hall"), "ready")
         c = talk.Conversation("elder", w)
         self.assertEqual(c.pages, q["ready"])
-        self.assertEqual(c.reward, {"flag": "has_orrins_map", "gold": 50})
+        self.assertEqual(c.reward, {"flag": "has_orrins_map", "gold": 100})   # Round RPG18: 50 -> 100
         self.assertEqual(c.after, q["done"])
         self.assertEqual(talk.quest_state(w, "the_dark_hall"), "done")
         self.assertIn("has_orrins_map", talk.flags(w))
         done = [e for e in talk.npcs()["elder"]["lines"] if e["when"] == ["quest:the_dark_hall=done"]][0]["pages"]
         self.assertEqual(talk.Conversation("elder", w).pages, done)
 
-    def test_the_lamplighters_debt_counts_three_bandits(self):
+    def test_the_lamplighters_debt_counts_one_bandit(self):
+        """Round RPG18 (Karl, 24 Oct: Plan 2, "their leader by the bridge"): one Ember Bandit, not three (expected change).
+        Round RPG18b (Karl 25 Oct, expected change): only the leader by the bridge counts."""
         w = {}
         talk.on_duel_won(w, "ember_bandit", "regular")                                       # before the quest: not counted
         talk.Conversation("lamplighter", w).answer(True)
-        for _ in range(2):
-            talk.on_duel_won(w, "ember_bandit", "regular")
         talk.on_duel_won(w, "plague_rat", "dungeon")
-        self.assertEqual(talk.journal(w)[0][1][-8:], "(2 of 3)")
+        self.assertEqual(talk.journal(w)[0][1][-8:], "(0 of 1)")
         self.assertEqual(talk.quest_state(w, "lamplighters_debt"), "active")
-        talk.on_duel_won(w, "ember_bandit", "regular")
+        talk.on_duel_won(w, "ember_bandit", "regular")                                       # Round RPG18b: not the leader
+        self.assertEqual(talk.quest_state(w, "lamplighters_debt"), "active")
+        talk.on_duel_won(w, "ember_bandit", "regular", spot="ashfen_outskirts#6")             # ... the leader by the bridge
         self.assertEqual(talk.quest_state(w, "lamplighters_debt"), "ready")
         c = talk.Conversation("lamplighter", w)
         self.assertEqual((c.reward, c.after), ({"card": "rare_from_band"}, talk.quests()["lamplighters_debt"]["done"]))
@@ -344,7 +346,8 @@ class WindowBase(r13.ScreenBase):
         return f
 
     def say_all(self, g, answer=None):
-        """Enter through the box until it closes (or the choice opens: answered with Enter on Yes / Down then Enter on No)."""
+        """Enter through the box until it closes (or the choice opens: answered with Enter on Yes / Down then Enter on No).
+        Round RPG18b: answer True = the first answer, False = the last, an int = that answer (Marta by day has three)."""
         f = g.modal
         seen = []
         for _ in range(60):
@@ -352,7 +355,11 @@ class WindowBase(r13.ScreenBase):
                 return seen
             box = f.talk_box
             if box.choosing and answer is not None:
-                if box.cursor != (0 if answer else 1):       # Round RPG15c: the cursor may start on the second answer
+                n = len(box.choice)                           # Round RPG18b: two answers, or three (Marta by day)
+                want = answer if isinstance(answer, int) and not isinstance(answer, bool) else (0 if answer else n - 1)
+                for _k in range(n):                           # Round RPG15c: the cursor may start on another answer
+                    if box.cursor == want:
+                        break
                     key(g, pygame.K_DOWN)
                 key(g, pygame.K_RETURN)
                 answer = None
@@ -557,10 +564,16 @@ class StoryTests(WindowBase):
         self.say_all(g, answer=True)
         self.assertEqual(talk.quest_state(w, "lamplighters_debt"), "active")
         self.assertEqual(r8.on_disk(self.folder)["world"]["quests"]["lamplighters_debt"]["state"], "active")   # written
-        for i in range(3):                                              # three Ember Bandits, through the table
+        for i in range(2):                                              # two Ember Bandits that aren't the leader, through the table
             f = self.win(g, encounters.RandomFoe("ember_bandit"))
             self.assertEqual(f.sub, "result")
             key(g, pygame.K_RETURN)
+        self.assertEqual(talk.quest_state(f.game.save.world, "lamplighters_debt"), "active")   # Round RPG18b: only the leader counts
+        f = self.on_map(g, "ashfen_outskirts")                          # the bandits' leader by the bridge (expected change)
+        leader = next(t for t in f.explorer.area.triggers if t.spot == "ashfen_outskirts#6")
+        f = self.win(g, leader)
+        self.assertEqual(f.sub, "result")
+        key(g, pygame.K_RETURN)
         self.assertEqual(talk.quest_state(f.game.save.world, "lamplighters_debt"), "ready")
         f = self.on_map(g, "warrens_2")                                 # the Grave Priest
         boss = self.boss(f)
@@ -578,8 +591,8 @@ class StoryTests(WindowBase):
         key(g, pygame.K_RETURN)
         said = self.say_all(g)
         q = talk.quests()["the_dark_hall"]
-        self.assertEqual(said, q["ready"] + ["+50 gold."] + q["done"])
-        self.assertEqual(f.game.save.gold, gold + 50)
+        self.assertEqual(said, q["ready"] + ["+100 gold."] + q["done"])   # Round RPG18: 50 -> 100
+        self.assertEqual(f.game.save.gold, gold + 100)   # Round RPG18: 50 -> 100
         cards = f.game.save.collection.total()
         self.stand(g, "lamplighter")
         key(g, pygame.K_RETURN)

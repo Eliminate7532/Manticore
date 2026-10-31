@@ -17,6 +17,7 @@ import time
 import pygame
 
 import forge_dialogs as dlg
+import formats
 import forge_net
 import gfx
 import online_save
@@ -197,8 +198,11 @@ class HostDialog(dlg.Dialog):
             intro = wrap_text("You continue the saved game. Your friends join with the new invite code; each gets their own "
                               "seat back by typing the same name as before.", small, tw)
         else:
-            intro = wrap_text("Your friends join your game over the internet, each with their own deck. You play: %s."
-                              % (getattr(self.entry, "name", "") or "your chosen deck"), small, tw)
+            fmt = formats.normal(getattr(self.entry, "format", None))          # round MP3a: the game plays my deck's format
+            intro = wrap_text("Your friends join your game over the internet, each with their own deck. You play: %s. "
+                              "This is a %s game: your friends need %s."
+                              % (getattr(self.entry, "name", "") or "your chosen deck", formats.name(fmt),
+                                 formats.wanted_words(fmt)), small, tw)
         saved_line = []
         if self.saved:
             folder, meta, playable = self.saved
@@ -408,11 +412,16 @@ class HostWait:
             if status != "ready" or not room:
                 return None
             address, port = self.session.relay
-            return forge_net.make_invite(address, port, self.session.cert.fingerprint, self.password, room=room)
+            return forge_net.make_invite(address, port, self.session.cert.fingerprint, self.password, room=room,
+                                         **self._format_kw())
         addr = self.address.text.strip()
         if not addr or forge_net.validate_address(addr):
             return None
-        return forge_net.make_invite(addr, self.port, self.session.cert.fingerprint, self.password)
+        return forge_net.make_invite(addr, self.port, self.session.cert.fingerprint, self.password, **self._format_kw())
+
+    def _format_kw(self):
+        """Round MP3a: the game's format and house rules go into the invite, so a guest's table checks its deck first."""
+        return {"fmt": getattr(self.session, "fmt", None), "rules": tuple(getattr(self.session, "rules", ()) or ())}
 
     def failed(self):
         s = self.session
@@ -623,6 +632,7 @@ class JoinDialog(dlg.Dialog):
         prefs = prefs or {}
         self.entry = deck_entry
         self.deck_problem = deck_problem          # Round MP2: Join can't be used with this deck, but Watch can
+        self.game_format = None                   # Round MP3a: the format the pasted invite names
         self.by_hand = False
         self.fields = {
             "code": TextField("", 2000, "Paste the invite code here (Ctrl+V)"),
@@ -654,7 +664,31 @@ class JoinDialog(dlg.Dialog):
             return addr, port, self.fields["password"].text.strip(), self.known.get("%s:%d" % (addr, port))
         inv = forge_net.read_invite(self.fields["code"].text)
         self.room = inv.get("room")                # Round MP2d: through a relay
+        self.game_format = inv.get("format")       # Round MP3a: the host's game's format (None when typed by hand)
+        self.draft_invite = bool(inv.get("draft"))  # Round CD5: the host is drafting - no deck to bring
         return inv["address"], inv["port"], inv["password"], inv["fingerprint"]
+
+    def format_problem(self, gui):
+        """Round MP3a: the invite names a format my chosen deck isn't - say so before connecting, and switch the deck screen
+        to that format (its decks then become my choice). None when my deck fits (or the format isn't known: typed by hand)."""
+        game = getattr(self, "game_format", None)
+        if self.by_hand or not game or self.entry is None:
+            return None
+        mine = formats.normal(getattr(self.entry, "format", None))
+        if formats.online_match(game, mine):
+            return None
+        why = formats.online_mismatch(game, mine)
+        menu = getattr(gui, "menu", None)
+        if menu is not None and hasattr(menu, "set_format"):
+            menu.set_format(formats.screen(game))
+            new = getattr(menu, "mine", None)
+            if new is not None and formats.online_match(game, getattr(new, "format", None)):
+                self.entry = new
+                self.deck_problem = gui._online_deck_problem(new) if hasattr(gui, "_online_deck_problem") else None
+                return why + " The deck screen now shows %s decks: %s is chosen - press Join again." % (
+                    formats.name(formats.screen(game)), getattr(new, "name", "") or "a deck")
+            return why + " You have no %s decks yet: import one first." % formats.name(formats.screen(game))
+        return why
 
     def problem(self):
         try:
@@ -670,13 +704,22 @@ class JoinDialog(dlg.Dialog):
     def join(self, gui, watch=False):
         if self.job is not None:
             return
-        why = self.problem() or (None if watch else self.deck_problem)
+        self.draft_invite = False
+        why = self.problem()
+        drafting = self.draft_invite and not self.by_hand and not watch    # Round CD5: a draft needs no deck
+        why = why or (None if (watch or drafting) else self.deck_problem)
         if why:
             self.message = (why, RED)
             return
         self.room = None
         address, port, password, fp = self.target()
-        extra = {"watch": True} if watch else {}
+        if not watch and not drafting:
+            mismatch = self.format_problem(gui)               # round MP3a: before connecting
+            if mismatch:
+                self.message = (mismatch, ORANGE if self.entry is not None and not self.deck_problem
+                                and formats.online_match(self.game_format, getattr(self.entry, "format", None)) else RED)
+                return
+        extra = {"watch": True} if watch else ({"draft": True} if drafting else {})
         if self.room and not self.by_hand:
             extra["room"] = self.room
         session, error = gui.make_guest_session(self.entry, forge_net.clean_name(self.fields["name"].text), address, port,
@@ -686,7 +729,7 @@ class JoinDialog(dlg.Dialog):
             return
         self.connecting_to = "%s:%d" % (address, port)
         self.watching = watch
-        self.message = ("Connecting to %s..." % self.connecting_to, DIM)
+        self.message = ("Connecting to %s%s..." % (self.connecting_to, " (a draft)" if drafting else ""), DIM)
         self.job = JoinJob(session).start()
 
     def poll(self, gui):

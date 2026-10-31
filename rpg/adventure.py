@@ -96,6 +96,15 @@ def enemy_name(kind_id):
     return kind_names().get(kind_id) or (kind_id or "?").replace("_", " ").title()
 
 
+def foe_name(trigger):
+    """Round RPG18b: what a foe is called - a rare's own name, else the map's title for it (the bandits' leader), else its kind's."""
+    entry = rare_entry(trigger)
+    if entry:
+        return entry["name"]
+    title = getattr(trigger, "title", None)
+    return title if isinstance(title, str) and title else enemy_name(getattr(trigger, "enemy", None))
+
+
 def _move_old_save(game):
     """Round RPG12: rpg.explore.move_old_save for an opened game; a map folder that can't be read moves nothing (the map screen
     says so when it opens)."""
@@ -207,7 +216,7 @@ def inn_town(game, map_name):
 def fight_text(game, trigger):
     """(title, [lines]) for the question asked when you walk into a foe."""
     entry = rare_entry(trigger)                          # Round RPG16: a rare foe has its own name, reward and cooldown
-    name = entry["name"] if entry else enemy_name(trigger.enemy)
+    name = foe_name(trigger)                             # ... Round RPG18b: or the map's title for it
     what = ENCOUNTER_WORDS.get(trigger.encounter, "")
     title = f"{name}" + (f" - {what}" if what else "")
     n = game.numbers
@@ -246,7 +255,9 @@ def start_duel(game, trigger, now=None, index=None):
     enemy deck the encounter screen showed (rpg.duel.peek), so the duel plays exactly that one."""
     d = duel.start(game.save, trigger.enemy, trigger.encounter, pool=game.pool, lists=game.lists(), now=now, spot=trigger.spot,
                    once=trigger.once, index=index, source=deck_source(game, trigger))      # RPG17: a rare's own deck lists
-    d.enemy_name = enemy_name(trigger.enemy) or d.enemy_name
+    d.enemy_name = foe_name(trigger) or d.enemy_name     # Round RPG18b: the map's title (the bandits' leader) too
+    if getattr(trigger, "title", None) and isinstance(game.save.pending_duel, dict):
+        game.save.pending_duel["name"] = trigger.title    # ... so the result names him
     entry = rare_entry(trigger)
     if entry and isinstance(game.save.pending_duel, dict):          # Round RPG16: the result names it and pays its reward
         game.save.pending_duel["rare"] = trigger.rare
@@ -335,9 +346,12 @@ def finish_loaded(game, result):
     kind = game.save.pending_duel.get("kind")
     encounter = game.save.pending_duel.get("encounter")
     rid = game.save.pending_duel.get("rare")
+    title = game.save.pending_duel.get("name")                              # Round RPG18b: a foe with its own name
     entry = _rare_table().get(rid) if isinstance(rid, str) else None
     out = duel.finish(game.save, result, game.numbers, game.world, pool=game.pool, tier_table=game.tiers(), lists=game.lists())
     out.update(enemy=enemy_name(kind), kind=kind, encounter=encounter)     # Round RPG14: the kind, for the boss's last words
+    if isinstance(title, str) and title:
+        out["enemy"] = title
     if entry:                                                               # Round RPG16: a rare foe
         out.update(enemy=entry["name"], rare=rid)
         if out.get("result") == "won":

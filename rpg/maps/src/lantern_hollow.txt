@@ -5,6 +5,7 @@ dark_zone: 16,22,24,26 grave_priest_beaten
 darkness: 0.45
 lantern: 3
 music: music.rpg_town
+night_music: music.rpg_town_night
 ambience: amb.ruins
 outdoor: true
 town: town_1

@@ -165,7 +165,7 @@ class EncounterScreen:
         self.view = "main"
         self.cursor = 0
         self.note = None                        # (text, until)
-        self.name = (self.rare or {}).get("name") or adv.enemy_name(self.kind) or self.kind
+        self.name = adv.foe_name(trigger) or self.kind          # Round RPG18b: a rare's name, the map's title, else the kind's
         self.lines = adv.fight_text(game, trigger)[1]
         self.text = dict(encounters.kind_text(self.kind))
         home = getattr(getattr(trigger, "t", trigger), "home", None)      # Round RPG16b (review R5): the map's home= line (a Foe's

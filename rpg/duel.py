@@ -191,7 +191,7 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
             if pd["spot"] not in gone:
                 gone.append(pd["spot"])
         from rpg import talk                         # Round RPG14: the boss flag, and the quests that count this kind
-        talk.on_duel_won(save.world, pd["kind"], pd.get("encounter"))
+        talk.on_duel_won(save.world, pd["kind"], pd.get("encounter"), spot=pd.get("spot"))   # RPG18b: a goal may name a spot
     elif result in ("lost", "conceded"):
         rec["losses"] += 1
         cost = numbers.loss_cost(save.gold)

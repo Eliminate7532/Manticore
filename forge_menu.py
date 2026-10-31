@@ -491,9 +491,8 @@ class DeckMenu:
         elif name in ("crash_send", "crash_look", "crash_dismiss"):    # round 28d
             gui.crash_report(name[len("crash_"):])
         elif name in ("host_online", "join_online"):                  # Round MP1: play a friend over the internet
-            if not formats.get(self.fmt).online:                       # round FMT1: online play is Commander only for now
-                return self.say(f"Online games are Commander only for now. Switch to Commander (top right) to "
-                                f"{'host' if name == 'host_online' else 'join'} one.", ORANGE)
+            if not formats.get(self.fmt).online:                       # round FMT1 (round MP3a: every format is online)
+                return self.say(f"{formats.name(self.fmt)} games can't be played online yet.", ORANGE)
             problem = (gui.open_host if name == "host_online" else gui.open_join)(self.mine)
             if problem:
                 self.say(problem, RED)

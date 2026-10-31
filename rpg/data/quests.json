@@ -36,7 +36,7 @@
    ],
    "reward": {
     "flag": "has_orrins_map",
-    "gold": 50
+    "gold": 100
    },
    "journal": "Find who raised the dead below the old mill, and why the duel hall went dark."
   },
@@ -45,12 +45,14 @@
    "giver": "lamplighter",
    "goal": {
     "beat": "ember_bandit",
-    "count": 3
+    "spot": "ashfen_outskirts#6",
+    "count": 1,
+    "others_flag": "road_bandits_fled"
    },
    "offer": [
-    "Can I ask you a thing? A big thing? It's three things. Three bandits.",
+    "Can I ask you a thing? A big thing? It's one thing. One bandit. The big one.",
     "The Ember lot on the road keep taking my oil. I bought it on credit from Brackwater. Now I owe.",
-    "If you beat three of them, they'll stay off the road. I can pay you. Master Orrin left a card with me."
+    "Beat their leader by the bridge and they'll keep off the road. I can pay. Orrin left me a card."
    ],
    "yes": "I'll do it.",
    "no": "Sorry, Pell.",
@@ -62,10 +64,10 @@
     "No, that's fair. They're very rude bandits. I'll just. Stand here. In the dark."
    ],
    "progress": [
-    "Still bandits on the road? I saw a red sash by the gallows trees. Three, remember. Three in all."
+    "Still bandits on the road? Their leader's by the bridge. Biggest sash. Beat him and they scatter."
    ],
    "ready": [
-    "Three! The road's clear! A cart came in this morning with all its oil. All of it!",
+    "Their leader's beaten! The road's clear! A cart came in this morning with all its oil. All of it!",
     "Here. Master Orrin gave me this for lighting the hall. He said I'd know who to give it to.",
     "I think it's you."
    ],
@@ -75,7 +77,7 @@
    "reward": {
     "card": "rare_from_band"
    },
-   "journal": "Beat three Ember Bandits on the east road so Pell's oil carts get through."
+   "journal": "Beat the Ember Bandits' leader by the bridge on the east road so Pell's oil carts get through."
   }
  }
 }

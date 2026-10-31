@@ -183,8 +183,10 @@ def run_game(index, args, rng, out_root, watchdog_holder=None):
         fc.sync_bridge()
         test_command = getattr(args, "session_command", None)     # tests only: a stand-in bridge instead of real Java
         session = fc.ForgeSession(mine, opponents, name="Soak", seed=seed, record_path=record_path,
-                                  dev=bool(args.fault) or board, faults=[args.fault] if args.fault else (),
-                                  command=test_command, fmt=fmt)
+                                  dev=bool(args.fault) or board or bool(getattr(args, "attack_cache", None)),
+                                  faults=[args.fault] if args.fault else (),
+                                  command=test_command, fmt=fmt,
+                                  attack_cache=getattr(args, "attack_cache", None))   # round AI-ATTACK: compare / off
         session.stderr_path = os.path.join(game_dir, "forge_engine.log")
         if watchdog_holder is not None:
             watchdog_holder["session"] = session          # run()'s watchdog timer can now find this game's process
@@ -731,6 +733,9 @@ def main(argv=None):
     ap.add_argument("--format", choices=formats.ORDER, default="commander",
                     help="round FMT1: the games' format; decks are the sample (or my_decks) files of that format "
                          "(round CON1: standard too; the canary is always a Commander game)")
+    ap.add_argument("--attack-cache", choices=("on", "off", "compare"), default=None, dest="attack_cache",
+                    help="round AI-ATTACK: the AI attack planner's cache (compare = both ways, differences in each game's "
+                         "forge_engine.log as 'attackcache: compare' lines; needs the bridge's dev mode, which this turns on)")
     ap.add_argument("--no-canary", action="store_false", dest="canary",
                     help="skip the canary game (a deliberate fault that must be reported; round 28ba)")
     args = ap.parse_args(argv)

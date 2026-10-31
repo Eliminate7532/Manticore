@@ -584,7 +584,7 @@ class ForgeSession:
 
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
                  java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
-                 classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None):
+                 classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None, attack_cache=None):
         import formats
         import house_rules
         self.deck_path = deck_path
@@ -645,6 +645,8 @@ class ForgeSession:
         self.threat_ai_used = None          # round AI2: what the bridge's "ready" line reports (None: a bridge from before AI2)
         self.plan_cache = plan_cache        # round AIT2: "off" (Forge's own AI planning) or "compare" (both, logged; needs dev=True)
         self.plan_cache_used = None         # round AIT2: what the bridge's "ready" line reports (None: a bridge from before AIT2)
+        self.attack_cache = attack_cache    # round AI-ATTACK: "off" (Forge's own attack planner) or "compare" (both, logged; needs dev=True)
+        self.attack_cache_used = None       # round AI-ATTACK: what "ready" reports (None: a bridge from before AI-ATTACK)
         self.forge_undo = forge_undo        # round FB2: Forge's own undo, "off" (the bridge's default), "single" or "free" (needs dev=True)
         self.forge_undo_used = None         # round FB2: what the bridge's "ready" line reports (None: a bridge from before FB2)
         self.threat_moves = []              # round AI2: {"t": "ai_threat", ...} - an AI answered a threat Forge's own choice missed
@@ -685,6 +687,14 @@ class ForgeSession:
         # Round MP2c
         self.lobby = None                   # {"t":"lobby","players":[names],"joined","wanted","ai"}: who is at the table so far
         self.guests_joined = []             # the host's view: guests who have joined, in order
+        # Round CD5 (drafting together online): the draft's messages - on the host, each friend's {"t":"draft_from","seat","name",
+        # "msg"}; on a friend's table, the host's msg - and the connection notes NetHost makes during a draft ("draft": true on
+        # peer_dropped / peer_back / peer_left / guest_joined), kept apart so the game's own handling never sees them
+        self.draft = False                  # a draft is being hosted (HostSession) / joined (NetSession: the welcome said so)
+        self.draft_inbox = []
+        self.draft_events = []
+        self.draft_locked = None            # NetHost's {"t":"draft_locked","seats":[...]} once the host pressed Start
+        self.draft_game_failed = None
         self.players_left = []              # peer_left messages about a player leaving a game of 3 or more (the others play on)
         self.dropped_seats = {}             # seat number -> its peer_dropped message, while that guest is away
         self.peer_back_name = None          # the newest peer_back's name
@@ -781,6 +791,8 @@ class ForgeSession:
                 args += ["--threat-ai", "off"]            # round AI2: the baseline, for tools/ai_bench.py and tests
             if self.plan_cache:
                 args += ["--plan-cache", str(self.plan_cache)]   # round AIT2: "off" = Forge's own AI planning, for comparison
+            if self.attack_cache:
+                args += ["--attack-cache", str(self.attack_cache)]   # round AI-ATTACK: "off" = Forge's own attack planner
             if self.forge_undo:
                 args += ["--forge-undo", str(self.forge_undo)]   # round FB2: try Forge 9a6f776's own undo
         return args
@@ -884,6 +896,7 @@ class ForgeSession:
             self.loop_cap_used = m.get("loopCap")
             self.threat_ai_used = m.get("threatAi")       # round AI2
             self.plan_cache_used = m.get("planCache")     # round AIT2
+            self.attack_cache_used = m.get("attackCache")  # round AI-ATTACK
             self.forge_undo_used = m.get("forgeUndo")     # round FB2
             self.last_state_ok = bool(m.get("lastState"))
             self.last_state_marks = bool(m.get("lastStateMarks"))
@@ -902,6 +915,21 @@ class ForgeSession:
         elif t == "game_over":
             self.game_over = True
             self.game_over_info = {k: v for k, v in m.items() if k != "t"}
+        elif t == "draft_from" or t == "draft":            # round CD5: see draft_inbox
+            msg = m.get("msg")
+            if isinstance(msg, dict):
+                self.draft_inbox.append(dict(m) if t == "draft_from" else msg)
+        elif t == "draft_locked":
+            self.draft_locked = m
+        elif t == "draft_game_failed":
+            self.draft_game_failed = m.get("text") or "unknown"
+        elif t in ONLINE_MESSAGES and m.get("draft"):            # round CD5: a friend's connection during the draft
+            self.draft_events.append(m)
+            # ... and, in the order it came, beside the friends' messages: a pick that arrived before its connection's drop
+            # notice must be read before it (the online draft soak of 28 Oct, seed 8000: read after, it was refused as paused)
+            self.draft_inbox.append(m)
+            if t == "guest_joined":
+                self._note_online(t, m)
         elif t in ONLINE_MESSAGES:
             self._note_online(t, m)
         elif t == "setup_done":
@@ -1323,12 +1351,14 @@ class NetSession(ForgeSession):
 
     _connect = staticmethod(forge_net.connect_tls)         # tests put a plain-socket stand-in here (tests/net_fake.py)
     _sleep = staticmethod(time.sleep)
-    FINAL_REFUSALS = ("rejoin", "gone", "fingerprint", "version", "password", "full", "watch_full", "not_started", "deck")
+    FINAL_REFUSALS = ("rejoin", "gone", "fingerprint", "version", "password", "full", "watch_full", "not_started", "deck",
+                      "draft_full")                              # round CD5
 
     def __init__(self, address, port, name, password, deck_name, dck_text, fingerprint=None, code=None,
                  connect_timeout=None, welcome_timeout=None, record_path=None, watch=False, silence_seconds=None, room=None,
-                 fingerprint_from="invite"):
+                 fingerprint_from="invite", draft=False):
         super().__init__("", [], name=name, record_path=record_path)
+        self.draft_join = bool(draft)           # round CD5: a draft's hello (no deck; the welcome then says "draft")
         # round NETLOG1b (review G2): where `fingerprint` came from, for the connection log - "invite" (the invite code) or
         # "remembered" (an earlier game with this address: a join typed by hand, forge_table.make_guest_session)
         self.fingerprint_from = fingerprint_from
@@ -1440,8 +1470,11 @@ class NetSession(ForgeSession):
             if self.fingerprint else "none (typed by hand, first time)", protocol=forge_net.PROTOCOL_V)
         if self.spectator:
             line = forge_net.watch_line(self.name, password, self.code)
+        elif self.draft_join:                                       # round CD5: joining a draft - no deck yet
+            line = forge_net.draft_hello_line(self.name, password, self.code)
         else:
-            line = forge_net.hello_line(self.name, password, self.code, self.deck_name, self.dck_text)
+            line = forge_net.hello_line(self.name, password, self.code, self.deck_name, self.dck_text,
+                                        formats.from_dck(self.dck_text) if self.dck_text else None)
         try:
             sock, rfile, reply = self._handshake(line)
         except forge_net.NetRefused as e:
@@ -1451,8 +1484,13 @@ class NetSession(ForgeSession):
             self._attempt.end("FAILED", net_log.error_text(e))
             raise
         self.peer_name, self.peer_code, self.seat = reply.get("host"), reply.get("code"), reply.get("seat")
+        self.draft = bool(reply.get("draft"))                      # round CD5: the host is drafting first
         self.watched_guest = reply.get("guest")
         self.players = int(reply.get("players") or 2)           # round MP2c: the whole table, AI seats included
+        # Round MP3a: the host's game's format and house rules (the ready line is checked against them, as a local game's)
+        import house_rules
+        self.fmt = formats.normal(reply.get("gameFormat"))
+        self.rules = house_rules.normal(reply.get("houseRules") or ())
         self._token = reply.get("token") or None
         try:
             self.grace = max(0, int(reply.get("grace") or 0))
@@ -1621,9 +1659,16 @@ class HostSession(ForgeSession):
     def __init__(self, deck_path, name, port, password, cert, guest_deck_path, upnp=True, bind="0.0.0.0", code="",
                  seed=None, runtime=None, java=None, memory_mb=None, record_path=None, dev=False, block_seconds=None,
                  stall_seconds=None, grace_seconds=None, heartbeat_seconds=None, silence_seconds=None, guests=1, ai_paths=(),
-                 relay=None, journal_path=None, resume=None, drop_notice_delay_ms=None):
+                 relay=None, journal_path=None, resume=None, drop_notice_delay_ms=None, fmt=None, rules=None, draft=False,
+                 draft_reconnect_seconds=None):
+        # Round MP3a: the game's format and house rules - None = what the host's .dck says (a saved game's host.dck too)
+        # Round CD5: draft=True hosts a draft first (NetHost --draft): up to `guests` friends join without decks; the game's
+        # decks come at the end (draft_game). A draft is a Commander Draft game.
+        if draft:
+            fmt = fmt or "commander_draft"
+            guests = guests if guests != 1 else 3
         super().__init__(deck_path, list(ai_paths), name=name, seed=seed, runtime=runtime, record_path=record_path, java=java,
-                         memory_mb=memory_mb, dev=dev)
+                         memory_mb=memory_mb, dev=dev, fmt=fmt, rules=rules)
         self.guests_wanted = max(1, min(3, int(guests)))        # round MP2c: people joining over the network
         # round MP2d: (address, port) of a relay: NetHost then listens on 127.0.0.1 only and relay_agent brings the guests in
         self.relay = (relay[0], int(relay[1])) if relay else None
@@ -1651,6 +1696,8 @@ class HostSession(ForgeSession):
         # timings (tests)
         self.grace_seconds, self.heartbeat_seconds, self.silence_seconds = grace_seconds, heartbeat_seconds, silence_seconds
         self.drop_notice_delay_ms = drop_notice_delay_ms   # tests only (round MP2e)
+        self.draft = bool(draft)
+        self.draft_reconnect_seconds = draft_reconnect_seconds
         self.online = "host"
         self._attempt = None                # round NETLOG1: this host attempt's block in connection_log.txt
         self._logged_start = False
@@ -1684,6 +1731,15 @@ class HostSession(ForgeSession):
                 args += [flag, str(int(value))]
         if self.guests_wanted != 1 and not self.resume:
             args += ["--guests", str(self.guests_wanted)]
+        if self.draft:                                             # round CD5
+            args.append("--draft")
+            if self.draft_reconnect_seconds is not None:
+                args += ["--draft-reconnect-seconds", str(int(self.draft_reconnect_seconds))]
+        if self.fmt != formats.DEFAULT:                            # round MP3a: a Commander game's command line is unchanged
+            args += ["--format", formats.engine(self.fmt), "--game-format", self.fmt]
+        if self.rules:
+            import house_rules
+            args += house_rules.engine_args(self.rules)            # round MP3a: Turbo Cube's emblem online too
         for path in self.opponent_paths:                           # round MP2c: AI seats
             args += ["--opponent", path]
         if self.journal_path:                                      # round MP2b
@@ -1815,6 +1871,21 @@ class HostSession(ForgeSession):
     def cancel_host(self):
         """Stop waiting for the friend (the Cancel button on the Host screen)."""
         return self.send(c="cancel_host")
+
+    # ---- round CD5: the draft's messages (NetHost --draft carries them; online_draft.HostDraft decides them) ----
+    def draft_send(self, net_seat, msg):
+        return self.send(c="draft_send", seat=int(net_seat), msg=msg)
+
+    def draft_lock(self, reserve=()):
+        """The host pressed Start: no more friends join. `reserve`: friends of a continued draft who aren't back yet (their seat
+        waits for them by name)."""
+        return self.send(c="draft_lock", **({"reserve": list(reserve)} if reserve else {}))
+
+    def draft_game(self, host_deck, seats, ai):
+        """Every deck is ready: the host's .dck, [(net seat, .dck)] for the friends who play, the AI seats' .dck files."""
+        self.deck_path = host_deck
+        self.opponent_paths = list(ai)
+        return self.send(c="draft_game", host_deck=host_deck, seats=[{"seat": int(n), "deck": p} for n, p in seats], ai=list(ai))
 
     def waiting(self):
         """True while the game hasn't started (round MP2c: until every guest the host asked for has joined)."""

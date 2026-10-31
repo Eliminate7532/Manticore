@@ -82,7 +82,7 @@ class FormatTableTests(unittest.TestCase):
         self.assertFalse(s.commander_damage)
         self.assertFalse(s.exact)                              # 100.2a: at least 60
         self.assertEqual((s.copies, s.sideboard), (4, 15))     # 100.2a, 100.4a
-        self.assertFalse(s.online)                             # NetHost isn't touched: online stays Commander
+        self.assertTrue(s.online)                              # round MP3a: Standard online too
         self.assertEqual(formats.engine("standard"), "constructed")
 
     def test_commander_and_brawl_are_what_they_were(self):
@@ -359,15 +359,16 @@ class DeckScreenTests(tds.TempDecks):
         gui.restart_game()
         self.assertEqual(self.launcher.formats, ["standard", "standard"])
 
-    def test_online_play_stays_commander(self):
+    def test_online_play_is_open_to_this_format(self):
+        # Round MP3a (Karl, 27 Oct 2026: "Add brawl, standard, and draft to online play"): was test_online_play_stays_commander.
         gui = self.gui()
         gui.open_host = mock.Mock(return_value=None)
         click(gui, self.button_point(gui, "fmt_standard"))
         gui.menu.press(gui, "host_online")
-        gui.open_host.assert_not_called()
-        self.assertIn("Online games are Commander only for now", gui.menu.message[0])
+        gui.open_host.assert_called_once()
         entries = {e.name: e for e in lib.list_decks(*self.dirs)}
-        self.assertIn("Commander only", ft_online_problem(gui, entries[lib.SAMPLE_NAMES["standard_red_aggro"]]))
+        self.assertNotIn("Commander only", ft_online_problem(gui, entries[lib.SAMPLE_NAMES["standard_red_aggro"]]))
+        self.assertNotIn("online yet", ft_online_problem(gui, entries[lib.SAMPLE_NAMES["standard_red_aggro"]]))
 
     def test_the_import_window_saves_a_standard_deck(self):
         gui = self.gui()

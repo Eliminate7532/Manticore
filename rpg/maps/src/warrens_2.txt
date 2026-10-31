@@ -2,7 +2,7 @@ name: The Warrens, deeper
 region: 1
 dungeon: true
 backdrop: dungeon
-encounter_rate: 100
+encounter_rate: 200
 encounters: plague_rat 2, grave_robber 1
 darkness: 0.85
 lantern: 4.5
@@ -12,12 +12,14 @@ ambience: amb.plain
 U = exit map=warrens_1 spawn=stairs_down on <
 1 = spawn stairs_top on -
 B = encounter kind=grave_priest encounter=boss on +
+#! a stair up into the chapel crypt: one way, back to Lantern Hollow once the Grave Priest's hall is reached (RPG18)
+H = exit map=lantern_hollow spawn=from_outskirts on <
 [map]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%^++++++++++++++^%%
 %%%%%%%%%%%%%%%%%%%%%%++!+++nnnn+++!++%%
-%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%
+%%%%%%%%%%%%%%%%%%%%%%++++++++H+++++++%%
 %%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%
 %%%%%%%%%%%%%%%%%%%%%%+++++++B++++++++%%
 %%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%

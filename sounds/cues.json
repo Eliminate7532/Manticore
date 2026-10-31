@@ -891,6 +891,22 @@
    "duck": {
     "music": -8
    }
+  },
+  "music.rpg_town_night": {
+   "bus": "music",
+   "gain_db": 0,
+   "stream": true,
+   "files": [
+    "music/rpg_town_night.ogg"
+   ]
+  },
+  "music.rpg_outskirts_night": {
+   "bus": "music",
+   "gain_db": -2.0,
+   "stream": true,
+   "files": [
+    "music/rpg_outskirts_night.ogg"
+   ]
   }
  }
 }

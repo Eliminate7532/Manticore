@@ -1178,6 +1178,28 @@
    "title": "String and piano horror stings (strings sting \"abyss\")",
    "prefer_lossless": true,
    "note": "Round RPG15 provisional pick for the Adventure (Karl OK 23 Oct 2026 18:51); claude/RPG_MUSIC_CANDIDATES_2026-10-23.md"
+  },
+  "mus4-lonelyhood": {
+   "url": "https://opengameart.org/sites/default/files/Lonelyhood.ogg",
+   "kind": "file",
+   "page": "https://opengameart.org/content/lonelyhood",
+   "author": "yd",
+   "licence": "CC0-1.0",
+   "title": "Lonelyhood",
+   "licence_quote": "License(s): CC0 (links to http://creativecommons.org/publicdomain/zero/1.0/; read 25 Oct 2026)",
+   "sha256": "e342f0659e4ac33da72abc3a2fb72303523fe3d333228e328b7a76a5072c9067",
+   "note": "Round RPG-NM: Karl's night-music pick (25 Oct 2026 00:1x UTC, page \"Adventure Night Music\"); claude/DECISIONS_2026-10-24.md, claude/RPG_NIGHT_MUSIC_CANDIDATES_2026-10-24.md - town_night_4"
+  },
+  "mus4-when-the-shadows-gather": {
+   "url": "https://opengameart.org/sites/default/files/when_the_shadows_gather.flac",
+   "kind": "file",
+   "page": "https://opengameart.org/content/when-the-shadows-gather",
+   "author": "Tsorthan Grove",
+   "licence": "CC0-1.0",
+   "title": "When the Shadows Gather",
+   "licence_quote": "License(s): CC0 (links to http://creativecommons.org/publicdomain/zero/1.0/); Copyright/Attribution Notice: \"CC0 / Public Domain. No Rights Reserved. Free to use however you like with no attribution required.\" (read 25 Oct 2026)",
+   "sha256": "f275350e329c28dcc76e9d3a01688d6dc6c0b2f49341da9a3ff701deb14a3430",
+   "note": "Round RPG-NM: Karl's night-music pick (25 Oct 2026 00:1x UTC, page \"Adventure Night Music\"); claude/DECISIONS_2026-10-24.md, claude/RPG_NIGHT_MUSIC_CANDIDATES_2026-10-24.md - outskirts_night_1"
   }
  }
 }

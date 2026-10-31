@@ -26,7 +26,7 @@
     ],
     [
      "Swamp",
-     3
+     5
     ],
     [
      "Cast Down",
@@ -65,12 +65,8 @@
      2
     ],
     [
-     "Thraben Inspector",
-     3
-    ],
-    [
      "Plains",
-     3
+     6
     ],
     [
      "Bojuka Bog",
@@ -86,7 +82,7 @@
     ],
     [
      "Guardian of the Guildpact",
-     3
+     1
     ],
     [
      "Crypt Rats",
@@ -121,7 +117,18 @@
     "2": 16,
     "3": 27,
     "4": 7
-   }
+   },
+   "handicap": 5,
+   "swapped": [
+    [
+     "Thraben Inspector",
+     3
+    ],
+    [
+     "Guardian of the Guildpact",
+     2
+    ]
+   ]
   },
   {
    "name": "Grave Priest 2",
@@ -142,7 +149,7 @@
     ],
     [
      "Plains",
-     5
+     7
     ],
     [
      "Orzhov Basilica",
@@ -151,10 +158,6 @@
     [
      "Kor Skyfisher",
      4
-    ],
-    [
-     "Thraben Inspector",
-     2
     ],
     [
      "Pestilence",
@@ -170,7 +173,7 @@
     ],
     [
      "Swamp",
-     6
+     9
     ],
     [
      "Custodi Squire",
@@ -182,7 +185,7 @@
     ],
     [
      "Guardian of the Guildpact",
-     4
+     1
     ],
     [
      "Crypt Rats",
@@ -217,7 +220,18 @@
     "2": 14,
     "3": 26,
     "4": 5
-   }
+   },
+   "handicap": 5,
+   "swapped": [
+    [
+     "Thraben Inspector",
+     2
+    ],
+    [
+     "Guardian of the Guildpact",
+     3
+    ]
+   ]
   },
   {
    "name": "Grave Priest 3",
@@ -266,7 +280,7 @@
     ],
     [
      "Swamp",
-     5
+     7
     ],
     [
      "Dawnbringer Cleric",
@@ -274,7 +288,7 @@
     ],
     [
      "Guardian of the Guildpact",
-     4
+     2
     ],
     [
      "Silverquill Campus",
@@ -282,14 +296,10 @@
     ],
     [
      "Plains",
-     5
+     8
     ],
     [
      "Kabira Crossroads",
-     3
-    ],
-    [
-     "Thraben Inspector",
      3
     ]
    ],
@@ -308,7 +318,18 @@
     "2": 17,
     "3": 26,
     "4": 7
-   }
+   },
+   "handicap": 5,
+   "swapped": [
+    [
+     "Thraben Inspector",
+     3
+    ],
+    [
+     "Guardian of the Guildpact",
+     2
+    ]
+   ]
   },
   {
    "name": "Grave Priest 4",
@@ -357,7 +378,7 @@
     ],
     [
      "Swamp",
-     5
+     8
     ],
     [
      "Dawnbringer Cleric",
@@ -365,15 +386,11 @@
     ],
     [
      "Guardian of the Guildpact",
-     3
+     1
     ],
     [
      "Plains",
-     4
-    ],
-    [
-     "Thraben Inspector",
-     3
+     6
     ],
     [
      "Kabira Crossroads",
@@ -403,7 +420,18 @@
     "2": 19,
     "3": 25,
     "4": 7
-   }
+   },
+   "handicap": 5,
+   "swapped": [
+    [
+     "Thraben Inspector",
+     3
+    ],
+    [
+     "Guardian of the Guildpact",
+     2
+    ]
+   ]
   }
  ],
  "rejected": [
@@ -529,5 +557,67 @@
    }
   },
   "soak_failed": []
+ },
+ "balance": {
+  "about": "Round RPG18 (Karl, 24 Oct 2026: the 45-minute slice, Plan 2 - the boss about 50%, accept 45-55%): each deck's 5 strongest spells swapped for basic lands (rpg.enemies.handicap(main, 5); 'swapped' can still be won). Measured with tools/rpg_balance.py measure --source archetype --kind grave_priest --starters 96 --games 2 --seed 1024 (Forge's AI on both sides; share = the starting decks' wins; low-high = 95% Wilson). decks_sha = tests/test_rpg18.gp_digest of the decks measured.",
+  "handicap": 5,
+  "decks_sha": "0f57d63e238b745e871ef232ab01f57f11daf0e23366c1c8ad476e81e0a60242",
+  "measured": {
+   "games": 768,
+   "starter": 378,
+   "enemy": 390,
+   "draws": 0,
+   "share": 0.4922,
+   "low": 0.457,
+   "high": 0.5275,
+   "turns": 21.6
+  },
+  "decks": {
+   "Grave Priest 1": {
+    "games": 192,
+    "starter": 80,
+    "enemy": 112,
+    "draws": 0,
+    "share": 0.4167,
+    "low": 0.3492,
+    "high": 0.4874,
+    "turns": 20.9
+   },
+   "Grave Priest 2": {
+    "games": 192,
+    "starter": 135,
+    "enemy": 57,
+    "draws": 0,
+    "share": 0.7031,
+    "low": 0.635,
+    "high": 0.7633,
+    "turns": 20.9
+   },
+   "Grave Priest 3": {
+    "games": 192,
+    "starter": 72,
+    "enemy": 120,
+    "draws": 0,
+    "share": 0.375,
+    "low": 0.3096,
+    "high": 0.4453,
+    "turns": 21.9
+   },
+   "Grave Priest 4": {
+    "games": 192,
+    "starter": 91,
+    "enemy": 101,
+    "draws": 0,
+    "share": 0.474,
+    "low": 0.4045,
+    "high": 0.5444,
+    "turns": 22.5
+   }
+  },
+  "seed": 1024,
+  "starters": 96,
+  "games_per_pair": 2,
+  "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
+  "when": "2026-10-25 14:58"
  }
 }

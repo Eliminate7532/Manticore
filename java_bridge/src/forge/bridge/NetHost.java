@@ -86,7 +86,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * table closes, and {"t":"refused_cmd","c"} for a command a guest may not send.
  */
 public class NetHost {
-    static final int PROTOCOL_V = 2;                        // round MP2: rejoin, watch, hb, leave
+    // Round MP3a: 3 - the welcome and the invite carry the game's format and house rules, and the guest's deck must be of that
+    // format. A copy speaking 2 is refused with "version" both ways (a v2 guest would otherwise join a Brawl game with a
+    // Commander deck unchecked, and a v2 host can only play Commander).
+    static final int PROTOCOL_V = 3;                        // round MP2: rejoin, watch, hb, leave
     static final int MAX_SPECTATORS = 4;
     static final int HELLO_MAX = 256 * 1024;                // the hello carries the guest's whole deck
     static final int DECK_MAX = 200 * 1024;
@@ -109,11 +112,23 @@ public class NetHost {
     static String hostName = "Host";
     static String code = "";
     static String guestDeckPath;
+    /** Round MP3a: the game's format as the deck screen names it (commander, brawl, standard, commander_draft, draft); Main.format
+     *  holds how Forge plays it (commander, brawl, constructed). Set by --game-format and --format. */
+    static String gameFormat = "commander";
     static Deck hostDeck;
     static String password;
     static Wire hostWire;
     static volatile BridgeGui hostGui;
     static int guestsWanted = 1;                            // round MP2c: --guests N (1-3), the people who join over the network
+    // Round CD5: --draft - drafting together before the game. The lobby takes up to --guests friends without decks; the host's
+    // table runs the draft (Python's draft_pod) and NetHost only carries its messages: {"c":"draft_send","seat","msg"} goes to that
+    // guest as {"t":"draft","msg"}, and a guest's {"c":"draft","msg"} reaches the host's table as {"t":"draft_from","seat","name",
+    // "msg"}. {"c":"draft_lock"} closes the lobby (the host pressed Start): from then on a dropped friend keeps the seat for as
+    // long as the draft lasts (everyone waits - Karl, 27 Oct), and can come back with the rejoin token or, with the password,
+    // by name. {"c":"draft_game"} gives every seat its deck and starts the game in this process, as MP2c's lobby does.
+    static boolean draftMode = false;
+    static volatile boolean draftLocked = false;
+    static int draftReconnectSeconds = 900;                 // the welcome's "grace" in a draft: how long a guest's table retries
     static final List<String> aiDeckPaths = new ArrayList<>();      // round MP2c: --opponent FILE, one per AI seat
     static final List<Deck> aiDecks = new ArrayList<>();
     /** The guests in seat order, from the moment each joins (round MP2: a SeatWire outlives its connection). */
@@ -147,6 +162,7 @@ public class NetHost {
         int port = 36800;
         Long seed = null, parentPid = null;
         boolean upnp = false;
+        String badArg = null;                               // round MP3a
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--deck": deckPath = args[++i]; break;
@@ -172,6 +188,12 @@ public class NetHost {
                     if (PlanCache.MODES.contains(m)) PlanCache.mode = m;
                     break;
                 }
+                case "--attack-budget": AttackCache.budgetSeconds = Integer.parseInt(args[++i]); break;   // round AI-ATTACK
+                case "--attack-cache": {                                                     // round AI-ATTACK, see AttackCache (off = Forge's own)
+                    String m = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (AttackCache.MODES.contains(m)) AttackCache.mode = m;
+                    break;
+                }
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;
                 case "--block-seconds": blockSeconds = Integer.parseInt(args[++i]); break;           // tests
                 case "--stall-seconds": RemoteWire.stallSeconds = Integer.parseInt(args[++i]); break; // tests
@@ -180,10 +202,30 @@ public class NetHost {
                 case "--silence-seconds": silenceSeconds = Integer.parseInt(args[++i]); break;       // tests
                 case "--drop-notice-delay-ms": dropNoticeDelayMs = Integer.parseInt(args[++i]); break; // tests (round MP2e)
                 case "--guests": guestsWanted = Integer.parseInt(args[++i]); break;                 // round MP2c
+                case "--draft": draftMode = true; break;                                             // round CD5
+                case "--draft-reconnect-seconds": draftReconnectSeconds = Integer.parseInt(args[++i]); break;   // round CD5
                 case "--opponent": aiDeckPaths.add(args[++i]); break;                               // round MP2c: an AI seat
                 case "--journal": journalPath = args[++i]; break;                                   // round MP2b
                 case "--replay": replayPath = args[++i]; break;                                     // round MP2b
                 case "--resume-guest": resumeGuests.add(args[++i]); break;                          // round MP2b
+                case "--format": {                                                                  // round MP3a, as Main
+                    String f = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (f.equals("commander") || f.equals("brawl") || f.equals("constructed")) Main.format = f;
+                    else badArg = "unknown format " + args[i];
+                    break;
+                }
+                case "--game-format": {                                                             // round MP3a
+                    String f = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (OnlineFormats.NAMES.containsKey(f)) gameFormat = f;
+                    else badArg = "unknown game format " + args[i];
+                    break;
+                }
+                case "--house-rule": {                                                              // round MP3a, as Main
+                    String r = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (HouseRules.KNOWN.contains(r)) HouseRules.active.add(r);
+                    else badArg = "unknown house rule " + args[i];
+                    break;
+                }
                 default: System.err.println("nethost: unknown argument " + args[i]);
             }
         }
@@ -198,6 +240,15 @@ public class NetHost {
         if (deckPath == null || keystore == null || guestDeckPath == null || password == null || password.isEmpty()
                 || storePass == null) {
             hostFailed("args", "NetHost needs --deck, --keystore, --guest-deck, MANTICORE_NET_PASSWORD and MANTICORE_KEYSTORE_PASS");
+            return;
+        }
+        if (badArg != null) {
+            hostFailed("args", badArg);
+            return;
+        }
+        if (!OnlineFormats.engine(gameFormat).equals(Main.format)) {   // round MP3a: --format must be how --game-format is played
+            hostFailed("args", "the game format " + gameFormat + " is played as " + OnlineFormats.engine(gameFormat)
+                    + ", not " + Main.format);
             return;
         }
         if (!resumeGuests.isEmpty()) {
@@ -234,8 +285,8 @@ public class NetHost {
         hostReader.start();
 
         Main.initForge(hostName, seed);
-        hostDeck = DeckSerializer.fromFile(new File(deckPath));
-        if (hostDeck == null) {
+        hostDeck = draftMode ? null : DeckSerializer.fromFile(new File(deckPath));     // round CD5: a draft's deck comes later
+        if (hostDeck == null && !draftMode) {
             hostFailed("deck", "could not read deck " + deckPath);
             return;
         }
@@ -345,8 +396,11 @@ public class NetHost {
         t.start();
     }
 
+    /** Round NET-RESUME: replayDone, a back guest's mute and its welcome back change together under this lock, so a guest who
+     *  joins just as the play-back ends is either welcomed by replayFinished or by resumeJoin, never muted for good. */
+    static final Object RESUME_LOCK = new Object();
+
     static void replayFinished(ResumeFeeder feeder) {
-        replayDone = true;
         System.err.println("nethost: play-back done: " + feeder.applied + " applied, " + feeder.skipped + " skipped"
                 + (feeder.diverged != null ? "; stopped early (" + feeder.diverged + ")" : ""));
         JsonObject m = new JsonObject();
@@ -357,9 +411,16 @@ public class NetHost {
         if (feeder.diverged != null) {
             m.addProperty("diverged", feeder.diverged);
         }
-        hostWire.send(m);
-        BridgeGui hg = hostGui;
-        javax.swing.SwingUtilities.invokeLater(() -> {
+        // Round NET-RESUME (O1, the online soak of 24 Oct, games 5 and 7): all of this used to run in one invokeLater, queued on
+        // Swing's thread behind the play-back's last click. When that click makes Forge ask something there ("Choose an
+        // ability", ...), Swing's thread waits for the answer, and the welcome back and the re-asking that would let anyone
+        // give it never ran: the friend got no snapshot at all and the host waited for the friend. Done here instead, on the
+        // feeder's thread: the host's table is told first that the play-back is over (so it stops ignoring questions), then
+        // everything still waiting is asked again. A question Forge asks after this goes out as usual.
+        synchronized (RESUME_LOCK) {
+            replayDone = true;
+            hostWire.send(m);
+            BridgeGui hg = hostGui;
             if (hg != null) {
                 hg.markDirty();
             }
@@ -369,10 +430,11 @@ public class NetHost {
                     welcomeBack(g);
                 }
             }
-        });
+        }
     }
 
-    /** A guest of a resumed game, once the play-back is done: the game as it is now, and whatever it is being asked. */
+    /** A guest of a resumed game, once the play-back is done: the game as it is now, and whatever it is being asked.
+     *  Safe on any thread (round NET-RESUME: never on Swing's, which a question may be holding). */
     static void welcomeBack(SeatWire seat) {
         seat.muted = false;
         seat.send(ready(false));
@@ -416,7 +478,14 @@ public class NetHost {
         out.write(w + "\n");
         out.flush();
         taken.code = str(hello, "code");
-        taken.attach(s, reader.withLimit(REMOTE_LINE_MAX), cmd -> guestCommand(taken, cmd), NetHost::guestConnectionEnded);
+        boolean welcomeNow;
+        synchronized (RESUME_LOCK) {                          // round NET-RESUME: attach + mute under the play-back's lock
+            taken.attach(s, reader.withLimit(REMOTE_LINE_MAX), cmd -> guestCommand(taken, cmd), NetHost::guestConnectionEnded);
+            welcomeNow = replayDone;
+            if (!welcomeNow) {
+                taken.muted = true;                           // the play-back's questions are not theirs to answer
+            }
+        }
         startHeartbeat();
         int back = 0;
         for (SeatWire g : guests) {
@@ -432,8 +501,10 @@ public class NetHost {
         joined.addProperty("resumed", true);
         hostWire.send(joined);
         System.err.println("nethost: " + taken.name + " is back for the saved game (" + back + " of " + guestsWanted + ")");
-        if (replayDone) {
-            javax.swing.SwingUtilities.invokeLater(() -> welcomeBack(taken));
+        if (welcomeNow) {
+            synchronized (RESUME_LOCK) {
+                welcomeBack(taken);                           // round NET-RESUME: not queued on Swing's thread (see replayFinished)
+            }
         } else {
             JsonObject m = new JsonObject();
             m.addProperty("t", "lobby");
@@ -447,7 +518,6 @@ public class NetHost {
             m.addProperty("joined", back);
             m.addProperty("ai", aiDeckPaths.size());
             m.addProperty("resuming", true);
-            taken.muted = true;                               // the play-back's questions are not theirs to answer
             taken.sendNow(m);
         }
     }
@@ -508,6 +578,14 @@ public class NetHost {
         if (c.equals("quit")) {
             hostLeft();
             return;
+        }
+        if (draftMode && !started) {                         // round CD5: the draft's own commands, before the game
+            switch (c) {
+                case "draft_lock": draftLock(cmd); return;
+                case "draft_send": draftSend(cmd); return;
+                case "draft_game": draftGame(cmd); return;
+                default: break;
+            }
         }
         BridgeGui g = hostGui;
         if (g == null) {
@@ -649,6 +727,12 @@ public class NetHost {
                 finished.set(true);
                 deadline.cancel(false);
                 resumeJoin(s, out, reader, hello);
+                return;
+            }
+            if (draftMode) {                                      // round CD5: a friend joining the draft (no deck yet)
+                finished.set(true);
+                deadline.cancel(false);
+                draftJoin(s, out, reader, hello);
                 return;
             }
             JsonObject deck = hello.has("deck") && hello.get("deck").isJsonObject() ? hello.getAsJsonObject("deck") : new JsonObject();
@@ -801,10 +885,23 @@ public class NetHost {
         w.addProperty("grace", graceSeconds);
         w.addProperty("players", totalPlayers());              // round MP2c: the whole table, AI seats included
         w.addProperty("guests", guestsWanted);
+        addFormat(w);                                          // round MP3a
+        if (draftMode && !started) {                           // round CD5: the table opens the draft, and retries for long
+            w.addProperty("draft", true);
+            w.addProperty("grace", draftReconnectSeconds);
+        }
         if (rejoined) {
             w.addProperty("rejoined", true);
         }
         return w;
+    }
+
+    /** Round MP3a: the game's format (the deck screen's name for it) and its house rules, for the welcome and ready lines. */
+    static void addFormat(JsonObject o) {
+        o.addProperty("gameFormat", gameFormat);
+        com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
+        for (String r : HouseRules.active) rules.add(r);
+        o.add("houseRules", rules);
     }
 
     static JsonObject ready(boolean spectator) {
@@ -817,6 +914,8 @@ public class NetHost {
         ready.addProperty("loopCap", LoopGuard.cap);
         ready.addProperty("threatAi", Threats.on);           // round AI2
         ready.addProperty("grace", graceSeconds);
+        ready.addProperty("format", Main.format);              // round MP3a: how Forge plays it, as Main's ready line says
+        addFormat(ready);
         if (spectator) {
             ready.addProperty("spectator", true);
         }
@@ -858,11 +957,22 @@ public class NetHost {
                 g.cancel(false);
             }
             if (!started) {
+                if (draftMode && draftLocked) {                 // round CD5: back in the draft - the host's table carries on
+                    hostWire.send(draftBack(seat, "token"));
+                    System.err.println("nethost: " + seat.name + " is back in the draft");
+                    return;
+                }
                 sendLobby();                                    // still waiting for the others
                 return;
             }
-            if (!replayDone) {                                  // round MP2b: a saved game still being played back
-                seat.muted = true;
+            boolean stillPlayingBack;
+            synchronized (RESUME_LOCK) {                        // round NET-RESUME: never muted after replayFinished unmuted
+                stillPlayingBack = !replayDone;
+                if (stillPlayingBack) {
+                    seat.muted = true;
+                }
+            }
+            if (stillPlayingBack) {                             // round MP2b: a saved game still being played back
                 JsonObject m = new JsonObject();
                 m.addProperty("t", "lobby");
                 m.addProperty("resuming", true);
@@ -879,13 +989,14 @@ public class NetHost {
             back.addProperty("seat", seat.seat);
             tellAll(back, seat);
         }
+        // Round NET-RESUME: not queued on Swing's thread. A question Forge asked there (a click's "Choose an ability") holds
+        // that thread until the answer comes, and the answer can only come once the question is asked again on the new
+        // connection; queued behind it, a reconnect in that moment would wait for ever (read from the code, not reproduced).
         BridgeGui gg = seat.gui;
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            if (gg != null) {
-                gg.markDirty();
-            }
-            seat.resendPending();
-        });
+        if (gg != null) {
+            gg.markDirty();
+        }
+        seat.resendPending();
     }
 
     /** Round MP2: a spectator. Gets an all-face-down view of every player's hidden cards and may not play. */
@@ -918,6 +1029,7 @@ public class NetHost {
         welcome.addProperty("guest", names.toString());
         welcome.addProperty("players", totalPlayers());
         welcome.addProperty("watching", true);
+        addFormat(welcome);                                    // round MP3a
         welcome.addProperty("code", code);
         out.write(welcome + "\n");
         out.flush();
@@ -1040,11 +1152,20 @@ public class NetHost {
             if (d == null) {
                 return "Forge could not read the deck.";
             }
-            if (d.getCommanders().isEmpty()) {
-                return "The deck has no commander.";
+            // Round MP3a: the deck must be of this game's format (as the deck screen groups them), then that format's checks.
+            String fmt = OnlineFormats.ofDck(dck);
+            if (!OnlineFormats.compatible(gameFormat, fmt)) {
+                return OnlineFormats.mismatch(gameFormat, fmt);
             }
-            if (d.getMain().countAll() < 1) {
-                return "The deck has no cards besides the commander.";
+            if (OnlineFormats.hasCommander(gameFormat)) {
+                if (d.getCommanders().isEmpty()) {
+                    return "The deck has no commander.";
+                }
+                if (d.getMain().countAll() < 1) {
+                    return "The deck has no cards besides the commander.";
+                }
+            } else if (d.getMain().countAll() < 1) {
+                return "The deck has no cards.";
             }
             return null;
         } catch (Exception e) {
@@ -1094,7 +1215,10 @@ public class NetHost {
     static void startGame() throws Exception {
         List<RegisteredPlayer> players = new ArrayList<>();
         Map<RegisteredPlayer, IGuiGame> guis = new LinkedHashMap<>();
-        RegisteredPlayer p1 = RegisteredPlayer.forCommander(hostDeck);
+        // Round MP3a: every seat is registered as Main registers it for this format (Main.register: forCommander, Brawl's
+        // forVariants with the table's size, or a plain Constructed seat), and the match starts as Main starts it.
+        int seatCount = 1 + guests.size() + aiDecks.size();
+        RegisteredPlayer p1 = Main.register(hostDeck, seatCount);
         p1.setPlayer(new Passing.Human(hostName));          // patch 43
         BridgeGui g1 = new BridgeGui(hostWire);
         g1.events = new EventForwarder(hostWire);
@@ -1102,7 +1226,7 @@ public class NetHost {
         guis.put(p1, g1);
         for (SeatWire seat : guests) {
             Deck d = DeckSerializer.fromFile(new File(seat.deckPath));
-            RegisteredPlayer rp = RegisteredPlayer.forCommander(d);
+            RegisteredPlayer rp = Main.register(d, seatCount);
             rp.setPlayer(new Passing.Human(seat.name));         // patch 43
             BridgeGui g = new BridgeGui(seat);
             g.events = new EventForwarder(seat);
@@ -1112,7 +1236,7 @@ public class NetHost {
         }
         int i = 1;
         for (Deck d : aiDecks) {                                  // round MP2c: AI seats, named as in a game against the AIs
-            RegisteredPlayer rp = RegisteredPlayer.forCommander(d);
+            RegisteredPlayer rp = Main.register(d, seatCount);
             rp.setPlayer(LoopGuard.guarded(GamePlayerUtil.createAiPlayer("AI " + i + " (" + d.getName() + ")", i, "")));
             players.add(rp);
             i++;
@@ -1143,10 +1267,233 @@ public class NetHost {
         Main.match = new HostedMatch();
         Main.match.setOnMatchOver(() -> gameOver = true);
         // The Commander variant must be applied (round 27c: without it nobody is asked about moving a commander to the
-        // command zone), exactly as Main does.
-        Main.match.startMatch(GameType.Commander, java.util.EnumSet.of(GameType.Commander), players, guis);
+        // command zone), exactly as Main does. Round MP3a: the format's variant (Brawl), or none for a Constructed game.
+        GameType variant = Main.variant();
+        java.util.Set<GameType> variants = Checks.fault(Checks.Fault.NO_COMMANDER_VARIANT) || Main.constructed()
+                ? java.util.EnumSet.noneOf(GameType.class) : java.util.EnumSet.of(variant);
+        Main.match.startMatch(variant, variants, players, guis);
         System.err.println("nethost: the game started with " + players.size() + " players (" + guests.size() + " online, "
-                + aiDecks.size() + " AI)");
+                + aiDecks.size() + " AI), " + gameFormat + (HouseRules.active.isEmpty() ? "" : " + " + HouseRules.active));
+    }
+
+    // ---- round CD5: drafting together -------------------------------------------------------------------------------
+    /** A friend joining the draft: a new seat while the lobby is open, or - once the draft has started - their own seat back,
+     *  found by name (they lost the rejoin token: their program closed). Anyone else is turned away. */
+    static void draftJoin(SSLSocket s, Writer out, LineReader reader, JsonObject hello) throws IOException {
+        boolean drafting = flag(hello, "draft") || flag(hello, "drafts");   // a draft hello, or any hello of a copy that drafts
+        if (!drafting) {                                      // a copy of the game from before online drafts
+            noteRefusal("version");
+            refuse(s, out, "version", "host is drafting (needs a copy with online drafts)");
+            return;
+        }
+        String name = cleanName(str(hello, "name"));
+        SeatWire seat = null;
+        boolean back = false;
+        String full = null;
+        synchronized (NetHost.class) {
+            if (started) {
+                full = "The draft is over and its game has started.";
+            } else if (draftLocked) {
+                for (SeatWire g : guests) {
+                    if (!g.attached() && !g.gone.get() && g.name.equalsIgnoreCase(name)) {
+                        seat = g;
+                        back = true;
+                        break;
+                    }
+                }
+                if (seat == null) {
+                    full = "The draft has started without you: ask the host to start another one.";
+                }
+            } else if (guests.size() >= guestsWanted) {
+                full = "This draft already has all its players.";
+            } else {
+                seat = new SeatWire(freeSeatNumber(), uniqueName(name), newToken(), REMOTE_RATE);
+                seat.deckPath = seatDeckPath(seat.seat);
+                guests.add(seat);
+            }
+            if (seat != null) {
+                seat.code = str(hello, "code");
+            }
+        }
+        if (seat == null) {
+            noteRefusal("full");
+            refuse(s, out, "draft_full", full);
+            return;
+        }
+        final SeatWire taken = seat;
+        s.setSoTimeout(0);
+        out.write(welcome(taken, back) + "\n");
+        out.flush();
+        synchronized (taken.announce) {
+            taken.attach(s, reader.withLimit(REMOTE_LINE_MAX), cmd -> guestCommand(taken, cmd), NetHost::guestConnectionEnded);
+        }
+        startHeartbeat();
+        if (back) {
+            System.err.println("nethost: " + taken.name + " is back in the draft (by name)");
+            hostWire.send(draftBack(taken, "name"));
+            return;
+        }
+        JsonObject joined = new JsonObject();
+        joined.addProperty("t", "guest_joined");
+        joined.addProperty("name", taken.name);
+        joined.addProperty("code", taken.code);
+        joined.addProperty("seat", taken.seat);
+        joined.addProperty("joined", guests.size());
+        joined.addProperty("wanted", guestsWanted);
+        joined.addProperty("draft", true);
+        hostWire.send(joined);
+        System.err.println("nethost: " + taken.name + " joined the draft (" + guests.size() + " of at most " + guestsWanted + ")");
+        sendLobby();
+    }
+
+    static boolean flag(JsonObject o, String key) {
+        try {
+            return o.has(key) && o.get(key).isJsonPrimitive() && o.get(key).getAsBoolean();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    static JsonObject draftBack(SeatWire seat, String how) {
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "peer_back");
+        m.addProperty("who", "guest");
+        m.addProperty("name", seat.name);
+        m.addProperty("seat", seat.seat);
+        m.addProperty("draft", true);
+        m.addProperty("by", how);
+        return m;
+    }
+
+    /** The host pressed Start: no more friends join; the seats as they are. A continued draft (the host's program had closed)
+     *  names the friends who aren't back yet in "reserve": each gets a seat now, empty, that they take with the same name. */
+    static void draftLock(JsonObject cmd) {
+        com.google.gson.JsonArray list = new com.google.gson.JsonArray();
+        synchronized (NetHost.class) {
+            if (cmd.has("reserve") && cmd.get("reserve").isJsonArray()) {
+                for (JsonElement e : cmd.getAsJsonArray("reserve")) {
+                    if (guests.size() >= 3) {
+                        break;
+                    }
+                    String name = cleanName(e.isJsonPrimitive() ? e.getAsString() : "");
+                    boolean taken = false;
+                    for (SeatWire g : guests) {
+                        taken |= g.name.equalsIgnoreCase(name);
+                    }
+                    if (!taken) {
+                        SeatWire seat = new SeatWire(freeSeatNumber(), name, newToken(), REMOTE_RATE);
+                        seat.deckPath = seatDeckPath(seat.seat);
+                        guests.add(seat);
+                    }
+                }
+            }
+            draftLocked = true;
+            guestsWanted = Math.max(1, guests.size());
+            for (SeatWire g : guests) {
+                JsonObject o = new JsonObject();
+                o.addProperty("seat", g.seat);
+                o.addProperty("name", g.name);
+                o.addProperty("connected", g.attached());
+                list.add(o);
+            }
+        }
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "draft_locked");
+        m.add("seats", list);
+        hostWire.send(m);
+        System.err.println("nethost: the draft started with " + list.size() + " friend(s)");
+    }
+
+    /** One draft message from the host's table to one friend's (dropped while that friend is away: the host sends it again). */
+    static void draftSend(JsonObject cmd) {
+        int seatNo = cmd.has("seat") ? safeInt(cmd.get("seat")) : -1;
+        JsonElement msg = cmd.get("msg");
+        if (msg == null || !msg.isJsonObject()) {
+            return;
+        }
+        for (SeatWire g : guests) {
+            if (g.seat == seatNo && !g.gone.get()) {
+                JsonObject m = new JsonObject();
+                m.addProperty("t", "draft");
+                m.add("msg", msg);
+                g.send(m);
+                return;
+            }
+        }
+    }
+
+    /** Every deck is ready: the host's, each friend's who plays (their seats), and the AI seats' (the AI drafters', and any
+     *  friend's seat the host gave to the AI). A friend not in "seats" gives up the seat. Then the game starts in this process. */
+    static void draftGame(JsonObject cmd) {
+        try {
+            Deck mine = DeckSerializer.fromFile(new File(str(cmd, "host_deck")));
+            if (mine == null) {
+                draftGameFailed("could not read the host's deck");
+                return;
+            }
+            Map<Integer, String> paths = new java.util.HashMap<>();
+            if (cmd.has("seats") && cmd.get("seats").isJsonArray()) {
+                for (JsonElement e : cmd.getAsJsonArray("seats")) {
+                    JsonObject o = e.getAsJsonObject();
+                    paths.put(safeInt(o.get("seat")), str(o, "deck"));
+                }
+            }
+            List<String> ai = new ArrayList<>();
+            List<Deck> aiD = new ArrayList<>();
+            if (cmd.has("ai") && cmd.get("ai").isJsonArray()) {
+                for (JsonElement e : cmd.getAsJsonArray("ai")) {
+                    Deck d = DeckSerializer.fromFile(new File(e.getAsString()));
+                    if (d == null) {
+                        draftGameFailed("could not read the AI deck " + e.getAsString());
+                        return;
+                    }
+                    ai.add(e.getAsString());
+                    aiD.add(d);
+                }
+            }
+            List<SeatWire> dropped = new ArrayList<>();
+            synchronized (NetHost.class) {
+                int playing = 0;
+                for (SeatWire g : guests) {
+                    playing += paths.containsKey(g.seat) ? 1 : 0;
+                }
+                if (1 + playing + aiD.size() > 4) {
+                    draftGameFailed("more than 4 players");
+                    return;
+                }
+                for (SeatWire g : new ArrayList<>(guests)) {
+                    String path = paths.get(g.seat);
+                    if (path == null) {
+                        guests.remove(g);
+                        g.gone.set(true);
+                        dropped.add(g);
+                    } else {
+                        g.deckPath = path;
+                    }
+                }
+                hostDeck = mine;
+                aiDeckPaths.clear();
+                aiDeckPaths.addAll(ai);
+                aiDecks.clear();
+                aiDecks.addAll(aiD);
+                guestsWanted = guests.size();
+                started = true;
+            }
+            for (SeatWire g : dropped) {
+                g.close();
+            }
+            startGame();
+        } catch (Exception e) {
+            draftGameFailed(String.valueOf(e));
+        }
+    }
+
+    static void draftGameFailed(String text) {
+        System.err.println("nethost: the draft's game could not start: " + text);
+        JsonObject m = new JsonObject();
+        m.addProperty("t", "draft_game_failed");
+        m.addProperty("text", text);
+        hostWire.send(m);
     }
 
     static void guestCommand(SeatWire seat, JsonObject cmd) {
@@ -1157,6 +1504,18 @@ public class NetHost {
         if (c.equals("leave")) {                              // round MP2: the guest is going for good - no grace period
             seat.leaving = true;
             seat.dropConnection(seat.name + " left the game");
+            return;
+        }
+        if (c.equals("draft") && draftMode && !started) {   // round CD5: a pick, a deck, ... - the host's table checks it
+            JsonElement msg = cmd.get("msg");
+            if (msg != null && msg.isJsonObject()) {
+                JsonObject m = new JsonObject();
+                m.addProperty("t", "draft_from");
+                m.addProperty("seat", seat.seat);
+                m.addProperty("name", seat.name);
+                m.add("msg", msg);
+                hostWire.send(m);
+            }
             return;
         }
         if (!REMOTE_ALLOWED.contains(c)) {
@@ -1207,6 +1566,28 @@ public class NetHost {
             }
             if (started && !replayDone) {
                 return;                                       // round MP2b: the seat stays theirs; they can join again
+            }
+            if (draftMode && draftLocked && !started) {       // round CD5: the draft waits for them (or the host gives the seat
+                String why = seat.dropReason() != null ? seat.dropReason() : "the connection closed";   // to the AI)
+                JsonObject m = new JsonObject();
+                m.addProperty("who", "guest");
+                m.addProperty("name", seat.name);
+                m.addProperty("seat", seat.seat);
+                m.addProperty("why", why);
+                m.addProperty("draft", true);
+                if (seat.leaving) {                           // it said "leave": it won't be back
+                    seat.gone.set(true);
+                    m.addProperty("t", "peer_left");
+                    m.addProperty("left", true);
+                    m.addProperty("players", totalPlayers());
+                    System.err.println("nethost: " + seat.name + " left the draft");
+                } else {
+                    m.addProperty("t", "peer_dropped");
+                    m.addProperty("grace", 0);
+                    System.err.println("nethost: " + seat.name + "'s connection dropped during the draft (" + why + "); the draft waits");
+                }
+                hostWire.send(m);                             // the host's table only: the others' draft screens hear it from it
+                return;
             }
             lobby = !started;
             if (!lobby && !(gameOver || seat.leaving || graceSeconds <= 0 || Main.match == null)) {

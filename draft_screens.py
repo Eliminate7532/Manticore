@@ -309,6 +309,16 @@ class DraftFlow(dlg.Dialog):
     def to_review(self):
         self.stage, self.review_seat, self.scroll, self.hover, self.message = "review", 0, 0, None, None
 
+    def leave_label(self):
+        return "Save and leave"
+
+    def review_next_label(self):
+        return "Build the decks"
+
+    def review_seats(self):
+        """Round CD5: the seats whose picks the review shows (every seat offline; OnlineDraftFlow: yours and the AI drafters')."""
+        return list(range(self.pod.draft.n)) if self.pod is not None else []
+
     def to_decks(self, gui):
         self.decks = self.pod.build_all()
         self.problems = [self.pod.problems(s, d) if d is not None else None for s, d in enumerate(self.decks)]
@@ -441,7 +451,7 @@ class DraftFlow(dlg.Dialog):
         if menu is not None and self.pod.classic:            # round CD3: 1v1 against the AI drafter you chose
             ai = entries[self.opponent] if 0 < self.opponent < len(entries) else None
             menu.choose_draft(entries[0].id, [ai.id] if ai is not None else [], fmt=self.pod.format)
-            menu.say(CHOSEN_SAID_CLASSIC.format(ai=dp.SEAT_NAMES[self.opponent]), GREEN)
+            menu.say(CHOSEN_SAID_CLASSIC.format(ai=self.pod.seat_name(self.opponent)), GREEN)
         elif menu is not None:
             menu.choose_draft(entries[0].id, [e.id for e in entries[1:] if e is not None])
             menu.say(CHOSEN_SAID, GREEN)
@@ -461,6 +471,11 @@ class DraftFlow(dlg.Dialog):
             self.load_cube(refresh=self.loaded_ref == self.ref() and bool(self.job and self.job.done))
         elif name == "start":
             self.start_draft(gui)
+        elif name == "online":                                # round CD5
+            if self.ready() and hasattr(gui, "open_online_draft"):
+                self.remember_cube(gui)
+                gui.play_cue("ui.click")
+                gui.open_online_draft(self.job, self.from_title)
         elif name == "continue":
             self.continue_draft(gui)
         elif name == "discard":
@@ -774,10 +789,14 @@ class DraftFlow(dlg.Dialog):
                     draw_text(scr, ln, rect.x + pad, y, small, WHITE)
                     y += small.get_height() + 1
                 y += 3
+        online = []                                           # round CD5: drafting together online (Commander cubes first)
+        if hasattr(gui, "open_online_draft") and self.resume is None and style == "commander":
+            online = [("Draft with friends", "online", self.ready(), False)]
         top = self.footer(gui, rect, [("Back", "back", True, False)],
-                          [("Start the draft", "start", self.ready() and self.resume is None, self.resume is None)])
+                          [("Start the draft", "start", self.ready() and self.resume is None, self.resume is None)] + online)
         self.draw_message(gui, rect.x + pad + gui.button_width("Back") + int(16 * fs), top + (bh - smallb.get_height()) // 2,
-                          rect.w - 2 * pad - gui.button_width("Back") - gui.button_width("Start the draft") - int(40 * fs))
+                          rect.w - 2 * pad - gui.button_width("Back") - gui.button_width("Start the draft") - int(40 * fs)
+                          - (gui.button_width("Draft with friends") + int(10 * fs) if online else 0))
 
     def status_lines(self):
         """[(text, colour)] about the cube being loaded."""
@@ -825,7 +844,7 @@ class DraftFlow(dlg.Dialog):
         need = pod.needed()
         word, to = pod.passing()
         counts = pod.counts()
-        others = "   ".join(f"{dp.SEAT_NAMES[s]}: {counts[s]} cards" for s in range(1, len(counts)))
+        others = "   ".join(f"{pod.seat_name(s)}: {counts[s]} cards" for s in range(1, len(counts)))     # round CD5: names
         y = self.header(gui, rect, f"{pod.label()}  -  take {need}",
                         f"Passing {word}, to {to}.   You have {counts[0]} cards.   {others}")
         foot = rect.bottom - pad - self.bh - int(10 * fs)
@@ -855,7 +874,7 @@ class DraftFlow(dlg.Dialog):
                           "midtop")
             self.tiles.append((pygame.Rect(r), card))
         self.draw_side(gui, side)
-        left_label = "Save and leave"
+        left_label = self.leave_label()                          # round CD5: online, "Stop the draft" / "Leave the draft"
         top = self.footer(gui, rect, [(left_label, "leave", True, False)],
                           [("Confirm", "confirm", len(self.selected) == need, True), ("Clear", "clear", bool(self.selected), False)])
         if self.message:
@@ -952,7 +971,8 @@ class DraftFlow(dlg.Dialog):
         y = self.header(gui, rect, "The draft is done - every pick, in order",
                         "In gold: the cards that seat took. The rest of each row is the pack they were taken from.")
         x = rect.x + pad
-        for s, name in enumerate(dp.SEAT_NAMES):
+        for s in self.review_seats():                              # round CD5: online, yours and the AI drafters' only
+            name = pod.seat_name(s)
             w = gui.button_width(name)
             self.button(gui, pygame.Rect(x, y, w, self.bh), name, f"seat_{s}", True, s == self.review_seat)
             x += w + int(8 * fs)
@@ -1002,7 +1022,7 @@ class DraftFlow(dlg.Dialog):
             by = area.y + int((area.h - bar_h) * self.scroll / self.max_scroll)
             pygame.draw.rect(scr, gfx.SCROLLBAR, pygame.Rect(area.right - 4, by, 4, bar_h))
         self.draw_side(gui, side, picks=False)
-        self.footer(gui, rect, [("Save and leave", "leave", True, False)], [("Build the decks", "build", True, True)])
+        self.footer(gui, rect, [(self.leave_label(), "leave", True, False)], [(self.review_next_label(), "build", True, True)])
 
     # decks
     def draw_decks(self, gui, rect):
@@ -1038,7 +1058,7 @@ class DraftFlow(dlg.Dialog):
             prev = scr.get_clip()
             scr.set_clip(col)
             cy = inner.y
-            title = (dp.SEAT_NAMES[s] if s else "You") + ("  -  you play this one" if versus else "")
+            title = (pod.seat_name(s) if s else "You") + ("  -  you play this one" if versus else "")
             draw_text(scr, clip_text(title, body, inner.w), inner.x, cy, body,
                       GOLD if s == 0 else (gfx.VS_TEXT if versus else WHITE))
             cy += body.get_height() + 4
@@ -1079,7 +1099,7 @@ class DraftFlow(dlg.Dialog):
                 cy += tiny.get_height()
             scr.set_clip(prev)
         mine_ok = bool(self.decks) and self.decks[0] is not None
-        save_label = (f"Save the decks and play {dp.SEAT_NAMES[self.opponent]}" if pod.classic
+        save_label = (f"Save the decks and play {pod.seat_name(self.opponent)}" if pod.classic
                       else "Save the decks and choose them")
         top = self.footer(gui, rect, [("Back to the review", "to_review", True, False), ("Save and leave", "leave", True, False)],
                           [(save_label, "save", mine_ok, True)])

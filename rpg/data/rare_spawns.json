@@ -1,6 +1,6 @@
 {
  "version": 1,
- "about": "Round RPG16: rare spawns (claude/SPEC_RPG16_DAYNIGHT_2026-10-23.md 3.4, the spec lane's draft, unchanged). Every word, chance, cooldown and reward is a placeholder for Karl to edit (open question Q6). Round RPG17 (Karl 24 Oct Q6): the chances doubled (0.25 / 0.3 / 0.2 -> 0.5 / 0.6 / 0.4) and the cooldown 3 -> 2 days, rewards kept; Old Gorsehide's \"decks\": \"regular\" - he plays the region's regular (Jumpstart) deck lists, since claude/SLICE_NIGHT_DUELS_2026-10-24.md measured him at 23.6% on his archetype decks (Karl: under 30% -> the regular decks); his pay stays a dungeon win's. Round RPG17b (Karl 24 Oct, RPG16d's question 4): a \"level\" per rare (placeholders for Karl to change: Mother of Rats 1, Red Sash 2, Old Gorsehide 3); a cooldown_days that can't be read is 1 day per level; a missing or unreadable level counts as 1.",
+ "about": "Round RPG16: rare spawns (claude/SPEC_RPG16_DAYNIGHT_2026-10-23.md 3.4, the spec lane's draft, unchanged). Every word, chance, cooldown and reward is a placeholder for Karl to edit (open question Q6). Round RPG17 (Karl 24 Oct Q6): the chances doubled (0.25 / 0.3 / 0.2 -> 0.5 / 0.6 / 0.4) and the cooldown 3 -> 2 days, rewards kept; Old Gorsehide's \"decks\": \"regular\" - he plays the region's regular (Jumpstart) deck lists, since claude/SLICE_NIGHT_DUELS_2026-10-24.md measured him at 23.6% on his archetype decks (Karl: under 30% -> the regular decks); his pay stays a dungeon win's. Round RPG17b (Karl 24 Oct, RPG16d's question 4): a \"level\" per rare (placeholders for Karl to change: Mother of Rats 1, Red Sash 2, Old Gorsehide 3); a cooldown_days that can't be read is 1 day per level; a missing or unreadable level counts as 1. Round RPG18b (Karl 25 Oct): the Red Sash is the beaten leader's successor - his taunt says so.",
  "rare": {
   "old_gorsehide": {
    "level": 3,
@@ -32,7 +32,7 @@
    "chance": 0.6,
    "cooldown_days": 2,
    "home": "The east road, after dark",
-   "taunt": "You cost me three thieves and a cart of oil. Pay up.",
+   "taunt": "You beat our leader at the bridge. The sash is mine now. Pay up.",
    "seen": "A red sash moves by the road, in no hurry.",
    "reward": {
     "card": "rare_from_band"
