@@ -1,0 +1,8 @@
+try 1 of run 41531511061: FAIL
+relay: yes
+joined: yes
+join_error: -
+ended: time_cap, turns 13, 1500.4 s
+fails: none
+warns: none
+version: Manticore 0.28.53.13 | commit ff38774 | code 13499692
