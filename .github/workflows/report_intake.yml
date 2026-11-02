@@ -1,10 +1,11 @@
 # Round BUG1: copy new bug reports and ideas from Discord into the PRIVATE repository's branch claude/reports, every hour.
 # This file belongs in the PUBLIC repository (github.com/Eliminate7532/Manticore) as .github/workflows/report_intake.yml, on its
 # main branch (GitHub runs scheduled workflows only from the default branch; public repositories' standard runners are free).
-# It needs three repository secrets there (Settings > Secrets and variables > Actions):
+# It needs two repository secrets there (Settings > Secrets and variables > Actions):
 #   DISCORD_BOT_TOKEN    the bot's token (Discord Developer Portal > the app > Bot > Reset Token)
-#   DISCORD_CHANNEL_IDS  the bug-report channel's id (several: comma-separated, e.g. bugs and ideas)
 #   INTAKE_TOKEN         a fine-grained GitHub token: only Eliminate7532/commander_sim, Contents: Read and write
+# The bug-report channel's id is written below (Karl, 2 Nov: 1551323821233934426 - not a secret: it gives no access without the
+# bot's token). A DISCORD_CHANNEL_IDS secret, if there is one, replaces it (several channels: comma-separated).
 # Only `schedule` and manual runs start it - never a pull request, so a stranger's fork can't reach the secrets. It prints counts
 # only (a public repository's log is public); the reports themselves go only to the private branch.
 name: Report intake (Discord -> claude/reports)
@@ -39,7 +40,7 @@ jobs:
       - name: Copy new reports
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-          DISCORD_CHANNEL_IDS: ${{ secrets.DISCORD_CHANNEL_IDS }}
+          DISCORD_CHANNEL_IDS: ${{ secrets.DISCORD_CHANNEL_IDS || '1551323821233934426' }}
           PYTHONUNBUFFERED: '1'
         run: |
           git -C reports_repo config user.name "manticore-intake"
