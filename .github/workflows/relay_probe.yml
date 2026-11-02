@@ -1,0 +1,33 @@
+# Round RLY1: check a Manticore relay from outside (a GitHub runner on the internet), with tools/relay_probe.py.
+# Push to a claude/relay-probe* branch with relay_probe/target.txt holding HOST:PORT. Tries every 60 s for up to 15 minutes
+# (a new server needs a few minutes to install the relay), and stops at the first full pass.
+name: Relay probe
+on:
+  push:
+    branches: ['claude/relay-probe*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Probe the relay
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          if [ ! -f relay_probe/target.txt ]; then echo "no relay_probe/target.txt yet - nothing to probe"; exit 0; fi
+          target="$(tr -d ' \r\n' < relay_probe/target.txt)"
+          for i in $(seq 1 15); do
+            echo "--- try $i ($(date -u +%H:%M:%S) UTC)"
+            if python tools/relay_probe.py "$target" --timeout 10; then exit 0; fi
+            sleep 60
+          done
+          exit 1
