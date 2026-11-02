@@ -1,0 +1,8 @@
+try 2 of run 41487960604: FAIL
+relay: no
+joined: no
+join_error: NetRefused no_answer: No answer from that address. Your friend's router port may not be open: they should check the status line on their Host screen.
+ended: None, turns None, 10.0 s
+fails: none
+warns: none
+version: Manticore 0.28.53.13 | commit 531b826 | code 13499692
