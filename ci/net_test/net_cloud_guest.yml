@@ -30,6 +30,7 @@ jobs:
       - name: Wait for invites, join, play, send the results back
         env:
           MANTICORE_PORTABLE: '1'
+          PYTHONUNBUFFERED: '1'     # every line in the log as it happens, also when the run is cancelled
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
