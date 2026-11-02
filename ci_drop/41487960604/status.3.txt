@@ -1,0 +1,8 @@
+try 3 of run 41487960604: FAIL
+relay: no
+joined: no
+join_error: NetRefused tls: The encrypted connection could not be set up ([SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1032)).
+ended: None, turns None, 0.8 s
+fails: none
+warns: none
+version: Manticore 0.28.53.13 | commit c93d735 | code 13499692
