@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Round RLY1: online games through a relay, several at once (tools/relay_load.py), a guest bot that joins a real host from an
-invite code (tools/net_guest_bot.py), and the relay's cloud-init (tools/make_relay_cloud_init.py)."""
+invite code (tools/net_guest_bot.py), the encrypted mailbox a public repository's runner uses (tools/ci_drop.py), and the
+relay's cloud-init (tools/make_relay_cloud_init.py)."""
 import base64
 import datetime
 import hashlib
@@ -15,9 +16,10 @@ import threading
 import time
 import unittest
 from contextlib import redirect_stdout
+from shutil import which as shutil_which
 
 from tests import live
-from tools import make_relay_cloud_init, net_guest_bot, online_soak, relay_load
+from tools import ci_drop, make_relay_cloud_init, net_guest_bot, online_soak, relay_load
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -160,6 +162,169 @@ class GuestBotJoinFailureTests(unittest.TestCase):
                 for name in files:
                     with open(os.path.join(root, name), "rb") as f:
                         self.assertNotIn(password.encode(), f.read(), name)
+
+
+class CiMaskTests(unittest.TestCase):
+    def test_masks_only_on_a_github_runner(self):
+        out = io.StringIO()
+        self.assertEqual(net_guest_bot.ci_mask(["198.51.100.4", "otter-lamp-12", None, "ab"], {"GITHUB_ACTIONS": "true"}, out), 2)
+        self.assertEqual(out.getvalue(), "::add-mask::198.51.100.4\n::add-mask::otter-lamp-12\n")
+        out = io.StringIO()
+        self.assertEqual(net_guest_bot.ci_mask(["198.51.100.4"], {}, out), 0)
+        self.assertEqual(out.getvalue(), "")
+
+
+def _git(args, cwd):
+    p = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)
+    if p.returncode != 0:
+        raise AssertionError("git %s: %s" % (args, p.stderr))
+    return p.stdout
+
+
+@unittest.skipUnless(shutil_which("openssl") and shutil_which("git"), "needs openssl and git")
+class CiDropTests(unittest.TestCase):
+    """The invite and the results go through a branch encrypted; a wrong key, a changed byte or a foreign option are refused."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = self.tmp.name
+        self.priv, self.pub = os.path.join(self.d, "k.pem"), os.path.join(self.d, "k.pub")
+        ci_drop.make_key_pair(self.priv, self.pub, bits=2048)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_seal_and_open(self):
+        data = os.urandom(5000)
+        self.assertEqual(ci_drop.open_bytes(ci_drop.seal_bytes(data, self.pub), self.priv), data)
+
+    def test_a_wrong_key_is_refused(self):
+        other, other_pub = os.path.join(self.d, "o.pem"), os.path.join(self.d, "o.pub")
+        ci_drop.make_key_pair(other, other_pub, bits=2048)
+        with self.assertRaises(ci_drop.DropError):
+            ci_drop.open_bytes(ci_drop.seal_bytes(b"secret", self.pub), other)
+
+    def test_a_changed_byte_is_refused(self):
+        env = json.loads(ci_drop.seal_bytes(b"x" * 300, self.pub))
+        body = bytearray(base64.b64decode(env["body"]))
+        body[len(body) // 2] ^= 1
+        env["body"] = base64.b64encode(bytes(body)).decode()
+        with self.assertRaises(ci_drop.DropError):
+            ci_drop.open_bytes(json.dumps(env).encode(), self.priv)
+
+    def test_only_the_bot_options_pass(self):
+        self.assertEqual(ci_drop.bot_args({"minutes": 5, "address": "192.168.0.9"}),
+                         ["--address", "192.168.0.9", "--minutes", "5"])
+        with self.assertRaises(ci_drop.DropError):
+            ci_drop.bot_args({"command": "anything"})
+
+    def test_the_invite_is_taken_masked_and_written_private(self):
+        import forge_net
+        code = forge_net.make_invite("198.51.100.23", 36800, "c" * 64, "lamp-otter-river-77")
+        env = ci_drop.seal_bytes(json.dumps({"invite": code, "options": {"minutes": 3}}).encode(), self.pub)
+        inv, argf = os.path.join(self.d, "invite.txt"), os.path.join(self.d, "args.json")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            old = os.environ.get("GITHUB_ACTIONS")
+            os.environ["GITHUB_ACTIONS"] = "true"
+            try:
+                args, secrets = ci_drop.take_invite(env, self.priv, inv, argf)
+            finally:
+                if old is None:
+                    os.environ.pop("GITHUB_ACTIONS", None)
+                else:
+                    os.environ["GITHUB_ACTIONS"] = old
+        self.assertEqual(args, ["--minutes", "3"])
+        self.assertIn("::add-mask::198.51.100.23", out.getvalue())
+        self.assertIn("::add-mask::lamp-otter-river-77", out.getvalue())
+        with open(inv, encoding="utf-8") as f:
+            self.assertEqual(f.read().strip(), code)
+        if os.name == "posix":
+            self.assertEqual(os.stat(inv).st_mode & 0o077, 0)
+
+    def test_the_status_is_scrubbed(self):
+        res = os.path.join(self.d, "r.json")
+        with open(res, "w", encoding="utf-8") as f:
+            json.dump({"verdict": "FAIL", "joined": False,
+                       "join_error": "no answer from 198.51.100.23:36800 (password lamp-otter-river-77)"}, f)
+        text = ci_drop.status_text(res, ["198.51.100.23", "lamp-otter-river-77"], 1)
+        self.assertNotIn("198.51.100.23", text)
+        self.assertNotIn("lamp-otter-river-77", text)
+        self.assertIn("FAIL", text)
+
+    def test_the_runner_loop_through_a_branch(self):
+        """A bare repository stands in for GitHub: the runner publishes its key, takes an invite, 'plays' (a stand-in bot that
+        writes a result naming the address), and pushes back a sealed result and a scrubbed status - nothing in the repository
+        ever holds the address or the password in the clear."""
+        import forge_net
+        origin = os.path.join(self.d, "origin.git")
+        _git(["init", "-q", "--bare", origin], self.d)
+        op = os.path.join(self.d, "op")
+        _git(["clone", "-q", origin, op], self.d)
+        for k, v in (("user.name", "t"), ("user.email", "t@t")):
+            _git(["config", k, v], op)
+        _git(["checkout", "-q", "-b", "claude/net-test"], op)
+        os.makedirs(os.path.join(op, "ci_drop"))
+        oppriv = os.path.join(self.d, "operator.pem")
+        ci_drop.make_key_pair(oppriv, os.path.join(op, "ci_drop", "operator.pub"), bits=2048)
+        _git(["add", "-A"], op)
+        _git(["commit", "-q", "-m", "start"], op)
+        _git(["push", "-q", "origin", "claude/net-test"], op)
+        runner = os.path.join(self.d, "runner")
+        _git(["clone", "-q", "--branch", "claude/net-test", origin, runner], self.d)
+        for k, v in (("user.name", "r"), ("user.email", "r@r")):
+            _git(["config", k, v], runner)
+        address, password = "198.51.100.23", "lamp-otter-river-77"
+        code = forge_net.make_invite(address, 36800, "c" * 64, password)
+        seen = []
+
+        def bot(cmd):
+            seen.append(cmd)
+            out = cmd[cmd.index("--out") + 1]
+            os.makedirs(out, exist_ok=True)
+            with open(os.path.join(out, "net_guest_result.json"), "w", encoding="utf-8") as f:
+                json.dump({"verdict": "FAIL", "joined": False, "join_error": "no answer from %s:36800" % address}, f)
+            return 1
+
+        def operator():
+            end = time.monotonic() + 30
+            while time.monotonic() < end:
+                pub = ci_drop.remote_file(op, "origin", "claude/net-test", "ci_drop/9/runner.pub")
+                if pub:
+                    p = os.path.join(self.d, "runner9.pub")
+                    with open(p, "wb") as f:
+                        f.write(pub)
+                    env = ci_drop.seal_bytes(json.dumps({"invite": code, "options": {"minutes": 1}}).encode(), p)
+                    ci_drop.publish(op, "origin", "claude/net-test", {"ci_drop/9/invite.1.enc": env}, "invite 1")
+                    return
+                time.sleep(0.2)
+
+        t = threading.Thread(target=operator, daemon=True)
+        t.start()
+        played = ci_drop.runner_loop("9", "claude/net-test", tries=2, wait_minutes=0.05, cwd=runner,
+                                     temp=os.path.join(self.d, "rt"), poll=0.2, bot=bot, log=lambda *_a: None)
+        t.join(5)
+        self.assertEqual(played, 1)
+        self.assertEqual(len(seen), 1)
+        self.assertIn("--invite-file", seen[0])
+        self.assertNotIn(code, " ".join(seen[0]))                 # the invite is a file, never a command-line argument
+        status = ci_drop.remote_file(op, "origin", "claude/net-test", "ci_drop/9/status.1.txt").decode()
+        self.assertIn("FAIL", status)
+        self.assertNotIn(address, status)
+        result = ci_drop.remote_file(op, "origin", "claude/net-test", "ci_drop/9/result.1.enc")
+        opened = os.path.join(self.d, "opened")
+        with open(os.path.join(self.d, "r.enc"), "wb") as f:
+            f.write(result)
+        self.assertEqual(ci_drop.main(["open-results", "--priv", oppriv, "--file", os.path.join(self.d, "r.enc"),
+                                       "--out", opened]), 0)
+        with open(os.path.join(opened, "out_1", "net_guest_result.json"), encoding="utf-8") as f:
+            self.assertIn(address, f.read())                      # the operator sees everything ...
+        objs = _git(["cat-file", "--batch-all-objects", "--batch-check=%(objectname) %(objecttype)"], origin).split()
+        for oid, kind in zip(objs[0::2], objs[1::2]):
+            data = subprocess.run(["git", "cat-file", kind, oid], cwd=origin, capture_output=True).stdout
+            self.assertNotIn(address.encode(), data, oid)          # ... the repository nothing
+            self.assertNotIn(password.encode(), data, oid)
+        self.assertIsNotNone(ci_drop.remote_file(op, "origin", "claude/net-test", "ci_drop/9/status.2.txt"))   # gave up on try 2
 
 
 def _host_until_over(host, seed, stop, concede_turn=6):

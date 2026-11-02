@@ -54,8 +54,10 @@ def read_invite_text(path=None, env=os.environ):
     return text
 
 
-def ci_mask(values, env=os.environ, out=sys.stdout):
+def ci_mask(values, env=None, out=None):
     """On a GitHub Actions runner, tell the runner to hide these strings in the log (::add-mask::) before anything shows them."""
+    env = os.environ if env is None else env
+    out = sys.stdout if out is None else out
     if (env.get("GITHUB_ACTIONS") or "").lower() != "true":
         return 0
     n = 0
