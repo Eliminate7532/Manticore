@@ -15,7 +15,11 @@ What it writes (one folder per Discord message, oldest first):
     reports/bug/<YYYYMMDD-HHMMSS>_<message id>/message.json    id, channel, time, the poster's name, the text, the attachments
     reports/bug/<...>/<attachment file names>                   the zip (journal, logs, crash log, screenshot) as the game sent it
     reports/idea/<...>/...                                      the same for "Feature idea from ..." messages
-    reports/other/<...>/message.json                            anything else in the channel (text only, no attachments)
+    reports/bug/<...>/...                                       also a message a PERSON posted in the channel by hand, with its
+                                                                pictures and files (round BUG1b - Karl, 2 Nov: "things I manually
+                                                                add to the bug reports channel should be taken as if they were
+                                                                reported from the game"); message.json "manual": true
+    reports/other/<...>/message.json                            anything else - another bot or webhook (text only, no attachments)
     intake_state.json                                           the newest message id read per channel
 The first run (no intake_state.json) reads the last --backfill-days days; later runs read only what is newer.
 Exit code: 0 (also when nothing was new), 1 on any failure (the job then shows red; nothing half-written is pushed).
@@ -56,14 +60,22 @@ def snowflake_time(sid):
     return datetime.datetime.fromtimestamp(((int(sid) >> 22) + DISCORD_EPOCH_MS) / 1000, datetime.timezone.utc)
 
 
+def by_hand(msg):
+    """A message a person typed into the channel: not the game's webhook, not a bot (round BUG1b)."""
+    return not msg.get("webhook_id") and not (msg.get("author") or {}).get("bot")
+
+
 def kind_of(msg):
-    """'bug', 'idea' or 'other', from what the game posts (reporting.summary_text / idea_summary and the zip's name)."""
+    """'bug', 'idea' or 'other', from what the game posts (reporting.summary_text / idea_summary and the zip's name). Round
+    BUG1b: whatever a person posts by hand is a bug report too (Karl's own notes in the channel)."""
     content = (msg.get("content") or "").lstrip()
     names = [a.get("filename") or "" for a in msg.get("attachments") or []]
     if content.startswith("**Bug report from") or any(BUG_ZIP.match(n) for n in names):
         return "bug"
     if content.startswith("**Feature idea from"):
         return "idea"
+    if by_hand(msg):
+        return "bug"
     return "other"
 
 
@@ -163,7 +175,8 @@ def save_message(dest, channel, msg, discord):
         atts.append(row)
     info = {"id": msg["id"], "channel": channel, "kind": kind, "time": snowflake_time(msg["id"]).isoformat(),
             "timestamp": msg.get("timestamp"), "poster": (msg.get("author") or {}).get("username"),
-            "webhook": bool(msg.get("webhook_id")), "content": msg.get("content") or "", "attachments": atts}
+            "webhook": bool(msg.get("webhook_id")), "bot": bool((msg.get("author") or {}).get("bot")),
+            "manual": by_hand(msg), "content": msg.get("content") or "", "attachments": atts}
     with open(os.path.join(folder, "message.json"), "w", encoding="utf-8") as f:
         json.dump(info, f, indent=1, ensure_ascii=False)
     return kind
