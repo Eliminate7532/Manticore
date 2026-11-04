@@ -1,8 +1,8 @@
 {
-  "label": "long run: three soaks side by side through the Oracle relay, about 4.5 hours each",
+  "label": "control: the long run's first games again on 127.0.0.1 (same seeds, up to and including each relay job's failing resume game)",
   "jobs": [
-    {"name": "long-a", "seed": 43001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325},
-    {"name": "long-b", "seed": 44001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325},
-    {"name": "long-c", "seed": 45001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325}
+    {"name": "control-a", "seed": 43001, "games": 63, "hours": 2.5, "relay": false, "timeout_min": 170},
+    {"name": "control-b", "seed": 44001, "games": 95, "hours": 2.5, "relay": false, "timeout_min": 170},
+    {"name": "control-c", "seed": 45001, "games": 63, "hours": 2.5, "relay": false, "timeout_min": 170}
   ]
 }
