@@ -1,0 +1,34 @@
+[
+ {
+  "index": 0,
+  "started": 1793807332.7535536,
+  "seconds": 0.3,
+  "ended": "host_failed",
+  "via": "direct",
+  "players": 4,
+  "guests": 2,
+  "drops": 0,
+  "reconnected": 0,
+  "fails": [
+   "engine_error",
+   "host_failed"
+  ],
+  "warns": []
+ },
+ {
+  "index": 1,
+  "started": 1793807333.0636497,
+  "seconds": 0.3,
+  "ended": "host_failed",
+  "via": "direct",
+  "players": 2,
+  "guests": 1,
+  "drops": 0,
+  "reconnected": 0,
+  "fails": [
+   "engine_error",
+   "host_failed"
+  ],
+  "warns": []
+ }
+]

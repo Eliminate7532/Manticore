@@ -1,0 +1,6 @@
+tcp      OK  4 ms
+host     OK  the relay opened a room
+no_room  OK  an unknown room is refused
+pair     OK  guest and host paired through the relay
+bytes    OK  64 KB each way unchanged, 16 ms
+RELAY PROBE: ALL PASSED
