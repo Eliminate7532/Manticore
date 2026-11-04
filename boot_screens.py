@@ -23,6 +23,7 @@ import pygame
 
 import gfx
 import paths
+import forge_dialogs as dlg
 from gfx import draw_text, get_font
 
 SPLASH_SECONDS = 2.2
@@ -141,6 +142,7 @@ class BootFlow:
         self.heard_focus = 0                             # round AU1: a soft sound when the highlight moves to another item
         self.sound_done = False                          # round AU1: the splash's sound has played
         self.buttons = []
+        self.name_rect = None                            # NAME1: "Playing as ... (change)", top left - not one of the menu's items
         import version
         self.version = version.short()                   # once: it fingerprints the program's files
         self.update = None                               # Round 30: update_screens.UpdateNotice, made at the first draw
@@ -169,7 +171,9 @@ class BootFlow:
         if not self.enabled(gui, name):
             return
         gui.play_cue("ui.menu_select")                  # round AU1: heavier than a table click
-        if name == "play":
+        if name == "name":                              # bug report from Erik, 2 Nov 2026 ("I was Karl"): your own name
+            gui.modal = NameDialog(gui)
+        elif name == "play":
             gui.boot = None
             gui.open_menu()
         elif name == "draft":                           # round CD2: the cube draft, over the deck screen
@@ -202,6 +206,8 @@ class BootFlow:
             if rect.collidepoint(pos):
                 self.choose(gui, name)
                 return
+        if self.stage == "menu" and self.name_rect is not None and self.name_rect.collidepoint(pos):
+            self.choose(gui, "name")
 
     def key(self, gui, ev):
         if self.stage == "splash":
@@ -254,6 +260,7 @@ class BootFlow:
             veil.fill(gfx.SHADOW + (int(255 * (1 - fade)),))
             scr.blit(veil, (0, 0))
         self.buttons = []
+        self.name_rect = None
         if self.stage == "splash":
             if pic is None:
                 draw_text(scr, "Manticore", L.W // 2, L.H // 2, get_font(int(60 * L.fs), True, "display"), gfx.DEFEAT, "center")
@@ -309,6 +316,19 @@ class BootFlow:
             gui.play_cue("ui.menu_hover")
         draw_text(scr, f"v{self.version}  -  a Commander playtester", L.margin, L.H - L.margin, gui.font("small"), gfx.DIM,
                   "bottomleft")
+        # Bug report from Erik, 2 Nov 2026 ("I was Karl"; Karl: "the game should ask for your player name"): who you are at the
+        # table, top left - click to change it. The first time the menu shows with no name, the question comes by itself.
+        who = getattr(gui, "player_name", "") or ""
+        label = ("Playing as %s  (change)" % who) if who else "Set your name"
+        nr = pygame.Rect(L.margin, L.margin, small.size(label)[0] + int(16 * L.fs), small.get_height() + int(10 * L.fs))
+        hot_name = nr.collidepoint(gui.mouse)
+        draw_text(scr, label, nr.x + int(8 * L.fs), nr.centery, small, gfx.GOLD if hot_name else gfx.WHITE, "midleft")
+        self.name_rect = nr
+        if not getattr(self, "asked_name", False):
+            self.asked_name = True
+            ask = getattr(gui, "ask_name_if_needed", None)
+            if callable(ask):
+                ask()
         self.update.draw(gui)                                            # Round 30: "a new version is ready", top right
 
     def _draw_prompt(self, gui, now):
@@ -329,3 +349,84 @@ class BootFlow:
         draw_text(scr, PROMPT, L.W // 2, L.H - L.margin, font, shade, "midbottom")
         draw_text(scr, f"v{self.version}  -  a Commander playtester", L.margin, L.H - L.margin, gui.font("small"), gfx.DIM,
                   "bottomleft")
+
+
+class NameDialog(dlg.Dialog):
+    """Your name at the table, in online games and on bug reports (bug report from Erik, 2 Nov 2026: "I was Karl" - every copy
+    called its player Karl). Asked the first time the main menu shows; "Playing as ... (change)" brings it back."""
+
+    def __init__(self, gui, first=False):
+        super().__init__()
+        import forge_net
+        import online_screens as onl
+        self.first = first
+        start = (getattr(gui, "player_name", "") or getattr(gui, "reporter_name", "")
+                 or (getattr(gui, "online_prefs", None) or {}).get("name") or "")      # a name given before, for reports or online
+        self.field = onl.TextField(start, forge_net.NAME_MAX, "Your name")
+        self.message = None
+
+    def name(self):
+        import forge_net
+        return forge_net.clean_name(self.field.text)
+
+    def ok(self, gui):
+        name = self.name()
+        if not name:
+            self.message = "Type a name first."
+            return
+        gui.set_player_name(name)
+        self.done = True
+
+    def draw(self, gui):
+        import online_screens as onl
+        import osk
+        L, scr = gui.L, gui.screen
+        k = max(1.0, L.fs)
+        title, small = gui.font("title", True), gui.font("small")
+        rh = onl._row_h(gui)
+        gap = int(10 * L.fs)
+        bh = int(max(42, 46 * L.fs))
+        pw = min(int(620 * k), L.W - 40)
+        tw = pw - 52
+        text = gfx.wrap_text("Other players see it at the table and in online games, and it goes on the bug reports you send. "
+                             "You can change it later on the main menu.", small, tw)
+        need = 20 + title.get_height() + 8 + len(text) * small.get_height() + gap + rh + gap + small.get_height() + gap + bh + 20
+        rect = self.panel(gui, pw, min(need, L.H - 40), real=True)
+        x, y = rect.x + 26, rect.y + 20
+        draw_text(scr, "What's your name?", x, y, title, gfx.WHITE)
+        y += title.get_height() + 8
+        for ln in text:
+            draw_text(scr, ln, x, y, small, gfx.BODY_TEXT)
+            y += small.get_height()
+        y += gap
+        kw = osk.button_width(gui)
+        self.field.draw(gui, pygame.Rect(x, y, rect.right - 26 - x - kw - 8, rh), True)
+        self.buttons.append((pygame.Rect(x, y, rect.right - 26 - x - kw - 8, rh), "field"))
+        osk.toggle_button(self, gui, pygame.Rect(rect.right - 26 - kw, y, kw, rh))
+        y += rh + gap
+        if self.message:
+            draw_text(scr, self.message, x, y, small, gfx.RED)
+        by = rect.bottom - 18 - bh
+        nw = max(gui.button_width("Not now"), int(130 * L.fs))
+        self.button(gui, pygame.Rect(x, by, nw, bh), "Not now" if self.first else "Cancel", "cancel")
+        ow = max(gui.button_width("OK"), int(160 * L.fs))
+        ok = bool(self.name())
+        self.button(gui, pygame.Rect(rect.right - 26 - ow, by, ow, bh), "OK", "ok", ok, True, ok)
+
+    def click(self, gui, pos, button):
+        name = self.button_at(pos)
+        if name == "keyboard":
+            gui.toggle_keyboard(self)
+        elif name == "ok":
+            self.ok(gui)
+        elif name == "cancel":
+            self.done = True
+
+    def key(self, gui, ev):
+        if ev.key == pygame.K_ESCAPE:
+            self.done = True
+        elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.ok(gui)
+        else:
+            self.field.key(gui, ev)
+            self.message = None

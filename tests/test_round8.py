@@ -179,7 +179,7 @@ class RestartConcedeTests(unittest.TestCase):
         gui = self.make()
         click(gui, point_for(gui, "button", name="settings"))
         names = [n for _r, n in gui.overlay.buttons]
-        for n in ("newgame", "concede", "help", "report", "full", "motion", "smaller", "bigger"):
+        for n in ("newgame", "quit", "help", "report", "full", "motion", "smaller", "bigger"):
             self.assertIn(n, names)
         for gone in ("restart", "concede_close"):                    # folded into the two windows below
             self.assertNotIn(gone, names)
@@ -265,12 +265,15 @@ class RestartConcedeTests(unittest.TestCase):
         self.assertEqual(gui.current_decks[0], (["Tymna the Weaver"], ["Plains"] * 99))
         self.assertTrue(gui.can_restart())
 
-    def test_concede_asks_and_nothing_is_sent_until_you_choose(self):
+    # bug-1566939794272161812 (Karl, 3 Nov 2026): Concede... became Quit... - the main menu or the desktop, each with "keep for
+    # later" or "concede" (options 0-3), and "Keep playing". These were round 8's / round 32's concede tests.
+    def test_quit_asks_and_nothing_is_sent_until_you_choose(self):
         gui = self.make()
-        click(gui, cog_button(gui, "concede"))
+        click(gui, cog_button(gui, "quit"))
         self.assertIsInstance(gui.modal, dlg.OptionsDialog)
-        self.assertEqual([style for _l, _r, style in gui.modal.options], ["danger", "danger", "danger"])
-        key(gui, pygame.K_RETURN)                                     # a stray Enter must not concede
+        self.assertEqual([style for _l, _r, style in gui.modal.options], ["normal", "danger", "normal", "danger"])
+        self.assertEqual(gui.modal.cancel, "Keep playing")
+        key(gui, pygame.K_RETURN)                                     # a stray Enter must not concede or quit
         self.assertIsInstance(gui.modal, dlg.OptionsDialog)
         self.assertEqual(gui.session.commands("concede"), [])
         key(gui, pygame.K_ESCAPE)                                     # Esc = keep playing
@@ -278,37 +281,38 @@ class RestartConcedeTests(unittest.TestCase):
         self.assertEqual(gui.session.commands("concede"), [])
         self.assertTrue(gui.running)
 
-    def test_concede_and_stay_gives_up_but_keeps_the_program_open(self):
+    def test_desktop_and_concede_gives_up_and_ends_the_program(self):
         gui = self.make()
-        click(gui, cog_button(gui, "concede"))
-        click(gui, next(r.center for r, n in gui.modal.buttons if n == "opt1"))
+        click(gui, cog_button(gui, "quit"))
+        self.assertEqual(gui.modal.options[3][0], "Desktop  -  concede")
+        click(gui, next(r.center for r, n in gui.modal.buttons if n == "opt3"))
         self.assertEqual(gui.session.commands("concede"), [{"c": "concede"}])
-        self.assertTrue(gui.running)
+        self.assertFalse(gui.running)
 
-    def test_concede_and_close_gives_up_and_ends_the_program(self):
+    def test_desktop_and_keep_ends_the_program_without_conceding(self):
         gui = self.make()
-        click(gui, cog_button(gui, "concede"))
+        click(gui, cog_button(gui, "quit"))
         click(gui, next(r.center for r, n in gui.modal.buttons if n == "opt2"))
-        self.assertEqual(gui.session.commands("concede"), [{"c": "concede"}])
+        self.assertEqual(gui.session.commands("concede"), [])
         self.assertFalse(gui.running)
 
     def test_the_number_keys_choose_the_options(self):
         gui = self.make()
-        click(gui, cog_button(gui, "concede"))
-        key(gui, pygame.K_3)
+        click(gui, cog_button(gui, "quit"))
+        key(gui, pygame.K_4)
         self.assertEqual(gui.session.commands("concede"), [{"c": "concede"}])
         self.assertFalse(gui.running)
 
     def test_concede_and_return_to_the_main_menu(self):
-        """Round 32 (Karl, 3 Oct: "Concede and return to main menu should be an option"): the first option concedes, ends the
-        game's engine and shows the title's main menu; the program keeps running and Play opens the deck screen."""
+        """Round 32 (Karl, 3 Oct: "Concede and return to main menu should be an option"), now Quit... > Main menu - concede: it
+        concedes, ends the game's engine and shows the title's main menu; the program keeps running and Play opens the deck screen."""
         gui = self.make()
         session = gui.session
         closed = []
         session.close = lambda: closed.append(True)
-        click(gui, cog_button(gui, "concede"))
-        self.assertEqual(gui.modal.options[0][0], "Concede and return to the main menu")
-        click(gui, next(r.center for r, n in gui.modal.buttons if n == "opt0"))
+        click(gui, cog_button(gui, "quit"))
+        self.assertEqual(gui.modal.options[1][0], "Main menu  -  concede")
+        click(gui, next(r.center for r, n in gui.modal.buttons if n == "opt1"))
         self.assertEqual(session.commands("concede"), [{"c": "concede"}])
         self.assertEqual(closed, [True])                              # this game's engine is ended
         self.assertTrue(gui.running)
@@ -326,28 +330,29 @@ class RestartConcedeTests(unittest.TestCase):
 
     def test_the_safe_button_is_the_highlighted_one_only_when_something_is_at_stake(self):
         gui = self.make()
-        click(gui, cog_button(gui, "concede"))
+        click(gui, cog_button(gui, "quit"))
         frame(gui, 1)
         self.assertTrue(gui.modal.options and any(s == "danger" for _l, _r, s in gui.modal.options))
         gui.modal = dlg.OptionsDialog("Pick", "one", [("A", lambda: None, "normal")], "Never mind")
         frame(gui, 1)
         self.assertIn("cancel", [n for _r, n in gui.modal.buttons])
 
-    def test_concede_is_off_when_no_game_is_running(self):
+    def test_quit_with_no_game_running_offers_the_main_menu_and_the_desktop(self):
         gui = self.make()
         gui.shown_over = True                                         # the game-over window was already dismissed
         gui.session.game_over = True
         frame(gui, 1)
         click(gui, point_for(gui, "button", name="settings"))
-        self.assertNotIn("concede", [n for _r, n in gui.overlay.buttons])
+        self.assertIn("quit", [n for _r, n in gui.overlay.buttons])   # no longer greyed: there is always somewhere to go
         gui.overlay = None
-        gui.ask_concede()
-        self.assertIsNone(gui.modal)
-        self.assertIsNotNone(gui.toast)
+        gui.ask_quit()
+        self.assertIsInstance(gui.modal, dlg.OptionsDialog)
+        self.assertEqual([l for l, _r, _s in gui.modal.options], ["Main menu", "Desktop  (close the program)"])
+        self.assertEqual([s for _l, _r, s in gui.modal.options], ["normal", "normal"])
 
     def test_the_option_windows_fit_at_small_sizes_and_big_text(self):
         for size, scale in (((900, 600), 1.0), ((900, 600), 2.0), ((1100, 700), 2.0), ((1920, 1080), 1.0)):
-            for ask in ("ask_concede", "ask_new_game"):
+            for ask in ("ask_quit", "ask_new_game"):
                 gui = self.make()
                 gui.text_scale = scale
                 gui.screen = pygame.display.set_mode(size)
@@ -373,7 +378,7 @@ class RestartConcedeTests(unittest.TestCase):
 
     def test_help_describes_the_three_groups(self):
         text = " ".join(h for _k, h in ft.HELP_LINES)
-        for word in ("DISPLAY", "GAME", "HELP", "New game...", "Concede...", "same decks"):
+        for word in ("DISPLAY", "GAME", "HELP", "New game...", "Quit...", "same decks"):
             self.assertIn(word, text)
 
 

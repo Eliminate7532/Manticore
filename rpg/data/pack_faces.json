@@ -1,0 +1,5 @@
+{
+ "about": "Round PACK2 (3 Nov 2026): the card on the front of a pack's wrapper is chosen by a rule (rpg/pack_faces.py: a set's highest-tier rare or mythic in its pack pool, ties to the one most often in the pool, then the name; a theme pack's highest-tier non-basic card, ties to the name). Name another card here to show it instead: \"sets\": {\"M10\": \"Baneslayer Angel\"}, \"themes\": {\"JMP Angels 1\": \"Serra Angel\"}. Empty to start.",
+ "sets": {},
+ "themes": {}
+}

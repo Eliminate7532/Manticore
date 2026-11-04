@@ -381,7 +381,7 @@ class RareDuelTests(r8.Base):
         out = adv.finish_duel(1, "lost")
         disk = r8.on_disk(self.folder)
         self.assertNotIn("rare", disk["world"])
-        self.assertEqual(disk["gold"], gold - g.numbers.loss_cost(gold))
+        self.assertEqual(disk["gold"], gold - g.numbers.loss_cost(gold, "dungeon"))   # GOLD1: its encounter's share
         self.assertEqual(adv.outcome_lines(out, g.world)[0], "The Old Gorsehide beat you.")
 
 

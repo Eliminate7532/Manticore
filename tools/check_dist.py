@@ -47,7 +47,8 @@ REQUIRED_FILES = ["Manticore{exe}", "Manticore-cli{exe}", "jre/bin/java{exe}", "
                   "LICENSE", "THIRD_PARTY_NOTICES.txt", "build_info.json", "README_FIRST.txt", "START_HERE.txt",
                   "banned_commander.snapshot.json", "banned_brawl.snapshot.json",
                   "banned_standard.snapshot.json",                  # round CON1
-                  "forge_card_names.json"]                         # patch 38: Forge's card-name index, made by the build
+                  "forge_card_names.json",                         # patch 38: Forge's card-name index, made by the build
+                  "relay_config.json"]                             # round RLY2: the relay Host online uses by default
 REQUIRED_DIRS = ["sample_decks", "assets/fonts", "forge_runtime/res/cardsfolder", "jre/legal"]
 FORBIDDEN_TOP = [".git", "portable.txt", "settings.json", "my_decks", "bug_report_config.json", "soak_runs", "cache"]
 
@@ -364,6 +365,13 @@ def update_source_note(folder):
     return "updates: off in this build (update_config.json names no repo or feed_url)"
 
 
+def relay_note(folder):
+    """Round RLY2: one line saying which relay this build's Host online uses by default (never blocking)."""
+    import forge_net                                     # (BASE_DIR is on sys.path)
+    relay = forge_net.default_relay(folder)
+    return f"relay: Host online uses {relay} by default" if relay else "relay: none set (relay_config.json) - Host online hosts directly"
+
+
 PLACEHOLDER = re.compile(r"\[[^\]\n]{1,80}\]")
 
 
@@ -408,6 +416,7 @@ def check_dist(folder, run=True, release=False, runner=subprocess.run, exe=".exe
         res.todo.append("START_HERE.txt still has blanks to fill in: " + ", ".join(blanks[:5]))
     res.problems += jar_coverage_problems(os.path.join(folder, "forge_runtime", "forge.jar"), manifest)
     res.notes.append(update_source_note(folder))
+    res.notes.append(relay_note(folder))
     leaks = webhook_files(folder, tree)
     if leaks:
         res.problems.append("a Discord webhook address is in: " + ", ".join(leaks[:5]) + " (names only; see SPEC 4.5)")

@@ -60,6 +60,10 @@ of you, or across a counter); the map property dark_zone ("col0,row0,col1,row1 f
 dark until the flag is set (Lantern Hollow's duel hall: grave_priest_beaten); save.world["spawn"] - where the next place() puts you
 on the map the save names (a lost duel: the inn you last rested at).
 
+Round PROG2: treasure chests - objects of class chest with an id (rpg.chests; contents in rpg/data/progression.json). Walking
+into a closed one returns ("chest", trigger); an open one is in skipped(), so it fires no more (a daily one closes again at 07:00).
+Explorer.chests() lists them for the view. A chest is not a wall: you stand on it once it is open.
+
 Round RPG13 (random fights in dungeons, Karl's decision 6): a map with the properties encounter_rate and encounters has random
 fights (rpg.encounters: the steps to the next one are drawn from the save's rng and kept in save.world["danger"]); step() then
 returns ("random", rpg.encounters.RandomFoe) when one starts. Only tiles walked count. The map property backdrop (cave / dungeon /
@@ -79,7 +83,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MAPS_DIR = os.path.join(HERE, "maps")
 COLLISION_LAYER = "collision"
 SOLID_PROPS = ("solid", "collides")
-KINDS = ("spawn", "encounter", "exit", "town", "rare")    # Round RPG16: "rare" (a rare foe: rpg/data/rare_spawns.json)
+KINDS = ("spawn", "encounter", "exit", "town", "rare", "chest")    # RPG16: "rare" (rpg/data/rare_spawns.json); PROG2: "chest"
 WALK_TILES_PER_SECOND = 4.5          # my estimate
 FEET = (0.625, 0.5)                  # the walker's box, as a share of a tile (width, height) - my estimate
 ROWS_IN_VIEW = 15                    # the camera's zoom aims at about this many rows of tiles on the screen - my estimate
@@ -131,7 +135,7 @@ class MapError(Exception):
 class Trigger:
     """Something on a map you can walk into."""
     __slots__ = ("kind", "obj", "box", "spot", "enemy", "encounter", "once", "to_map", "to_spawn", "town", "wander", "tab",
-                 "back", "when", "home", "rare", "title")
+                 "back", "when", "home", "rare", "title", "chest")
 
     def __init__(self, kind, obj, box, spot, rare=None):
         self.kind, self.obj, self.box, self.spot = kind, obj, box, spot
@@ -151,13 +155,15 @@ class Trigger:
         self.to_map = p.get("map") if kind == "exit" else None
         self.to_spawn = p.get("spawn") if kind == "exit" else None
         self.town = p.get("town") if kind == "town" else None
+        self.chest = p.get("id") if kind == "chest" else None          # Round PROG2: a treasure chest's id (rpg.chests)
         self.tab = p.get("tab") if kind == "town" else None          # Round RPG12: the shop's tab a counter opens on
         self.back = p.get("spawn") if kind == "town" else None       # ... and the spawn you leave it at (default: the town's)
         wander = p.get("wander")              # Round RPG6: a foe walks about its room; a boss stands still
         self.wander = kind == "encounter" and ((self.encounter != "boss") if wander is None else bool(wander))
 
     def __repr__(self):
-        what = {"encounter": self.enemy, "exit": f"{self.to_map}:{self.to_spawn}", "town": self.town}.get(self.kind)
+        what = {"encounter": self.enemy, "exit": f"{self.to_map}:{self.to_spawn}", "town": self.town,
+                "chest": self.chest}.get(self.kind)
         return f"Trigger({self.kind}, {what!r}, {self.spot})"
 
 
@@ -442,6 +448,9 @@ class Area:
                     out.append(f"{where}: no map {t.to_map!r}")
                 elif spawns_of is not None and t.to_spawn not in spawns_of(t.to_map):
                     out.append(f"{where}: map {t.to_map!r} has no spawn {t.to_spawn!r}")
+            elif t.kind == "chest":                           # Round PROG2: its contents are progression.json's
+                if not t.chest:
+                    out.append(f"{where} has no id")
             elif t.kind == "town":
                 if not t.town:
                     out.append(f"{where} has no town")
@@ -1328,8 +1337,27 @@ class Explorer:
         return set(w.get("cleared") or ()) | set(w.get("beaten") or ())
 
     def skipped(self):
-        """Round RPG16: the spots that can't fire now - beaten or cleared, or a foe whose hour it isn't."""
-        return self.gone() | {spot for spot in self.foes if not self.is_out(spot)}
+        """Round RPG16: the spots that can't fire now - beaten or cleared, or a foe whose hour it isn't. Round PROG2: and the
+        chests open now."""
+        return self.gone() | {spot for spot in self.foes if not self.is_out(spot)} | {t.spot for t, o in self.chests() if o}
+
+    def chests(self):
+        """Round PROG2: [(trigger, open now)] of this map's treasure chests (rpg.chests; contents in rpg/data/progression.json)."""
+        if self.area is None:
+            return []
+        out = [t for t in self.area.triggers if t.kind == "chest"]
+        if not out:
+            return []
+        from rpg import chests, progress
+        try:
+            n = progress.read()
+            table, hour = n.chests, n.refill_hour
+        except (OSError, ValueError) as e:
+            _note_once("progression", f"rpg/data/progression.json can't be read: {type(e).__name__}: {e}")
+            table, hour = {}, 7
+        now = clock.now(self.save.world)
+        return [(t, chests.is_open(self.save.world, t.chest, table.get(t.chest), hour, now) or t.chest not in table)
+                for t in out]
 
     def encounters(self):
         """The foes still on this map and out at this hour, where they are now (for the screen to draw)."""
@@ -1367,6 +1395,8 @@ class Explorer:
                 return ("town", t.town)
             if t.kind == "encounter":
                 return ("encounter", t)
+            if t.kind == "chest":                                # Round PROG2: a treasure chest walked into (closed ones only:
+                return ("chest", t)                              # skipped() leaves the open ones out)
         return None
 
     def step(self, dx, dy, dt):

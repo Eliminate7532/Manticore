@@ -107,6 +107,71 @@ public class BridgeGui extends AbstractGuiGame {
         this.wire = wire;
     }
 
+    // ---- Round ENG-BRAWL: the "Waiting for ..." timer without the race ------------------------
+    // Forge 9a6f776, AbstractGuiGame.awaitNextInput (game thread) does, with no lock:
+    //     awaitNextInputTask = new TimerTask() {...};  awaitNextInputTimer.schedule(awaitNextInputTask, 250);
+    // reading the field twice. Swing's thread clears that field inside synchronized (awaitNextInputTimer): in
+    // cancelAwaitNextInput (InputBase.showMessageInitial, updatePromptForAwait, the game-over handler) and at the end of an
+    // EARLIER task's own runnable (a task is never cancelled when the next one replaces it). A clear between the write and
+    // the read hands Timer.schedule a null: NullPointerException "task is null" on the game thread, which dies - the Brawl
+    // soak's game 26 of 27 Oct. Two awaitNextInput calls at once (the game thread and Swing's, InputBase.setFinished) can
+    // also schedule one task twice (IllegalStateException). This override runs Forge's own method holding the same monitor
+    // the clearing code holds, so its write-then-read can't be split. What a player sees is unchanged: the same method runs.
+
+    private static final java.lang.reflect.Field AWAIT_TIMER = awaitTimerField();
+    private final Object awaitLock = new Object();
+    private static final AtomicBoolean awaitRaceNoted = new AtomicBoolean(false);
+
+    private static java.lang.reflect.Field awaitTimerField() {
+        try {
+            java.lang.reflect.Field f = AbstractGuiGame.class.getDeclaredField("awaitNextInputTimer");
+            f.setAccessible(true);
+            return f;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            System.err.println("bridge: AbstractGuiGame.awaitNextInputTimer not found (" + e + "); awaitNextInput is unguarded");
+            return null;
+        }
+    }
+
+    private Object awaitTimer() {
+        try {
+            return AWAIT_TIMER == null ? null : AWAIT_TIMER.get(this);
+        } catch (IllegalAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void awaitNextInput() {
+        synchronized (awaitLock) {                  // the first call makes the timer; later calls also queue here
+            Object timer = awaitTimer();
+            if (timer == null) {                     // nothing can clear the task before the first schedule
+                awaitNextInputGuarded();
+                return;
+            }
+            synchronized (timer) {                   // the monitor cancelAwaitNextInput and the task's runnable hold
+                awaitNextInputGuarded();
+            }
+        }
+    }
+
+    /** The last resort, only if the field above is gone after a Forge update: a lost race costs one "Waiting for ..." prompt
+     *  (the task was cancelled or already shown by the time it would have been scheduled), not the game thread. */
+    private void awaitNextInputGuarded() {
+        try {
+            super.awaitNextInput();
+        } catch (NullPointerException | IllegalStateException e) {
+            StackTraceElement[] st = e.getStackTrace();
+            // An empty trace is the JVM's fast throw (a hot NullPointerException loses its trace); from here it is the Timer's.
+            if (st.length > 0 && !"java.util.Timer".equals(st[0].getClassName())) {
+                throw e;
+            }
+            if (awaitRaceNoted.compareAndSet(false, true)) {
+                System.err.println("gamesync: awaitNextInput lost a race with Swing's thread (" + e + "); the game goes on");
+            }
+        }
+    }
+
     /** Round MP2: an online spectator's view. It has no player, so Forge never asks it anything; its snapshots show every
      *  hidden card (hands, libraries, face-down cards) face down (Snapshot.build). */
     volatile boolean spectator = false;
@@ -199,6 +264,16 @@ public class BridgeGui extends AbstractGuiGame {
         if (input != lastInput) {
             lastInput = input;
             inputSeq++;
+            if (input != null) {
+                scheduleQuestionFlush(inputSeq);            // round PERF1: the question's snapshot without the 40 ms wait
+            }
+            if (Timing.on && input != null) {               // round PERF1: Forge showed this seat a question
+                passing.forgeEnded("ask");
+                JsonObject t = Timing.line("input", 0);
+                t.addProperty("kind", input.getClass().getSimpleName());
+                t.addProperty("seq", inputSeq);
+                Timing.send(t);
+            }
         }
     }
 
@@ -426,9 +501,62 @@ public class BridgeGui extends AbstractGuiGame {
             return;                                 // round MP2: a spectator who left (or a seat given up): nobody to send to
         }
         if (dirty.compareAndSet(false, true)) {
-            flusher.schedule(this::flush, 40, TimeUnit.MILLISECONDS);
+            flusher.schedule(this::flushIfDirty, 40, TimeUnit.MILLISECONDS);
         }
     }
+
+    /** Round PERF1: a scheduled flush whose snapshot the question's quick flush has already sent does nothing. */
+    private void flushIfDirty() {
+        if (dirty.get()) {
+            flush();
+        }
+    }
+
+    // ---- round PERF1: the question's snapshot without the 40 ms wait ---------------------------------------------------
+    // Every snapshot waits 40 ms after the first change, so that a resolving spell's many small changes go out as one. The
+    // bench (tools/bench_board.py) showed that wait between Forge showing a question and its snapshot leaving in nearly every
+    // action - about 40 ms of a 90 ms wait on a 60-permanent board. When Forge shows this seat a question, the snapshot now goes
+    // as soon as the question is complete: Forge shows a question on Swing's thread (InputProxy.update queues showMessageInitial:
+    // the prompt, the buttons, the highlights), so the quick flush waits until Swing has done what was queued before it, and
+    // only goes when this question's prompt or buttons have been set (uiSeq) and nothing newer has come since. Otherwise the
+    // ordinary 40 ms flush sends it, as before. {@code --question-flush off}: always the 40 ms flush.
+    static volatile boolean questionFlush = true;
+    static final int QUESTION_FLUSH_MS = 4;
+    private volatile long uiSeq = -1;
+
+    private void scheduleQuestionFlush(long seq) {
+        if (!questionFlush || wire.isClosed()) {
+            return;
+        }
+        try {
+            flusher.schedule(() -> questionFlush(seq), QUESTION_FLUSH_MS, TimeUnit.MILLISECONDS);
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            // shutting down
+        }
+    }
+
+    private void questionFlush(long seq) {
+        java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        javax.swing.SwingUtilities.invokeLater(done::countDown);    // runs after everything Swing had queued: the question's showMessage
+        try {
+            if (!done.await(250, TimeUnit.MILLISECONDS)) {
+                return;                                     // Swing is busy: the ordinary flush will send it
+            }
+        } catch (InterruptedException e) {
+            return;
+        }
+        if (inputSeq() != seq || uiSeq != seq || !dirty.get()) {
+            return;                                         // another question already, its prompt not shown yet, or already sent
+        }
+        quickFlush = true;                                  // only the flusher thread reads and writes it
+        try {
+            flush();
+        } finally {
+            quickFlush = false;
+        }
+    }
+
+    private boolean quickFlush = false;
 
     /** Round MP2b: snapshots sent so far (a played-back online game waits until a seat's view stops changing). */
     volatile long flushes = 0;
@@ -443,12 +571,30 @@ public class BridgeGui extends AbstractGuiGame {
         for (int attempt = 0; attempt < 5; attempt++) {
             try {
                 long eventSeq = events == null ? -1 : events.lastSeq();      // read FIRST: the snapshot then shows at least these events' results
+                long tb = Timing.start();
                 JsonObject snap = Snapshot.build(gv, me(), this, cardIndex);
                 if (eventSeq >= 0) snap.addProperty("eventSeq", eventSeq);
                 snap.addProperty("input", inputKind());
                 snap.addProperty("asking", asking());
                 snap.addProperty("inputSeq", inputSeq());
-                wire.send(snap);
+                if (Timing.on && wire == Timing.wire) {     // round PERF1: build, text and send timed separately; the size in bytes
+                    double build = Timing.since(tb);
+                    long tj = System.nanoTime();
+                    String text = snap.toString();
+                    double json = Timing.since(tj);
+                    long ts = System.nanoTime();
+                    wire.sendText(text);
+                    JsonObject t = Timing.line("snap", build);
+                    t.addProperty("json", Math.round(json * 100) / 100.0);
+                    t.addProperty("send", Math.round(Timing.since(ts) * 100) / 100.0);
+                    t.addProperty("bytes", text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length);
+                    t.addProperty("seq", inputSeq());
+                    t.addProperty("quick", quickFlush);
+                    t.addProperty("prompt", prompt == null ? "" : (prompt.length() > 80 ? prompt.substring(0, 80) : prompt));
+                    Timing.send(t);
+                } else {
+                    wire.send(snap);
+                }
                 sendNewLogLines(gv);
                 return;
             } catch (java.util.ConcurrentModificationException e) {
@@ -586,6 +732,7 @@ public class BridgeGui extends AbstractGuiGame {
             cardIndex.put(card.getId(), card);
         }
         promptCard = card;
+        uiSeq = inputSeq();                                 // round PERF1: this question's prompt has been shown
         markDirty();
     }
 
@@ -596,6 +743,7 @@ public class BridgeGui extends AbstractGuiGame {
         okEnabled = enable1;
         cancelEnabled = enable2;
         okFocus = focus1;
+        uiSeq = inputSeq();                                 // round PERF1
         markDirty();
     }
 
@@ -665,6 +813,7 @@ public class BridgeGui extends AbstractGuiGame {
 
     @Override
     public void finishGame() {
+        Passing.Controller.compareSummary();             // round PERF1: --skip-scan compare's count for this game
         flush();
         JsonObject m = new JsonObject();
         m.addProperty("t", "game_over");

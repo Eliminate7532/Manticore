@@ -424,8 +424,9 @@ class WindowTests(WindowBase):
     def test_the_pause_window_has_the_specs_items(self):
         self.assertEqual([(n, label) for n, label, _on in rs.PAUSE_ITEMS],
                          [("resume", "Back to the map"), ("hint", "Hint"), ("deck", "Deck"), ("collection", "Collection"),
+                          ("book", "Card Book"), ("beasts", "Bestiary"),
                           ("save", "Save"), ("light", "Light"), ("settings", "Settings"), ("leave", "Main menu")])
-        # RPG15: + Light; RPG15b: + Hint (expected changes)
+        # RPG15: + Light; RPG15b: + Hint; PROG1: + Card Book, Bestiary (expected changes)
 
     def test_the_corner_window_cuts_a_long_deck_name_and_stays_in_half_the_screen(self):
         r8.new_game(None)
@@ -461,6 +462,9 @@ class WindowTests(WindowBase):
                 key(g, pygame.K_ESCAPE)
             elif name == "collection":
                 self.assertEqual(f.stage, "collection")
+                key(g, pygame.K_ESCAPE)
+            elif name in ("book", "beasts"):            # Round PROG1: the Card Book and the bestiary (expected change)
+                self.assertEqual(f.stage, name)
                 key(g, pygame.K_ESCAPE)
             elif name == "save":
                 self.assertEqual((f.sub, f.message[0]), (None, "Saved."))

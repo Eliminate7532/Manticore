@@ -290,6 +290,61 @@ class BackupTests(BackupBase):
         self.assertEqual((big, secret, reserved), ([], [], []))
 
 
+class CatchUpTests(BackupBase):
+    """Round BUG1: a worker pushed a fix to GitHub's main; the next backup takes it and still uploads this PC's changes."""
+
+    def push_from_elsewhere(self, rel, text, msg="a worker's fix"):
+        other = os.path.join(self.tmp, "other")
+        if not os.path.isdir(other):
+            sh(["clone", "-q", self.remote, other], self.tmp)
+        else:
+            sh(["pull", "-q", "origin", "main"], other)
+        write(os.path.join(other, rel), text)
+        sh(["add", "-A"], other)
+        sh(["-c", "user.name=w", "-c", "user.email=w@w", "commit", "-q", "-m", msg], other)
+        sh(["push", "-q", "origin", "HEAD:main"], other)
+
+    def test_a_main_that_moved_on_github_is_caught_up_with(self):
+        self.setup_repo()
+        self.push_from_elsewhere("fix.py", "fixed = True\n")
+        write(os.path.join(self.proj, "my_decks", "Tymna.txt"), "1 Tymna the Weaver\n1 Sol Ring\n")
+        code, out = self.run_cli()
+        self.assertEqual(code, 0, out)
+        self.assertIn("had 1 new commit(s)", out)
+        self.assertIn("Backed up", out)
+        self.assertIn("fix.py", self.remote_files())
+        self.assertEqual(sh(["rev-parse", "HEAD"], self.proj), sh(["rev-parse", "main"], self.remote))
+        self.assertTrue(os.path.exists(os.path.join(self.proj, "fix.py")))
+        with open(os.path.join(self.proj, "my_decks", "Tymna.txt")) as f:
+            self.assertIn("Sol Ring", f.read())
+
+    def test_a_clash_changes_nothing_here_and_says_so(self):
+        self.setup_repo()
+        self.push_from_elsewhere("game.py", "print('theirs')\n")
+        write(os.path.join(self.proj, "game.py"), "print('mine')\n")
+        before_remote = sh(["rev-parse", "main"], self.remote)
+        code, out = self.run_cli()
+        self.assertNotEqual(code, 0)
+        self.assertIn("clash with this PC's changes", out)
+        self.assertEqual(sh(["rev-parse", "main"], self.remote), before_remote)
+        with open(os.path.join(self.proj, "game.py")) as f:
+            self.assertEqual(f.read(), "print('mine')\n")
+        self.assertFalse(os.path.isdir(os.path.join(self.proj, ".git", "rebase-merge")))
+        self.assertFalse(os.path.isdir(os.path.join(self.proj, ".git", "rebase-apply")))
+
+    def test_nothing_new_here_just_takes_theirs(self):
+        self.setup_repo()
+        self.push_from_elsewhere("fix.py", "fixed = True\n")
+        code, out = self.run_cli()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(sh(["rev-parse", "HEAD"], self.proj), sh(["rev-parse", "main"], self.remote))
+
+    def test_the_rejection_words(self):
+        self.assertTrue(backup.behind_remote(" ! [rejected]        main -> main (fetch first)"))
+        self.assertTrue(backup.behind_remote("! [rejected] main -> main (non-fast-forward)"))
+        self.assertFalse(backup.behind_remote("fatal: refusing to merge unrelated histories [rejected]"))
+        self.assertFalse(backup.behind_remote("fatal: Authentication failed"))
+
 class LocalBackupTests(BackupBase):
     """The local copy: dated zips outside the project, the packed engine kept once, old zips thinned."""
 

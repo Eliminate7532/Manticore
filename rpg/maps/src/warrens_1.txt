@@ -13,11 +13,14 @@ U = exit map=ashfen_outskirts spawn=mill_door on <
 1 = spawn entrance on -
 N = exit map=warrens_2 spawn=stairs_top on >
 2 = spawn stairs_down on ;
+[more markers]
+#! Round PROG2: a treasure chest in the coffin room
+C = chest id=crypt_coffer on +
 [map]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-------^%%%%^+++++++++++%%%%%%%%%%%%%%
-%%-j------%%%%++z+z+z+z+++%%%%%%%%%%%%%%
+%%-j------%%%%++z+z+z+z+C+%%%%%%%%%%%%%%
 %%--UU----%%%%++++++++++++%%%%%%%%%%%%%%
 %%------------+!++++++++!+%%%%%%%%%%%%%%
 %%--1-----%%%%++++++++++++%%%%%%%%%%%%%%

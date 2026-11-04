@@ -10,6 +10,7 @@
     to_morning(world)             sleeping: on to the next MORNING (07:00)
     to_dusk(world)                Round RPG17: resting at the inn by day - on to the next DUSK (18:00)
     stamp(minutes)                Round RPG17 (Karl 24 Oct Q10): the corner window's line, "Day 2, Night 21:00"
+    crossed(old, new)             Round SND1: the dawns and dusks the clock reached going from `old` to `new` - [("dusk", minute)]
     level(minutes, dusk, night)   how dark an outdoor map is at that time - 0 by day, `dusk` at dusk, `night` at night, eased
                                   between them over each change (KEYS)
 
@@ -91,6 +92,39 @@ def to_dusk(world):
 def stamp(minutes):
     """Round RPG17 (Karl 24 Oct Q10, "Add the day"): "Day 2, Night 21:00"."""
     return f"Day {day_number(minutes)}, {phase(minutes).capitalize()} {clock_text(minutes)}"
+
+
+def phase_start(name):
+    """The minute of the day phase `name` begins (dawn 05:00, dusk 18:00)."""
+    for n, start in PHASES:
+        if n == name:
+            return start
+    raise KeyError(name)
+
+
+CROSSINGS = ("dawn", "dusk")        # Round SND1: the boundaries that make a sound (rpg.worldsound: the rooster, the howl)
+
+
+def crossed(old, new, names=CROSSINGS):
+    """Round SND1 (Karl 3 Nov 2026: a wolf's howl at dusk, a rooster at dawn): the boundaries the clock reached going from `old` to
+    `new` - every phase in `names` whose start lies after `old` and at or before `new` (a rest that ends exactly at 18:00 reached
+    dusk). A jump of more than a day reaches each boundary ONCE, at its latest time (two days asleep crow once, not twice).
+    [(name, minute)] in time order; [] when the clock didn't move forward."""
+    try:
+        old, new = float(old), float(new)
+    except (TypeError, ValueError):
+        return []
+    if not (math.isfinite(old) and math.isfinite(new)) or new <= old:
+        return []
+    out = []
+    for name in names:
+        start = phase_start(name)
+        m = new - minute_of_day(new) + start           # this day's
+        if m > new:
+            m -= DAY                                    # ... or the day before's
+        if m > old:
+            out.append((name, round(m, 3)))
+    return sorted(out, key=lambda c: c[1])
 
 
 PHASE_NAMES = ("dawn", "day", "dusk", "night")    # Round RPG16: the words "phase:<p>" knows (rpg.conditions)

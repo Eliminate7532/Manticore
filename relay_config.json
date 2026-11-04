@@ -1,0 +1,4 @@
+{
+  "_about": "Round RLY2: the relay Manticore hosts online games through by default (Host online and Draft with friends). Change the address here when the relay moves (an update brings the new file to installed copies). A player can still type another relay in Host online, or untick it to host directly.",
+  "relay": "163.192.120.37:36900"
+}

@@ -106,6 +106,9 @@ def tick_box(gui, owner, rect, on, label, name):
     owner.buttons.append((pygame.Rect(rect), name))
 
 
+RELAY_TICK = "Connect through the relay (recommended: works on any internet connection)"     # round RLY2
+
+
 # ---- Host a game --------------------------------------------------------------------------------------------------
 class HostDialog(dlg.Dialog):
     """Before hosting: your name, the password, the port, and whether to ask the router to open the port (UPnP)."""
@@ -128,12 +131,16 @@ class HostDialog(dlg.Dialog):
         # Round MP2c: up to three friends, and AI players for the empty seats (four at most in all)
         self.guests = min(3, max(1, int(prefs.get("guests") or 1)))
         self.ai = min(3 - self.guests, max(0, int(prefs.get("ai") or 0)))
-        # Round MP2d: through a relay (for internet providers that block incoming connections)
-        self.use_relay = bool(prefs.get("use_relay")) and bool(prefs.get("relay"))
+        # Round MP2d: through a relay (for internet providers that block incoming connections). Round RLY2: the relay is the
+        # default - relay_config.json's address is filled in and ticked, unless the player last chose to host directly
+        # ("direct") or typed a relay of their own ("relay").
+        self.default_relay = prefs.get("relay_default") or ""
+        relay_text = prefs.get("relay") or self.default_relay
+        self.use_relay = bool(relay_text) and not prefs.get("direct")
         # Round MP2b: an unfinished hosted game that can be continued
         self.saved = gui.online_saved() if hasattr(gui, "online_saved") else None
         self.resume = False
-        self.fields["relay"] = TextField(prefs.get("relay") or "", 120, "relay address:port")
+        self.fields["relay"] = TextField(relay_text, 120, "relay address:port")
 
     def step(self, what, d):
         if what == "guests":
@@ -143,18 +150,9 @@ class HostDialog(dlg.Dialog):
             self.ai = min(3 - self.guests, max(0, self.ai + d))
 
     def relay_target(self):
-        """(address, port) of the relay typed, or a str saying what's wrong."""
-        text = self.fields["relay"].text.strip()
-        if not text:
-            return "Type the relay's address (address:port)."
-        addr, _sep, port_text = text.rpartition(":")
-        if not addr:
-            addr, port_text = text, str(forge_net.DEFAULT_RELAY_PORT)
-        why = forge_net.validate_address(addr)
-        if why:
-            return why
-        port, why = forge_net.validate_port(port_text)
-        return why if why else (addr, port)
+        """(address, port) of the relay typed (round RLY2: an emptied box means the default relay), or a str saying what's
+        wrong."""
+        return forge_net.parse_relay(self.fields["relay"].text.strip() or self.default_relay)
 
     def problem(self):
         if not forge_net.clean_name(self.fields["name"].text):
@@ -211,7 +209,9 @@ class HostDialog(dlg.Dialog):
                                                                                      gui.button_width("Discard", "small")) - 30)
         ai_note = wrap_text("The AI players use the decks chosen for AI 1%s on the deck screen." % (
             "" if self.ai == 1 else " and AI 2"), small, tw) if self.ai and not self.resume else []
-        note = wrap_text("You'll get an invite code to send your friend. The first time, Windows may ask whether Java may "
+        note = wrap_text("You'll get an invite code to send your friends. Through the relay, your friends can join whatever "
+                         "your internet connection is." if self.use_relay else
+                         "You'll get an invite code to send your friend. The first time, Windows may ask whether Java may "
                          "use the network: allow it, or your friend can't connect.", small, tw)
         msg = wrap_text(self.message[0], small, tw)[:3] if self.message else []
         bh = int(max(42, 46 * L.fs))
@@ -287,7 +287,7 @@ class HostDialog(dlg.Dialog):
             y += rh + gap
         # Round MP2d: through a relay
         tick_box(gui, self, pygame.Rect(x, y + (rh - int(26 * L.fs)) // 2, rect.w - 52, int(26 * L.fs)), self.use_relay,
-                 "Connect through a relay (when your internet provider blocks incoming connections)", "use_relay")
+                 RELAY_TICK, "use_relay")
         y += rh + gap
         if self.use_relay:
             draw_text(scr, "Relay", x, y + rh // 2, body, WHITE, "midleft")

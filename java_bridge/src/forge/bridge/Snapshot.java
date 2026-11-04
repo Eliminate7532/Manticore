@@ -59,6 +59,30 @@ public final class Snapshot {
         return z == null || !z.isHidden();
     }
 
+    /** Round PLOT1 - bug report from Karl, 1 Nov 2026 ("I used plot on a Tumbleweed Rising and was unable to play it later"):
+     *  Forge's "you could act with this" scan (AvailableActions) looks at the hand, the battlefield and getCardsIn(Flashback),
+     *  and a plotted card in exile is in none of them (PlayerZone's exile filter knows foretold and adventure cards, not plotted
+     *  ones). So it never glowed, and the table's exile window only lets a glowing card be clicked. Forge itself casts it when it
+     *  is clicked (checked live). True when it is the viewer's own plotted card, plotted on an earlier turn, and the viewer
+     *  could cast a sorcery now while Forge asks for priority - GameActionUtil's own test for the "(Plotted)" spell. Read-only on
+     *  purpose: getAllPossibleAbilities would run checkStaticAbilities on Swing's thread beside the game thread. */
+    static boolean plottedCastable(CardView v, PlayerView viewer, BridgeGui gui) {
+        try {
+            if (viewer == null || gui == null || gui.spectator || Main.match == null || Main.match.getGame() == null) {
+                return false;
+            }
+            forge.game.card.Card c = Main.match.getGame().findById(v.getId());
+            if (c == null || !c.isPlotted() || !c.isInZone(ZoneType.Exile) || c.enteredThisTurn()) {
+                return false;
+            }
+            forge.game.player.Player owner = c.getOwner();
+            return owner != null && owner.getId() == viewer.getId() && !owner.hasLost() && owner.canCastSorcery()
+                    && "InputPassPriority".equals(gui.inputKind());
+        } catch (RuntimeException e) {
+            return false;                                        // the game thread moved the card while we looked: no glow this once
+        }
+    }
+
     static JsonObject card(CardView c, PlayerView viewer, BridgeGui gui) {
         JsonObject o = new JsonObject();
         o.addProperty("id", c.getId());
@@ -151,6 +175,9 @@ public final class Snapshot {
                 // built on another; reading it at that moment threw ArrayIndexOutOfBoundsException and the whole snapshot was
                 // lost (soak night 1, game 99). Skip the glow this once; the next snapshot has it.
                 weak = 0;
+            }
+            if (weak == 0 && z == ZoneType.Exile && plottedCastable(c, viewer, gui)) {
+                weak = 1;                                        // round PLOT1: a plotted card you can cast now
             }
             if (weak > 0) o.addProperty("weak", weak);           // Forge's "you could act with this" glow
             if (gui.isHighlighted(c)) o.addProperty("highlight", true);

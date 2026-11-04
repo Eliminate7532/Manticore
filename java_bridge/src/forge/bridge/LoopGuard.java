@@ -12,11 +12,14 @@ import forge.LobbyPlayer;
 import forge.ai.LobbyPlayerAi;
 import forge.ai.PlayerControllerAi;
 import forge.game.Game;
+import forge.game.ability.AbilityKey;
 import forge.game.card.Card;
 import forge.game.combat.Combat;
 import forge.game.player.Player;
 import forge.game.player.PlayerController;
 import forge.game.spellability.SpellAbility;
+import forge.game.trigger.Trigger;
+import forge.game.trigger.WrappedAbility;
 import forge.game.zone.ZoneType;
 
 /**
@@ -43,6 +46,18 @@ import forge.game.zone.ZoneType;
  * ends by itself, and the guard was cutting the AI's clock at 10. A board that shrinks on every use can't go on for ever; the
  * Monolith pair gives nothing up and is still stopped at 10. To be safe against a chain the count can't see through (one that
  * shrinks and regrows the board), every use of the ability is also counted, and {@link #SHRINK_CAP} uses in one turn stop it too.
+ *
+ * Round ENG-FELIDAR (3 Nov 2026): optional triggers. Online draft soak 1, draft 13 (claude/CD5_2026-10-27.md): Felidar Guardian
+ * and Restoration Angel each have "When this enters, you may exile [the other], then return it" - an optional ("may") trigger
+ * that Forge's AI always accepts, so the two flickered each other 4,614 times until Java ran out of memory. No ability was
+ * activated, so the count above never saw it. Forge asks the AI at the trigger's resolution, through
+ * PlayerControllerAi.confirmTrigger(WrappedAbility) (WrappedAbility.resolve, for a trigger with OptionalDecider$; checked with
+ * javap on Forge 9a6f776). The guard now also counts each "yes" per (source card, trigger, triggering card) per turn and answers
+ * "no" at {@link #cap} - the same "bridge: loop guard: ..." line and {"t":"ai_loop_guard"} (with "kind": "trigger"). The
+ * triggering card is part of the key so that one card that triggers on many different cards (Mentor of the Meek and a
+ * token swarm: one yes per new creature) is not cut at 10; every yes of that card and trigger is also counted, and
+ * {@link #SHRINK_CAP} in one turn stops it too, in case a loop makes a new triggering object every time. A mandatory trigger
+ * can't be refused: it is not counted here.
  */
 final class LoopGuard {
     static final int DEFAULT_CAP = 10;
@@ -90,6 +105,8 @@ final class LoopGuard {
         private final Map<String, Integer> all = new HashMap<>();       // Round LG2: every use
         private final Map<String, int[]> board = new HashMap<>();       // Round LG2: the AI's board at the ability's last use
         private final Set<String> told = new HashSet<>();
+        private final Map<String, Integer> yes = new HashMap<>();       // Round ENG-FELIDAR: accepted optional triggers
+        private final Map<String, Integer> yesAll = new HashMap<>();    // ... per source card and trigger, any triggering card
 
         Controller(Game game, Player p, LobbyPlayer lp) {
             super(game, p, lp);
@@ -97,18 +114,13 @@ final class LoopGuard {
 
         @Override
         public List<SpellAbility> chooseSpellAbilityToPlay() {
+            long t0 = Timing.start();
             List<SpellAbility> chosen = Threats.adjust(getPlayer(), super.chooseSpellAbilityToPlay());   // Round AI2
+            Timing.mark("ai", t0);                                      // round PERF1: one AI decision
             if (chosen == null || chosen.isEmpty() || cap <= 0) {
                 return chosen;
             }
-            int now = getGame().getPhaseHandler().getTurn();
-            if (now != turn) {
-                turn = now;
-                uses.clear();
-                all.clear();
-                board.clear();
-                told.clear();
-            }
+            newTurn();
             for (SpellAbility sa : chosen) {
                 if (sa == null || sa.isLandAbility()) {
                     continue;
@@ -131,6 +143,89 @@ final class LoopGuard {
                 }
             }
             return chosen;
+        }
+
+        /** A new turn starts every count again. */
+        private void newTurn() {
+            int now = getGame().getPhaseHandler().getTurn();
+            if (now != turn) {
+                turn = now;
+                uses.clear();
+                all.clear();
+                board.clear();
+                told.clear();
+                yes.clear();
+                yesAll.clear();
+            }
+        }
+
+        /** Round ENG-FELIDAR: the AI's "yes" to an optional trigger, counted per turn; "no" at the cap. */
+        @Override
+        public boolean confirmTrigger(WrappedAbility wa) {
+            boolean ok = super.confirmTrigger(wa);
+            if (!ok || cap <= 0 || wa == null || wa.isMandatory()) {
+                return ok;
+            }
+            newTurn();
+            String k = triggerKey(wa);
+            String kAll = k.substring(0, k.lastIndexOf('|'));
+            if (yes.getOrDefault(k, 0) >= cap || yesAll.getOrDefault(kAll, 0) >= SHRINK_CAP) {
+                tellTrigger(wa, k, kAll);
+                return false;                          // decline the "may"
+            }
+            yes.merge(k, 1, Integer::sum);
+            yesAll.merge(kAll, 1, Integer::sum);
+            return true;
+        }
+
+        int triggerYes(WrappedAbility wa) {
+            return yes.getOrDefault(triggerKey(wa), 0);
+        }
+
+        /** "T|source id|trigger text|triggering card id" (-1 when the trigger has no triggering card). */
+        static String triggerKey(WrappedAbility wa) {
+            Card host = wa.getHostCard();
+            Object by = wa.getTriggeringObject(AbilityKey.Card);
+            int byId = by instanceof Card ? ((Card) by).getId() : -1;
+            return "T|" + (host == null ? -1 : host.getId()) + "|" + triggerText(wa) + "|" + byId;
+        }
+
+        static String triggerText(WrappedAbility wa) {
+            Trigger t = wa.getTrigger();
+            String d = t != null && t.hasParam("TriggerDescription") ? t.getParam("TriggerDescription") : null;
+            if (d == null) {
+                SpellAbility in = wa.getWrappedAbility();
+                d = in == null ? wa.getDescription() : in.getDescription();
+            }
+            Card host = wa.getHostCard();
+            return d == null ? "" : (host == null ? d : d.replace("CARDNAME", host.getName()));
+        }
+
+        private void tellTrigger(WrappedAbility wa, String k, String kAll) {
+            if (!told.add(k)) {
+                return;
+            }
+            Card host = wa.getHostCard();
+            String card = host == null ? "?" : host.getName();
+            boolean any = yes.getOrDefault(k, 0) < cap;              // stopped by SHRINK_CAP over many triggering cards
+            int count = any ? yesAll.getOrDefault(kAll, 0) : cap;
+            String text = triggerText(wa);
+            System.err.println("bridge: loop guard: " + getPlayer().getName() + " said yes to " + card + "'s trigger (" + text
+                    + ") " + count + " times this turn" + (any ? " (on different cards)" : "") + "; answering no instead");
+            if (Checks.wire != null) {
+                JsonObject m = new JsonObject();
+                m.addProperty("t", "ai_loop_guard");
+                m.addProperty("kind", "trigger");
+                m.addProperty("player", getPlayer().getName());
+                m.addProperty("card", card);
+                m.addProperty("cardId", host == null ? -1 : host.getId());
+                m.addProperty("ability", text);
+                m.addProperty("turn", turn);
+                m.addProperty("count", count);
+                m.addProperty("uses", yesAll.getOrDefault(kAll, 0));
+                m.addProperty("shrinking", false);
+                Checks.wire.send(m);
+            }
         }
 
         /** Round AI-ATTACK: the attack declaration with a time budget (see AttackCache.declareWithBudget). */
@@ -183,6 +278,7 @@ final class LoopGuard {
             if (Checks.wire != null) {
                 JsonObject m = new JsonObject();
                 m.addProperty("t", "ai_loop_guard");
+                m.addProperty("kind", "ability");
                 m.addProperty("player", getPlayer().getName());
                 m.addProperty("card", card);
                 m.addProperty("cardId", host == null ? -1 : host.getId());

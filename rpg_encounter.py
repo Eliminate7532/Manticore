@@ -56,6 +56,7 @@ REFUSED = "It won't let you leave."
 NOTE_SECONDS = 2.5
 BODY, BIG = 8, 16                         # the pixel font's two sizes (px)
 PITCH = 10                                # px between lines of body text
+GUARDS = "Guards: {card}. Beat him and it is yours."      # Round PROG2: a boss's signature card (rpg.rewards.signature_card)
 
 W_NAME = pygame.Rect(328, 8, 304, 60)
 W_ABOUT = pygame.Rect(328, 76, 304, 236)
@@ -180,6 +181,14 @@ class EncounterScreen:
                                                     source=adv.deck_source(game, trigger))   # Round RPG17: a rare's own decks
         except (OSError, ValueError, KeyError, IndexError):
             self.deck_index, self.deck = None, None
+        self.guards = None                      # Round PROG2: a boss's signature card - "Guards: <card>", his on top of the reward
+        if self.boss and self.deck:
+            try:
+                self.guards = rduel.guarded_card(self.deck, "boss", game.pool, game.lists(), game.tiers())
+            except Exception:                   # never stops the encounter screen
+                self.guards = None
+            if self.guards:
+                self.lines = [self.lines[0], GUARDS.format(card=self.guards)] + list(self.lines[1:])
         self.foe, self.foe_scale, self.foe_rect = foe_layout(self.kd, self.boss, 1 if self.rare else 0)
         self.buttons = []                       # [(screen Rect, name)] drawn this frame
         self._rows = []                         # [(canvas Rect, name)]
@@ -310,8 +319,11 @@ class EncounterScreen:
         blocks = [(self.text.get("plan") or "", gfx.DB_TEXT, 4)]
         if self.text.get("taunt"):
             blocks.append((f"\"{self.text['taunt']}\"", gfx.DB_GOLD, 8))
+        held = adv.duel.held_by(self.game.save, getattr(self.trigger, "spot", None))
+        held_line = adv.HOLDS_LINE.format(n=held) if held else None
         for i, line in enumerate(self.lines):
-            colour = gfx.DB_ORANGE if line.startswith("Your deck can't") else gfx.DB_DIM
+            colour = gfx.DB_ORANGE if line.startswith("Your deck can't") else (
+                gfx.DB_GOLD if line == held_line else gfx.DB_DIM)               # Round GOLD1: the gold it holds, in gold
             blocks.append((line, colour, 2 if i < len(self.lines) - 1 else 0))
         for text, colour, gap in blocks:
             for ln in t.wrap(text, w):

@@ -16,7 +16,9 @@ PAGE_KEEP = 0.15        # a page step keeps this share of the view on screen, so
 
 
 class ScrollBar:
-    def __init__(self):
+    def __init__(self, base=WIDTH, min_px=0):
+        self.base = base                     # task bug-sell-scroll-2: the Adventure's lists use a wider bar a finger can grab
+        self.min_px = min_px                 # ... and never narrower than this many pixels (the owner may change it each frame)
         self.track = pygame.Rect(0, 0, 0, 0)
         self.handle = pygame.Rect(0, 0, 0, 0)
         self.view = 0
@@ -46,13 +48,13 @@ class ScrollBar:
     def layout(self, view_rect, content_h, scroll, fs):
         """Place the bar along the right edge of `view_rect` for this much content and this scroll."""
         self.view, self.content = view_rect.h, content_h
-        w = self.width(fs)
+        w = max(self.min_px, max(10, int(self.base * max(1.0, fs))))
         self.track = pygame.Rect(view_rect.right - w, view_rect.y, w, view_rect.h)
         if not self.needed:
             self.handle = pygame.Rect(self.track.x, self.track.y, w, 0)
             self.grab = None
             return
-        hh = max(int(MIN_HANDLE * max(1.0, fs)), int(self.track.h * self.view / self.content))
+        hh = max(int(MIN_HANDLE * max(1.0, fs)), w, int(self.track.h * self.view / self.content))
         hh = min(hh, self.track.h)
         room = self.track.h - hh
         top = self.track.y + (int(room * self.clamp(scroll) / self.max_scroll()) if self.max_scroll() else 0)

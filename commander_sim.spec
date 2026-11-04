@@ -40,6 +40,7 @@ a = Analysis(
         _data("banned_brawl.snapshot.json", "."),        # Round FMT1: the same for MTG Arena's Brawl
         _data("banned_standard.snapshot.json", "."),     # Round CON1: the same for Standard
         _data("update_config.json", "."),          # Round 30: where an installed copy looks for updates
+        _data("relay_config.json", "."),           # Round RLY2: the relay Host online uses by default
         _data("stock_cubes"),                       # Round CD3: the stock cubes' bundled lists
         _data(os.path.join("rpg", "data")),         # Round RPG8: the Adventure's data (card pool, tiers, packs, enemies, numbers)
         _data(os.path.join("rpg", "maps")),         # Round RPG8: its Tiled maps and their tiles
@@ -48,7 +49,7 @@ a = Analysis(
     # Opus's Linux probe needed exactly these (SONNET_SPEC_R29 section 1.3); add whatever the first Windows build's warnings
     # file (build\\pyinstaller\\commander_sim\\warn-commander_sim.txt) names as missing.
     hiddenimports=[
-        "tools.soak", "tools.net_selftest", "soak_bot", "soak_report", "soak_boards", "bridge_rules", "card_check", "deck_loader",
+        "tools.soak", "tools.net_selftest", "tools.bench_board", "soak_bot", "soak_report", "soak_boards", "bridge_rules", "card_check", "deck_loader",
         # Round RPG8: the Adventure is opened from the main menu by a function-level import
         "rpg_screens", "rpg_map_view", "rpg.adventure", "rpg.explore", "rpg.tmx", "pytmx",
     ],

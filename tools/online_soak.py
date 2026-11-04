@@ -53,6 +53,7 @@ HOST_READY_SECONDS = 120
 POLL_SLEEP = 0.02
 MOVE_WAIT_SECONDS = 3.0
 RECONNECT_SECONDS = 30           # round MP2: a cut connection must be back within this
+RELAY_READY_SECONDS = 30         # round RLY1 (--relay): the host's relay agent must have opened its room by then
 # round RESUME-DIFF (--resume): the boards are compared only where the game waits for a person - a priority question nobody
 # has answered yet, and no table has had a new snapshot for SETTLE_SECONDS. A fixed 1.5 s wait compared a board in motion
 # (26 Oct soak, game 12: the bot had just answered, and the AIs were still playing their turns when the picture was taken).
@@ -285,6 +286,8 @@ class OnlineResult:
         self.resumes = 0             # round MP2b (--resume): times the game was closed and continued from its journal
         self.resume_turn = None
         self.format = None           # round MP3a: the game's format (formats.py key)
+        self.via = "direct"          # round RLY1: "relay" when the guests joined through --relay
+        self.started = None          # round RLY1: time.time() when the game started (tools/relay_load.py measures overlap)
 
     def fail_rules(self):
         return sorted({f["rule"] for f in self.findings if f["severity"] == "fail"})
@@ -301,7 +304,8 @@ class OnlineResult:
             ",".join(self.fail_rules()) or "-", ",".join(self.warn_rules()) or "-",
             (" late=%d" % self.late) if self.late else "",
             (" drops=%d/%d" % (self.reconnected, self.drops)) if self.drops else "",
-            (" resumed@%s" % self.resume_turn) if self.resumes else "", ("  -> " + self.kept) if self.kept else "")
+            (" resumed@%s" % self.resume_turn) if self.resumes else "", ("  -> " + self.kept) if self.kept else "") + \
+            (" via=relay" if self.via == "relay" else "")
 
 
 def _free_port():
@@ -313,8 +317,31 @@ def _free_port():
     return port
 
 
+def _guest_target(host, port, relay):
+    """Round RLY1: where the guests connect - (address, port, room, None), or (None, None, None, why) when the relay never opened
+    the host's room. Direct: the host's own port on 127.0.0.1 (no room). Through a relay (--relay): the relay's address and the
+    room the host's relay agent opened there, as an invite code through a relay says."""
+    if not relay:
+        return "127.0.0.1", port, None, None
+    end = time.monotonic() + RELAY_READY_SECONDS
+    st = host.relay_status()
+    while time.monotonic() < end:
+        host.poll()
+        st = host.relay_status()
+        if st and st[0] == "ready" and st[1]:
+            return relay[0], relay[1], st[1], None
+        if st and st[0] == "failed":
+            break
+        time.sleep(0.05)
+    return None, None, None, "the relay at %s:%s never opened the host's room within %d s (status %s, error %s)" % (
+        relay[0], relay[1], RELAY_READY_SECONDS, st[0] if st else "?", (st[2] if st else None) or "-")
+
+
 def run_game(index, rng, out_root, cert, args):
     seed = (args.seed + index) if args.seed is not None else fc.new_seed()
+    relay = getattr(args, "relay_addr", None)                     # round RLY1: --relay HOST:PORT
+    # round RLY1: through a relay that may be on the internet, every game gets its own password (PASSWORD is in the source)
+    password = fn.make_password(random.Random(seed)) if relay else PASSWORD
     pool = getattr(args, "pool", None) or soak.deck_pool("sample", getattr(args, "format", "commander"))     # round MP3a
     # --pods (round MP2c): in this share of games the table has 3 or 4 players - 1-3 guests over the network, AI players for
     # the rest. Otherwise 1v1, as before.
@@ -330,6 +357,7 @@ def run_game(index, rng, out_root, cert, args):
     guest_recs = [os.path.join(game_dir, "guest.jsonl" if k == 0 else "guest%d.jsonl" % (k + 1)) for k in range(n_guests)]
     engine_log = os.path.join(game_dir, "host_engine.log")
     t0 = time.time()
+    result.started = t0
     with tempfile.TemporaryDirectory(prefix="online_soak_") as tmp:
         host_dck = build_deck(decks[0], tmp, "host")                                      # round MP3a: format + house rules
         guest_dcks = [build_deck(decks[1 + k], tmp, "guest%d" % k) for k in range(n_guests)]
@@ -338,7 +366,9 @@ def run_game(index, rng, out_root, cert, args):
         port = _free_port()
         extra = {"guests": n_guests, "ai_paths": ai_dcks} if players > 2 else {}
         journal = os.path.join(game_dir, "cmds.jsonl")             # round MP2b: NetHost's journal, for --resume
-        host = fc.HostSession(host_dck, "Host", port, PASSWORD, cert, os.path.join(tmp, "incoming.dck"), upnp=False,
+        if relay:
+            extra["relay"] = relay
+        host = fc.HostSession(host_dck, "Host", port, password, cert, os.path.join(tmp, "incoming.dck"), upnp=False,
                               bind="127.0.0.1", code="soakhost", seed=seed, record_path=host_rec, journal_path=journal, **extra)
         host.stderr_path = engine_log
         guests = []
@@ -353,10 +383,17 @@ def run_game(index, rng, out_root, cert, args):
                 result.findings.append({"rule": "host_failed", "severity": "fail",
                                         "detail": str(host.host_failed or "NetHost never got ready")})
                 return _finish(result, host, guests, host_rec, guest_recs, engine_log, game_dir, t0)
+            g_addr, g_port, room, why = _guest_target(host, port, relay)
+            if why:
+                result.ended = "relay_failed"
+                result.findings.append({"rule": "relay_failed", "severity": "fail", "detail": why})
+                return _finish(result, host, guests, host_rec, guest_recs, engine_log, game_dir, t0)
+            result.via = "relay" if room else "direct"
             for k in range(n_guests):
                 with open(guest_dcks[k], encoding="utf-8") as f:
-                    g = fc.NetSession("127.0.0.1", port, "Guest" if k == 0 else "Guest%d" % (k + 1), PASSWORD, "guest%d" % k,
-                                      f.read(), fingerprint=cert.fingerprint, code="soakguest", record_path=guest_recs[k])
+                    g = fc.NetSession(g_addr, g_port, "Guest" if k == 0 else "Guest%d" % (k + 1), password, "guest%d" % k,
+                                      f.read(), fingerprint=cert.fingerprint, code="soakguest", record_path=guest_recs[k],
+                                      room=room)
                 guests.append(g)
                 try:
                     g.start()
@@ -424,7 +461,8 @@ def run_game(index, rng, out_root, cert, args):
                 if resume_turn is not None and now_turn >= resume_turn and pending_drop is None and _quiet(seats) \
                         and not (host.game_over or any(g.game_over for g in guests)):
                     resume_turn = None
-                    got = _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir, extra)
+                    got = _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir, extra,
+                                       relay=relay, password=password)
                     if got == "later":                    # round RESUME-DIFF: the game wasn't waiting for a person; try later
                         resume_turn = now_turn + 1
                         last_progress = time.monotonic()
@@ -583,7 +621,7 @@ def _wait_for_person(tables, limit=None, settle=None):
     return False
 
 
-def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir, extra):
+def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir, extra, relay=None, password=PASSWORD):
     """Round MP2b: close the host's engine and every guest, continue the game from NetHost's journal with fresh sessions, and
     compare every table's board with what it was. Returns (host, guests, seats) to play on with, or None (a finding was added)."""
     import replay
@@ -601,7 +639,7 @@ def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir
     shutil.copyfile(journal, src)
     port = _free_port()
     extra = {k: v for k, v in extra.items() if k != "guests"}
-    h2 = fc.HostSession(host.deck_path, "Host", port, PASSWORD, cert, os.path.join(tmp, "incoming2.dck"), upnp=False,
+    h2 = fc.HostSession(host.deck_path, "Host", port, password, cert, os.path.join(tmp, "incoming2.dck"), upnp=False,
                         bind="127.0.0.1", code="soakhost", seed=seed, record_path=os.path.join(game_dir, "host_resumed.jsonl"),
                         journal_path=journal, resume={"replay": src, "guests": [(g["seat"], g["name"], g["deck"]) for g in seat_list]},
                         **extra)
@@ -622,10 +660,16 @@ def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir
         result.ended = "resume_failed"
         h2.close()
         return None
+    g_addr, g_port, room, why = _guest_target(h2, port, relay)     # round RLY1: a continued game opens a new room at the relay
+    if why:
+        result.findings.append({"rule": "relay_failed", "severity": "fail", "detail": "continuing on turn %s: %s" % (turn, why)})
+        result.ended = "relay_failed"
+        h2.close()
+        return None
     new_guests = []
     for k, g in enumerate(seat_list):
-        ng = fc.NetSession("127.0.0.1", port, g["name"], PASSWORD, "guest", "", fingerprint=cert.fingerprint, code="soakguest",
-                           record_path=os.path.join(game_dir, "guest%d_resumed.jsonl" % (k + 1)))
+        ng = fc.NetSession(g_addr, g_port, g["name"], password, "guest", "", fingerprint=cert.fingerprint, code="soakguest",
+                           record_path=os.path.join(game_dir, "guest%d_resumed.jsonl" % (k + 1)), room=room)
         ng.start()
         new_guests.append(ng)
     end = time.monotonic() + 60
@@ -722,6 +766,9 @@ def summary_text(results, started, args, stopped_early):
                                    " (stopped early)" if stopped_early else ""),
              "version: %s" % _version_line(),
              "format: %s" % getattr(args, "format", "commander"),
+             "connection: %s" % (("through the relay at %s:%s, %d of %d game(s) joined through it" % (
+                 args.relay_addr[0], args.relay_addr[1], len([r for r in results if r.via == "relay"]), games))
+                 if getattr(args, "relay_addr", None) else "direct (127.0.0.1)"),
              "late questions released after game over: %d, in %d game(s)" % (sum(r.late for r in results),
                                                                              len([r for r in results if r.late])),
              "connections cut (--drops): %d, came back by themselves: %d" % (sum(r.drops for r in results),
@@ -740,6 +787,18 @@ def summary_text(results, started, args, stopped_early):
     lines.append("GAMES")
     lines += ["  " + r.line() for r in results]
     return "\n".join(lines) + "\n"
+
+
+def write_results_json(path, results):
+    """Round RLY1: one entry per game (when it started, how long, how it ended, direct or relay, its failing rules), for
+    tools/relay_load.py. Written after every game, atomically."""
+    rows = [{"index": r.index, "started": r.started, "seconds": round(r.seconds, 1), "ended": r.ended, "via": r.via,
+             "players": r.players, "guests": r.guests, "drops": r.drops, "reconnected": r.reconnected,
+             "fails": r.fail_rules(), "warns": r.warn_rules()} for r in results]
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=1)
+    os.replace(tmp, path)
 
 
 def _version_line():
@@ -770,6 +829,10 @@ def run(args):
     if args.pool is not None:
         args.pool = [p for p in args.pool if soak._file_format(p) == fmt] or args.pool
         print("deck pool (%s): %d decks" % (fmt, len(args.pool)), flush=True)
+    relay_proc = None
+    if getattr(args, "start_relay", False):                  # round RLY1: a relay of this run's own, on this machine
+        relay_proc, args.relay_addr = start_local_relay(os.path.join(out_root, "relay.log"))
+        print("relay started on %s:%s (log: relay.log)" % args.relay_addr, flush=True)
     results, stopped = [], False
     deadline = time.time() + args.hours * 3600 if args.hours else None
     summary = os.path.join(out_root, "online_summary.txt")
@@ -781,15 +844,56 @@ def run(args):
             print(r.line(), flush=True)
             with open(summary, "w", encoding="utf-8") as f:
                 f.write(summary_text(results, started, args, False))
+            write_results_json(os.path.join(out_root, "online_results.json"), results)
             i += 1
     except KeyboardInterrupt:
         stopped = True
         print("stopping (Ctrl+C): writing what happened so far.")
     with open(summary, "w", encoding="utf-8") as f:
         f.write(summary_text(results, started, args, stopped))
+    write_results_json(os.path.join(out_root, "online_results.json"), results)
+    if relay_proc is not None:
+        relay_proc.terminate()
+        try:
+            relay_proc.wait(10)
+        except Exception:
+            relay_proc.kill()
     shutil.rmtree(os.path.join(out_root, "net"), ignore_errors=True)        # the run's own throwaway certificate
     print("summary: " + summary)
     return results
+
+
+def parse_relay(text):
+    """Round RLY1: "host:port" (or "host", port 36900) -> (host, port). ValueError says what's wrong."""
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("no relay address")
+    host, sep, port = text.rpartition(":")
+    if not sep:
+        host, port = text, "36900"
+    if not host or not port.isdigit() or not 0 < int(port) < 65536:
+        raise ValueError("a relay is host:port, like relay.example.com:36900 (got %r)" % text)
+    return host, int(port)
+
+
+def start_local_relay(log_path, python=None):
+    """Round RLY1: relay/manticore_relay.py on 127.0.0.1 and a free port, for this run only. Returns (process, (host, port))."""
+    import subprocess
+    port = _free_port()
+    proc = subprocess.Popen([python or sys.executable, os.path.join(BASE_DIR, "relay", "manticore_relay.py"),
+                             "--bind", "127.0.0.1", "--port", str(port), "--log", log_path],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    end = time.monotonic() + 15
+    while time.monotonic() < end:
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=1).close()
+            return proc, ("127.0.0.1", port)
+        except OSError:
+            if proc.poll() is not None:
+                break
+            time.sleep(0.1)
+    proc.kill()
+    raise RuntimeError("the local relay did not start (see %s)" % log_path)
 
 
 def main(argv=None):
@@ -812,9 +916,22 @@ def main(argv=None):
                     help="round MP3a: the games' format; draft / commander_draft decks are drafted at the start (Turbo Cube "
                          "with its house rule / the Commander Cube) unless --deck-dir names them")
     ap.add_argument("--deck-dir", default=None, help="round MP3a: play the .txt decks in this folder (their own format lines)")
+    ap.add_argument("--relay", default=None, metavar="HOST:PORT",
+                    help="round RLY1: every game through this relay (relay/manticore_relay.py): the host's game opens a room "
+                         "there and the guests join it, as an invite code through a relay does; a fresh password per game")
+    ap.add_argument("--start-relay", action="store_true",
+                    help="round RLY1: start a relay of this run's own on 127.0.0.1 and play every game through it")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
     _finish.keep_all = args.keep
+    args.relay_addr = None
+    if args.relay and args.start_relay:
+        ap.error("--relay and --start-relay: choose one")
+    if args.relay:
+        try:
+            args.relay_addr = parse_relay(args.relay)
+        except ValueError as e:
+            ap.error(str(e))
     if args.hours is None and args.games is None:
         args.games = 3
     run(args)

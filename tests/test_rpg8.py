@@ -27,6 +27,7 @@ import pygame
 
 import forge_client as fc
 import forge_table as ft
+import rpg_results
 import rpg_screens as rs
 from rpg import adventure as adv
 from rpg import cardpool, duel, explore, newgame, rules
@@ -66,8 +67,9 @@ class Launcher:
     def __init__(self, fail=None):
         self.calls, self.fail = [], fail
 
-    def start(self, mine, opponents, fmt=None, rules=(), names=None):
-        self.calls.append({"mine": mine, "opponents": opponents, "fmt": fmt, "names": names})
+    def start(self, mine, opponents, fmt=None, rules=(), names=None, effects=None):
+        # Round PROG3 (expected change): the player's start effects (levels and perks) are kept too
+        self.calls.append({"mine": mine, "opponents": opponents, "fmt": fmt, "names": names, "effects": effects})
         if self.fail:
             raise RuntimeError(self.fail)
         return FakeSession(copy.deepcopy(load_state("main1_start")), load_log())
@@ -96,6 +98,8 @@ class Base(unittest.TestCase):
         self.folder = os.path.join(self.tmp, "rpg_saves")
         folder = self.folder
         self.enterContext(mock.patch.object(sv, "saves_dir", lambda: folder))     # every save of the test goes here
+        self.enterContext(mock.patch.object(rpg_results, "AT_ONCE", True))   # Round PROG1: the results screen opens finished (one
+        # Enter or OK closes it, as the result window did); tests/test_prog1.py plays it out
         self.pool = cardpool.load()
 
     def gui(self, size=(1360, 840), scale=None, launcher=None):
@@ -233,8 +237,9 @@ class LogicTests(Base):
         disk = on_disk(self.folder)
         self.assertEqual((out["result"], disk["gold"]), ("won", gold + out["gold"]))
         self.assertGreater(out["gold"], 0)
-        self.assertEqual(len(out["cards"]), 1)
-        self.assertIn(out["cards"][0][0], disk["collection"])
+        self.assertEqual(out["cards"], [])                                   # Round PROG2: the reward card is a choice of 3,
+        self.assertEqual(len(out["offers"]), 1)                              # written before it is chosen
+        self.assertEqual(disk["pending_pick"]["groups"], out["offers"])
         self.assertIsNone(disk["pending_duel"])
         self.assertIn(t.spot, disk["world"]["beaten"])
         self.assertEqual(adv.outcome_lines(out)[0], f"You beat the {out['enemy']}: +{out['gold']} gold.")
@@ -254,7 +259,8 @@ class LogicTests(Base):
                 self.assertEqual((disk["gold"], disk["record"]["losses"]), (gold - cost, 1))
                 self.assertEqual((disk["world"]["map"], disk["world"]["x"]), (g.world.start_town, None))
                 lines = adv.outcome_lines(out, g.world)
-                self.assertEqual(lines[1], f"You lost {cost} gold and are back in Lantern Hollow.")
+                self.assertEqual(lines[1:], [f"You lost {cost} gold - the {out['enemy']} has it now. Beat them to win it back.",
+                                             "You are back in Lantern Hollow."])          # Round GOLD1: the foe holds it
                 self.assertTrue(lines[0].startswith("You conceded" if result == "conceded" else "The "))
 
     def test_an_unfinished_duel_is_not_settled_and_nothing_is_settled_twice(self):
@@ -463,6 +469,8 @@ class WindowTests(Base):
         f.game.save.gold = 500
         self.press(g, "tab:packs")
         code = f.shop.packs()[0][0]
+        f.shelf_pick = ("plain", code)                                               # Round PACK2: tap the wrapper first
+        frame(g)
         self.press(g, f"pack:{code}")
         self.assertEqual(f.stage, "pack")
         self.assertTrue(f.opened[1])
@@ -470,10 +478,17 @@ class WindowTests(Base):
         self.press(g, "pack_done")
         self.press(g, "tab:sell")
         rows = f.sell_list()
-        needed = next(r for r in rows if r[3] >= r[1])                                # the deck uses every copy: refused
-        self.assertNotIn(f"sell:{needed[0]}", self.names(g))
+        needed = next(r for r in rows if r[3] >= r[1] and r[2] >= 1)                  # the deck uses every copy
+        self.assertIn(f"sell:{needed[0]}", self.names(g))                            # SELL1: sold all the same
+        deck_name = f.game.deck()["name"]
+        size = sum(k for _n, k in f.game.deck()["main"])
+        before = on_disk(self.folder)["gold"]
         f.shop_do(g, "sell", needed[0])
-        self.assertIn("take them out first", f.message[0])
+        d = on_disk(self.folder)
+        self.assertEqual(d["gold"], before + needed[2])
+        deck = next(x for x in d["decks"] if x["name"] == deck_name)
+        self.assertEqual(sum(k for _n, k in deck["main"]), size - 1)                 # out of the deck, written at once
+        rows = f.sell_list()
         spare = next(r for r in rows if r[1] > r[3] and r[2] >= 1)
         before = on_disk(self.folder)["gold"]
         f.shop_do(g, "sell", spare[0])
@@ -577,13 +592,16 @@ class WindowTests(Base):
     def test_a_lost_duel_sends_you_to_the_town_and_says_so(self):
         g, f, foe = self.start_fight()
         gold = f.game.save.gold
+        name = adv.foe_name(f.fight)                                               # Round GOLD1: who holds the gold
         self.press(g, "fight")
         g.vs = None
         end_game(g, won=False)
         cost = f.game.numbers.loss_cost(gold)
         self.assertEqual(on_disk(self.folder)["gold"], gold - cost)
         town = f.game.world.town(f.game.world.start_town).name                     # the end screen names the town,
-        self.assertIn(f"You lost {cost} gold and are back in {town}.", g.end_stats_lines())   # never its id
+        self.assertIn(f"You are back in {town}.", g.end_stats_lines())                      # never its id
+        self.assertIn(f"You lost {cost} gold - the {name} has it now. Beat them to win it back.",   # Round GOLD1
+                      g.end_stats_lines())
         g.end_continue()
         frame(g)
         f2 = g.modal

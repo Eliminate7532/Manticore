@@ -186,7 +186,8 @@ def run_game(index, args, rng, out_root, watchdog_holder=None):
                                   dev=bool(args.fault) or board or bool(getattr(args, "attack_cache", None)),
                                   faults=[args.fault] if args.fault else (),
                                   command=test_command, fmt=fmt,
-                                  attack_cache=getattr(args, "attack_cache", None))   # round AI-ATTACK: compare / off
+                                  attack_cache=getattr(args, "attack_cache", None),   # round AI-ATTACK: compare / off
+                                  skip_scan=getattr(args, "skip_scan", None))         # round PERF1: compare / off
         session.stderr_path = os.path.join(game_dir, "forge_engine.log")
         if watchdog_holder is not None:
             watchdog_holder["session"] = session          # run()'s watchdog timer can now find this game's process
@@ -733,6 +734,9 @@ def main(argv=None):
     ap.add_argument("--format", choices=formats.ORDER, default="commander",
                     help="round FMT1: the games' format; decks are the sample (or my_decks) files of that format "
                          "(round CON1: standard too; the canary is always a Commander game)")
+    ap.add_argument("--skip-scan", choices=("on", "off", "compare"), default=None, dest="skip_scan",
+                    help="round PERF1: skip Forge's 'can I act?' scan at steps the player doesn't stop at (compare = Forge's way, "
+                         "every priority where Forge asked instead is a 'bridge: passscan compare DIFFERENCE' line)")
     ap.add_argument("--attack-cache", choices=("on", "off", "compare"), default=None, dest="attack_cache",
                     help="round AI-ATTACK: the AI attack planner's cache (compare = both ways, differences in each game's "
                          "forge_engine.log as 'attackcache: compare' lines; needs the bridge's dev mode, which this turns on)")

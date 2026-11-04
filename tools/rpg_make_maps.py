@@ -40,7 +40,8 @@ Round RPG16 (day and night): a marker may say when=<conditions> (rpg.conditions'
 !flag:warrens_entered) - it is there only while they hold. A person with `when` is not put on the people layer (rpg_map_view draws
 them while they are there); their object keeps the sprite and its cell. An encounter may say spot=<name> (its saved spot is then
 "<map>#<name>", whatever its id) and home=<words> (the encounter screen's line; "_" is a space, as in name=). "rare" markers
-(G = rare id=old_gorsehide on :) place a rare foe from rpg/data/rare_spawns.json. A [more markers] section (after [markers]) holds
+(G = rare id=old_gorsehide on :) place a rare foe from rpg/data/rare_spawns.json. Round PROG2: "chest" markers (C = chest id=moor_cairn on .) place a treasure
+chest whose contents are rpg/data/progression.json's chests.list entry of that id (in [more markers]). A [more markers] section (after [markers]) holds
 markers whose objects come after every [markers] object and before the lights, so adding them never moves an older object's id.
 The map property event_rate (an int: tiles between random events, rpg.events) is written typed.
 
@@ -155,7 +156,7 @@ LEGEND = {
 }
 SPACED = ("name", "home", "title")    # Round RPG16: "_" in these words is a space (home= is the encounter screen's line);
                                       # RPG18b: title= a foe's own name (the bandits' leader)
-MARKER_KINDS = ("spawn", "exit", "town", "encounter", "npc", "platino", "light", "rare")   # Round RPG16: "rare"
+MARKER_KINDS = ("spawn", "exit", "town", "encounter", "npc", "platino", "light", "rare", "chest")   # RPG16: "rare"; PROG2: "chest"
 
 # the wall / fence joins: (north, south, east, west) -> piece in the 6 x 3 block (DawnLike's legend, Wall.png and Fence.png rows 0-2)
 WALL_PIECES = {
@@ -249,6 +250,8 @@ def read_layout(path):
                 raise LayoutError(f"{lay.where(no)}: marker {ch!r} is already given a meaning")
             if kind == "rare" and not props.get("id"):
                 raise LayoutError(f"{lay.where(no)}: a rare needs its id in rpg/data/rare_spawns.json ('G = rare id=old_gorsehide on :')")
+            if kind == "chest" and not props.get("id"):          # Round PROG2: a chest's contents are rpg/data/progression.json's
+                raise LayoutError(f"{lay.where(no)}: a chest needs its id in rpg/data/progression.json ('C = chest id=moor_cairn on .')")
             lay.markers[ch] = (kind, props, base)
             if section == "more markers":
                 lay.more.add(ch)

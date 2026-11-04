@@ -1,0 +1,812 @@
+{
+ "attack_question": {
+  "t": "state",
+  "turn": 1,
+  "phase": "COMBAT_DECLARE_ATTACKERS",
+  "phaseLabel": "Declare Attackers Step",
+  "activePlayer": 0,
+  "me": 0,
+  "gameOver": false,
+  "players": [
+   {
+    "id": 0,
+    "name": "Soak",
+    "ai": false,
+    "life": 40,
+    "lost": false,
+    "priority": false,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 309,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Grizzly Bears",
+       "oracleName": "Grizzly Bears",
+       "type": "Creature - Bear",
+       "cost": "{1}{G}",
+       "colors": [
+        "G"
+       ],
+       "text": "",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "SLZ",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false,
+       "weak": 1
+      },
+      {
+       "id": 310,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Grizzly Bears",
+       "oracleName": "Grizzly Bears",
+       "type": "Creature - Bear",
+       "cost": "{1}{G}",
+       "colors": [
+        "G"
+       ],
+       "text": "",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "SLZ",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false,
+       "weak": 1
+      },
+      {
+       "id": 311,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Plains",
+       "oracleName": "Plains",
+       "type": "Basic Land - Plains",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {W}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 100,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Command",
+       "name": "Teysa Karlov",
+       "oracleName": "Teysa Karlov",
+       "type": "Legendary Creature - Human Advisor",
+       "cost": "{2}{W}{B}",
+       "colors": [
+        "W",
+        "B"
+       ],
+       "text": "If a creature dying causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.\r\n\r\nCreature tokens you control have vigilance and lifelink.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 4,
+       "set": "CMM",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "hand": []
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     100
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "100": 0
+    }
+   },
+   {
+    "id": 1,
+    "name": "AI 1 (O1)",
+    "ai": true,
+    "life": 40,
+    "lost": false,
+    "priority": false,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 317,
+       "hidden": false,
+       "owner": 1,
+       "controller": 1,
+       "zone": "Battlefield",
+       "name": "Forest",
+       "oracleName": "Forest",
+       "type": "Basic Land - Forest",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {G}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 201,
+       "hidden": false,
+       "owner": 1,
+       "controller": 1,
+       "zone": "Command",
+       "name": "Kinnan, Bonder Prodigy",
+       "oracleName": "Kinnan, Bonder Prodigy",
+       "type": "Legendary Creature - Human Druid",
+       "cost": "{G}{U}",
+       "colors": [
+        "U",
+        "G"
+       ],
+       "text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\r\n\r\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "PLST",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ]
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     201
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "201": 0
+    }
+   },
+   {
+    "id": 2,
+    "name": "AI 2 (O2)",
+    "ai": true,
+    "life": 40,
+    "lost": false,
+    "priority": true,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 323,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Battlefield",
+       "name": "Trove of Temptation",
+       "oracleName": "Trove of Temptation",
+       "type": "Enchantment",
+       "cost": "{3}{R}",
+       "colors": [
+        "R"
+       ],
+       "text": "Each opponent must attack you or a planeswalker you control with at least one creature each combat if able.\r\n\r\nAt the beginning of your end step, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+       "isCreature": false,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "set": "J22",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      },
+      {
+       "id": 324,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Battlefield",
+       "name": "Island",
+       "oracleName": "Island",
+       "type": "Basic Land - Island",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {U}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 302,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Command",
+       "name": "Kinnan, Bonder Prodigy",
+       "oracleName": "Kinnan, Bonder Prodigy",
+       "type": "Legendary Creature - Human Druid",
+       "cost": "{G}{U}",
+       "colors": [
+        "U",
+        "G"
+       ],
+       "text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\r\n\r\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "PLST",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ]
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     302
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "302": 0
+    }
+   }
+  ],
+  "stack": [],
+  "combat": [],
+  "prompt": {
+   "message": "Select creatures to attack AI 1 (O1) or select player/card you wish to attack.",
+   "ok": {
+    "label": "OK",
+    "enabled": true,
+    "focus": true
+   },
+   "cancel": {
+    "label": "Alpha Strike",
+    "enabled": true
+   },
+   "selecting": false,
+   "selMin": 0,
+   "selMax": 0
+  },
+  "stops": {
+   "mine": [
+    "MAIN1",
+    "MAIN2"
+   ],
+   "theirs": [
+    "END_OF_TURN"
+   ]
+  },
+  "yield": {
+   "autoPass": true,
+   "autoYields": [],
+   "autoTriggers": {},
+   "passing": {
+    "classic": false,
+    "slow": false,
+    "fullControl": false,
+    "turnControl": false,
+    "passTurn": false,
+    "hold": false,
+    "passed": 0,
+    "alwaysStop": []
+   }
+  },
+  "eventSeq": 73,
+  "input": "InputAttack",
+  "asking": true,
+  "inputSeq": 15
+ },
+ "message": {
+  "t": "message",
+  "title": "",
+  "text": "Attack declaration invalid"
+ },
+ "pending": false,
+ "asked_again": {
+  "t": "state",
+  "turn": 1,
+  "phase": "COMBAT_DECLARE_ATTACKERS",
+  "phaseLabel": "Declare Attackers Step",
+  "activePlayer": 0,
+  "me": 0,
+  "gameOver": false,
+  "players": [
+   {
+    "id": 0,
+    "name": "Soak",
+    "ai": false,
+    "life": 40,
+    "lost": false,
+    "priority": false,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 309,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Grizzly Bears",
+       "oracleName": "Grizzly Bears",
+       "type": "Creature - Bear",
+       "cost": "{1}{G}",
+       "colors": [
+        "G"
+       ],
+       "text": "",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "SLZ",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false,
+       "weak": 1
+      },
+      {
+       "id": 310,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Grizzly Bears",
+       "oracleName": "Grizzly Bears",
+       "type": "Creature - Bear",
+       "cost": "{1}{G}",
+       "colors": [
+        "G"
+       ],
+       "text": "",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "SLZ",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false,
+       "weak": 1
+      },
+      {
+       "id": 311,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Battlefield",
+       "name": "Plains",
+       "oracleName": "Plains",
+       "type": "Basic Land - Plains",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {W}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 100,
+       "hidden": false,
+       "owner": 0,
+       "controller": 0,
+       "zone": "Command",
+       "name": "Teysa Karlov",
+       "oracleName": "Teysa Karlov",
+       "type": "Legendary Creature - Human Advisor",
+       "cost": "{2}{W}{B}",
+       "colors": [
+        "W",
+        "B"
+       ],
+       "text": "If a creature dying causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.\r\n\r\nCreature tokens you control have vigilance and lifelink.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 4,
+       "set": "CMM",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "hand": []
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     100
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "100": 0
+    }
+   },
+   {
+    "id": 1,
+    "name": "AI 1 (O1)",
+    "ai": true,
+    "life": 40,
+    "lost": false,
+    "priority": false,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 317,
+       "hidden": false,
+       "owner": 1,
+       "controller": 1,
+       "zone": "Battlefield",
+       "name": "Forest",
+       "oracleName": "Forest",
+       "type": "Basic Land - Forest",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {G}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 201,
+       "hidden": false,
+       "owner": 1,
+       "controller": 1,
+       "zone": "Command",
+       "name": "Kinnan, Bonder Prodigy",
+       "oracleName": "Kinnan, Bonder Prodigy",
+       "type": "Legendary Creature - Human Druid",
+       "cost": "{G}{U}",
+       "colors": [
+        "U",
+        "G"
+       ],
+       "text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\r\n\r\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "PLST",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ]
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     201
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "201": 0
+    }
+   },
+   {
+    "id": 2,
+    "name": "AI 2 (O2)",
+    "ai": true,
+    "life": 40,
+    "lost": false,
+    "priority": true,
+    "landsPlayed": 0,
+    "maxLandPlay": 1,
+    "manaPool": {},
+    "zones": {
+     "battlefield": [
+      {
+       "id": 323,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Battlefield",
+       "name": "Trove of Temptation",
+       "oracleName": "Trove of Temptation",
+       "type": "Enchantment",
+       "cost": "{3}{R}",
+       "colors": [
+        "R"
+       ],
+       "text": "Each opponent must attack you or a planeswalker you control with at least one creature each combat if able.\r\n\r\nAt the beginning of your end step, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+       "isCreature": false,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "set": "J22",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      },
+      {
+       "id": 324,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Battlefield",
+       "name": "Island",
+       "oracleName": "Island",
+       "type": "Basic Land - Island",
+       "cost": "",
+       "colors": [],
+       "text": "({T}: Add {U}.)",
+       "isCreature": false,
+       "isLand": true,
+       "isPlaneswalker": false,
+       "set": "MDD",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": false,
+       "damage": 0,
+       "selectable": false
+      }
+     ],
+     "graveyard": [],
+     "exile": [],
+     "command": [
+      {
+       "id": 302,
+       "hidden": false,
+       "owner": 2,
+       "controller": 2,
+       "zone": "Command",
+       "name": "Kinnan, Bonder Prodigy",
+       "oracleName": "Kinnan, Bonder Prodigy",
+       "type": "Legendary Creature - Human Druid",
+       "cost": "{G}{U}",
+       "colors": [
+        "U",
+        "G"
+       ],
+       "text": "Whenever you tap a nonland permanent for mana, add one mana of any type that permanent produced.\r\n\r\n{5}{G}{U}: Look at the top five cards of your library. You may put a non-Human creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
+       "isCreature": true,
+       "isLand": false,
+       "isPlaneswalker": false,
+       "power": 2,
+       "toughness": 2,
+       "set": "PLST",
+       "tapped": false,
+       "sick": false,
+       "attacking": false,
+       "blocking": false,
+       "faceDown": false,
+       "token": false,
+       "commander": true,
+       "damage": 0,
+       "selectable": false
+      }
+     ]
+    },
+    "handCount": 0,
+    "libraryCount": 5,
+    "commanders": [
+     302
+    ],
+    "commanderDamage": {},
+    "commanderCasts": {
+     "302": 0
+    }
+   }
+  ],
+  "stack": [],
+  "combat": [],
+  "prompt": {
+   "message": "Select creatures to attack AI 1 (O1) or select player/card you wish to attack.",
+   "ok": {
+    "label": "OK",
+    "enabled": true,
+    "focus": true
+   },
+   "cancel": {
+    "label": "Alpha Strike",
+    "enabled": true
+   },
+   "selecting": false,
+   "selMin": 0,
+   "selMax": 0
+  },
+  "stops": {
+   "mine": [
+    "MAIN1",
+    "MAIN2"
+   ],
+   "theirs": [
+    "END_OF_TURN"
+   ]
+  },
+  "yield": {
+   "autoPass": true,
+   "autoYields": [],
+   "autoTriggers": {},
+   "passing": {
+    "classic": false,
+    "slow": false,
+    "fullControl": false,
+    "turnControl": false,
+    "passTurn": false,
+    "hold": false,
+    "passed": 0,
+    "alwaysStop": []
+   }
+  },
+  "eventSeq": 73,
+  "input": "InputAttack",
+  "asking": true,
+  "inputSeq": 17
+ }
+}

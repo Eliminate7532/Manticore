@@ -1,0 +1,131 @@
+{
+ "about": "Round PROG1 (Karl, 2 Nov 2026: \"add ways to make progression more tangible and 'fun' JRPG style\"; the design is the Project doc claude/HANDOVER_PROGRESSION_2026-11-02.md). The Adventure's progression numbers, one file so Karl tunes them without code. EVERY value is a placeholder (Claude's estimate, 3 Nov 2026) until prog-tune measures them. results: how the screen after a duel plays out, in seconds. card_quality (Round PROG1b; it was meter, the deck-power meter, and a file with meter still reads): the Card quality line - change_seconds the +0.1 shows, decimals, and explain, the one line saying what it is (Karl to edit). rpg/progress.py checks this file when it is read and names any key it can't use. Round PROG2: rewards - how many cards each reward card is a choice of (choices_per_card); boss - whether a boss gives the 'Guards:' card he holds on top of his reward cards; chests - each treasure chest's contents by its id (the map's chest marker names it): gold (a number), card (\"band\": a card from the region's tier band in your deck's colours), pack (a set code with a pack pool, opened at once), gear (gold until gear exists, Round PROG4: the number is the gold), daily (true: it fills again at refill_hour each in-game morning; otherwise it opens once). Round PROG3: xp - XP a duel gives by kind of foe when won (regular, dungeon, rare, boss), a quest handed in (quest), a lost or conceded duel (loss) and a draw (draw). levels - the curve: level 2 at 'first' XP, each next level needs 'step' more than the last; 'cap' the highest level; every level above 1 adds life_per_level to the duel's starting life (base_life at level 1); every perk_every-th level deals a choice of perk_choices perks. perks - each perk's name, text (what the choice says), stackable (offered again once taken), available (false: never offered - the game can't do it yet; why_not says why) and effect: reward_choices (+N cards per reward pick), gold_bonus (a share added to a win's gold), loss_cut (Round GOLD1: how much smaller a loss is - 0.25 takes a quarter less of numbers.json's share for that kind of fight; it was loss_share, a share instead of numbers.json's), life / hand (added to the duel's start), battlefield (cards on your battlefield at the start; token:SCRIPT is one of Forge's token scripts). rpg/levels.py reads and checks these.",
+ "results": {
+  "banner_seconds": 0.5,
+  "gold_count_seconds": 1.2,
+  "card_flip_seconds": 0.45,
+  "card_gap_seconds": 0.3,
+  "xp_slot_lines": 2
+ },
+ "card_quality": {
+  "change_seconds": 4.0,
+  "decimals": 1,
+  "explain": "The average tier of your cards: how often tournament players use them. Not how strong your deck is - the curve and counts matter as much."
+ },
+ "rewards": {
+  "choices_per_card": 3
+ },
+ "boss": {
+  "signature_card": true
+ },
+ "chests": {
+  "refill_hour": 7,
+  "list": {
+   "yard_crate": {
+    "gold": 15,
+    "daily": true
+   },
+   "moor_hollow": {
+    "gold": 60
+   },
+   "moor_cairn": {
+    "card": "band"
+   },
+   "crypt_coffer": {
+    "gold": 40,
+    "card": "band"
+   },
+   "cave_cache": {
+    "pack": "M10"
+   },
+   "priest_hoard": {
+    "gold": 100,
+    "gear": 80,
+    "card": "band"
+   }
+  }
+ },
+ "xp": {
+  "regular": 10,
+  "dungeon": 20,
+  "rare": 30,
+  "boss": 60,
+  "quest": 25,
+  "loss": 2,
+  "draw": 0
+ },
+ "levels": {
+  "first": 30,
+  "step": 15,
+  "cap": 20,
+  "base_life": 20,
+  "life_per_level": 1,
+  "perk_every": 3,
+  "perk_choices": 3
+ },
+ "perks": {
+  "keen_eye": {
+   "name": "Keen Eye",
+   "text": "Each reward card is a pick of 1 from 4.",
+   "effect": {
+    "reward_choices": 1
+   }
+  },
+  "haggler": {
+   "name": "Haggler",
+   "text": "10% off shop prices.",
+   "available": false,
+   "why_not": "the shops' prices don't read perks yet (PROG3 reading)"
+  },
+  "thick_skin": {
+   "name": "Thick Skin",
+   "text": "A loss takes a quarter less gold.",
+   "effect": {
+    "loss_cut": 0.25
+   }
+  },
+  "bounty": {
+   "name": "Bounty Hunter",
+   "text": "10% more gold from wins.",
+   "effect": {
+    "gold_bonus": 0.1
+   }
+  },
+  "fleet_foot": {
+   "name": "Fleet Foot",
+   "text": "Walk 20% faster.",
+   "available": false,
+   "why_not": "the map's walk speed doesn't read perks yet (PROG3 reading)"
+  },
+  "quick_draw": {
+   "name": "Quick Draw",
+   "text": "One more card in your opening hand.",
+   "effect": {
+    "hand": 1
+   }
+  },
+  "hoard": {
+   "name": "Hoarder",
+   "text": "Start each duel with a Treasure.",
+   "effect": {
+    "battlefield": [
+     "token:c_a_treasure_sac"
+    ]
+   }
+  },
+  "pack_mule": {
+   "name": "Pack Mule",
+   "text": "One more gear slot.",
+   "available": false,
+   "why_not": "gear comes in PROG4"
+  },
+  "stout": {
+   "name": "Stout",
+   "text": "Start each duel with 3 more life.",
+   "stackable": true,
+   "effect": {
+    "life": 3
+   }
+  }
+ }
+}

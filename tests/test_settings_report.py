@@ -88,7 +88,7 @@ class CogTests(Base):
                           "sound", "hover_tick", "music_on", "ambience_on",        # round 24 (AD1: Sound | Hover tick share a row; AU1: Music | Ambience)
                           "vol_down", "vol_up",
                           "speed",                                                                              # round PRI1: Speed | New game | Concede
-                          "newgame", "concede", "help", "report", "licenses",
+                          "newgame", "quit", "help", "report", "licenses",
                           "data_folder",                                                                        # round 28
                           "tour", "updates"])                                                                   # round UX1, 30
 
@@ -123,13 +123,13 @@ class CogTests(Base):
         gui = self.gui()
         calls = []
         gui.ask_new_game = lambda: calls.append("new")
-        gui.ask_concede = lambda: calls.append("concede")
+        gui.ask_quit = lambda: calls.append("quit")      # bug-1566939794272161812: Concede... became Quit...
         open_cog(gui)
         click(gui, popup_point(gui, "newgame"))
         self.assertIsNone(gui.overlay)
         open_cog(gui)
-        click(gui, popup_point(gui, "concede"))
-        self.assertEqual(calls, ["new", "concede"])
+        click(gui, popup_point(gui, "quit"))
+        self.assertEqual(calls, ["new", "quit"])
         self.assertIsNone(gui.overlay)
         open_cog(gui)
         click(gui, popup_point(gui, "help"))
@@ -143,7 +143,7 @@ class CogTests(Base):
         rows = dict((n, r) for r, n in pop.buttons)
         self.assertLess(rows["smaller"].y, rows["full"].y)
         self.assertLess(rows["motion"].y, rows["newgame"].y)          # DISPLAY, then GAME ...
-        self.assertLess(rows["concede"].y, rows["help"].y)            # ... then HELP
+        self.assertLess(rows["quit"].y, rows["help"].y)            # ... then HELP
         self.assertGreater(rows["newgame"].y - rows["motion"].bottom, rows["motion"].y - rows["full"].bottom)      # a heading sits between the groups
 
         def greenness(name):                                          # the most green pixel along the row's right end (the pill)

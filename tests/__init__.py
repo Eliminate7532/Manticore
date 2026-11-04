@@ -23,5 +23,8 @@ os.environ["MANTICORE_NO_TOUR"] = "1"
 os.environ["MANTICORE_OFFLINE"] = "1"
 # Round 30: no test ever looks for an update on the network (tests/test_round30.py sets MANTICORE_UPDATE_TEST where it tests that)
 os.environ["MANTICORE_NO_UPDATE_CHECK"] = "1"
+# Round RLY2: no default relay in tests (relay_config.json would tick "Connect through the relay" in every Host dialog the older
+# tests open); tests/test_rly2.py sets MANTICORE_RELAY itself, or reads the real file through forge_net.default_relay(folder)
+os.environ["MANTICORE_RELAY"] = ""
 # Patch 38: Forge's card-name index is never saved into the project's own cache/ by a test (tests/test_patch38.py saves to a temp file)
 os.environ["MANTICORE_NO_CARD_INDEX_SAVE"] = "1"

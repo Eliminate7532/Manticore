@@ -8,8 +8,9 @@ says basic_lands_free (RPG4's first choice, as on MTG Arena). Round RPG7 (Karl, 
 counted like any card, bought in shops (rpg.shop, 1 gold each) and found in packs; a save keeps which rule it was made under.
 
 A deck is two lists of [name, count] (main and sideboard). problems() is the RPG's deck rules (rpg/rules.py) plus one more: you
-must own every copy the deck uses. Several decks may share the same copies (a deck is a list, not a set of cards taken out); a card
-can't be SOLD while any saved deck uses more copies than would be left (sell_problem).
+must own every copy the deck uses. Several decks may share the same copies (a deck is a list, not a set of cards taken out). Round
+SELL1 (Karl, 2 Nov 2026): any card you own can be SOLD (not a free basic land); copies a saved deck would be left using that you no
+longer own come out of that deck (deck_takes / take_out), the sideboard first.
 """
 from rpg import cardpool, rules
 
@@ -20,6 +21,7 @@ class Collection:
         self.basics_free = basics_free
         self._n = {}           # normal name -> count
         self._name = {}        # normal name -> display name
+        self.on_add = None     # Round PROG1: called with (display name) after every add - the save's Card Book log (rpg.save)
         for name, k in (counts or {}).items():
             self.add(name, k)
 
@@ -49,6 +51,8 @@ class Collection:
         key, shown = self._key(name)
         self._n[key] = self._n.get(key, 0) + k
         self._name.setdefault(key, shown)
+        if self.on_add is not None:
+            self.on_add(self._name[key])
 
     def remove(self, name, k=1):
         k = int(k)
@@ -104,18 +108,44 @@ def problems(deck, collection, pool=None, lists=None):
     return rules.check(deck.get("main", []), deck.get("sideboard", []), pool, lists) + owned_problems(deck, collection)
 
 
-def sell_problem(name, k, collection, decks):
-    """Why `k` copies of `name` can't be sold (a sentence), or None. Refused when you don't own them, when the card is free, or
-    when a saved deck would be left using more copies than you'd own."""
+def sell_problem(name, k, collection, decks=()):
+    """Why `k` copies of `name` can't be sold (a sentence), or None. Refused when the card is a free basic land or you don't own
+    `k` copies. Round SELL1 (Karl, 2 Nov 2026: "I should be able to sell all cards, not just duplicates, and from the starting
+    deck"): a card a deck uses CAN be sold - the sale takes the copies out of that deck (deck_takes). `decks` is kept for callers."""
     if collection.is_free(name):
         return f"{name} is a free basic land - there is nothing to sell."
     have = collection.count(name)
     if k < 1 or k > have:
         return f"You own {have} {name}; you can't sell {k}."
-    left = have - k
+    return None
+
+
+def deck_takes(name, k, collection, decks):
+    """[(deck, part, copies)]: what selling `k` of `name` takes out of the saved decks, so that none is left using more copies than
+    you'd own - from the sideboard first, then the main deck. [] when every deck keeps all it uses."""
+    left = (collection.count(name) or 0) - k
     key = cardpool.normal_name(collection._key(name)[1])
+    out = []
     for d in decks:
         used = deck_counts(d).get(key)
-        if used and used[1] > left:
-            return f"Your deck '{d.get('name', '?')}' uses {used[1]} {name} - take them out first."
-    return None
+        excess = (used[1] - max(0, left)) if used else 0
+        for part in ("sideboard", "main"):
+            for row in d.get(part, []):
+                if excess > 0 and cardpool.normal_name(row[0]) == key and int(row[1]) > 0:
+                    n = min(excess, int(row[1]))
+                    out.append((d, part, n))
+                    excess -= n
+    return out
+
+
+def take_out(takes, name):
+    """Apply deck_takes(): lower each row's count (a row at 0 goes)."""
+    key = cardpool.normal_name(name)
+    for d, part, n in takes:
+        rows = d.get(part, [])
+        for row in rows:
+            if n > 0 and cardpool.normal_name(row[0]) == key:
+                m = min(n, int(row[1]))
+                row[1] = int(row[1]) - m
+                n -= m
+        d[part] = [row for row in rows if int(row[1]) > 0]

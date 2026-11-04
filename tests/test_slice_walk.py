@@ -511,7 +511,7 @@ class SliceWalkTests(r14.WindowBase):
             rival = f.fight.enemy
             gold = f.game.save.gold
             f = self.duel(g, won=False)
-            lost = int(gold * f.game.numbers.loss_gold_share)
+            lost = f.game.numbers.loss_cost(gold, "regular")     # Round GOLD1: a rematch is a regular fight (5%), no spot
             self.assertEqual(f.game.numbers.loss_gold_share, 0.2)
             self.assertEqual(f.game.save.gold, gold - lost)
             rematch = (rival, gold, lost)
@@ -684,6 +684,7 @@ class SliceWalkTests(r14.WindowBase):
             spot = foe.spot
             self.walk(g, lambda: self.foe_tile(g, spot), until=lambda fl: fl.sub == "fight" and fl.fight.spot == spot)
             gold = g.modal.game.save.gold
+            kind = g.modal.fight.encounter                  # Round GOLD1: the share is the fight's kind's
             frame(g)
             self.press(g, "fight")
             g.vs = None
@@ -693,9 +694,10 @@ class SliceWalkTests(r14.WindowBase):
             frame(g)
             f = g.modal
             self.assertEqual((f.stage, f.sub, f.result[0]), ("town", "result", "Defeat"))
-            lost = int(gold * f.game.numbers.loss_gold_share)
+            lost = f.game.numbers.loss_cost(gold, kind)
             self.assertEqual(f.game.save.gold, gold - lost)
-            self.assertEqual(f.result[1][-1], f"You lost {lost} gold and are back in Lantern Hollow.")
+            self.assertEqual(f.result[1][-1], "You are back in Lantern Hollow.")
+            self.assertTrue(f.result[1][-2].startswith(f"You lost {lost} gold - the "), f.result[1])
         with self.step(2, "out of the shop window and back through the gate"):
             self.ok(g)
             frame(g)

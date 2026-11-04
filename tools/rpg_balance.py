@@ -3,7 +3,7 @@
 never runs it).
 
     python tools/rpg_balance.py measure [--source jumpstart|archetype] [--rule two|any] [--starters 24] [--games 2]
-                                        [--kind ID ...] [--seed N] [--workers 2]
+                                        [--kind ID ...] [--seed N] [--workers 2] [--start SPEC | --level N [--perk ID ...]]
     python tools/rpg_balance.py tune    --handicap N [--handicap M ...] [--keep 4] [--starters N] [--games N] [--seed N]
     python tools/rpg_balance.py make    --handicap N [--keep 4] [--seed N] [--tuned-by FOLDER]
     python tools/rpg_balance.py record  --measured FOLDER --before FOLDER [--step FOLDER[@N] ...] [--mirror FOLDER]
@@ -25,6 +25,9 @@ every game to <out>/games.jsonl plus a summary to <out>/summary.json. tune plays
 swapped for basic lands, rpg.enemies.handicap) and says which handicap lands nearest --target; it changes no data file. make writes
 those decks, at one handicap, into rpg/data/enemies/<kind>.json as "jumpstart" (the archetype "decks" are left as they are).
 record writes rpg/data/balance.json from a measurement of the shipped decks and the one from before RPG9.
+
+Round PROG3: --start SPEC gives seat A (the starting deck) the bridge's start effects (start_effects.py: "life:29;hand:8"); --level N
+[--perk ID ...] makes that SPEC the Adventure's way (rpg.levels.duel_effects at level N with those perks). Seat B never gets any.
 
 Needs Java 17+ and java_rpg/rpg_tools.jar built from the current sources (python tools/rpg_build_data.py jar, needs a JDK).
 """
@@ -180,7 +183,17 @@ def pct(t):
 
 # ---- the commands --------------------------------------------------------------------------------------------------------
 
-def measure(kinds, source, rule, n_starters, games, seed, workers, out, log=print):
+def level_spec(level, perks=()):
+    """Round PROG3: the start SPEC of an Adventure duel at `level` with `perks` (rpg.levels.duel_effects; "" at level 1, no perks)."""
+    import start_effects
+    from rpg import levels
+
+    class S:
+        progress = {"xp": levels.read().xp_to_reach(level), "perks": list(perks), "offers": []}
+    return start_effects.spec(levels.duel_effects(S()))
+
+
+def measure(kinds, source, rule, n_starters, games, seed, workers, out, log=print, start=""):
     pool, lists = cardpool.load(), rules.vintage_lists()
     folder = os.path.join(out, "decks")
     os.makedirs(folder, exist_ok=True)
@@ -195,7 +208,7 @@ def measure(kinds, source, rule, n_starters, games, seed, workers, out, log=prin
     for si, sp in enumerate(s_paths):
         for ei, ep in enumerate(e_paths):
             pid = f"s{si}_e{ei}"
-            pairs.append((pid, sp, ep, games, rng.randrange(1 << 40)))
+            pairs.append((pid, sp, ep, games, rng.randrange(1 << 40)) + ((start,) if start else ()))
             labels[pid] = (si, ei)
     log(f"{len(starters)} starting decks ({rule}) x {len(foes)} enemy decks ({source}) x {games} games = {len(pairs) * games}")
     played = run_pairs(pairs, out, workers, log=log)
@@ -206,6 +219,8 @@ def measure(kinds, source, rule, n_starters, games, seed, workers, out, log=prin
                      kind=foes[ei][0] if ei is not None else None, enemy=foes[ei][1] if ei is not None else None)
             f.write(json.dumps(g) + "\n")
     info = run_info(source, rule, n_starters, games, seed)
+    if start:
+        info["start"] = start                      # Round PROG3: seat A's start effects
     if source == "jumpstart":
         info["handicap"] = sorted({d.get("handicap", 0) for k in kinds for d in enemies.read_kind(k).get(enemies.JUMPSTART) or []})
     summary = with_info(summarize(played, labels, starters, foes), info)
@@ -422,6 +437,9 @@ def main(argv=None):
                     help="record: a tune folder, or a measure folder as FOLDER@N (decks with N spells swapped); repeatable")
     ap.add_argument("--mirror", help="record: a folder with Jumpstart-without-handicap numbers")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--start", default="", help="measure: seat A's start effects SPEC (Round PROG3)")
+    ap.add_argument("--level", type=int, default=None, help="measure: seat A as an Adventure player of this level (Round PROG3)")
+    ap.add_argument("--perk", action="append", default=[], help="measure with --level: a perk taken (repeatable)")
     a = ap.parse_args(argv)
     kinds = a.kind or enemies.regular_kinds()
     if a.what == "record":
@@ -437,7 +455,8 @@ def main(argv=None):
         return 0
     out = a.out or os.path.join(BASE, "soak_runs", f"rpg_balance_{a.what}_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     if a.what == "measure":
-        measure(kinds, a.source, a.rule, a.starters, a.games, a.seed, a.workers, out)
+        start = a.start or (level_spec(a.level, a.perk) if a.level else "")
+        measure(kinds, a.source, a.rule, a.starters, a.games, a.seed, a.workers, out, start=start)
     else:
         if not a.handicap:
             ap.error("tune needs at least one --handicap")

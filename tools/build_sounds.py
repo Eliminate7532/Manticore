@@ -241,8 +241,9 @@ def impulse(kind):
     """A synthetic stone-room impulse response, stereo, fixed seed. 'room' a small vault, 'hall' a nave, 'crypt' long and dark."""
     if kind in _IR:
         return _IR[kind]
-    rt60, pre, damp, er = {"room": (0.7, 0.008, 5200, 6), "hall": (2.3, 0.022, 3800, 10), "crypt": (3.6, 0.035, 2600, 12)}[kind]
-    rng = np.random.default_rng({"room": 1, "hall": 2, "crypt": 3}[kind])
+    rt60, pre, damp, er = {"room": (0.7, 0.008, 5200, 6), "hall": (2.3, 0.022, 3800, 10), "crypt": (3.6, 0.035, 2600, 12),
+                           "air": (1.8, 0.060, 2200, 2)}[kind]       # Round SND1: open air - a late, dark, sparse echo off far hills
+    rng = np.random.default_rng({"room": 1, "hall": 2, "crypt": 3, "air": 4}[kind])
     n = int((rt60 * 1.1 + pre) * SR)
     t = np.arange(n) / SR
     ir = np.zeros((n, 2), np.float32)
@@ -659,7 +660,115 @@ RPG_LOOP_XFADE = {"music.rpg_town_night": 3.0}
 # stream down by it (audio._start_track), exactly as the page's clip B did.
 RPG_MUSIC_GAIN = {"music.rpg_outskirts_night": -2.0}
 RPG_MUSIC_QUALITY = 3                                           # Vorbis q3, as the long table tracks
+# Round PROG3: the level-up fanfare. No recording: synthesized here from scratch (a brass-like rising arpeggio, C-E-G-C, over a
+# soft low drum, in the small stone room), so it is our own work - CC0 1.0 like the recordings (CREDITS.txt names it).
+def level_up_fanfare():
+    t_note, sus = 0.11, 0.75
+    notes = [261.63, 329.63, 392.00, 523.25]
+    total = int((t_note * 3 + sus + 0.1) * SR)
+    x = np.zeros((total, 2), np.float32)
+    for i, f in enumerate(notes):
+        dur = sus if i == len(notes) - 1 else t_note * 1.6
+        n = int(dur * SR)
+        t = np.arange(n) / SR
+        tone = np.zeros(n, np.float32)
+        for h in range(1, 9):                         # brass: strong odd and even harmonics, brighter as it swells
+            tone += (0.9 ** h) * np.sin(2 * np.pi * f * h * t * (1 + 0.0015 * np.sin(2 * np.pi * 5.5 * t)))
+        att = np.clip(t / 0.025, 0, 1)
+        rel = np.clip((dur - t) / (0.18 if i == len(notes) - 1 else 0.05), 0, 1)
+        tone *= att * rel * (0.85 + 0.15 * np.exp(-t * 6))
+        place(x, np.stack([tone, tone], axis=1), i * t_note, -3.0 * (len(notes) - 1 - i) / 3)
+    t = np.arange(int(0.5 * SR)) / SR                 # a low drum under the first and the last note
+    drum = (np.sin(2 * np.pi * 70 * t * (1 - 0.3 * t)) * np.exp(-t * 9)).astype(np.float32)
+    place(x, np.stack([drum, drum], axis=1), 0.0, -6.0)
+    place(x, np.stack([drum, drum], axis=1), t_note * 3, -4.0)
+    x = filt(x, hp=60, lp=7000)
+    x = reverb(x, "room", -14.0)
+    return level(fade(x, 0.002, 0.25), -18, -1.0)
+
+
+SYNTH_STINGS = {"rpg.level_up": level_up_fanfare}   # Round PROG3: cue -> function (no source, our own synthesis)
+
+
 RPG_STING = ("rpg.encounter", "mus3-string-and-piano-horror-stings", 3.5, 1.2, -18)   # cue, source, seconds kept, fade, LUFS
+
+
+# ---- Round SND1: the world's sounds (a wolf's howl at dusk, a rooster at dawn) ------------------------------------------------------
+
+def stretch(x, factor):
+    """Longer by `factor` at the same pitch (ffmpeg's atempo, chained: each stage takes 0.5-2). Deterministic."""
+    if factor == 1:
+        return x
+    tempo, chain = 1.0 / factor, []
+    while tempo < 0.5:
+        chain.append("atempo=0.5")
+        tempo /= 0.5
+    chain.append(f"atempo={tempo:.6f}")
+    out = subprocess.run(["ffmpeg", "-v", "error", "-f", "f32le", "-ac", "2", "-ar", str(SR), "-i", "-", "-af", ",".join(chain),
+                          "-f", "f32le", "-ac", "2", "-ar", str(SR), "-"], input=np.ascontiguousarray(x, np.float32).tobytes(),
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(out, np.float32).reshape(-1, 2).copy()
+
+
+def far(x, lp, wet_db, dry_db=0.0, kind="air"):
+    """Far off in the open: the top rolled off (air takes the highs first), a late echo, the dry sound turned down."""
+    x = filt(x, hp=120, lp=lp)
+    return reverb(width(x, 0.2), kind, wet_db, dry=db(dry_db))
+
+
+# Each candidate: (what it is, the recipe). WORLD_PICK names the one the game ships: changing a pick is one line here, then
+# `python tools/build_sounds.py --only rpg.howl` (or rpg.rooster). `--candidates DIR` writes every candidate as an MP3 (Karl's page).
+WORLD_LUFS = {"rpg.howl": -31, "rpg.rooster": -31}      # ungated BS.1770 (this file's loudness()); about 4 dB under the music as heard - SOUND_BIBLE 7b
+
+
+def world_candidates(L, P=None):
+    """L loads a source from tools/sound_sources.json "sources". P is kept for a source still under "pending" (a candidate only,
+    never in a shipped cue while WORLD_PENDING names it); none is pending now (SND1B: Karl allowed alys's roosters, 3 Nov 2026)."""
+    P = P or L
+    H, R = WORLD_LUFS["rpg.howl"], WORLD_LUFS["rpg.rooster"]
+    return {
+        "rpg.howl": {
+            "A": ("rubberduck's howl (80 CC0 creature SFX), 3.8x longer at its pitch, 2 semitones down, far off in the open air",
+                  lambda: [level(fade(far(pitch(stretch(L("snd1-creature-sfx:howl"), 3.8), -2), 2400, -4, -3), 0.25, 1.2), H, -12)]),
+            "B": ("fvcalderan's howl (25 sounds from Avalanche), 2.6x longer, 1 semitone down, far off",
+                  lambda: [level(fade(far(pitch(stretch(L("snd1-avalanche:howl"), 2.6), -1), 2600, -4, -3), 0.25, 1.2), H, -12)]),
+            "C": ("CaveboyTup's wolf monster (a horse's snort made wolf-like), 2.2x longer, 3 semitones down, further off",
+                  lambda: [level(fade(far(pitch(stretch(L("snd1-wolf-monster"), 2.2), -3), 1800, -2, -5), 0.25, 1.2), H, -12)]),
+        },
+        "rpg.rooster": {        # SND1B: alys's public-domain-dedicated recordings (Wikimedia Commons), allowed by Karl 3 Nov 2026
+            "A": ("alys's medium rooster (pdsounds 539, Wikimedia Commons, public domain), its crow, a farm away",
+                  lambda: [level(fade(far(cut(L("snd1-pd-rooster-medium", raw=True), 2.75, 2.6), 3500, -9, 0), 0.04, 0.6), R, -12)]),
+            "B": ("alys's small bantam rooster (pdsounds 540, public domain), its crow, a farm away",
+                  lambda: [level(fade(far(cut(L("snd1-pd-rooster-small", raw=True), 2.95, 1.6), 3800, -9, 0), 0.04, 0.5), R, -12)]),
+            "C": ("the medium rooster again, 1 semitone down and further off (a darker, more distant dawn)",
+                  lambda: [level(fade(far(pitch(cut(L("snd1-pd-rooster-medium", raw=True), 2.75, 2.5), -1), 2500, -5, -3), 0.04, 0.8),
+                                 R, -12)]),
+        },
+    }
+
+
+WORLD_PICK = {"rpg.howl": "B", "rpg.rooster": "A"}        # the candidate each cue ships (sounds/SOUND_BIBLE.md, "The world")
+WORLD_PENDING = set()                                    # cues built only as candidates (none since SND1B: the rooster ships, A)
+
+
+def write_mp3(x, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ac", "2", "-ar", str(SR), "-i", "-", "-c:a", "libmp3lame",
+                    "-b:a", "128k", "-map_metadata", "-1", "-fflags", "+bitexact", path],
+                   input=np.clip(x, -1, 1).astype(np.float32).tobytes(), check=True)
+
+
+def write_candidates(L, folder):
+    """Every world candidate as a 128 kbps MP3: <folder>/<cue>_<letter>.mp3. Returns [(cue, letter, file, seconds, LUFS, what)]."""
+    out = []
+    for cid, cands in world_candidates(L, L).items():
+        for letter, (what, make) in cands.items():
+            x = make()[0]
+            name = f"{cid}_{letter}.mp3"
+            write_mp3(x, os.path.join(folder, name))
+            out.append((cid, letter, name, round(len(x) / SR, 2), round(float(loudness(x)), 1), what))
+            print(f"{name:20s} {len(x) / SR:5.2f}s {loudness(x):6.1f} LUFS  {what}")
+    return out
 
 
 # ---- the manifest ---------------------------------------------------------------------------------------------------------------------
@@ -678,6 +787,9 @@ CUE_SETTINGS = {         # bus, gain_db, cooldown_ms, max_voices (+ duck)
     "game.win": ("stinger", 0, 0, 1, {"sfx": -12, "ambience": -10}), "game.lose": ("stinger", 0, 0, 1, {"sfx": -12, "ambience": -10}),
     "rewind": ("stinger", 0, 0, 1), "vs.reveal": ("stinger", 0, 500, 1, {"music": -8}), "boot.splash": ("stinger", 0, 1000, 1),
     "rpg.encounter": ("stinger", 0, 500, 1, {"music": -8}),        # Round RPG15: the Adventure's encounter sting
+    "rpg.level_up": ("stinger", 0, 500, 1, {"music": -8}),         # Round PROG3: the level-up fanfare (synthesized)
+    # Round SND1: the world's sounds - on the ambience bus (Cog > Ambience off silences them), rare (one a dusk or a dawn)
+    "rpg.howl": ("ambience", 0, 20000, 1), "rpg.rooster": ("ambience", 0, 20000, 1),
 }
 
 
@@ -715,13 +827,19 @@ def main(argv=None):
     ap.add_argument("--cache", default=os.path.join(os.path.expanduser("~"), ".cache", "manticore_sound_sources"))
     ap.add_argument("--only", nargs="*", help="build just these cues (the manifest is still rewritten in full)")
     ap.add_argument("--no-music", action="store_true", help="skip the music tracks (they are the slow part)")
+    ap.add_argument("--candidates", metavar="DIR", help="Round SND1: write every world candidate (rpg.howl, rpg.rooster) as an MP3 and stop")
     a = ap.parse_args(argv)
     if not shutil.which("ffmpeg"):
         raise SystemExit("ffmpeg is needed on the PATH")
     with open(SOURCES, encoding="utf-8") as f:
-        sources = json.load(f)["sources"]
+        listed = json.load(f)
+    sources = listed["sources"]
     ctx = {"sources": sources, "cache": a.cache, "used": set()}
     L = lambda ref, raw=False: load(ref, ctx, raw)       # noqa: E731
+    if a.candidates:                                     # Round SND1: the candidates may use a source still waiting for Karl
+        ctx["sources"] = dict(sources, **listed.get("pending", {}))
+        write_candidates(L, a.candidates)
+        return 0
     with open(os.path.join(SOUNDS, "cues.json"), encoding="utf-8") as f:
         manifest = json.load(f)
     cues = manifest["cues"]
@@ -785,6 +903,16 @@ def main(argv=None):
             write_ogg(x, os.path.join(SOUNDS, f"music/{cid[6:]}.ogg"), RPG_MUSIC_QUALITY)
             print(f"{cid:22s} {len(x) / SR:6.1f}s {'loop' if loops else ''}")
         cues[cid] = {"bus": "music", "gain_db": RPG_MUSIC_GAIN.get(cid, 0), "stream": True, "files": [f"music/{cid[6:]}.ogg"]}
+    for cid, letter in WORLD_PICK.items():               # Round SND1: the world's sounds, each its picked candidate
+        if cid in WORLD_PENDING:
+            cues.pop(cid, None)
+            continue
+        if wanted(cid):
+            x = world_candidates(L)[cid][letter][1]()[0]
+            write_ogg(x, os.path.join(SOUNDS, f"sfx/{cid}.1.ogg"), 5)
+            print(f"{cid:22s} 1 x {len(x) / SR:4.2f}s  {loudness(x):6.1f} LUFS  (candidate {letter})")
+        s = settings_for(cid)
+        cues[cid] = {"bus": s[0], "gain_db": s[1], "files": [f"sfx/{cid}.1.ogg"], "cooldown_ms": s[2], "max_voices": s[3]}
     cid, ref, keep, fo, lufs = RPG_STING
     if wanted(cid):
         x = level(fade(cut(L(ref), 0, keep), 0.003, fo), lufs, -1.0)
@@ -792,6 +920,14 @@ def main(argv=None):
         print(f"{cid:22s} 1 x {len(x) / SR:4.2f}s  {loudness(x):6.1f} LUFS")
     s = settings_for(cid)
     cues[cid] = {"bus": s[0], "gain_db": s[1], "files": [f"sfx/{cid}.1.ogg"], "cooldown_ms": s[2], "max_voices": s[3], "duck": s[4]}
+    for cid, make in SYNTH_STINGS.items():                                 # Round PROG3: our own synthesized stingers
+        if wanted(cid):
+            x = make()
+            write_ogg(x, os.path.join(SOUNDS, f"sfx/{cid}.1.ogg"), 5)
+            print(f"{cid:22s} 1 x {len(x) / SR:4.2f}s  {loudness(x):6.1f} LUFS")
+        s = settings_for(cid)
+        cues[cid] = {"bus": s[0], "gain_db": s[1], "files": [f"sfx/{cid}.1.ogg"], "cooldown_ms": s[2], "max_voices": s[3],
+                     "duck": s[4], "synth": {"type": "chime", "freq": 523, "len": 1.0}}
     manifest["version"] = 3
     manifest["_comment"] = ("Every cue plays real recordings (CC0, built by tools/build_sounds.py from tools/sound_sources.json); 'synth' is "
                             "only the fallback if a file is missing. 'stream' cues (ambience, music) are played by the director's ambience/music "
@@ -806,14 +942,22 @@ def main(argv=None):
     return 0
 
 
+LICENCE_WORDS = {"CC0-1.0": "CC0 1.0",
+                 "public-domain-dedication": "public domain (the author's own dedication on Wikimedia Commons)"}   # Round SND1B
+
+
 def write_credits(sources, used):
     lines = ["Sounds and music in this folder are built by tools/build_sounds.py from these recordings. Every one is CC0 1.0",
-             "(public domain dedication: no permission or credit needed). We credit them anyway, with thanks.", ""]
+             "(public domain dedication: no permission or credit needed), except the two rooster recordings marked",
+             "\"public domain\", which their author dedicated to the public domain on Wikimedia Commons in their own words.",
+             "We credit them anyway, with thanks.", ""]
     for key in sorted(used):
         s = sources[key]
         extra = f" - {s['note']}" if s.get("note") else ""
         title = f" \"{s['title']}\"" if s.get("title") else ""
-        lines.append(f"{key}:{title} by {s['author']} - {s['page']} - CC0 1.0{extra}")
+        lines.append(f"{key}:{title} by {s['author']} - {s['page']} - {LICENCE_WORDS[s['licence']]}{extra}")
+    for cid in sorted(SYNTH_STINGS):                     # Round PROG3: no recording behind these
+        lines.append(f"Synthesized for Manticore by tools/build_sounds.py, no recording used (CC0 1.0): {cid}")
     with open(os.path.join(SOUNDS, "CREDITS.txt"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
 

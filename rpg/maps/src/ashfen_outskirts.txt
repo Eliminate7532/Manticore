@@ -14,9 +14,9 @@ X = exit map=lantern_hollow spawn=from_outskirts on =
 1 = spawn from_town on =
 M = exit map=warrens_1 spawn=entrance on >
 9 = spawn mill_door on w
-W = town town=town_2 on =
+W = town town=town_2 on K
 7 = spawn town_2 on =
-Z = town town=town_3 on =
+Z = town town=town_3 on K
 8 = spawn town_3 on =
 E = encounter kind=ember_bandit when=!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done,!flag:road_bandits_fled on =
 L = encounter kind=ember_bandit title=Ember_Bandit_Leader when=!quest:lamplighters_debt=ready,!quest:lamplighters_debt=done on =
@@ -28,14 +28,20 @@ a = encounter kind=grave_robber spot=night_graves when=phase:night on .
 d = encounter kind=grave_robber spot=night_chapel when=phase:night on +
 q = encounter kind=plague_rat encounter=dungeon once=false spot=night_rocks when=phase:night,flag:warrens_entered,!flag:grave_priest_beaten home=Up_from_the_mill's_cellar on :
 u = encounter kind=plague_rat encounter=dungeon once=false spot=night_mill when=phase:night,flag:warrens_entered,!flag:grave_priest_beaten home=Up_from_the_mill's_cellar on .
+#! Bug 1566241279598264410 (Karl, 3 Nov 2026: 'Visible stall'): Brackwater's and Cinder Gate's traders keep stalls beside the road
+B = npc name=Brackwater_trader id=brackwater_trader cell=4,9 on .
+g = npc name=Cinder_Gate_trader id=cinder_trader cell=1,12 on .
 G = rare id=old_gorsehide on :
 S = rare id=red_sash on .
 N = rare id=mother_of_rats on .
+#! Round PROG2: treasure chests off the road (rpg/data/progression.json chests.list)
+C = chest id=moor_hollow on .
+V = chest id=moor_cairn on .
 [map]
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTTTTTTT.........TTTTTTT...~~......................TTTTTTTT
-TTTTTTTTT.........TTTTTTT...~~...........HHHHHHHHHH.TTTTTTTT
+TTTTTTTTT..C......TTTTTTT...~~...........HHHHHHHHHH.TTTTTTTT
 TTTTTTTTT.......t.TTTTTTT...~~...........HwxxwwwwoH.TTTTTTTT
 TTTTTTTTT...................~~..:::::::::HwwwMMwwoH.......TT
 TTTTTTTTT...................~~..:::::::::HwwwwwwwwH.......TT
@@ -44,15 +50,15 @@ TT........::::::............~~..::::F::::HxwwwwwwwH.......TT
 TT........::::::............~~..:::::::::HHHHDDHHHH.......TT
 TT..."....::G:::..........y.~~..:::::::q:....==...........TT
 TT........::::::............~~..:::::::::....==...........TT
-TT...."...::::::....".......~~...............==...........TT
+TT...."...::::::....".......~~...............==..........VTT
 TT..........................~~...............==..."..u....TT
 TT......t...................~~....y......."..==...........TT
 TT......................."..~~...............==...........TT
-TT..........................~~....S..........==........t..TT
-TT............t.............~~........t......==...........TT
-TT........p.................~~...............==p..........TT
-X=1=====================L===vv===========================7=W
-X===========================vv==========E==================W
+TT..........................~~....S..........==........to.TT
+TT............t.............~~........t......==........xBoTT
+TT........p.................~~...............==p......pKWKTT
+X=1=====================L===vv==========================7===
+X===========================vv==========E===================
 TT..........==..............~~."..................p==.....TT
 TT........".=E........t.....~~..........t..........==.....TT
 TT..........==..............~~.....................==."...TT
@@ -67,8 +73,8 @@ TTTTT.++++++++d+++#.R.R.bbbbbbbbbbb.........:::::::==.TTTTTT
 TTTTT.++++++++++++#.....bbbbbbbbbbb.........:::::::==.TTTTTT
 TTTTT.#++++++++z++#.R.R.R...bbb.............:::::::==.TTTTTT
 TTTTT.#+j+++++++++#.........bbb.....TTTTTTTTTTT....==.TTTTTT
-TTTTT.#+++++++++++#....O....bbb.....TTTTTTTTTTT....==.TTTTTT
-TTTTT.####++###+###.................TTTTTTTTTTT....==.TTTTTT
-TTTTT...............................TTTTTTTTTTT....8=.TTTTTT
+TTTTT.#+++++++++++#....O....bbb.....TTTTTTTTTTT..xp==.TTTTTT
+TTTTT.####++###+###.................TTTTTTTTTTT.xgZ8=.TTTTTT
+TTTTT...............................TTTTTTTTTTT..o.==.TTTTTT
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTT
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTZZTTTTTTT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTT

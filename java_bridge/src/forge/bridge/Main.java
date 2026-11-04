@@ -98,6 +98,8 @@ public class Main {
         Long parentPid = null;
         String badFormat = null;
         String badRule = null;                           // round CD3
+        String startSpec = null;                         // round PROG3
+        String sampleFile = null;                        // round PERF1: --sample
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--deck": deckPath = args[++i]; break;
@@ -128,12 +130,23 @@ public class Main {
                 case "--attack-cache-plant": AttackCache.plantedError = Integer.parseInt(args[++i]); break;   // tests only (needs --dev)
                 case "--parent-pid": parentPid = Long.parseLong(args[++i]); break;        // round 29a, see ParentWatch
                 case "--classic-stops": Passing.classic = true; break;                     // patch 43: every stop, as before (card check)
+                case "--timing": Timing.on = true; break;                                   // round PERF1: timing lines (tools/bench_board.py)
+                case "--skip-scan": {                                                       // round PERF1, see Passing.skipScan
+                    String v = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (Passing.SKIP_MODES.contains(v)) Passing.skipScan = v;
+                    else System.err.println("bridge: unknown --skip-scan " + v);
+                    break;
+                }
+                case "--question-flush": BridgeGui.questionFlush = !"off".equalsIgnoreCase(args[++i]); break;   // round PERF1
+                case "--skip-scan-plant": Passing.comparePlant = Integer.parseInt(args[++i]); break;   // tests only (needs --dev)
+                case "--sample": sampleFile = args[++i]; break;                             // round PERF1: a stack sampler (needs --dev)
                 case "--house-rule": {                                                      // round CD3: a cube's own rule (HouseRules)
                     String r = args[++i].toLowerCase(java.util.Locale.ROOT);
                     if (HouseRules.KNOWN.contains(r)) HouseRules.active.add(r);
                     else badRule = args[i];
                     break;
                 }
+                case "--start-effects": startSpec = args[++i]; break;                     // round PROG3: the human seat's start effects (StartEffects)
                 case "--format": {                                                          // round FMT1: commander (default) or brawl
                     String f = args[++i].toLowerCase(java.util.Locale.ROOT);            // round CON1: or constructed
                     if (f.equals("commander") || f.equals("brawl") || f.equals("constructed")) format = f;
@@ -151,7 +164,7 @@ public class Main {
             }
         }
         if (deckPath == null || opponents.isEmpty()) {
-            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl|constructed] [--house-rule turbo]");
+            System.err.println("usage: --deck FILE --opponent FILE [--opponent FILE ...] [--seed N] [--name NAME] [--format commander|brawl|constructed] [--house-rule turbo] [--start-effects SPEC]");
             System.exit(2);
         }
 
@@ -168,12 +181,28 @@ public class Main {
             fail(wire, "unknown house rule " + badRule + " (this bridge knows " + String.join(", ", HouseRules.KNOWN) + ")");
             return;
         }
+        if (startSpec != null) {
+            try {
+                StartEffects.active = StartEffects.parse(startSpec);       // round PROG3: a bad item is a fatal error, never a quiet game
+            } catch (IllegalArgumentException e) {
+                fail(wire, "bad start effects: " + e.getMessage());
+                return;
+            }
+        }
         if (!Checks.faults.isEmpty() && !dev) {
             System.err.println("bridge: --fault ignored (the bridge was not started with --dev)");
         }
         if (AttackCache.plantedError != 0 && !dev) {
             AttackCache.plantedError = 0;                    // round AI-ATTACK: a planted error only in a test's dev session
             System.err.println("bridge: --attack-cache-plant ignored (the bridge was not started with --dev)");
+        }
+        if (Passing.comparePlant != 0 && !dev) {
+            Passing.comparePlant = 0;                        // round PERF1: a planted difference only in a test's dev session
+            System.err.println("bridge: --skip-scan-plant ignored (the bridge was not started with --dev)");
+        }
+        if (sampleFile != null) {                                // round PERF1: dev only
+            if (dev) Timing.startSampler(sampleFile, 10);
+            else System.err.println("bridge: --sample ignored (the bridge was not started with --dev)");
         }
         initForge(name, seed);
 
@@ -187,6 +216,14 @@ public class Main {
         int seats = 1 + opponents.size();
         RegisteredPlayer human = register(mine, seats);
         human.setPlayer(new Passing.Human(name));       // patch 43: the seat's controller asks Passing first
+        if (StartEffects.active != null) {
+            try {
+                StartEffects.active.applyTo(human);      // round PROG3: Forge's own fields; the AI seats never get them
+            } catch (IllegalArgumentException e) {
+                fail(wire, "bad start effects: " + e.getMessage());
+                return;
+            }
+        }
         players.add(human);
         int i = 1;
         for (String path : opponents) {
@@ -213,6 +250,8 @@ public class Main {
         ready.addProperty("threatAi", Threats.on);           // round AI2
         ready.addProperty("planCache", PlanCache.mode);      // round AIT2
         ready.addProperty("attackCache", AttackCache.mode);  // round AI-ATTACK
+        ready.addProperty("skipScan", Passing.skipScan);     // round PERF1
+        ready.addProperty("questionFlush", BridgeGui.questionFlush);
         ready.addProperty("attackBudget", AttackCache.budgetSeconds);
         ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
         ready.addProperty("lastStateMarks", true);           // round LAST1c: saves keep the Monarch, Initiative and City's Blessing; a failed load says so
@@ -222,6 +261,8 @@ public class Main {
         com.google.gson.JsonArray rules = new com.google.gson.JsonArray();       // round CD3: the house rules this game plays with
         for (String r : HouseRules.active) rules.add(r);
         ready.add("houseRules", rules);
+        // Round PROG3: always present ({} = none), so the Python side tells an older bridge (no key) from a game without effects.
+        ready.add("startEffects", StartEffects.active == null ? new JsonObject() : StartEffects.active.toJson());
         wire.send(ready);
         // The applied-variant set must include Commander. With null (as before round 27c) Forge's GameRules had no applied variant,
         // so GameAction.stateBasedAction_Commander, which checks GameRules.hasAppliedVariant(Commander), never ran: nobody was asked
@@ -235,7 +276,20 @@ public class Main {
                 ? java.util.EnumSet.noneOf(GameType.class) : java.util.EnumSet.of(variant);
         match.startMatch(variant, variants, players, human, gui);
 
-        wire.readLoop(cmd -> javax.swing.SwingUtilities.invokeLater(() -> handle(gui, cmd)));
+        Timing.wire = gui.wire;
+        wire.readLoop(cmd -> {
+            long queued = Timing.start();
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                long t0 = Timing.start();
+                handle(gui, cmd);
+                if (Timing.on) {                            // round PERF1: Main.handle's own time, and how long it waited for Swing
+                    JsonObject t = Timing.line("handle", Timing.since(t0));
+                    t.addProperty("queued", Math.round((t0 - queued) / 10_000.0) / 100.0);
+                    t.addProperty("c", cmd.has("c") ? cmd.get("c").getAsString() : "");
+                    Timing.send(t);
+                }
+            });
+        });
         System.exit(0);
     }
 

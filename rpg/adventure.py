@@ -198,7 +198,14 @@ class Game:
     def panel_info(self):
         """The map's side panel: gold, the deck and its size."""
         d = self.save.deck()
-        return {"gold": self.save.gold, "deck": d["name"] if d else "No deck", "cards": self.deck_size()}
+        out = {"gold": self.save.gold, "deck": d["name"] if d else "No deck", "cards": self.deck_size()}
+        try:                                       # Round PROG3: "Level 3  XP 12/60" (never stops the panel)
+            from rpg import levels
+            out["level"] = levels.bar_text(levels.state(self.save)["xp"])
+            out["perk"] = bool(levels.offers(self.save))
+        except (OSError, ValueError):
+            pass
+        return out
 
 
 # ---- duels ------------------------------------------------------------------------------------------------------------------
@@ -211,6 +218,12 @@ def inn_town(game, map_name):
         return game.town_name(town) if town else None
     except Exception:                                    # a map that won't load says nothing here; the loss itself still works
         return None
+
+
+# Round GOLD1: the words about the gold a foe holds (Karl to edit; rpg_encounter draws HOLDS_LINE in gold)
+HOLDS_LINE = "Holds {n} of your gold - win it back."
+LOST_HELD_LINE = "You lost {n} gold - the {enemy} has it now. Beat them to win it back."
+WON_BACK_LINE = "{n} of it won back from the {enemy}."
 
 
 def fight_text(game, trigger):
@@ -233,20 +246,45 @@ def fight_text(game, trigger):
     inn = game.save.world.get("inn")                     # Round RPG15b: a loss wakes you at the inn you last rested at (rpg.duel)
     if isinstance(inn, dict) and inn.get("map"):
         where = f"you wake at {inn_town(game, inn['map'])}'s inn" if inn_town(game, inn["map"]) else "you wake at the inn"
-    cost = n.loss_cost(game.save.gold)
+    cost = duel.loss_cost(game.save, n, trigger.encounter)   # PROG3: a perk may take less; GOLD1: by kind of fight
     lose = (f"Lose: {cost} of your {game.save.gold} gold, and {where}." if cost
             else f"Lose: {where[0].upper() + where[1:]}.")
     lines = [win, lose]
+    held = duel.held_by(game.save, getattr(trigger, "spot", None))   # Round GOLD1: what this foe took from you before
+    if held:
+        lines.append(HOLDS_LINE.format(n=held))
     if entry:
         from rpg import rare
         days = rare.cooldown_of(trigger.rare, entry)        # Round RPG16d (review T1): a hand-edited "three" never reaches :g
         lines.append(f"Beaten, it stays away for {days:g} day{'s' if days != 1 else ''}." if days else "Beaten, it may come back.")
     elif not trigger.once and not getattr(trigger, "random", False):   # Round RPG13: a random foe has no spot to come back to
         lines.append("Beaten, it comes back after your next visit to a town.")
+    start = start_words(game)                            # Round PROG3: your levels and perks at the duel's start
+    if start:
+        lines.append(start)
     wrong = game.deck_problems()
     if wrong:
         lines.append("Your deck can't be played yet: " + wrong[0].text)
     return title, lines
+
+
+def duel_effects(game):
+    """Round PROG3: the player's start effects in this save's duels (rpg.levels.duel_effects), {} when progression.json can't be
+    read - the duel as before, never a stopped fight."""
+    from rpg import levels
+    try:
+        return levels.duel_effects(game.save)
+    except (OSError, ValueError):
+        return {}
+
+
+def start_words(game):
+    """Round PROG3: "You start with 23 life and a Treasure." for the encounter screen; "" at level 1 with no perks."""
+    import start_effects
+    try:
+        return start_effects.describe(duel_effects(game), base_life=duel.LIFE)
+    except start_effects.StartEffectsError:
+        return ""
 
 
 def start_duel(game, trigger, now=None, index=None):
@@ -254,8 +292,11 @@ def start_duel(game, trigger, now=None, index=None):
     trigger: a map's encounter (rpg.explore.Trigger) or, Round RPG13, a random one (rpg.encounters.RandomFoe: no spot). index: the
     enemy deck the encounter screen showed (rpg.duel.peek), so the duel plays exactly that one."""
     d = duel.start(game.save, trigger.enemy, trigger.encounter, pool=game.pool, lists=game.lists(), now=now, spot=trigger.spot,
-                   once=trigger.once, index=index, source=deck_source(game, trigger))      # RPG17: a rare's own deck lists
+                   once=trigger.once, index=index, source=deck_source(game, trigger),      # RPG17: a rare's own deck lists
+                   tier_table=game.tiers())                                                 # PROG2: a boss's signature card
     d.enemy_name = foe_name(trigger) or d.enemy_name     # Round RPG18b: the map's title (the bandits' leader) too
+    d.effects = duel_effects(game) or None               # Round PROG3: your levels and perks (the table passes them to the bridge)
+    d.life = (d.effects or {}).get("life", d.life)
     if getattr(trigger, "title", None) and isinstance(game.save.pending_duel, dict):
         game.save.pending_duel["name"] = trigger.title    # ... so the result names him
     entry = rare_entry(trigger)
@@ -348,10 +389,22 @@ def finish_loaded(game, result):
     rid = game.save.pending_duel.get("rare")
     title = game.save.pending_duel.get("name")                              # Round RPG18b: a foe with its own name
     entry = _rare_table().get(rid) if isinstance(rid, str) else None
-    out = duel.finish(game.save, result, game.numbers, game.world, pool=game.pool, tier_table=game.tiers(), lists=game.lists())
+    out = duel.finish(game.save, result, game.numbers, game.world, pool=game.pool, tier_table=game.tiers(), lists=game.lists(),
+                      offer=True)                                           # Round PROG2: the reward cards are a choice
     out.update(enemy=enemy_name(kind), kind=kind, encounter=encounter)     # Round RPG14: the kind, for the boss's last words
     if isinstance(title, str) and title:
         out["enemy"] = title
+    kind_xp = "rare" if entry else (encounter if encounter in ("dungeon", "boss") else "regular")
+    try:                                                                    # Round PROG3: XP (and perhaps a level, a perk choice)
+        from rpg import levels
+        lv = levels.read()
+        out["xp"] = levels.gain(game.save, levels.xp_for(out.get("result"), kind_xp, lv), lv)
+    except (OSError, ValueError) as e:
+        from rpg import notes
+        notes.once("levels:read", f"progression.json's levels couldn't be read, so no XP was given: {e}")
+    if out.get("result") == "won":                                          # Round PROG1: the bestiary's page of this kind
+        from rpg import progress
+        progress.note_beaten(game.save, kind, [n for n, _src in out.get("cards") or ()])
     if entry:                                                               # Round RPG16: a rare foe
         out.update(enemy=entry["name"], rare=rid)
         if out.get("result") == "won":
@@ -367,6 +420,59 @@ def finish_loaded(game, result):
     return out
 
 
+def quest_xp(game):
+    """Round PROG3: a quest handed in gives XP (progression.json xp.quest). Returns the lines to add to the reward's words (the save is
+    written by the caller, as for the reward)."""
+    from rpg import levels
+    try:
+        lv = levels.read()
+        g = levels.gain(game.save, levels.xp_for("quest", None, lv), lv)
+    except (OSError, ValueError):
+        return []
+    return [f"+{g['gained']} XP."] + levels.level_up_lines(g, lv) if g["gained"] else []
+
+
+def choose_perk(game, perk_id):
+    """Round PROG3: the perk picked on the perk screen goes into the save, which is written. ValueError when it isn't offered;
+    OSError (undone in memory) when it can't be written. Returns the perk."""
+    from rpg import levels
+    before = game.save.to_dict()
+    perk = levels.choose(game.save, perk_id)
+    try:
+        game.write()
+    except OSError:
+        back = rsave.SaveGame.from_dict(before, pool=game.pool)
+        game.save.__dict__.update(back.__dict__)
+        raise
+    return perk
+
+
+def choose_rewards(game, picks):
+    """Round PROG2: the reward cards chosen on the results screen go into the collection and the save is written; returns the
+    lines that say so. ValueError for a choice that doesn't fit; OSError (the choice undone in memory) when it can't be written."""
+    from rpg import rewards
+    before = game.save.to_dict()
+    given = rewards.choose(game.save, list(picks))
+    try:
+        game.write()
+    except OSError:
+        back = rsave.SaveGame.from_dict(before, pool=game.pool)
+        game.save.__dict__.update(back.__dict__)
+        raise
+    names = [n for n, _src in given]
+    return [f"New card{'s' if len(names) != 1 else ''}: " + ", ".join(names) + "."] if names else []
+
+
+def pending_pick_outcome(game):
+    """Round PROG2: a reward still to choose (a game closed on the choosing screen) as an outcome the results screen opens with -
+    the same cards again; None when there is none."""
+    pp = game.save.pending_pick
+    if not pp:
+        return None
+    return {"result": "won", "gold": 0, "cards": [], "offers": pp["groups"], "enemy": enemy_name(pp.get("kind")),
+            "kind": pp.get("kind"), "again": True}
+
+
 def outcome_lines(out, world_=None):
     """The lines that say what a settled duel did ([] for None)."""
     if not out:
@@ -374,10 +480,23 @@ def outcome_lines(out, world_=None):
     enemy = out.get("enemy") or "the enemy"
     r = out.get("result")
     if r == "won":
-        lines = [f"You beat the {enemy}: +{out.get('gold', 0)} gold."]
-        cards = [n for n, _src in out.get("cards") or []]
+        if out.get("again"):                     # Round PROG2: the choice left open when the game closed
+            lines = [f"Your reward from the {enemy} is still waiting."]
+        else:
+            lines = [f"You beat the {enemy}: +{out.get('gold', 0)} gold."]
+            if out.get("won_back"):              # Round GOLD1: the gold it took from you, in that count
+                lines.append(WON_BACK_LINE.format(n=out["won_back"], enemy=enemy))
+        sig = [n for n, src in out.get("cards") or [] if src == "signature"]
+        cards = [n for n, src in out.get("cards") or [] if src != "signature"]
+        if sig:                                  # Round PROG2: the card the boss guarded
+            lines.append(f"He guarded {sig[0]}: it is yours.")
         if cards:
             lines.append(f"New card{'s' if len(cards) != 1 else ''}: " + ", ".join(cards) + ".")
+        offers = out.get("offers") or []
+        if offers:                               # Round PROG2: pick 1 of 3 for each reward card
+            n, per = len(offers), max(len(g) for g in offers)
+            lines.append(f"Choose your reward card: 1 of {per}." if n == 1 else
+                         f"Choose your {n} reward cards: 1 of each {per}.")
         return lines + list(out.get("extra_lines") or ())
     if r in ("lost", "conceded"):
         town = out.get("moved_to")
@@ -388,6 +507,13 @@ def outcome_lines(out, world_=None):
                 pass
         lost = -int(out.get("gold") or 0)
         first = f"You conceded to the {enemy}." if r == "conceded" else f"The {enemy} beat you."
+        if lost and out.get("held_by"):          # Round GOLD1: the foe holds it - the place on a line of its own
+            lines = [first, LOST_HELD_LINE.format(n=lost, enemy=enemy)]
+            if out.get("inn"):
+                lines.append("You woke at the inn.")                 # the innkeeper's words follow in her box (rpg_screens)
+            elif town:
+                lines.append(f"You are back in {town}.")
+            return lines
         if out.get("inn"):                       # Round RPG14: you wake at the inn you last rested at (rpg.talk); the
             return [first, (f"You lost {lost} gold" if lost else "You had no gold to lose") +      # innkeeper's words follow
                     " and woke at the inn."]                                                   # in her box (rpg_screens)

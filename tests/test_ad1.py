@@ -94,7 +94,8 @@ GUARDED = ("forge_table.py", "forge_dialogs.py", "forge_menu.py", "forge_setting
            "osk.py", "panning.py",                                   # round PEN1
            "rpg_screens.py",                                         # Round RPG8
            "rpg_ui.py", "rpg_encounter.py", "rpg_map_view.py",       # Rounds RPG11-RPG14b
-           "online_draft_screens.py")                                # round CD5
+           "online_draft_screens.py",                                # round CD5
+           "pack_art.py")                                            # round PACK2
 # Colour-looking tuples that are allowed to stay outside gfx.py: value -> why it is not a colour anyone sees.
 ALLOWED_LITERALS = {
     (255, 120, 120): "BLEND_RGB_MULT tint",
@@ -436,7 +437,7 @@ OLD_CLIPPED = {("1.0", "Report a bug   (F8)"), ("2.0", "Report a bug   (F8)")}
 # round UI7: "Text size" became "Text" beside "Cards"
 SETTINGS_LABELS = ["Text", "Cards", "Table", "Full screen   (F11)", "Animations", "Compact: Off", "Sort hand: Off", "Log: Always", "Focus: Always",
                    "Sound", "Hover tick",
-                   "Volume", "Speed: Fast", "New game...", "Concede...",     # round PRI1: Speed
+                   "Volume", "Speed: Fast", "New game...", "Quit...",     # round PRI1: Speed
                    # round AWAY1: "Bug or idea", "Licenses" and "My data folder" sat after that comment, so were not in the list
                    "Controls   (H)", "Bug or idea   (F8)", "Licenses", "My data folder",
                    "Tour of the table"]

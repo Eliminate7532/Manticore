@@ -1,5 +1,7 @@
 Sounds and music in this folder are built by tools/build_sounds.py from these recordings. Every one is CC0 1.0
-(public domain dedication: no permission or credit needed). We credit them anyway, with thanks.
+(public domain dedication: no permission or credit needed), except the two rooster recordings marked
+"public domain", which their author dedicated to the public domain on Wikimedia Commons in their own words.
+We credit them anyway, with thanks.
 
 fs-choir-men: "Myst Men Choir Dark Atmo Drone Thriller Mood Cinematic.wav" by szegvari - https://freesound.org/s/619558/ - CC0 1.0 - Freesound's high-quality preview of the original
 fs-crow: "Hooded Crow: Cawing" by Mish7913 - https://freesound.org/s/741366/ - CC0 1.0 - Freesound's high-quality preview of the original
@@ -87,3 +89,9 @@ oga2-undead-moans: "Undead Moans" by AntumDeluge - https://opengameart.org/conte
 oga2-various-paper-sound-effects: "Various Paper Sound Effects" by Luckius - https://opengameart.org/content/various-paper-sound-effects - CC0 1.0
 oga2-water-drops: "Water Drops" by CeoxBlackj - https://opengameart.org/content/water-drops - CC0 1.0
 oga2-wind: "Wind" by IgnasD - https://opengameart.org/content/wind - CC0 1.0
+snd1-avalanche: "25 sounds from Avalanche minigame" by fvcalderan - https://opengameart.org/content/25-sounds-from-avalanche-minigame - CC0 1.0 - Round SND1: Misc/howl.ogg (the page: most sounds made with the author's own voice); licence read on the page 3 Nov 2026: CC0
+snd1-creature-sfx: "80 CC0 creature SFX" by rubberduck - https://opengameart.org/content/80-cc0-creature-sfx - CC0 1.0 - Round SND1: its howl.ogg (the page lists "1x howl"); licence read on the page 3 Nov 2026: CC0
+snd1-pd-rooster-medium: "Medium rooster crowing" by alys (pdsounds.org record 539, uploaded by Fae) - https://commons.wikimedia.org/wiki/File:Medium_rooster_crowing.ogg - public domain (the author's own dedication on Wikimedia Commons) - Round SND1: allowed by Karl, 3 Nov 2026 10:3x CST ('Allow alys's recordings'): a public-domain dedication by its author on Wikimedia Commons, not CC0.
+snd1-pd-rooster-small: "Small rooster crowing" by alys (pdsounds.org record 540, uploaded by Fae) - https://commons.wikimedia.org/wiki/File:Small_rooster_crowing.ogg - public domain (the author's own dedication on Wikimedia Commons) - Round SND1: allowed by Karl, 3 Nov 2026 10:3x CST ('Allow alys's recordings'): a public-domain dedication by its author on Wikimedia Commons, not CC0. A bantam Sebright rooster.
+snd1-wolf-monster: "Wolf monster sound" by CaveboyTup - https://opengameart.org/content/wolf-monster-sound - CC0 1.0 - Round SND1: the page says it is a horse snorting, modified to sound wolf-like; licence read on the page 3 Nov 2026: CC0
+Synthesized for Manticore by tools/build_sounds.py, no recording used (CC0 1.0): rpg.level_up

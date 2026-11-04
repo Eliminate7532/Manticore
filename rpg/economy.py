@@ -10,7 +10,8 @@ The arithmetic lives here and nowhere else, so a screen and a test compute the s
   price(tier)              a single's price in gold
   basic_land_price         one basic land in any shop (Round RPG7; 0 while basic_lands_free); shops don't buy them back
   sell_price(tier)         what the shop pays for one copy (a fraction of the price, rounded down, at least 1)
-  loss_cost(gold)          the gold a lost duel costs (a share of what you carry, rounded down)
+  loss_share(kind)         the share of the gold you carry a lost duel of that kind of fight takes (Round GOLD1)
+  loss_cost(gold, kind)    the gold a lost duel costs (that share of what you carry, rounded down, never over MAX_LOSS_SHARE)
   reward_gold(kind, rng)   the gold a won duel gives (a range per kind of encounter)
 """
 import json
@@ -24,6 +25,12 @@ TOWNS_FILE = data_path("towns.json")
 ENCOUNTERS = ("regular", "dungeon", "boss")
 ENEMY_DECK_SOURCES = ("archetype", "jumpstart")   # Round RPG9: which of a kind's deck lists a region's fights use (rpg.enemies)
 TIERS = (1, 2, 3, 4, 5)
+# Round GOLD1 (Karl, 3 Nov 2026: "a sliding scale based on duel difficulty but never lose more than 20%"): no lost duel ever takes
+# more than this share of the gold you carry - numbers.json refuses a larger share, and loss_cost clamps to it whatever a perk or
+# a settings file says.
+MAX_LOSS_SHARE = 0.2
+# Round PACK1: the shelf's other kinds of pack - prices in gold (placeholders) and how many Jumpstart theme packs a shop stocks.
+PACK1_DEFAULTS = {"jumpstart_price": 90, "premium_pack_price": 160, "bundle_price": 210, "jumpstart_stock": 3}
 
 
 def _int(v, name, lo=0, hi=None):
@@ -38,6 +45,41 @@ def _share(v, name):
     if isinstance(v, bool) or not isinstance(v, _num.Real) or not (0 <= v <= 1) or math.isnan(v):
         raise ValueError(f"{name}: a share from 0 to 1 is needed, not {v!r}")
     return float(v)
+
+
+def _loss_shares(v):
+    """Round GOLD1: numbers.json's loss_gold_share - {"regular", "dungeon", "boss": share}, or one share for every kind (a file from
+    before GOLD1). Each from 0 to MAX_LOSS_SHARE; anything else is a ValueError naming the key."""
+    name = "loss_gold_share"
+    if isinstance(v, dict):
+        if sorted(v) != sorted(ENCOUNTERS):
+            raise ValueError(f"{name}: one share for each of {', '.join(ENCOUNTERS)} is needed, not {sorted(v)!r}")
+        out = {k: _share(v[k], f"{name}[{k}]") for k in ENCOUNTERS}
+    else:
+        one = _share(v, name)
+        out = {k: one for k in ENCOUNTERS}
+    for k, share in out.items():
+        if share > MAX_LOSS_SHARE:
+            where = name if not isinstance(v, dict) else f"{name}[{k}]"
+            raise ValueError(f"{where}: {share:g} is above {MAX_LOSS_SHARE:g} - a loss never takes more than "
+                             f"{MAX_LOSS_SHARE:.0%} of your gold")
+    return out
+
+
+def clamp_loss_share(share):
+    """Round GOLD1: a loss's share kept from 0 to MAX_LOSS_SHARE, whatever reached it."""
+    try:
+        share = float(share)
+    except (TypeError, ValueError):
+        return 0.0
+    if math.isnan(share):
+        return 0.0
+    return min(MAX_LOSS_SHARE, max(0.0, share))
+
+
+def cost_of(gold, share):
+    """The gold a share of `gold` comes to, rounded down (a hair added so 0.15 x 100 is 15, not 14.999...)."""
+    return int(max(0, gold) * clamp_loss_share(share) + 1e-9)
 
 
 def _range(v, name):
@@ -62,7 +104,8 @@ class Numbers:
             raise ValueError("numbers: missing " + ", ".join(missing))
         self.save_slots = _int(data["save_slots"], "save_slots", 1, 9)
         self.start_gold = _int(data["start_gold"], "start_gold")
-        self.loss_gold_share = _share(data["loss_gold_share"], "loss_gold_share")
+        self.loss_shares = _loss_shares(data["loss_gold_share"])   # Round GOLD1: {kind of fight: share}
+        self.loss_gold_share = max(self.loss_shares.values())        # the largest (tools/rpg_soak.py's report reads it)
         if not isinstance(data["basic_lands_free"], bool):
             raise ValueError("basic_lands_free: true or false")
         self.basic_lands_free = data["basic_lands_free"]
@@ -82,6 +125,10 @@ class Numbers:
         self.single_price = {int(t): _int(p, f"single_price[{t}]", 1) for t, p in prices.items()}
         self.sell_share = _share(data["sell_share"], "sell_share")
         self.pack_price = _int(data["pack_price"], "pack_price", 1)
+        # Round PACK1 (Karl, 3 Nov 2026: more packs to buy): optional, so an older numbers file (tools/rpg_soak_settings) still
+        # reads; the defaults are the same placeholders numbers.json carries (Claude's estimate, until prog-tune).
+        for key, default in PACK1_DEFAULTS.items():
+            setattr(self, key, _int(data.get(key, default), key, 1))
         self.restock_after_duels = _int(data["restock_after_duels"], "restock_after_duels", 1)
         stock = data["stock"]
         if not isinstance(stock, dict) or not stock:
@@ -121,8 +168,13 @@ class Numbers:
             return 0
         return max(1, int(p * self.sell_share))
 
-    def loss_cost(self, gold):
-        return int(max(0, gold) * self.loss_gold_share)
+    def loss_share(self, kind="regular"):
+        """Round GOLD1: the share a lost duel of this kind of fight takes (an unknown kind: regular's), at most MAX_LOSS_SHARE."""
+        share = self.loss_shares.get(kind, self.loss_shares["regular"])
+        return clamp_loss_share(share)
+
+    def loss_cost(self, gold, kind="regular"):
+        return cost_of(gold, self.loss_share(kind))
 
     def reward_gold(self, kind, rng):
         lo, hi = self.rewards[kind]["gold"]

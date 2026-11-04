@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="40" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="35">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="40" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="36">
  <properties>
   <property name="ambience" value="amb.ruins"/>
   <property name="backdrop" value="forest"/>
@@ -392,6 +392,11 @@
   <object id="16" name="Platino" class="platino" x="16" y="448" width="16" height="16">
    <properties>
     <property name="id" value="platino"/>
+   </properties>
+  </object>
+  <object id="35" name="" class="chest" x="256" y="48" width="16" height="16">
+   <properties>
+    <property name="id" value="yard_crate"/>
    </properties>
   </object>
   <object id="30" name="Wenna" class="npc" x="320" y="240" width="16" height="16">

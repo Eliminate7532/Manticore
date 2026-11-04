@@ -126,6 +126,7 @@ class ArtPicker(dlg.Dialog):
 
     def open_card(self, name):
         self.card, self.scroll = name, 0
+        self.tiles = []                      # bug-1567003179428618281: the grid's tiles are stale until the next draw
         self.source = "mpc" if mpc_art.is_mpc_printing(self.chosen(name)) else "scryfall"
 
     def mpc_info(self, gui, drive_id):
@@ -145,6 +146,7 @@ class ArtPicker(dlg.Dialog):
 
     def back_to_grid(self):
         self.card, self.scroll = None, 0
+        self.tiles = []                      # bug-1567003179428618281: a second click this frame must not hit a printing tile
 
     def with_own_copy(self, gui, then):
         """Run then() on a deck that can be changed: a sample deck is first saved as a copy in My decks (asked first), and the
@@ -385,8 +387,9 @@ class ArtPicker(dlg.Dialog):
         for rect, value in self.tiles:
             if rect.collidepoint(pos):
                 if self.card is None:
-                    self.open_card(value)
-                else:
+                    if isinstance(value, str):               # a grid tile is a card name; anything else is stale
+                        self.open_card(value)
+                elif not isinstance(value, str):             # a printing (set, cn), an MPC/imported key, or None = Default
                     self.pick(gui, value)
                 return
 

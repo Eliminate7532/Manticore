@@ -35,11 +35,13 @@ W = npc name=Wenna id=mourner cell=1,16 when=phase:night on _
 J = npc name=Pell_the_lamplighter id=lamplighter cell=1,9 when=phase:dusk|night on _
 I = npc name=Elder_Hesk id=elder cell=2,16 when=phase:night on w
 a = encounter kind=grave_robber spot=night_yard when=phase:night home=The_back_yards_of_Lantern_Hollow on ,
+#! Round PROG2: a small chest that fills again every morning (07:00)
+C = chest id=yard_crate on ,
 [map]
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTT,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TTTT
-TT,HHHHHHHHHHH,,,,,,,,,,,,,HHHHHHHHHHTTT
+TT,HHHHHHHHHHH,,C,,,,,,,,,,HHHHHHHHHHTTT
 TT,HewwwwwAwoH,,,,,,,,,,,,,HskwSwkwsH,TT
 TT,HwwwwwKKKoH,,,,*,,,,,,,,HwKK3KKKwH,TT
 TT,HewwwhwwwwH,,,,,,,,*,,,,HwwwwwwwwH,TT

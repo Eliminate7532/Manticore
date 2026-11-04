@@ -232,6 +232,62 @@
     }
    ]
   },
+  "brackwater_trader": {
+   "name": "Brackwater trader",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_brackwater_trader"
+     ],
+     "pages": [
+      "Brackwater's stall, as far inland as I'll drag it. The town itself is three wet days east.",
+      "Blue and black, mostly. Cards that think, cards that drown things. Have a look."
+     ]
+    },
+    {
+     "when": [
+      "phase:night"
+     ],
+     "pages": [
+      "Still trading. The lamp keeps the bandits honest. Mostly it keeps me awake."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Brackwater's stall. Fresh off the cart, a bit damp. Have a look."
+     ]
+    }
+   ]
+  },
+  "cinder_trader": {
+   "name": "Cinder Gate trader",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_cinder_trader"
+     ],
+     "pages": [
+      "Cinder Gate's stall. The road south goes to the Gate, if your boots can take the heat.",
+      "Black and red, all of it. Cards that burn and cards that bite. Have a look."
+     ]
+    },
+    {
+     "when": [
+      "phase:night"
+     ],
+     "pages": [
+      "Night's no trouble. Anything that crawls out of the moor, I sell it a fire."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Cinder Gate's stall. Mind the coals. Have a look."
+     ]
+    }
+   ]
+  },
   "hall_keeper": {
    "name": "Keeper Brann",
    "lines": [

@@ -42,10 +42,18 @@ import forge.view.TimeLimitedCodeBlock;
  *
  *   java -cp rpg_tools.jar:forge.jar forge.rpgtools.Duels PAIRS.tsv OUT.jsonl [TIMEOUT_SECONDS]
  *
- * PAIRS.tsv: one pairing a line, "id TAB deckA.dck TAB deckB.dck TAB games TAB seed". The two seats are named "A" and "B" (their
+ * PAIRS.tsv: one pairing a line, "id TAB deckA.dck TAB deckB.dck TAB games TAB seed [TAB startA]". The two seats are named "A" and "B" (their
  * own AI each, Forge's default profile), 20 life, Forge's Constructed rules - what the RPG's duels play (formats "standard").
  * OUT.jsonl gets one line a game: {"id", "game", "winner": "A"|"B"|"draw", "first": "A"|"B"|null, "turns", "ms"}, written and
  * flushed as each game ends, so a run that is stopped keeps what it played.
+ *
+ * Round PROG3: startA (optional) is seat A's start effects, the bridge's --start-effects SPEC (life, hand, battlefield, command -
+ * the Adventure's levels and perks), applied through Forge's own RegisteredPlayer fields as the bridge does (forge.bridge.StartEffects;
+ * StartEffects below is its copy - rpg_tools.jar doesn't load the bridge). Seat B never gets any. A bad SPEC is an "error" line.
+ *
+ * Round RPG-SOAK1: PAIRS.tsv "-" reads the pairings from standard input instead, one line at a time, and plays each as soon as it
+ * arrives (tools/rpg_soak.py keeps one Java start open for a whole run of the Adventure, so each duel costs a game, not Forge's
+ * start-up). End of input ends the program.
  */
 public final class Duels {
 
@@ -63,6 +71,26 @@ public final class Duels {
         FModel.initialize(null, null);
         FModel.getPreferences().setPref(FPref.UI_ENABLE_SOUNDS, false);
         FModel.getPreferences().setPref(FPref.UI_ENABLE_MUSIC, false);
+        if ("-".equals(args[0])) {           // Round RPG-SOAK1: pairings from standard input, as they come
+            try (Writer w = new OutputStreamWriter(new FileOutputStream(args[1], true), StandardCharsets.UTF_8);
+                 BufferedReader in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    if (line.isBlank() || line.startsWith("#")) {
+                        continue;
+                    }
+                    String[] p = line.split("\t");
+                    try {
+                        play(w, p[0], p[1], p[2], Integer.parseInt(p[3]), Long.parseLong(p[4]), timeout,
+                             p.length > 5 ? p[5] : null);   // merge: PROG3's seat-A start effects here too
+                    } catch (Exception e) {
+                        w.write("{\"id\": " + RpgData.q(p[0]) + ", \"error\": " + RpgData.q(String.valueOf(e)) + "}\n");
+                        w.flush();
+                    }
+                }
+            }
+            System.exit(0);
+        }
         List<String[]> pairs = new ArrayList<>();
         try (BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), StandardCharsets.UTF_8))) {
             String line;
@@ -74,13 +102,13 @@ public final class Duels {
         }
         try (Writer w = new OutputStreamWriter(new FileOutputStream(args[1], true), StandardCharsets.UTF_8)) {
             for (String[] p : pairs) {
-                play(w, p[0], p[1], p[2], Integer.parseInt(p[3]), Long.parseLong(p[4]), timeout);
+                play(w, p[0], p[1], p[2], Integer.parseInt(p[3]), Long.parseLong(p[4]), timeout, p.length > 5 ? p[5] : null);
             }
         }
         System.exit(0);                  // Forge's model leaves non-daemon threads behind
     }
 
-    static void play(Writer w, String id, String a, String b, int games, long seed, int timeout) throws Exception {
+    static void play(Writer w, String id, String a, String b, int games, long seed, int timeout, String startA) throws Exception {
         Deck da = DeckSerializer.fromFile(new File(a));
         Deck db = DeckSerializer.fromFile(new File(b));
         if (da == null || db == null) {
@@ -92,6 +120,15 @@ public final class Duels {
         List<RegisteredPlayer> players = new ArrayList<>();
         RegisteredPlayer ra = new RegisteredPlayer(da);
         ra.setPlayer(GamePlayerUtil.createAiPlayer("A", 0));
+        if (startA != null && !startA.isBlank()) {
+            try {
+                StartEffects.parse(startA).applyTo(ra);       // round PROG3: seat A's levels and perks
+            } catch (IllegalArgumentException e) {
+                w.write("{\"id\": " + RpgData.q(id) + ", \"error\": " + RpgData.q("bad start effects: " + e.getMessage()) + "}\n");
+                w.flush();
+                return;
+            }
+        }
         RegisteredPlayer rb = new RegisteredPlayer(db);
         rb.setPlayer(GamePlayerUtil.createAiPlayer("B", 1));
         players.add(ra);

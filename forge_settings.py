@@ -23,7 +23,7 @@ from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, WHITE, clip_text, draw_text, rou
 
 class SettingsPopup(Dialog):
     """Hangs under the cog, in four groups. DISPLAY: text size and card size (round UI7, one row), the table background (Round AD1), full screen and animations (the last two are on/off switches that stay
-    put while you flip them). GAME: Speed (round PRI1: Fast | Slow), New game... and Concede... (each of the last two opens a small
+    put while you flip them). GAME: Speed (round PRI1: Fast | Slow), New game... and Quit... (each of the last two opens a small
     window that asks what exactly). HELP: controls and
     help, bug or idea (Round FR1: the report window has a Suggest a feature tab), licences, the data folder, and the tour of the
     table (Round UX1). Anything outside it (or Esc) closes it."""
@@ -141,10 +141,10 @@ class SettingsPopup(Dialog):
         self.button(gui, pygame.Rect(x, y, third, row_h), f"Speed: {gui.speed_label()}", "speed", True,
                     primary=gui.speed == "slow", fkey="small")
         self.button(gui, pygame.Rect(x + third + gap, y, third, row_h), "New game...", "newgame", True, fkey="small")
-        concede = pygame.Rect(x + 2 * (third + gap), y, inner - 2 * (third + gap), row_h)
-        self.button(gui, concede, "Concede...", "concede", gui.game_in_progress(), fkey="small")
-        if gui.game_in_progress():
-            pygame.draw.rect(scr, gfx.RED, concede, 2, border_radius=10)      # the one button that gives something up
+        quit_r = pygame.Rect(x + 2 * (third + gap), y, inner - 2 * (third + gap), row_h)
+        # bug-1566939794272161812 (Karl, 3 Nov 2026: "One Quit... button"): Concede... became Quit... - main menu or desktop, and
+        # with a game going on, keep it for later or concede it (ForgeTable.ask_quit). Always on: there is always somewhere to go.
+        self.button(gui, quit_r, "Quit...", "quit", True, fkey="small")
         y += row_h + gap
         heading("HELP")
         self.button(gui, pygame.Rect(x, y, half, row_h), "Controls   (H)", "help", True, fkey="small")
@@ -244,8 +244,8 @@ class SettingsPopup(Dialog):
             gui.overlay = None
             if name == "newgame":
                 gui.ask_new_game()
-            elif name == "concede":
-                gui.ask_concede()
+            elif name == "quit":
+                gui.ask_quit()
             elif name == "help":
                 gui.open_help()
             elif name == "report":

@@ -128,6 +128,8 @@ class MapView:
         self.dark_tiles = []                       # Round RPG14: the map's dark zones still dark [(c0, r0, c1, r1)] (rpg_screens)
         self.lit = True                            # Round RPG15: the Adventure's Light setting; False = the plain art
         self.flags = ()                            # ... the story flags set (a light with a flag burns once it is set)
+        self.held = ()                             # Round GOLD1: the spots of the foes that hold your gold (a coin by each)
+        self.coin_rects = {}                       # ... where each coin was drawn last frame, by spot (map canvas pixels)
         self.flicker = True                        # ... flames flicker (Animations on)
         self.darkness = None                       # ... how dark it is now (rpg_screens: the clock's); None = the map's own
 
@@ -146,7 +148,7 @@ class MapView:
             self.cache[key] = surf
         return surf
 
-    def draw(self, screen, camera, walker=None, encounters=(), now=0.0, people=()):
+    def draw(self, screen, camera, walker=None, encounters=(), now=0.0, people=(), chests=()):
         """Round RPG11: the view is drawn at the map's own pixel size on a canvas (the camera stops on whole map pixels, so
         nothing is lost) and the canvas is scaled up by the zoom once - as pixel-art games do. Drawing every tile at the
         screen's size took about 15 ms a frame at 4096 x 2160, a dark map's light 30 more; this way both are a few ms."""
@@ -156,7 +158,7 @@ class MapView:
         flat.x, flat.y = camera.x, camera.y
         canvas = self._surface("canvas", (cw, ch))
         canvas.fill(gfx.BACKDROP)
-        self._draw_map(canvas, flat, walker, encounters, now, people)
+        self._draw_map(canvas, flat, walker, encounters, now, people, chests)
         if screen.get_size() != (camera.view_w, camera.view_h):
             screen.fill(gfx.BACKDROP)
         if z == 1:
@@ -177,13 +179,15 @@ class MapView:
             self.cache[key] = surf
         return surf
 
-    def _draw_map(self, screen, camera, walker, encounters, now, people=()):
+    def _draw_map(self, screen, camera, walker, encounters, now, people=(), chests=()):
         a = self.area
         layers = [ly for ly in a.map.layers if ly.visible and ly.name.lower() != "collision"]
         above = [ly for ly in layers if is_above(ly)]
         for layer in layers:
             if layer not in above:
                 self._draw_layer(screen, camera, layer, now)
+        for t, opened, daily in chests:                 # Round PROG2: treasure chests, on the ground under everyone
+            self.draw_chest(screen, camera, t, opened, daily)
         stand = [(f.box[3], 0, f) for f in encounters]
         for p in people:                       # Round RPG16: a person who comes and goes, drawn while there (not on a layer)
             row = p["pos"][1] if p.get("pos") is not None else p["tile"][1]     # Round RPG17: a person walking, where they are
@@ -212,6 +216,22 @@ class MapView:
         for f in encounters:                            # Round RPG16: a rare foe's gold ring, over the night so it shows in it
             if getattr(getattr(f, "t", f), "rare", None):
                 self.draw_rare_ring(screen, camera, f)
+        self.coin_rects = {}
+        if self.held:                                   # Round GOLD1: a coin by a foe that holds your gold, over the night too
+            for f in encounters:
+                if getattr(f, "spot", None) in self.held:
+                    self.draw_held_coin(screen, camera, f)
+
+    def draw_chest(self, screen, camera, t, opened, daily):
+        """Round PROG2: a chest, closed or open, at its box's top left (one tile)."""
+        x0, y0, x1, y1 = t.box
+        x, y = camera.to_screen(round(x0), round(y0))
+        pic = chest_sprite(opened, daily, camera.zoom)
+        if pic is not None:
+            screen.blit(pic, (x, y))
+            return
+        w = self.area.tw * camera.zoom                                       # no picture: a plain box in the gold colour
+        pygame.draw.rect(screen, gfx.DB_GOLD, (x + w // 6, y + w // 4, w * 2 // 3, w // 2), 0 if not opened else max(1, w // 8))
 
     def draw_rare_ring(self, screen, camera, t):
         """Round RPG16: the gold ring round a rare foe's feet (gfx.RARE_RING), drawn after the darkness."""
@@ -219,6 +239,19 @@ class MapView:
         fx, fy = camera.to_screen(round((x0 + x1) / 2), round(y1))
         w = self.area.tw * camera.zoom
         pygame.draw.ellipse(screen, gfx.RARE_RING, (fx - w * 0.5, fy - w * 0.2, w, w * 0.4), max(1, camera.zoom))
+
+    def draw_held_coin(self, screen, camera, t):
+        """Round GOLD1: a small gold coin at the top right of a foe that holds your gold (drawn in code: a rim, the coin, a
+        notch). self.coin_rects: where each went, by spot (for the tests)."""
+        x0, y0, x1, y1 = t.box
+        w = self.area.tw * camera.zoom
+        r = max(2, int(w * 0.2))
+        cx, cy = camera.to_screen(round(x1), round(y0))
+        cx, cy = int(cx - r * 0.4), int(cy - w * 0.35)
+        pygame.draw.circle(screen, gfx.HELD_COIN_EDGE, (cx, cy), r + max(1, camera.zoom))
+        pygame.draw.circle(screen, gfx.HELD_COIN, (cx, cy), r)
+        pygame.draw.line(screen, gfx.HELD_COIN_EDGE, (cx, cy - r // 2), (cx, cy + r // 2), max(1, camera.zoom))
+        self.coin_rects[t.spot] = pygame.Rect(cx - r, cy - r, 2 * r, 2 * r)
 
     def _draw_layer(self, screen, camera, layer, now):
         a, z = self.area, camera.zoom
@@ -451,6 +484,31 @@ class Sprites:
         half = (int(now * 1000) // tmx.FRAME_MS) % 2               # DawnLike's 2-frame idle: the pair of sheets
         col, row = k["cell"]
         return self._cut(("foe", kind, half, zoom), f"{k['sheet']}{half}.png", col, row, zoom)
+
+
+CHEST_FILE = os.path.join(paths.assets_dir(), "rpg", "chests", "chests_16x16.png")    # Round PROG2: CC0, Blarumyrran
+CHEST_KEY = gfx.CHEST_KEY         # the sheet's green background (no alpha channel in the file): drawn as see-through
+CHEST_ROWS = {False: 0, True: 2}  # the wooden chest for a one-time chest, the iron one for a daily chest
+_CHESTS = {}
+
+
+def chest_sprite(opened, daily, zoom):
+    """Round PROG2: a treasure chest's picture (assets/rpg/chests/chests_16x16.png: column 1 closed, column 0 open), or None when
+    the file can't be read (the view then draws a plain box)."""
+    key = (bool(opened), bool(daily), zoom)
+    if key not in _CHESTS:
+        try:
+            sheet = _CHESTS.get("sheet")
+            if sheet is None:
+                sheet = _CHESTS["sheet"] = pygame.image.load(CHEST_FILE)
+            surf = sheet.subsurface(pygame.Rect(0 if opened else 16, 16 * CHEST_ROWS[bool(daily)], 16, 16)).copy()
+            surf.set_colorkey(CHEST_KEY)
+            if zoom != 1:
+                surf = pygame.transform.scale(surf, (16 * zoom, 16 * zoom))
+            _CHESTS[key] = surf
+        except (pygame.error, FileNotFoundError, OSError):
+            _CHESTS[key] = None
+    return _CHESTS[key]
 
 
 def wrap(text, font, width, most=3):

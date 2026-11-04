@@ -42,7 +42,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_reports", "my_decks", "my_art", "mpc_art", "deck_art", "saves", "stats", "rpg_saves",
-                   "Claude outputs", "backups", "soak_runs",
+                   "Claude outputs", "backups", "soak_runs", "rpg_soak_runs",
                    "docs", ".github",                      # Round PUB1: Karl's working notes; his own CI (see the docstring)
                    "build", "dist", "installer_out",      # Round 29: the installer build holds the bundled Discord webhook
                    "net",                                  # Round MP1: the online host's private key

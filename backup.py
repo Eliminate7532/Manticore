@@ -41,8 +41,8 @@ SNAP_PREFIX = "commander_sim"
 KEEP_ALL_DAYS = 3                                 # every local zip from the last 3 days is kept
 KEEP_DAILY_DAYS = 90                              # then the newest zip of each day, until 90 days, then they are removed
 SNAPSHOT_MAX_FILE = 50 * 1024 * 1024              # a file bigger than this is left out of the zip (and reported)
-TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_reports", "soak_runs",
-                  "build", "dist", "installer_out", "net", ".worktrees"}       # .worktrees: the sessions' desks (Round PAR1, tools/desk.py) - each a whole copy of the project; their work reaches GitHub as their own branches; rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
+TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_reports", "soak_runs", "rpg_soak_runs",
+                  "build", "dist", "installer_out", "net", ".worktrees"}       # .worktrees: the sessions' desks (Round PAR1, tools/desk.py) - each a whole copy of the project; their work reaches GitHub as their own branches; rebuilt or downloaded again (forge_bundle: kept separately); bug_reports: other people's data; soak_runs: tools\soak.py's own output (Round 28b), can be large; rpg_soak_runs: tools\rpg_soak.py's (Round RPG-SOAK1); net: the online host's private key (Round MP1); build/ dist/ installer_out/: the Round 29 installer build, which holds the bundled Discord webhook and must never be committed or backed up
 ANYWHERE_SKIP = {"__pycache__", ".git"}
 SKIP_FILES = {"forge_engine.log", "forge_engine.prev.log", "forge_engine.crashed.log", "forge_engine.rewind.log", "forge_engine.rewind.prev.log", "session.json", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
               "connection_log.txt", "connection_log.1.txt", "connection_log.2.txt", "connection_log.3.txt",   # round NETLOG1: IP addresses
@@ -546,6 +546,8 @@ def backup(folder, message=None, auto=False, name=None, email=None):
     # (round-27a's convention), and pushing a hardcoded BRANCH would silently push a stale main instead,
     # leaving the round's commits stuck on this PC only. --follow-tags carries any tag made on this branch.
     code, out = git(["push", "-u", "origin", "HEAD", "--follow-tags"], folder, check=False, timeout=300)
+    if code != 0 and behind_remote(out) and catch_up(folder):
+        code, out = git(["push", "-u", "origin", "HEAD", "--follow-tags"], folder, check=False, timeout=300)
     if code != 0:
         say(out.strip())
         raise BackupError(explain_push_failure(out, url))
@@ -554,6 +556,41 @@ def backup(folder, message=None, auto=False, name=None, email=None):
     desks = push_desk_branches(folder)
     push_round_branches(folder, skip=desks)
     return 0
+
+
+def behind_remote(push_output):
+    """True when a push was refused only because GitHub's copy of the branch has commits this PC doesn't."""
+    low = push_output.lower()
+    return any(k in low for k in ("fetch first", "non-fast-forward", "[rejected]")) and "unrelated histories" not in low
+
+
+def catch_up(folder):
+    """Round BUG1 (2 Nov 2026): Claude's task-list workers may now push small bug fixes to main on GitHub, so GitHub's main can be
+    ahead of this PC's. Bring those commits in and put this PC's own (unpushed) commits on top, so the push that follows works.
+    Only on a branch with nothing left uncommitted (backup() has just committed everything); on any clash nothing changes here:
+    the rebase is undone and False comes back (the push then fails as before, with its usual message)."""
+    code, branch = git(["rev-parse", "--abbrev-ref", "HEAD"], folder, check=False)
+    branch = branch.strip()
+    if code != 0 or not branch or branch == "HEAD":
+        return False
+    if git(["status", "--porcelain", "--untracked-files=no"], folder, check=False)[1].strip():
+        return False
+    code, out = git(["fetch", "-q", "origin", branch], folder, check=False, timeout=300)
+    if code != 0:
+        return False
+    if git(["merge-base", "HEAD", "FETCH_HEAD"], folder, check=False)[0] != 0:
+        return False                         # an unrelated history (e.g. a repository created on GitHub with a README): never mixed in
+    before = git(["rev-parse", "--short", "HEAD"], folder)[1].strip()
+    code, n = git(["rev-list", "--count", "HEAD..FETCH_HEAD"], folder, check=False)
+    code, out = git(["rebase", "-q", "FETCH_HEAD"], folder, check=False, timeout=300)
+    if code != 0:
+        git(["rebase", "--abort"], folder, check=False)
+        say("GitHub's %s has new commits that clash with this PC's changes; nothing was changed here (still at %s). "
+            "Tell Claude." % (branch, before))
+        return False
+    say("GitHub's %s had %s new commit(s) this PC didn't (a fix pushed from elsewhere); took them, with this PC's changes on top."
+        % (branch, n.strip() or "?"))
+    return True
 
 
 def desk_branches(folder):

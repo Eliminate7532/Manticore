@@ -371,11 +371,22 @@ class WalkTests(unittest.TestCase):
                     s2.stable_rng = lambda *parts: None                      # a save's rolls (the patched roll answers)
                     self.enterContext(mock.patch.object(rare_mod, "roll", return_value=0.0))   # every rare comes out
                     ex2.refresh(force=True)
+                if t.kind == "town":
+                    # Bug 1566241279598264410 (expected change, Karl 3 Nov 2026 "Visible stall"): the outskirts' shops are stalls -
+                    # walked up to, then opened by talking to the keeper across the counter (as Lantern Hollow's, RPG15b)
+                    a2 = ex2.area
+                    front = a2.tile_at(*a2.spawn(t.town))
+                    self.assertEqual(route.walk_to_tile(ex2, front, limit=20000)[0], [])
+                    counter = tile_of(a2, t)
+                    ex2.walker.facing = {(0, -1): "up", (0, 1): "down", (-1, 0): "left", (1, 0): "right"}[
+                        (counter[0] - front[0], counter[1] - front[1])]
+                    self.assertEqual(getattr(ex2.facing_shop(), "town", None), t.town)
+                    continue
                 foe = ex2.foes.get(t.spot)
                 goal = (lambda: ex2.area.tile_at(foe.x, foe.y)) if foe else tile_of(ex2.area, t)
                 events = route.walk_to_tile(ex2, goal, limit=20000)[0]
                 self.assertEqual(len(events), 1, events)
-                self.assertEqual(events[0][0], "encounter" if t.kind == "encounter" else "town")
+                self.assertEqual(events[0][0], "encounter")
 
 
 # ---- the town's counters ------------------------------------------------------------------------------------------------------

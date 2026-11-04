@@ -30,6 +30,7 @@ import forge.game.GameFormat;
 import forge.gui.GuiBase;
 import forge.item.PaperCard;
 import forge.item.SealedTemplate;
+import forge.item.SealedTemplateWithSlots;
 import forge.item.generation.BoosterGenerator;
 import forge.localinstance.properties.ForgePreferences.FPref;
 import forge.model.FModel;
@@ -42,6 +43,8 @@ import forge.util.MyRandom;
  *
  *   java -cp forge.jar:rpg_tools.jar forge.rpgtools.RpgData archetypes OUT.json Vintage Legacy ...
  *   java ... RpgData boosters OUT.json SEED COUNT SET [SET ...]
+ *   java ... RpgData premium OUT.json SEED COUNT SET [SET ...]   (Round PACK1: the set's own template with 3 commons fewer,
+ *                                                               2 uncommons and 1 rare/mythic more - e.g. 7 C, 5 U, 2 R, 1 land)
  *   java ... RpgData decks OUT.json SEED FORMAT COUNT [ARCHETYPE-NAME ...]   (no names: every archetype Forge keeps)
  *   java ... RpgData catalogue OUT.json
  *
@@ -66,6 +69,7 @@ public final class RpgData {
             switch (cmd) {
                 case "archetypes" -> archetypes(w, rest(args, 2));
                 case "boosters" -> boosters(w, Long.parseLong(args[2]), Integer.parseInt(args[3]), rest(args, 4));
+                case "premium" -> premium(w, Long.parseLong(args[2]), Integer.parseInt(args[3]), rest(args, 4));
                 case "decks" -> decks(w, Long.parseLong(args[2]), args[3], Integer.parseInt(args[4]), rest(args, 5));
                 case "catalogue" -> catalogue(w);
                 default -> usage();
@@ -75,7 +79,7 @@ public final class RpgData {
     }
 
     static void usage() {
-        System.err.println("usage: RpgData archetypes OUT FORMAT... | boosters OUT SEED COUNT SET... | decks OUT SEED FORMAT COUNT [NAME...]"
+        System.err.println("usage: RpgData archetypes OUT FORMAT... | boosters OUT SEED COUNT SET... | premium OUT SEED COUNT SET... | decks OUT SEED FORMAT COUNT [NAME...]"
                 + " | catalogue OUT");
     }
 
@@ -154,6 +158,74 @@ public final class RpgData {
                 boolean firstC = true;
                 for (PaperCard c : pack) {
                     w.write((firstC ? "" : ", ") + card(c));
+                    firstC = false;
+                }
+                w.write("]");
+            }
+            w.write("]}");
+        }
+        w.write("\n}}\n");
+    }
+
+    // ---- premium packs (Round PACK1): the set's own booster template, re-weighted ----------------------------------------
+
+    static final int PREMIUM_COMMON = -3, PREMIUM_UNCOMMON = 2, PREMIUM_RARE = 1;
+
+    /** The set's template with its first Common slot 3 fewer, its first Uncommon slot 2 more and its first Rare / RareMythic
+     *  slot 1 more (same size); null when the template has no such slots. */
+    static SealedTemplate premiumTemplate(CardEdition ed) {
+        SealedTemplate tpl = ed.getBoosterTemplate();
+        List<Pair<String, Integer>> slots = new ArrayList<>();
+        boolean c = false, u = false, r = false;
+        for (Pair<String, Integer> s : tpl.getSlots()) {
+            String kind = s.getKey().split(":", 2)[0].trim();
+            int n = s.getValue();
+            if (!c && kind.equals("Common")) {
+                n = Math.max(0, n + PREMIUM_COMMON);
+                c = true;
+            } else if (!u && kind.equals("Uncommon")) {
+                n += PREMIUM_UNCOMMON;
+                u = true;
+            } else if (!r && (kind.equals("RareMythic") || kind.equals("Rare"))) {
+                n += PREMIUM_RARE;
+                r = true;
+            }
+            slots.add(Pair.of(s.getKey(), n));
+        }
+        if (!(c && u && r)) {
+            return null;
+        }
+        if (tpl instanceof SealedTemplateWithSlots ws) {       // e.g. Foundations' "Common-Guest": the set's own named slots
+            return new SealedTemplateWithSlots(tpl.getEdition(), slots, new ArrayList<>(ws.getNamedSlots().values()));
+        }
+        return new SealedTemplate(tpl.getEdition(), slots);
+    }
+
+    static void premium(Writer w, long seed, int count, List<String> sets) throws Exception {
+        initForge(seed);
+        w.write("{\"seed\": " + seed + ", \"sets\": {");
+        boolean firstS = true;
+        for (String code : sets) {
+            w.write((firstS ? "" : ",") + "\n " + q(code) + ": ");
+            firstS = false;
+            CardEdition ed = StaticData.instance().getEditions().get(code);
+            if (ed == null || !ed.hasBoosterTemplate()) {
+                w.write("{\"error\": " + q(ed == null ? "unknown set" : "no booster") + "}");
+                continue;
+            }
+            SealedTemplate tpl = premiumTemplate(ed);
+            if (tpl == null) {
+                w.write("{\"error\": " + q("no Common, Uncommon and Rare slots in " + ed.getBoosterTemplate()) + "}");
+                continue;
+            }
+            w.write("{\"name\": " + q(ed.getName()) + ", \"template\": " + q(String.valueOf(tpl)) + ", \"packs\": [");
+            for (int i = 0; i < count; i++) {
+                List<PaperCard> pack = tpl instanceof SealedTemplateWithSlots ws
+                        ? BoosterGenerator.getBoosterPack(ws) : BoosterGenerator.getBoosterPack(tpl);
+                w.write((i == 0 ? "" : ",") + "\n  [");
+                boolean firstC = true;
+                for (PaperCard pc : pack) {
+                    w.write((firstC ? "" : ", ") + card(pc));
                     firstC = false;
                 }
                 w.write("]");

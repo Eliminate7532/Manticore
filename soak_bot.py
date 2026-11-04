@@ -34,6 +34,7 @@ CONFIRM_REPEAT_CAP = 4      # round SB4: the same yes/no question back this ofte
 PLAY_LAND = "Play land"     # round SB2: Forge's label for a land's own "play it" ability ("Play land (Silundi Isle)" for an MDFC)
 PLAY_LAND_SHARE = 0.9       # round SB2: how often the bot takes it when a land's click asks "Choose an ability"
 MULLIGAN_WORDS = ("mulligan", "coin toss")
+ATTACK_PLAN_CAP = 40       # round ENG-SOAKATTACK: at most this many declarations tried after Alpha Strike was refused
 
 
 def _playable(card):
@@ -547,6 +548,97 @@ class SoakBot:
                 return True
         return False
 
+    @staticmethod
+    def _attack_defenders(state, me, prompt):
+        """Round ENG-SOAKATTACK: who my creatures could be declared against - the opponents still in the game, then their
+        planeswalkers and battles - with the one the attack question names now (Forge's "current defender") last."""
+        out = []
+        for p in state.get("players") or []:
+            if p.get("id") == me.get("id") or p.get("lost"):
+                continue
+            out.append(("player", p.get("id"), p.get("name") or ""))
+        for p in state.get("players") or []:
+            if p.get("id") == me.get("id") or p.get("lost"):
+                continue
+            for c in (p.get("zones") or {}).get("battlefield") or []:
+                if c.get("controller", p.get("id")) == me.get("id"):
+                    continue
+                if c.get("isPlaneswalker") or "Battle" in (c.get("type") or ""):
+                    out.append(("card", c.get("id"), c.get("name") or ""))
+        msg = prompt.get("message") or ""
+        now = [d for d in out if SoakBot._names_defender(msg, d[2])]
+        return [d for d in out if d not in now] + now
+
+    @staticmethod
+    def _names_defender(msg, name):
+        """True when the attack question says it is declaring against this player or permanent ("Select creatures to
+        attack AI 1 (opp1) or select player/card you wish to attack.")."""
+        return bool(name) and (("attack %s or " % name) in msg or msg.rstrip(".").endswith("attack %s" % name))
+
+    def _refused_attack_plans(self, state, me, prompt):
+        """Round ENG-SOAKATTACK (CD5's online draft soak 3, draft 3, 28 Oct: Lee's bot sent OK / Alpha Strike / Call Back for
+        ~10 minutes and Forge answered "Attack declaration invalid" each time). Forge refuses a declaration that leaves an
+        attack requirement unmet that could be met: a goaded creature must attack a player other than its goader (Disrupt
+        Decorum, Vengeful Ancestor, Grenzo... are in the Commander Cube), Trove of Temptation's opponents must attack its
+        controller, a Bident of Thassa makes everything attack. Alpha Strike declares every creature against the CURRENT
+        defender only (the first opponent when the question opens), so with the requirement pointing at another player no
+        number of Alpha Strikes is ever valid - nor is the empty declaration. These are the declarations that can be: no
+        attackers; everything at each defender in turn (other defenders first); each creature alone at each defender. Each is
+        a list of steps; _refused_attack_plan_move sends them one at a time and moves to the next plan at the next refusal."""
+        battlefield = (me.get("zones") or {}).get("battlefield") or []
+        creatures = [c.get("id") for c in battlefield
+                     if c.get("isCreature") and not c.get("tapped") and (_playable(c) or c.get("attacking"))]
+        defenders = self._attack_defenders(state, me, prompt)
+        plans = [("none", ["clear", "ok"])]
+        for d in defenders:
+            plans.append((("all", d[1]), ["clear", ("defend", d), "alpha", "ok"]))
+        for d in defenders:
+            for cid in creatures:
+                plans.append((("one", d[1], cid), ["clear", ("defend", d), ("attack", cid), "ok"]))
+        return plans[:ATTACK_PLAN_CAP]
+
+    def _refused_attack_plan_move(self, state, me, prompt, mem, turn, refused):
+        """One step of the plan for this refusal (see _refused_attack_plans). The plans are made once a turn; refusal n
+        (n >= 2) uses plan n - 2, going round again when every plan was refused, so two refusals in a row are never for the
+        same declaration. A step that is already true (nothing to call back, the defender already chosen, the creature
+        already attacking) is skipped."""
+        book = mem.get("soak_attack_plans")
+        if not book or book.get("turn") != turn:
+            book = mem["soak_attack_plans"] = {"turn": turn, "plans": self._refused_attack_plans(state, me, prompt),
+                                               "refusal": None, "step": 0}
+        plans = book["plans"]
+        if book["refusal"] != refused:
+            book["refusal"], book["step"] = refused, 0
+            book["plan"] = plans[(refused - 2) % len(plans)]
+            book.setdefault("tried", []).append(book["plan"][0])
+        ok = prompt.get("ok") or {}
+        cancel = prompt.get("cancel") or {}
+        label = (cancel.get("label") or "").lower()
+        msg = prompt.get("message") or ""
+        battlefield = (me.get("zones") or {}).get("battlefield") or []
+        steps = book["plan"][1]
+        while book["step"] < len(steps):
+            step = steps[book["step"]]
+            book["step"] += 1
+            if step == "clear":
+                if cancel.get("enabled") and "call back" in label:
+                    return ("cancel",)
+            elif step == "alpha":
+                if cancel.get("enabled") and "alpha" in label:
+                    return ("cancel",)
+            elif step == "ok":
+                book["step"] -= 1                       # the last step: OK again until Forge answers it
+                return ("ok",) if ok.get("enabled") else None
+            elif step[0] == "defend":
+                kind, did, name = step[1]
+                if not self._names_defender(msg, name):
+                    return ("player", did) if kind == "player" else ("click", did)
+            elif step[0] == "attack":
+                card = next((c for c in battlefield if c.get("id") == step[1]), None)
+                if card and not card.get("attacking") and not card.get("tapped") and _playable(card):
+                    return ("click", step[1])
+        return ("ok",) if ok.get("enabled") else None
+
     def _attackers_move(self, state, me, prompt, mem):
         """Declare a random subset of my creatures that can attack, then OK.
         Round MP2e (found by round FB1's soaks, 3 Oct): this never ran. It waited for the prompt's "selecting" flag and
@@ -564,6 +656,9 @@ class SoakBot:
             refusals[1] += 1
             mem["soak_attackers_chosen"] = None
         ok = prompt.get("ok") or {}
+        if refusals[1] >= 2:
+            # Round ENG-SOAKATTACK: Alpha Strike was refused too.
+            return self._refused_attack_plan_move(state, me, prompt, mem, turn, refusals[1])
         if refusals[1]:
             k = (turn, refusals[1])
             cancel = prompt.get("cancel") or {}

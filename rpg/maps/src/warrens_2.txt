@@ -14,17 +14,21 @@ U = exit map=warrens_1 spawn=stairs_down on <
 B = encounter kind=grave_priest encounter=boss on +
 #! a stair up into the chapel crypt: one way, back to Lantern Hollow once the Grave Priest's hall is reached (RPG18)
 H = exit map=lantern_hollow spawn=from_outskirts on <
+[more markers]
+#! Round PROG2: treasure chests (rpg/data/progression.json chests.list) - one behind the Grave Priest, one in the cave
+C = chest id=priest_hoard on +
+V = chest id=cave_cache on ;
 [map]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%^++++++++++++++^%%
+%%%%%%%%%%%%%%%%%%%%%%^C+++++++++++++^%%
 %%%%%%%%%%%%%%%%%%%%%%++!+++nnnn+++!++%%
 %%%%%%%%%%%%%%%%%%%%%%++++++++H+++++++%%
 %%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%
 %%%%%%%%%%%%%%%%%%%%%%+++++++B++++++++%%
 %%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%
 %%%;;;;;;;;;;;;;%%%%%%++++j+++++++++++%%
-%%%;j;;;;;;;;;;;%%%%%%++++++++++++++++%%
+%%%;j;;;;;;;;;V;%%%%%%++++++++++++++++%%
 %%%;;;;;;;;;;;;;------++++++++++++++++%%
 %%%;;;;;;;;;;;;;------++!++++++++++!++%%
 %%%;;;;;;;;;;;j;%%%%%%++++++++++++++++%%

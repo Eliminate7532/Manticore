@@ -98,6 +98,9 @@ class OnlineDraftFlow(ds.DraftFlow):
                            "port": onl.TextField(str(prefs.get("port") or forge_net.DEFAULT_PORT), 5, allowed="0123456789")}
             self.password = forge_net.make_password()
             self.upnp = bool(prefs.get("upnp", True))
+            # round RLY2: through the relay by default, as Host online (the address is the one Host online uses)
+            self.relay_text = prefs.get("relay") or prefs.get("relay_default") or ""
+            self.use_relay = bool(self.relay_text) and not prefs.get("direct")
             self.focus = "name"
             # the host's program closed in the middle of an online draft: Continue it (the friends join again by name)
             try:
@@ -168,7 +171,12 @@ class OnlineDraftFlow(ds.DraftFlow):
             return
         port, _ = forge_net.validate_port(self.fields["port"].text)
         name = forge_net.clean_name(self.fields["name"].text)
-        session, error = gui.host_draft(name, port, self.password, self.upnp)
+        relay = forge_net.parse_relay(self.relay_text) if self.use_relay else None       # round RLY2
+        if isinstance(relay, str):
+            self.message = ("The relay: " + relay, RED)
+            gui.play_cue("ui.error")
+            return
+        session, error = gui.host_draft(name, port, self.password, self.upnp, **({"relay": relay} if relay else {}))
         if error:
             self.message = (error, RED)
             gui.play_cue("ui.error")
@@ -409,6 +417,9 @@ class OnlineDraftFlow(ds.DraftFlow):
         elif name == "upnp":
             self.upnp = not self.upnp
             gui.play_cue("ui.click")
+        elif name == "use_relay" and getattr(self, "relay_text", ""):         # round RLY2
+            self.use_relay = not self.use_relay
+            gui.play_cue("ui.click")
         elif name == "new_password":
             self.password = forge_net.make_password()
             gui.play_cue("ui.click")
@@ -573,9 +584,13 @@ class OnlineDraftFlow(ds.DraftFlow):
         self.button(gui, pygame.Rect(rect.x + pad + lw + body.size(self.password)[0] + int(14 * fs), y + (rh - self.bh) // 2,
                                      nw, self.bh), "New password", "new_password", True, fkey="small")
         y += rh + int(8 * fs)
-        onl.tick_box(gui, self, pygame.Rect(rect.x + pad, y, wrap_w, rh), self.upnp,
-                     "Open the port on my router automatically (UPnP)", "upnp")
-        y += rh + int(8 * fs)
+        if self.relay_text:                                    # round RLY2: the relay first, ticked by default
+            onl.tick_box(gui, self, pygame.Rect(rect.x + pad, y, wrap_w, rh), self.use_relay, onl.RELAY_TICK, "use_relay")
+            y += rh + int(8 * fs)
+        if not self.use_relay:
+            onl.tick_box(gui, self, pygame.Rect(rect.x + pad, y, wrap_w, rh), self.upnp,
+                         "Open the port on my router automatically (UPnP)", "upnp")
+            y += rh + int(8 * fs)
         if self.resume_pod is not None:
             y = self.draw_saved_box(gui, rect, y, wrap_w)
         top = self.footer(gui, rect, [("Back", "close_host", True, False)], [("Open the draft", "open_host", True, True)])
@@ -664,7 +679,8 @@ class OnlineDraftFlow(ds.DraftFlow):
                 draw_text(scr, ln, box.x + 10, yy, small, WHITE)
                 yy += small.get_height()
         else:
-            draw_text(scr, "The invite code appears here once your address is filled in.", box.x + 10, box.centery, small,
+            draw_text(scr, "The invite code appears here once the relay has opened your room." if rel is not None else
+                      "The invite code appears here once your address is filled in.", box.x + 10, box.centery, small,
                       DIM, "midleft")
         y = box.bottom + int(6 * fs)
         note = "Send the invite code only to your friends: it holds the password (%s)." % self.password

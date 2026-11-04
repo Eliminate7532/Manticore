@@ -155,6 +155,8 @@ class StyleTests(StyleBase):
                 with self.subTest(size=size, scale=scale, tab=tab):
                     f.enter_town(g, f.game.world.start_town)
                     f.tab = tab
+                    if tab == "packs":                                  # Round PACK2: a tap on a wrapper shows its Buy
+                        f.shelf_pick = f.shop.shelf()[0][:2]
                     move(g, (2, 2))
                     shown = [s for s, _f, _c, _r in self.drawn(g)]
                     names = [n for _r, n in f.buttons]
@@ -162,8 +164,13 @@ class StyleTests(StyleBase):
                     self.assertIn("town_deck", names)
                     rows = shown.count(label)                                # one button with this label on each line
                     self.assertTrue(rows)
-                    priced = [s for s in shown if re.search(r"\d+ gold", s) and "Your deck" not in s]
-                    self.assertEqual(len(priced), rows, shown)               # every line's price whole, not cut to "..."
+                    priced = [s for s in shown if re.search(r"\d+ gold", s) and "Your deck" not in s
+                              and s != f"{f.game.save.gold} gold"]                   # Round GOLD1: your gold, a line of its own
+                    if tab == "packs":                                  # Round PACK2: one Buy (the picked pack's); every
+                        self.assertEqual(rows, 1, shown)                # wrapper's price and the details' price whole
+                        self.assertTrue(len(priced) >= 2 and all(re.fullmatch(r"\d+ gold", p) for p in priced), shown)
+                    else:
+                        self.assertEqual(len(priced), rows, shown)           # every line's price whole, not cut to "..."
                     f.sub = None
             self.close(g)
 

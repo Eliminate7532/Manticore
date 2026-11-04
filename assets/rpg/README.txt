@@ -28,4 +28,13 @@ simple_battles/
     Copied: all 19 pictures - 16 foes ("battlers") and 3 backdrops (scene_dungeon, scene_cave, scene_forest). The zip has no
             licence file of its own; the licence and credit are the page's.
 
-Both packs are credited in Cog > Licenses and credits and in THIRD_PARTY_NOTICES.txt (licenses/NOTICES.json).
+chests/
+    Round PROG2 (3 Nov 2026): "Treasure chests 32x32 and 16x16" by Blarumyrran - only its 16 x 16 sheet, chests_16x16.png.
+    Licence: CC0 1.0 (public domain dedication), licenses/texts/CC0-1.0.txt.
+    Page: https://opengameart.org/content/treasure-chests-32x32-and-16x16
+    File: https://opengameart.org/sites/default/files/chests_16x16.png
+          SHA-256 8f22dba30860bf4d195574fcf487e585b7651b5f08d8665f9a6ad9a4a4ad17e5 (downloaded 3 Nov 2026; copied by hand, not by
+          tools/rpg_import_art.py - MANIFEST.sha256 lists it all the same)
+    Used: column 1 closed, column 0 open; the wooden chest (row 0) for a one-time chest, the iron one (row 2) for a daily chest.
+
+All three packs are credited in Cog > Licenses and credits and in THIRD_PARTY_NOTICES.txt (licenses/NOTICES.json).

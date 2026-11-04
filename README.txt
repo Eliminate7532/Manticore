@@ -240,9 +240,13 @@ The row of little buttons that used to sit at the top right is now ONE cog. Clic
   GAME      New game...   asks what you mean: "Same decks, new shuffle" (ends the game if one is running and starts another with
                 exactly the decks you and the AI are playing now) or "Choose decks..." (the deck screen, same as Ctrl+N), or
                 "Keep playing". Without a game to repeat (nothing started from the deck screen yet) it goes straight to the deck screen.
-            Concede...    (red outline; greyed out when no game is running) asks: "Concede and stay on the table" (Forge counts it
-                as a loss; in a game with 2 or more AIs the others play on and you get "You are out" with New game / Look at the
-                board) or "Concede and close the program" (gives up AND quits in one step), or "Keep playing" (highlighted).
+            Quit...       (since 3 Nov 2026; it replaced Concede...) asks where to go: the main menu or the desktop (closes the
+                program). With a game going on, each comes as "keep for later" or "concede": keep for later leaves the game
+                unfinished, so "Resume last game" on the deck screen picks it up (an online game you host: Host online offers
+                to continue it from its save); concede gives it up (Forge counts it as a loss). An online game you joined can
+                only be left by conceding (only the host keeps it); watching one, you just stop watching. In an Adventure duel
+                "leave the duel" follows the Adventure's rule for a duel that didn't finish: it doesn't count - nothing won or
+                lost, and the foe can be fought again. "Keep playing" changes nothing.
   HELP      Controls and help; Report a bug.
 Click anywhere else, or press Esc, to close the panel. In the two windows above, Enter does nothing (so a slip cannot end your game),
 Esc is the "never mind" button, and the keys 1 and 2 press the first and second choice. The shortcuts still work without opening the
@@ -295,6 +299,20 @@ Setting up Discord (once, by Karl; friends need nothing except the config file b
      settings > Integrations) and make a new one.
   "owner_name" in that file is the name the messages use ("This sends the report to Karl's Discord channel", "Please send this file to Karl").
 Reading a report: unzip it. report.txt first (who, what, which version), then screenshot.jpg, then game_log.txt.
+Claude's workers read them too (round BUG1, 2 Nov 2026): the public repository's hourly job (.github/workflows/report_intake.yml
+there, tools/report_intake.py) reads this channel with a Discord bot and copies each new report into this repository's private
+branch claude/reports; the task list (branch claude/tasks) makes a task of each, and a worker reproduces it, writes a test and a fix,
+and either merges a small fix to main (claude/tasks small_fix.py; off until you switch "main_merges" on in claude/tasks config.json)
+or leaves a branch for you. A worker that needs you ends its run with a question: your phone is notified; answer in that session.
+  Setting up the bot (once): discord.com/developers/applications > New Application > Bot > Reset Token (copy it) and switch on
+  "Message Content Intent"; OAuth2 > URL Generator: scope "bot", permissions "View Channels" and "Read Message History"; open the
+  URL and add the bot to your server. Discord > Settings > Advanced > Developer Mode on; right-click the report channel > Copy
+  Channel ID. github.com > Settings > Developer settings > Fine-grained tokens: only Eliminate7532/commander_sim, Contents: Read
+  and write. In the PUBLIC repository: Settings > Secrets and variables > Actions > two repository secrets: DISCORD_BOT_TOKEN and
+  INTAKE_TOKEN (the GitHub token). Never paste either in chat. The bug channel's id (1551323821233934426, 2 Nov) is written in the
+  workflow itself - it is not a secret; a DISCORD_CHANNEL_IDS secret replaces it (several channels: separated by commas).
+  The bot must be able to read that channel: it is private, so in Discord > the channel > Edit Channel > Permissions add the bot
+  with View Channel and Read Message History.
 Only https://discord.com (and discordapp.com) webhook addresses are accepted, so the file cannot be pointed elsewhere.
 Ideas (Round FR1): the same window has a second tab, "Suggest a feature" - "What would you like?", "What would it help
 you do?" (optional), "Where in the game?" (optional: Table, Deck screen, Cards & rules, AI, Online, Look & sound, Other)
@@ -366,7 +384,13 @@ PLAYING A FRIEND ONLINE (Round MP1: one friend, 1v1, over the internet)
   One of you HOSTS: the game runs on the host's PC. The other JOINS from their own copy. Each of you plays the deck chosen as
   "your deck" on the deck screen, and each sees only what their own player may see (the other hand and both libraries stay
   hidden). The connection is encrypted (TLS 1.3) and needs the game password.
-  A. The normal way (a direct connection):
+  THE RELAY IS THE DEFAULT (Round RLY2): Host online (and Draft with friends) has "Connect through the relay" ticked, with the
+  relay's address already filled in (relay_config.json next to the program). Both of you only connect OUT to the relay, so it
+  works on any internet connection, including providers that share one address between customers (CGNAT) - press Host, then
+  Copy invite code. Untick it to host directly instead (parts A-C below). The game stays encrypted end to end; the relay only
+  passes the bytes on. Your choice is remembered; a relay address you type yourself is kept, the default one is not (so when
+  the relay moves, an update brings the new address).
+  A. A direct connection (relay unticked):
      1. Host: deck screen > choose your deck > Host online. Type your name. Leave "Try to open my router port automatically"
         ticked. Press Host.
      2. Read the line under "Hosting a game":
@@ -394,9 +418,10 @@ PLAYING A FRIEND ONLINE (Round MP1: one friend, 1v1, over the internet)
   Every friend uses the same invite code. The game starts when the last friend has joined; until then the Host screen counts
   them, and a friend who closes their game before the start frees their seat again. In a game of three or four, a player who
   leaves (or doesn't come back after a dropped connection) is out of the game and the others play on.
-  Through a relay (Round MP2d, only when part A and part C are both impossible): a relay is a small program on a server that
-  both of you can reach (relay\README.txt). Host online > tick "Connect through a relay" > type its address:port. The invite
-  code then points your friends at the relay; the game stays encrypted end to end. No relay is set up anywhere yet.
+  Through a relay (Round MP2d; the default since Round RLY2): a relay is a small program on a server that both of you can reach
+  (relay\README.txt). The invite code points your friends at the relay; the game stays encrypted end to end. Manticore's own
+  relay runs on an Oracle Cloud server (2 Nov 2026); its address is in relay_config.json. To use another relay, type its
+  address:port in Host online's Relay box.
   If the connection drops (Wi-Fi gone for a moment, a router restart), the friend's game reconnects by itself: both windows
   show an orange line with a countdown, and the game carries on where it was, with any question still waiting asked again.
   The host keeps the friend's seat for 60 seconds; after that the friend has lost the game. (Round MP2a.)
@@ -894,7 +919,8 @@ ComputerUtilCard.java and ComputerUtil.java (the AI's combat predictions keep wh
 thinks: one attack plan for identical creatures, one "can it regenerate?" answer per creature; their
 headers and tests/test_ait2.py); from round AI-ATTACK, AiAttackController.java (the AI's attack planner
 works out what depends only on the board once per plan instead of once per attacker and blocker: its header
-and tests/test_ai_attack.py).
+and tests/test_ai_attack.py); from bug-1567033887345877012, ComputerUtilMana.java (paying mana - the AI's and
+the Auto button's - sacrifices a creature only after every other source: its header and tests/test_bug_sac_mana.py).
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
@@ -919,7 +945,8 @@ the file, if anything it would copy holds a Discord webhook address or this PC's
     git init -b main  &&  git add -A  &&  git commit -m "Manticore <version>"
     git remote add origin https://github.com/<owner>/manticore.git  &&  git push -u origin main
   Later times, copy the new export over that folder, keeping its .git (robocopy's exit codes 1-7 mean success):
-    robocopy %USERPROFILE%\Documents\manticore_export_<version> <the public folder> /MIR /XD .git
+    robocopy %USERPROFILE%\Documents\manticore_export_<version> <the public folder> /MIR /XD .git .github
+  (/XD .github keeps the public repository's own workflows - the report intake, round BUG1 - which the export leaves out.)
     then, in the public folder: git add -A  &&  git commit -m "Manticore <version>"  &&  git push
   Then build the installer (INSTALLER, below) and publish the release from the public repository:
     python tools\make_update_feed.py installer_out\Manticore-<version>-setup.exe --notes "What's new."
@@ -993,6 +1020,23 @@ To run it every night on its own (like the backup), once, in a Command Prompt - 
     schtasks /create /tn "CommanderSimNightly" /tr "cmd /c cd /d \"%USERPROFILE%\Documents\commander_sim\" && python tools\nightly.py --until 07:00" /sc daily /st 00:30
 The PC has to be awake then (Settings > System > Power: sleep "Never", or at least not before 07:00). To stop it:
     schtasks /delete /tn "CommanderSimNightly" /f
+
+ADVENTURE SOAK (round RPG-SOAK1)
+--------------------------------
+Bots play the real Adventure from a new game: they walk the maps, fight, shop and rebuild their decks, and every duel is a
+real Forge game (Forge's AI in both seats, the bot's current deck against the foe's deck the game chose); the result goes
+through the game's own code, so the gold, cards, losses and clock are the game's. It measures the economy and progression
+(gold, cards by tier, deck power, win rate per foe, duels to the boss), not bugs.
+
+    python tools\rpg_soak.py --hours 8
+    python tools\rpg_soak.py --hours 8 --numbers tools\rpg_soak_settings\option_a.json --with-built
+
+--player grinder|rusher|shopper|gambler (several allowed; default all four), --numbers FILE (a numbers.json for this run
+only; --with-built also runs the shipped one), --progression FILE (accepted; nothing reads it until the levels round),
+--runs N, --duels M (most duels a run, 60), --workers W (2; each is one Java start), --seed S, --out DIR (default
+rpg_soak_runs\run_<date>_<time>\ - not committed, not backed up). Read summary.txt's first line: VERDICT VALID or INVALID
+(with the reasons). --compare rpg_saves\duel_stats adds your own Adventure duels next to the bot's win rates. It uses
+java_rpg\rpg_tools.jar as committed (rebuilt in this round: Duels now takes its pairings one at a time).
 
 SOAK TEST (round 28b)
 ----------------------
@@ -1093,9 +1137,10 @@ FILES - new table and engine
                          payment waits while a mana ability is still being paid) and, from round AIT2, PumpAllAi,
                          ComputerUtilCard and ComputerUtil (src/forge/ai/: the AI's combat predictions keep what
                          doesn't change while it thinks) and, from round AI-ATTACK, AiAttackController (src/forge/ai/:
-                         the attack planner works out board-only answers once per plan); the game puts the bridge jar FIRST on the Java class path
+                         the attack planner works out board-only answers once per plan) and ComputerUtilMana
+                         (src/forge/ai/: a creature is sacrificed for mana only after every other source); the game puts the bridge jar FIRST on the Java class path
                          so they replace Forge's own copies. When Forge is updated, re-copy them from the new Forge
-                         and re-apply the marked changes (tests/test_patch45.py, tests/test_ait2.py and tests/test_ai_attack.py go red until
+                         and re-apply the marked changes (tests/test_patch45.py, tests/test_ait2.py, tests/test_ai_attack.py and tests/test_bug_sac_mana.py go red until
                          they are redone).
                          Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
                          and commit it with the change: the jar carries a stamp of the sources it was built from, and

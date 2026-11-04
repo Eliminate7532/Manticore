@@ -1,0 +1,12 @@
+Treasure chests 32x32 and 16x16
+===============================
+Art by Blarumyrran, on OpenGameArt.org.
+Page: https://opengameart.org/content/treasure-chests-32x32-and-16x16
+Licence (as the page states it): CC0 - Creative Commons Zero 1.0, a public domain dedication (licenses/texts/CC0-1.0.txt).
+Credit is not required by CC0; Manticore gives it anyway.
+
+The page's own words (read 3 Nov 2026): "Treasure chests, 32x32 and 16x16, with gold & gems for fillings."
+
+Manticore ships the 16 x 16 sheet unmodified (assets/rpg/chests/chests_16x16.png, downloaded 3 Nov 2026 from
+https://opengameart.org/sites/default/files/chests_16x16.png, SHA-256 8f22dba30860bf4d195574fcf487e585b7651b5f08d8665f9a6ad9a4a4ad17e5).
+The game draws its green background as see-through and scales the chests on screen; the file itself is not changed.

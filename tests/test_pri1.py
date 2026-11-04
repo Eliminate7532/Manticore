@@ -351,8 +351,8 @@ class CogTests(unittest.TestCase):
                     pop = gui.overlay
                     rects = {n: r for r, n in pop.buttons}
                     names = [n for _r, n in pop.buttons]
-                    self.assertEqual(names[names.index("speed"):names.index("speed") + 3], ["speed", "newgame", "concede"])
-                    sp, ng, co = rects["speed"], rects["newgame"], rects["concede"]
+                    self.assertEqual(names[names.index("speed"):names.index("speed") + 3], ["speed", "newgame", "quit"])
+                    sp, ng, co = rects["speed"], rects["newgame"], rects["quit"]
                     self.assertEqual(sp.y, ng.y)
                     self.assertEqual(sp.y, co.y)
                     self.assertLess(sp.right, ng.x)
@@ -360,7 +360,7 @@ class CogTests(unittest.TestCase):
                     for r in (sp, ng, co):
                         self.assertTrue(pop.rect.contains(r), r)
                     label = f"Speed: {ft.SPEED_LABELS[speed]}"
-                    for text, r in ((label, sp), ("New game...", ng), ("Concede...", co)):
+                    for text, r in ((label, sp), ("New game...", ng), ("Quit...", co)):
                         self.assertLessEqual(gui.button_width(text, "small"), r.w, (text, r))
 
     def test_the_pop_up_still_fits_the_window(self):

@@ -1,0 +1,37 @@
+# Round RLY1: a GitHub runner joins a game a real PC hosts, as a friend would - over the internet, or through a relay.
+# For the PUBLIC repository (github.com/Eliminate7532/Manticore), where standard runners are free; copy it to
+# .github/workflows/ on a claude/net-test* branch there. A push to that branch starts it (a push that only changes ci_drop/
+# does not). The invite code - the host's address and the game's password - reaches the runner encrypted to a key made by
+# this run alone, and the results go back encrypted to ci_drop/operator.pub (tools/ci_drop.py); the log masks the address
+# and the password. The run waits up to 60 minutes for each invite and plays up to 8 of them.
+name: Net test (cloud guest)
+on:
+  push:
+    branches: ['claude/net-test*']
+    paths-ignore: ['ci_drop/**']
+permissions:
+  contents: write
+concurrency:
+  group: net-test-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  guest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install what the guest needs (no Forge, no pygame)
+        run: python -m pip install --quiet requests
+      - name: Wait for invites, join, play, send the results back
+        env:
+          MANTICORE_PORTABLE: '1'
+          PYTHONUNBUFFERED: '1'     # every line in the log as it happens, also when the run is cancelled
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python tools/ci_drop.py runner-loop --run-id "${{ github.run_id }}" --branch "${{ github.ref_name }}" --tries 8 --wait-minutes 60

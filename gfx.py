@@ -232,10 +232,30 @@ DB_BG = (20, 12, 28)                        # #140c1c, also the dark bars round 
 DB_TEXT = (222, 238, 214)                   # #deeed6
 DB_GOLD = (218, 212, 94)                    # #dad45e
 RARE_RING = (218, 212, 94)                  # Round RPG16: the gold ring under a rare foe on the map (DB_GOLD)
+HELD_COIN = (218, 212, 94)                  # Round GOLD1: the coin beside a foe that holds your gold (DB_GOLD)
+HELD_COIN_EDGE = (133, 76, 48)              # ... its rim: DawnBringer 16's brown #854c30
+CHEST_KEY = (87, 230, 118)                  # Round PROG2: the treasure chest sheet's green background, drawn see-through
 DB_DIM = (133, 149, 161)                    # #8595a1
 DB_RED = (208, 70, 72)                      # #d04648
 DB_ORANGE = (210, 125, 44)                  # #d27d2c
 DB_GREEN = (109, 170, 44)                   # #6daa2c
+DB_BLUE = (89, 125, 206)                    # #597dce  (Round PROG1: DawnBringer 16's blue, for tier 3)
+# Round PROG1: THE tier colours (the results screen's glow, the Card Book's tier words): tier 0 Basic .. 5 Power, by index
+TIER_GLOW = (DB_DIM, DB_TEXT, DB_GREEN, DB_BLUE, DB_ORANGE, DB_GOLD)
+# Round PACK2: the Adventure's pack wrappers (pack_art.py) - our own foil, never a real booster's look; one colour per mana colour,
+# silver for colourless, gold for three or more; the ink and light for the words on it, the sheen, a crimp's shade
+PACK_W = (226, 214, 176)
+PACK_U = (46, 92, 168)
+PACK_B = (58, 40, 66)
+PACK_R = (176, 48, 36)
+PACK_G = (44, 118, 58)
+PACK_SILVER = (168, 174, 182)
+PACK_GOLD = (204, 160, 58)
+PACK_INK = (24, 18, 14)
+PACK_LIGHT = (246, 240, 226)
+PACK_SHEEN = (255, 255, 255)
+PACK_SHADE = (0, 0, 0)
+PACK_EDGE = (240, 200, 90)                   # a premium pack's gold edge
 
 FONT_NAMES = "segoeui,helveticaneue,helvetica,arial,dejavusans,freesans"
 

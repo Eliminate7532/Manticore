@@ -579,6 +579,38 @@ def _rule_loop_guard(messages):
     return [_finding("ai_loop_guard", WARN, i, "the AI loop guard stopped %d repeat(s): %s" % (len(hits), ", ".join(cards)))]
 
 
+ATTACK_REFUSED_LIMIT = 10           # round ENG-SOAKATTACK: more refusals of my attack declaration than this in one turn = a loop
+ATTACK_REFUSED = "Attack declaration invalid"
+
+
+def _rule_attack_refused_loop(messages):
+    """Round ENG-SOAKATTACK (CD5's online draft soak 3, 28 Oct): the soak bot answered Forge's refusal of its attack
+    declaration with the same few answers for ~10 minutes. Snapshots kept coming, so no stall rule fired; only the time cap
+    would have ended it. A warning: the same refusal more than ATTACK_REFUSED_LIMIT times in one turn (one finding a turn,
+    with the refusal's text and how often it came)."""
+    out = []
+    turn = None
+    counts = {}
+    first = {}
+    for i, m in enumerate(messages):
+        t = m.get("t")
+        if t == "state":
+            turn = m.get("turn", turn)
+        elif t in ("message", "info"):
+            text = (m.get("text") or "").strip()
+            if ATTACK_REFUSED not in text:
+                continue
+            key = (turn, text)
+            counts[key] = counts.get(key, 0) + 1
+            first.setdefault(key, i)
+    for (turn, text), n in counts.items():
+        if n > ATTACK_REFUSED_LIMIT:
+            out.append(_finding("attack_refused_loop", WARN, first[(turn, text)],
+                                "Forge refused my attack declaration %d times in turn %s: %r" % (n, turn, text[:120])))
+    out.sort(key=lambda f: f["at"])
+    return out
+
+
 # ---------------------------------------------------------------------------------------------
 # entry point
 # ---------------------------------------------------------------------------------------------
@@ -592,6 +624,7 @@ RULES = (
     _rule_dropped_clicks,
     _rule_ai_loop,
     _rule_loop_guard,
+    _rule_attack_refused_loop,
 )
 
 

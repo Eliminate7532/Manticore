@@ -454,13 +454,16 @@ def unknown_cards(names, runtime=None, wait=True):
     return missing
 
 
-def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None, rules=None):
+def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None, rules=None, effects=None):
     """Write a Forge .dck file. `deck` is a list of card names (repeats allowed). Round FMT1: a Brawl deck's [metadata] says
     "Deck Type=Brawl" (formats.dck_lines); a Commander deck's file is exactly what it was before. Round CON1: a format without a
     commander (Standard) says "Deck Type=Constructed" and has no [Commander] section (any `commanders` go into the main deck).
-    Round CD3: `rules` (house_rules keys, e.g. ("turbo",)) add "Manticore Rules=turbo" to [metadata]; none = the file as before."""
+    Round CD3: `rules` (house_rules keys, e.g. ("turbo",)) add "Manticore Rules=turbo" to [metadata]; none = the file as before.
+    Round PROG3: `effects` (start_effects dict: one seat's starting life, hand, cards) add "Manticore Start=..." - the player's file
+    only; none = the file as before."""
     import formats
     import house_rules
+    import start_effects
     if not formats.has_commander(fmt):
         deck, commanders = list(commanders) + list(deck), []
     counts = {}
@@ -468,6 +471,7 @@ def write_deck_file(path, commanders, deck, name="Deck", runtime=None, fmt=None,
         n = forge_card_name(card, runtime)
         counts[n] = counts.get(n, 0) + 1
     lines = ["[metadata]", f"Name={name}"] + formats.dck_lines(fmt) + house_rules.dck_lines(rules)
+    lines += start_effects.dck_lines(effects)
     if formats.has_commander(fmt):
         lines.append("[Commander]")
         lines += [f"1 {forge_card_name(c, runtime)}" for c in commanders]
@@ -584,9 +588,11 @@ class ForgeSession:
 
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
                  java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
-                 classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None, attack_cache=None):
+                 classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None, attack_cache=None,
+                 effects=None, timing=False, skip_scan=None):
         import formats
         import house_rules
+        import start_effects
         self.deck_path = deck_path
         # Round FMT1: the game's format. None = what the player's .dck says ("Deck Type=Brawl"), so a resumed game, a bug report
         # replay and anything else that starts from saved .dck files plays the format it was started in.
@@ -595,6 +601,11 @@ class ForgeSession:
         # the same reason as the format.
         self.rules = (house_rules.normal(rules) if rules is not None
                       else (house_rules.from_dck_file(deck_path) if deck_path else ()))
+        # Round PROG3: the player's seat's start effects (the Adventure's levels and perks). None = what the player's .dck says
+        # ("Manticore Start=..."), so a resumed game starts the same way.
+        self.effects = (start_effects.normal(effects) if effects is not None
+                        else (start_effects.from_dck_file(deck_path) if deck_path else {}))
+        self.effects_used = None            # round PROG3: what the bridge's "ready" line reports (None: an older bridge)
         self.rules_used = None              # round CD3: the house rules the bridge's "ready" line reports
         self.format_used = None             # round FMT1: the format the bridge's "ready" line reports
         self.opponent_paths = list(opponent_paths)
@@ -657,6 +668,10 @@ class ForgeSession:
         self.last_state_marks = False       # round LAST1c: the bridge keeps the Monarch, Initiative and City's Blessing in a save
         self.setup_failures = []            # round LAST1c: why a dev set-up failed (the bridge still says setup_done, with ok:false)
         self._save_n = 0
+        # Round PERF1: --timing makes the bridge send {"t":"timing"} lines (tools/bench_board.py); kept here, newest 20000.
+        self.timing = bool(timing)
+        self.skip_scan = skip_scan          # round PERF1: "off" (Forge's own scan at every priority) or "compare" (both, logged)
+        self.timings = deque(maxlen=20000)
         # Patch 43: the bridge passes priority for me when nothing meaningful is happening (Passing.java). classic_stops=True asks for
         # every stop as before (the card check's scripted boards rely on them); "passing" is what the bridge's "ready" line says.
         self.classic_stops = bool(classic_stops)
@@ -779,8 +794,15 @@ class ForgeSession:
         if self.rules:
             import house_rules
             args += house_rules.engine_args(self.rules)   # round CD3: Turbo Cube's emblem (no rules: the command line as before)
+        if self.effects:
+            import start_effects
+            args += start_effects.engine_args(self.effects)   # round PROG3: the player's start effects (none: as before)
         if self.classic_stops:
             args.append("--classic-stops")                # patch 43: every priority stop, as before
+        if self.timing:
+            args.append("--timing")                       # round PERF1: timing lines for tools/bench_board.py
+        if self.skip_scan:
+            args += ["--skip-scan", str(self.skip_scan)]  # round PERF1: see Passing.skipScan ("on" is the bridge's default)
         if self.dev:
             args.append("--dev")
             for f in self.faults:
@@ -912,6 +934,12 @@ class ForgeSession:
                 # Round CD3: an older bridge doesn't know --house-rule; never let a Turbo Cube game start without its emblem.
                 self.fatal = ("The engine started without this cube's house rule (" + ", ".join(self.rules) + "): its bridge "
                               "(forge_bridge.jar) is older than this program. Run setup_forge.py again, or reinstall.")
+            import start_effects
+            self.effects_used = m.get("startEffects")            # round PROG3: a bridge from before PROG3 says nothing
+            if self.effects and not start_effects.same(self.effects, self.effects_used) and not self.command and not self.fatal:
+                # Round PROG3: never let an Adventure duel start without the player's levels and perks.
+                self.fatal = ("The engine started without your starting life, hand or cards: its bridge (forge_bridge.jar) is "
+                              "older than this program. Run setup_forge.py again, or reinstall.")
         elif t == "game_over":
             self.game_over = True
             self.game_over_info = {k: v for k, v in m.items() if k != "t"}
@@ -948,6 +976,8 @@ class ForgeSession:
         elif t == "state_load_failed":
             self.state_load_failed = m.get("reason") or "unknown"
             self.state_load_untouched = bool(m.get("untouched"))
+        elif t == "timing":
+            self.timings.append(m)                  # round PERF1 (--timing only)
         elif t == "passed":
             self.passed.append(m)                   # patch 43: shown in the table's feed
             del self.passed[:-200]

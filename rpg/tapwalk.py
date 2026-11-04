@@ -12,8 +12,9 @@ What a tap on the map means (goal_at), in this order:
   door     an exit or a town (a shop's door) whose box holds the tapped point: walk into it - the map changes or the town opens
            as with the keys.
   tile     anything else you could stand on: walk to its middle.
-A wall, or a place with no way to it, says so (NO_WAY / WALL) and nothing moves. The Adventure has no signs or chests (rpg/maps):
-the brief's "sign, door, chest" are the doors above.
+  chest    Round PROG2: a closed treasure chest whose box holds the tapped point: walk into it - it opens as with the keys (a
+           "door" goal: the walk ends on its tile).
+A wall, or a place with no way to it, says so (NO_WAY / WALL) and nothing moves. The Adventure has no signs.
 
 How it walks: a way of whole tiles (route, breadth first, four directions) from the tile under the walker to the goal, found again
 at every step, so a person or a foe that moves is followed. The walker is moved by Explorer.step - the code the arrow keys use, with
@@ -104,8 +105,9 @@ def goal_at(ex, mx, my):
             beyond = (tile[0] + dc, tile[1] + dr)
             if beyond in people:
                 return Goal("person", beyond, a.name, nid=people[beyond]), None
+    shut = closed_chests(ex)
     for t in a.triggers:
-        if t.kind in ("exit", "town") and t.box[0] <= mx < t.box[2] and t.box[1] <= my < t.box[3]:
+        if (t.kind in ("exit", "town") or t.spot in shut) and t.box[0] <= mx < t.box[2] and t.box[1] <= my < t.box[3]:
             if any(not a.blocked(*c) for c in box_tiles(a, t.box)):
                 return Goal("door", tile, a.name, spot=t.spot), None
     if a.blocked(*tile) or tile in (ex.walker.blockers or ()):
@@ -122,10 +124,18 @@ def walls(ex, goal):
         if goal.kind == "foe" and f.spot == goal.spot:
             continue
         out |= box_tiles(a, f.box)
+    shut = closed_chests(ex)                  # Round PROG2: a walk never opens a chest it isn't going to
     for t in a.triggers:
-        if t.kind in ("exit", "town") and not (goal.kind == "door" and t.spot == goal.spot) and t.spot not in w.inside:
+        if ((t.kind in ("exit", "town") or t.spot in shut) and not (goal.kind == "door" and t.spot == goal.spot)
+                and t.spot not in w.inside):
             out |= box_tiles(a, t.box)
     return out - feet(ex)
+
+
+def closed_chests(ex):
+    """Round PROG2: the spots of the closed treasure chests on the map (rpg.explore.Explorer.chests)."""
+    fn = getattr(ex, "chests", None)
+    return {t.spot for t, opened in (fn() if fn else ()) if not opened}
 
 
 def feet(ex):

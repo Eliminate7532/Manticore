@@ -130,9 +130,10 @@ Resume
          (Copy invite code) by message.
   Join:  pick your deck, click Join online, and paste the invite code.
   Both of you should have the same version of Manticore.
-  Windows Firewall may ask about Java the first time you host: allow it.
-  If the host screen says the router can't open the way (often "CGNAT"), the simplest fix is Tailscale
-  (free) on both PCs; the host screen fills in the address when Tailscale is running.
+  Hosting goes through Manticore's relay by default ("Connect through the relay" is ticked and its address
+  filled in), so it works on any internet connection - nothing to set up on your router.
+  Hosting directly instead (untick the relay): Windows Firewall may ask about Java the first time you host -
+  allow it; if the host screen says the router can't open the way (often "CGNAT"), keep the relay ticked.
   An online game can't be saved or resumed yet: if either side closes, the game ends.
   Drafting together: the host chooses Draft > Commander Cube > Draft with friends and sends the invite code;
   friends paste it into Join online (no deck needed). Everyone drafts, builds a deck on their own PC, and

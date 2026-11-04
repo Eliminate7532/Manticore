@@ -5,6 +5,44 @@ This tracks planned features in rough priority order. Update as things
 get built or priorities shift.
 Marks: [ ] open, [~] partly done, [x] done, [-] dropped by Karl (not built; the line under it says when).
 
+WHERE THINGS STAND (3 Nov 2026; Round RM3) - one page. The history follows, phase by phase.
+How to keep it current: a round or release that lands adds its [x] line below AND moves its line here (NOW -> done, NEXT -> NOW).
+Sources: the task list (claude/tasks, `ledger.py list`), claude/BIG_PICTURE_2026-11-03.md, claude/DECISIONS_2026-11-03.md.
+--------------------------------------------------------------------------------------------------------------------------------
+LATEST RELEASE: 0.28.53.14 (2 Nov; relay by default, NAME1, ATK1, ROOM1, GOLD1, PLOT1, SELL1) - CLAUDE.md "Release 0.28.53.14".
+NOW (being built, 3-4 Nov - release 0.28.53.15, Karl 3 Nov 09:33 "Start B now", 18:48 "Merge everything that's done into this release"):
+  - RC15 + RC15B (built 3-4 Nov, wait for Karl's Windows run): one branch claude/rc-0.28.53.15 - the engine bugs, progression parts
+    1-3, RPG-SOAK1, the bug branches of 2-3 Nov, google-probe, RM3 (RC15), then GOLD1 (gold lost), PACK1, PACK2, PROG1b, SND1/1B/1C,
+    PERF1, BUG1/1b and RLY1's tooling (RC15B); one bridge jar. Project claude/RELEASE_0.28.53.15_2026-11-03.md, claude/RC15B_2026-11-03.md.
+NEXT (queued on the task list, after 0.28.53.15 - the Adventure chain, claude/DECISIONS_2026-11-03.md):
+  - prog4 (gear and relics; built on claude/round-prog4, not in 0.28.53.15), prog5 (daily win, bounties), prog-tune (the soak's
+    numbers), spar1 (sparring).
+LATER (claude/BIG_PICTURE_2026-11-03.md section 6):
+  - A: the relay on Oracle's Always Free tier, then RLY3 (no invite codes or passwords; protocol 4; branch claude/rly3) -
+    Karl, 3 Nov 10:25: "A will be done later"; reminder 23 Nov 10:00 CST (claude/RLY1_2026-11-02.md, RLY2_RLY3_2026-11-02.md).
+  - D before C: more testers (15 of 17 reports since 27 Oct may be Karl's), then the AI pillar (combo, interaction).
+  - Google sign-in and sync, SYNC0-SYNC3, not queued (claude/GOOGLE_SYNC_OUTLINE_2026-11-03.md).
+  - Gaps named in BIG_PICTURE section 3: Windows only (no Mac build); no solo goldfish mode; no Commander deck editor.
+WAITING ON KARL (each with where it is written):
+  - AI2's four judgement calls and RM2's dropped combo lines (PHASE AD tail below; docs/rounds/AI2.md, RM2.md).
+  - LAST1 after a knock-out: offer the last save from before it? (below, "LAST1, still Karl's call").
+  - The soak: DROP1's 3 s wait, AWAY1's turn cap; round-soak-cap not merged (below, "The soak, Karl's calls").
+  - Formats D2-D10: Two-Headed Giant, Sealed (below; claude/FORMATS_SKETCH_2026-10-02.md).
+  - AD2 art: the wordmark, larger splash/title art, a card back (PHASE AD); AU1 follow-ups (PHASE AD).
+  - RPG9's foes, his hand check (below, "The RPG plan"); the CD5 AI drafters' bar (below, "Cube draft, next").
+  - SND1's howl A/B/C (claude/DECISIONS_2026-11-03.md); Google steps A1-A8 (claude/GOOGLE_SYNC_OUTLINE_2026-11-03.md).
+  - Merges: claude/bugflow (backup.py catch-up, report intake) and claude/bug1b, then "turn on main merges" (claude/BUG1_2026-11-02.md).
+  - Who "Karl Shuh" and kr.bot.01 are (claude/BIG_PICTURE_2026-11-03.md section 3.1).
+  - Older open checks on his PC: PHASE 0 (backup folder on another drive, a restore drill), PHASE 3 (webhook, --report-test),
+    PHASE 4 (Paste on Windows, free mulligan, the table's look), PHASE R (enable-tests-on-github, timing quick_tests).
+BEFORE A PUBLIC RELEASE (claude/BIG_PICTURE_2026-11-03.md section 4):
+  - Licences: AvQest and the Grok art's terms (PHASE AD), jUPnP's CDDL now our code uses it (MP2b line), MPC Autofill's maintainer
+    asked (ALT2), the cube owners (CD3).
+  - A signed installer (SmartScreen) and signed updates (below, "Later (production)").
+  - Bug reports through something other than a raw webhook (it ships in the installer; Round 29).
+  - Google sync's privacy page, if it ships; Wizards' Fan Content Policy position checked (no data yet).
+================================================================================================================================
+
 PHASE 0 - Version control (top priority, asked for 2026-09-20)
 --------------------------------------------------------------
 [x] backup.py + backup.bat + .gitignore + .gitattributes: one command saves a local zip AND uploads every change to a private GitHub
@@ -165,6 +203,15 @@ PHASE 3 - Playtesting & Bug Reporting
     -> RM1: the installer bundles it (Round 29: bug_report_config.bundled.json, reporting.load_config's fallback).
 [x] Playtest with friends once Phase 1 and 2 are stable
     -> RM1: testers play the released builds (Release 0.28.53.9, 12 Oct: "the cube draft for the testers"; CLAUDE.md).
+[x] Round NETLOG1 (23 Oct, on main 7c09d9f) + NETLOG1b (24 Oct: the review's R1-R9 and G2 fixed) + NETLOG1c (24 Oct: F8 reports carry
+    the last 7 days of the connection log; --net-selftest passes --port and --timeout) + NETLOG1d (25 Oct, merged d988693: the
+    self-test says whether each network is Public or Private): a log of every online host and join attempt, in bug reports, and a
+    network self-test that needs no second PC. docs/rounds/NETLOG1.md, NETLOG1b.md, NETLOG1c.md, NETLOG1d.md. Added by RM3.
+[x] Round BUG1 (2 Nov; Karl: "automatically delegates bug reports to workers"): a Discord bot copies each report into the private
+    branch claude/reports (the public repo's report_intake.yml, hourly at :17), the task list makes a bug-<id> task, a worker triages,
+    reproduces and fixes it, and asks Karl by phone when it must; BUG1b (2 Nov evening): what Karl posts by hand counts as a report.
+    Live since 2 Nov 13:25 CST, but outside main: claude/bugflow (backup.py catch-up, tools/report_intake.py) and claude/bug1b are
+    not merged, and main merges by workers stay off until they are. claude/BUG1_2026-11-02.md. Added by RM3.
 
 PHASE 4 - Polish & Packaging
 -------------------------------
@@ -529,6 +576,10 @@ PHASE R - Reliability (round 27a, 2026-09-25) - backups that never fail silently
 [ ] Karl: re-run  python backup.py --enable-tests-on-github  (the device bridge couldn't write
     .github/workflows/tests.yml directly - see EVENING_CHECKLIST.txt)
 [ ] Karl: time tools/quick_tests.py and run the full suite on his own PC (not yet measured there)
+[x] The task list (25 Oct; Karl, 24 Oct: "Build the task list, add small checkpoints, make an hourly supervisor task, a claim on
+    each task, always allow to push to GitHub"): branch claude/tasks with ledger.py - tasks with briefs, claims, heartbeats,
+    CHECKPOINT.md on each claude/round-* branch, an hourly supervisor and up to three scheduled workers that take one task a run;
+    workers push only claude/ branches. claude/TASKLIST_WORKERS_2026-10-25.md, claude/TASKS.md. Added by RM3.
 
 PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNET_SPEC_AD1_2026-09-27.md)
 --------------------------------------------------------------------------------------------------------
@@ -652,6 +703,7 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     -> RM1: built since - Standard (Round CON1, best-of-one; CON2's third sample deck) and drafting (Rounds CD1-CD4: Commander and
     classic cubes, not set boosters). No answer on Two-Headed Giant or Sealed was found. Online stays Commander only: NetHost
     (MP2) would build its seats with Main.register() and start Main.variant() as Main does, and the host dialog would carry the format.
+    -> RM3: online too since MP3A (0.28.53.13): Brawl, Standard, Commander Draft and Draft decks online (docs/rounds/MP3A.md).
 [x] Round FB1b (2026-10-03, Claude (Opus), 0.28.34, patch 30 after FB1): what FB1's checks found, neither from the Forge update.
     NetHost no longer says a friend dropped after saying they were back (a lock around both announcements). The soak seat
     declares attackers at last (it never had: Forge marks attackers "weak", the bot looked for "selectable") and uses Alpha
@@ -870,6 +922,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     not merged; the classic AI's settings and the 17 lands are first settings, not measured (tools/draft_sim.py can); a 4-player
     or resumed Turbo game not run. Open: the AI drafters' bar (spec section 10) is Karl's to accept; asking the cube owners (Karl
     chose to bundle with credit).
+    -> RM3: CD5 built and released in 0.28.53.13 (a Commander cube drafted together online; docs/rounds/CD5.md); the Turbo
+    emblem chip is EMB1 (0.28.53.11). Still open: the classic draft with friends (CD5: "not this round"), the AI drafters' bar.
 [x] LAST1c (in 0.28.53.10): the bridge says state_load_failed for a restore Forge refuses (untouched when nothing changed); a
     restore keeps The Monarch, The Initiative and the City's Blessing. NOT kept (no format for them): hideaway and other cards' own
     effects, emblems (a house rule's emblem comes back from the game's own rule), a dungeon and its room.
@@ -886,6 +940,8 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     -> RM1: since then RPG7 (Karl's answers), RPG8 (the first playable loop: main menu > Adventure, duels on the real table, the
     shop, the deck editor; rpg/data and rpg/maps in the installer) and RPG9 (an easier first map: 59% for a starting deck, Forge's
     AI on both sides). Next: Karl's hand check of RPG9's foes ("Karl's hand check is the test of that", docs/rounds/RPG9.md).
+    -> RM3: since then RPG10-RPG18 (the 45-minute slice, day and night, the reviews; lines at the end) and RPG-TAP (0.28.53.13);
+    built on branches for 0.28.53.15: PROG1-3 (results screen, Card Book, rewards, XP and perks; claude/PROG1/2/3_2026-11-03.md).
 [ ] Stats, later builds (decision 6 left them out): what the AI answered; mulligans (recorded, not shown) and opening hands;
     commander cast / recast / removed; time and waiting on the AI; clicks per game; after 20-30 games a deck: win % by mulligans
     and by commander-on-turn-N, missed land drops, colour screw.
@@ -903,3 +959,92 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     - RPG8: the Adventure's first playable loop.
     - RPG9: an easier first map (two-colour starting decks; Jumpstart foes with 9 spells swapped for lands; 59%).
     - HK1: housekeeping (branches, ignore rules, deliveries no longer committed, the Project tidied); no program code.
+[x] Rounds of 23 Oct - 2 Nov, added by RM3 (3 Nov): none of them had a line here. Each has its notes in docs/rounds/<round>.md or
+    the Project doc named.
+    The Adventure's slice, RPG10-RPG18 (Karl's RPG plan; spec claude/SPEC_RPG_SLICE_2026-10-23.md):
+    - RPG10 (23 Oct, on main): the Adventure's art in the program, credited; tiles that move. docs/rounds/RPG10.md.
+    - RPG11 (23 Oct): the map scrolls freely and its people walk. docs/rounds/RPG11.md.
+    - RPG12 (23 Oct): the slice's three maps. docs/rounds/RPG12.md.
+    - RPG13 (23 Oct): encounters - random fights, the encounter screen, the way in. docs/rounds/RPG13.md.
+    - RPG14 (23 Oct): people, dialogue, quests, the inn, the duel hall, the pause window. docs/rounds/RPG14.md.
+    - RPG14b (23 Oct): the shop, the pack, the deck editor and the Collection in DawnLike's look. docs/rounds/RPG14b.md.
+    - RPG15 (23 Oct): light, the clock and the Adventure's music. docs/rounds/RPG15.md.
+    - RPG15b (23 Oct): the Hint button, and the bugs the slice walk (SLICEWALK, a headless walk of the whole slice) found.
+      docs/rounds/RPG15b.md; claude/SLICE_WALK_2026-10-23.md.
+    - RPG15c (23-24 Oct): the independent review of RPG10-RPG15 fixed. docs/rounds/RPG15c.md; claude/REVIEW_RPG10_RPG15_2026-10-24.md.
+    - RPG16 (24 Oct): day and night - people by the hour, night foes, rare foes, random events. docs/rounds/RPG16.md;
+      spec claude/SPEC_RPG16_DAYNIGHT_2026-10-23.md.
+    - RPG16b, RPG16c, RPG16d (24 Oct): three cold reviews of RPG16 and their fixes. docs/rounds/RPG16b.md, RPG16c.md, RPG16d.md;
+      claude/REVIEW_RPG16_2026-10-24.md, REVIEW_RPG16b_2026-10-24.md, REVIEW_RPG16c_2026-10-24.md.
+    - RPG17 + RPG17b (24-25 Oct, merged f45cbaf): Karl's 24 Oct Adventure decisions, and his answers to RPG16d's five questions.
+      docs/rounds/RPG17.md, RPG17b.md; claude/RPG17_2026-10-24.md, RPG17B_2026-10-24.md.
+    - RPG18 + RPG-NM (25 Oct, merged f8be6f5; the night track 2 dB quieter, 47cefa3): the slice in about 45 minutes ("Short road,
+      fair boss" + the rewards) and the Adventure's night music. docs/rounds/RPG18.md, RPG-NM.md; claude/RPG18_2026-10-24.md,
+      RPG_NIGHT_MUSIC_BUILT_2026-10-25.md.
+    - RPG18b + RPG18c (25-26 Oct, merged 7152032): Karl's answers to RPG18's and RPG17's questions, and his follow-ups (the other
+      bandits flee after one win; a stopped walker walks on after 3 s). docs/rounds/RPG18b.md, RPG18c.md; claude/RPG18B_2026-10-25.md,
+      RPG18C_2026-10-26.md.
+    The table and online:
+    - PEN1 + GY1 (24 Oct, merged eaa0a6a): lists you drag with a pen, an on-screen keyboard, a Find box for long lists; playing a
+      card from a graveyard or exile pile (the pile glows). docs/rounds/PEN1.md, GY1.md; claude/PEN1_2026-10-24.md.
+    - NET-RESUME (26 Oct): an online game continued from its save no longer freezes (O1), and the concede click race (O2); bridge jar
+      rebuilt. docs/rounds/NET-RESUME.md; claude/NET_RESUME_2026-10-26.md.
+    - RESUME-DIFF (27 Oct): the online soak's resume check takes its pictures at a moment that waits for a person (soak harness only).
+      docs/rounds/RESUME-DIFF.md; claude/RESUME_DIFF_2026-10-27.md.
+    - O1-TEST (27 Oct): O1's live test forced into the order that exposes the bug (tests only). claude/O1_TEST_2026-10-27.md.
+    - AI-ATTACK (27 Oct): AttackCache - the AI's attack planner works board-only answers out once (511 tokens a side: an AI turn
+      270 s -> about 30 s, same choices), and a 30 s budget on an AI's whole attack declaration. claude/AI_ATTACK_2026-10-27.md.
+    - TOKENS (27 Oct): identical attacking or blocking tokens share a stack at the table (a 1,023-token attack 1.35 s -> 12 ms a
+      frame). claude/TOKENS_2026-10-27.md.
+    - HAND-IDX (27 Oct): the Surface's IndexError in draw_hand (a hand that shrinks during the hover dwell). claude/HAND_IDX_2026-10-27.md.
+    - RPG-TAP (27 Oct): the Adventure with a pen only - tap to walk, tap to act. docs/rounds/RPGTAP.md; claude/RPG_TAP_2026-10-27.md.
+    - CHOOSE-FREEZE (27 Oct): the 32 s freeze in a huge choose list ("Choose a card name": 35,291 names) - only rows on screen are
+      drawn. claude/CHOOSE_FREEZE_2026-10-27.md.
+    - FORGE-SO (27 Oct, research, not merged: branch claude/task-forge-so-0027): Forge's AI StackOverflow with copy-spell effects,
+      a reproduction and a draft upstream report. claude/FORGE_SO_2026-10-27.md.
+    - MP3A (27 Oct): online play in every format - Brawl, Standard, Commander Draft and Draft decks; online protocol 3.
+      docs/rounds/MP3A.md; claude/MP3A_2026-10-27.md.
+    - CD5 (27-28 Oct): drafting a Commander cube together online - friends and AI drafters, then one 4-player online game; "Everyone
+      waits" for a friend who drops. docs/rounds/CD5.md; claude/CD5_2026-10-27.md.
+[x] Release 0.28.53.13 (31 Oct 2026, Claude (Opus 5.5); Karl: "lets finish what is in-progress now, merge all and push update"):
+    merge pack 27 Oct (NET-RESUME, RESUME-DIFF, O1-TEST, AI-ATTACK, TOKENS, HAND-IDX, RPG-TAP, CHOOSE-FREEZE) and claude/round-cd5
+    (MP3A, CD5); the bridge jar rebuilt once - games saved before can't be continued; online protocol 3. Open at release: the Brawl
+    stall, the Felidar Guardian + Restoration Angel loop, the soak bot's invalid-attack loop. CLAUDE.md "Release 0.28.53.13";
+    claude/RELEASE_0.28.53.13_2026-10-31.md, MERGE_PACK_2026-10-27.md.
+[x] Round RLY1 (2 Nov; tooling on branch claude/rly1, not merged): the relay on Oracle (163.192.120.37:36900, on trial credits - not
+    Always Free) and the FIRST ONLINE GAME between real machines - Karl hosting on his PC, a GitHub runner joining over the internet,
+    13 turns. Karl's PC can't host directly (carrier-grade NAT). claude/RLY1_2026-11-02.md.
+[x] Release 0.28.53.14 (2 Nov 2026; Karl: "Passed all tests. Attribute an appropriate version number. Merge and push to testers."):
+    claude/rly2 - RLY2 (hosting goes through the relay by default, its address from relay_config.json), NAME1 (the game asks for
+    your name; Erik's "I was Karl"), ATK1 (attacking one of several opponents in a pod), ROOM1 (Room cards upright in the focus
+    panel), GOLD1 (Adventure gold in yellow on its own line - not the 3 Nov gold1 task about gold lost in a duel), PLOT1 (a plotted
+    card can be cast from exile; bridge jar rebuilt), SELL1 (Adventure shop lists drag to scroll; any owned card sells). The first
+    five came from BUG1's reports. docs/rounds/RLY2.md; claude/RLY2_RLY3_2026-11-02.md, RELEASE_0.28.53.14_2026-11-02.md.
+[ ] RLY3 (built on claude/rly3, not merged): no invite codes or passwords, the relay's game list, the host lets each person in;
+    protocol 4. Ships with the relay's rebuild on Oracle's Always Free tier (Karl, 2 Nov 17:14 and 3 Nov 10:25: "A will be done
+    later"); reminder 23 Nov. claude/RLY2_RLY3_2026-11-02.md, DECISIONS_2026-11-03.md.
+[x] Release candidate 0.28.53.15 (task rc15, 3 Nov 2026; Karl 09:33 "Start B now", "Include parts 1-3"): built on branch
+    claude/rc-0.28.53.15 from main 06a368e - the three engine bugs (ENG-BRAWL, ENG-FELIDAR, ENG-SOAKATTACK), PROG1-3, RPG-SOAK1,
+    the bug branches of 2-3 Nov (art picker, cog Quit..., creatures sacrificed for mana last, the outskirts shop stalls, the Sell
+    list), google-probe and RM3; one bridge jar. NOT merged to main: Karl runs quick_tests on Windows, then decides. PERF1 is not in
+    it (still being built). CLAUDE.md "Release candidate 0.28.53.15"; Project claude/RELEASE_0.28.53.15_2026-11-03.md.
+    RC15B (task rc15b, 4 Nov; Karl 3 Nov 18:48 "Merge everything that's done into this release") added on the same branch the
+    rounds below, then the bridge and rpg_tools jars rebuilt once; PERF1 is in it now. Not in it: rly3, round-prog4.
+[x] GOLD1 (3 Nov, gold lost): a lost duel takes 5% / 10% / 20% of your gold by kind of fight (regular / dungeon / boss, never more
+    than 20%); the foe you lost to holds it until you beat it. docs/rounds/GOLD1.md; claude/GOLD1_2026-11-03.md. In 0.28.53.15 (RC15B).
+[x] PACK1 (3 Nov): more packs in the Adventure's shops - six sets, Jumpstart theme packs, premium packs, a bundle of 3.
+    docs/rounds/PACK1.md; claude/PACK1_2026-11-03.md. In 0.28.53.15 (RC15B).
+[x] PACK2 (3 Nov): a picture of each pack - our own wrapper in the set's colours with a real card from the set.
+    docs/rounds/PACK2.md; claude/PACK2_2026-11-03.md. In 0.28.53.15 (RC15B).
+[x] PROG1b (3 Nov): "Deck power" is "Card quality" (with what it means), and the deck's shape (curve, removal, lands) in the deck
+    editor. docs/rounds/PROG1b.md; claude/PROG1B_2026-11-03.md. In 0.28.53.15 (RC15B).
+[x] SND1, SND1B, SND1C (3 Nov): a wolf's howl at dusk (candidate B, Karl's pick) and a rooster at dawn on the Adventure's outdoor
+    maps. docs/rounds/SND1.md; claude/SND1_2026-11-03.md, SND1B_2026-11-03.md, SND1C_2026-11-03.md. In 0.28.53.15 (RC15B).
+[x] PERF1 (3 Nov): a shorter wait after acting on a big board (no scan at a step you don't stop at; the question's snapshot sent
+    sooner); --skip-scan on|off|compare, tools/bench_board.py. Bridge jar rebuilt. docs/rounds/PERF1.md; claude/PERF1_2026-11-03.md.
+    In 0.28.53.15 (RC15B).
+[x] BUG1, BUG1b (2 Nov, merged now): backup.py's catch-up of a worker's merge to main, tools/report_intake.py (the public repo's hourly
+    report intake; hand-posted reports with their pictures), ci/report_intake/. docs/rounds/BUG1.md; claude/BUG1_2026-11-02.md.
+    In 0.28.53.15 (RC15B): the public export no longer needs /XF report_intake.py.
+[x] RLY1 tooling (2 Nov): relay/cloud_init.yaml, the cloud net test, tools/ci_drop.py, docs - no game code. docs/rounds/RLY1.md;
+    claude/RLY1_2026-11-02.md. In 0.28.53.15 (RC15B).

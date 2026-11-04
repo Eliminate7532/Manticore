@@ -133,6 +133,33 @@ all sound the same"), music.victory, ui.dialog_open ("Not attention getting") - 
 card.play, land.play, ui.dialog_open and music.victory play AU1's files, a land's destruction plays the creature's, and every creature
 plays card.land.
 
+## 7b. The world (Round SND1, 3 Nov 2026)
+
+Karl: "Add a wolf "howl" sound to the game that plays at dusk." and "Add a rooster sound at dawn." The Adventure's clock speaks twice a
+day, on maps that follow it (outdoors and towns). The rule is in `rpg/worldsound.py`; the boundaries come from `rpg.clock.crossed`.
+
+| cue | what | when | bus | level |
+|---|---|---|---|---|
+| rpg.howl | a lone wolf, far off in the open air: one howl, 3-6 s, the top rolled off, a late dark echo ("air") | the clock reaching 18:00 | ambience | -31 LUFS ungated (the build's `loudness()`), -28.7 EBU R128 gated (candidate B, SND1C) |
+| rpg.rooster | one rooster's crow, a farm away, 2-4 s | the clock reaching 05:00 | ambience | -31 LUFS ungated, -29.8 EBU R128 gated (shipped file) |
+
+- They are one-shots on the **ambience** bus: their own two channels (`ambience_fx`), the ambience's volume, and silent with Cog >
+  Ambience off, Sound off or M - like the loop under them. Under the music, by about 5 dB as heard (the howl, candidate B since SND1C): the Adventure's map music measures
+  -21.1 to -21.2 LUFS gated (the moors at night -19.2 with its -2 dB cue gain) on a bus at 0.45 (-6.9 dB): about -28 as heard; the
+  howl -28.7 gated on the ambience bus at 0.6 (-4.4 dB): about -33 as heard. Peaks: -15.7 dBFS true peak. (Candidate A, shipped until SND1C, was -27.9 / -15.8.)
+- Rare (one a dusk or a dawn), so the 1.2 s length guard doesn't apply (it is for cues with `cooldown_ms` under 100); cooldown 20 s.
+- **The rooster (Round SND1B, Karl 3 Nov 2026 10:3x CST: "Allow alys's recordings").** No CC0 rooster could be reached from the
+  cloud (Freesound answers 403; OpenGameArt has none), so it is built from alys's recordings on Wikimedia Commons (pdsounds.org),
+  which their author released into the public domain in their own words - not CC0. That is the one other licence the sound rules
+  accept (`licence_problem` in `tests/test_au1.py`): `"public-domain-dedication"`, only with the dedication's own words in the
+  source's `"checked"` field and its page on wikimedia.org. CC0 stays the default for everything else. Shipped: candidate A (the
+  medium rooster's crow, 3.94 s); about 6 dB under the music as heard (-29.8 gated, -34.2 at the ambience's 0.6).
+- Picks (Karl, 3 Nov 2026, on the listening page "Dusk Howl and Dawn Rooster"): **howl B, rooster A** - `WORLD_PICK` in
+  `tools/build_sounds.py`; the candidates are `docs/rounds/SND1/candidates/`. The howl ships as B since Round SND1C (3.88 s).
+- No real wolf: no CC0 recording of one could be reached either. The shipped howl is fvcalderan's voice howl (25 sounds from Avalanche,
+  CC0), stretched 2.6x, 1 semitone down and distanced; A was rubberduck's (80 CC0 creature SFX); C a horse's snort made wolf-like
+  (CaveboyTup).
+
 ## 8. Rebuilding
 
 `python tools/build_sounds.py` downloads into its cache and rebuilds everything; `--only <cue> ...` rebuilds some. A Keep that uses a

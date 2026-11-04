@@ -40,6 +40,7 @@ replay_pid*.log
 
 # Overnight soak runs (tools\soak.py, Round 28b): can be large, and it's Karl's own test output.
 soak_runs/
+rpg_soak_runs/
 
 # Your window size, text size and last deck choice.
 settings.json

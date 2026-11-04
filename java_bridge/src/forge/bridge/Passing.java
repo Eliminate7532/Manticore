@@ -56,7 +56,39 @@ final class Passing {
     /** --classic-stops on the command line: every stop as before patch 43 (old default stops, no passing rules). */
     static volatile boolean classic = false;
 
-    enum Decision { PASS, STOP, DEFER }
+    enum Decision { PASS, STOP, DEFER, SKIP }
+
+    /**
+     * Round PERF1 (Karl, 3 Nov 2026: "waiting after I act" on a big board). {@code --skip-scan on|off|compare}.
+     *
+     * <p>At a priority in a step this seat doesn't stop at (the turn bar's dots: in Fast, every step but my Main 1 and Main 2
+     * and the opponents' end steps), with an empty stack, Forge always passes for me: its chooseSpellAbilityToPlay passes
+     * whenever skipsPromptForStackOrPhase() is true, whatever the player could do. But it first runs its "can this player act?"
+     * scan (AvailableActions.collectActionable: every card in my hand, battlefield and flashback zone, its abilities, their
+     * costs against all my mana and their targets against the whole board) - with the actionable-card highlights on, it walks
+     * every card, with no early exit, under a time budget of up to 1.5 s. On Karl's Surface that budget ran out
+     * ("AvailableActions: heuristic timed out after 1500ms") and the bench (tools/bench_board.py) shows the scan is most of
+     * what Forge does for me at a priority. "on" (the default) passes at such a priority without the scan: SKIP is handled
+     * like PASS (awaitNextInput, then null = "I pass"), the same thing Forge's own code does after the scan.
+     *
+     * <p>Only when the scan's result can't matter: the stack is empty, the step is set to be skipped for this seat, Forge's
+     * "auto-pass when I can't act" is on for this seat (Fast, not full control: then Forge's InputPassPriority shows the
+     * normal prompt whatever the yield-ended flag says), no yield is running (Forge's own yield code then decides, as before)
+     * and no macro. What the skip leaves out, and why that is safe: the scan's set (cachedActionableCards) is read only when
+     * a priority prompt is shown, and every prompt runs its own scan first; PlayerView.hasAvailableActions is read by
+     * mayAutoPass and the prompt's suggestions, both again only after a fresh scan; YieldController.noteMayAutoPassResult is
+     * not called for the skipped priority - its yield-ended flag is read only by InputPassPriority while auto-pass is off.
+     *
+     * <p>"compare": the skip is never taken; Forge runs as before and each time the skip would have been taken, the bridge
+     * checks Forge passed without asking. A difference is a "bridge: passscan compare DIFFERENCE" line in forge_engine.log
+     * (the soak's rules then report it); "passscan: compare" lines count the agreements. "off": Forge exactly as before.
+     */
+    static volatile String skipScan = "on";
+    static final List<String> SKIP_MODES = List.of("on", "off", "compare");
+    /** Tests only (needs --dev): pretend Forge asked at every Nth compared priority, which compare mode must report. */
+    static volatile int comparePlant = 0;
+    static final AtomicInteger compareSame = new AtomicInteger();
+    static final AtomicInteger compareDiffer = new AtomicInteger();
 
     /** Round PRI1 (Karl, 9 Oct 2026: "Slow"): this seat plays with the stops from before patch 43 - the old default stops
      *  (BridgeGui.slowMine / slowTheirs), nothing passed for me, auto-pass off - what --classic-stops does for the whole engine,
@@ -78,6 +110,20 @@ final class Passing {
     /** How many priority stops these rules passed this game (the soak and the tests read it). */
     final AtomicInteger passed = new AtomicInteger();
     private volatile int lastNoticed = -1;
+    /** Round PERF1 (--timing): when Forge's own chooseSpellAbilityToPlay started for this seat, 0 when not running. Ended by
+     *  BridgeGui.noteInput (Forge showed a question) or by the method returning (Forge passed by itself). */
+    volatile long forgeT0 = 0L;
+
+    void forgeEnded(String how) {
+        long t0 = forgeT0;
+        if (t0 == 0L) {
+            return;
+        }
+        forgeT0 = 0L;
+        JsonObject o = Timing.line("forge", Timing.since(t0));
+        o.addProperty("ret", how);
+        Timing.send(o);
+    }
 
     // ---- the decision -------------------------------------------------------------------------------------------------------
 
@@ -107,6 +153,9 @@ final class Passing {
         MagicStack stack = game.getStack();
         if (stack.isEmpty()) {
             holdNext = false;                               // the held spell resolved, or the cast was cancelled
+            if (!"off".equals(skipScan) && skippedStep(pc, gui)) {
+                return Decision.SKIP;                       // round PERF1: Forge would pass here whatever its scan found
+            }
             return Decision.DEFER;                          // Forge: phase stops and auto-pass
         }
         SpellAbilityStackInstance top = stack.peek();
@@ -126,11 +175,33 @@ final class Passing {
         if (top.isSpell()) {
             return Decision.DEFER;                          // an opponent's spell: a stop whenever I could respond
         }
-        if (hasAnswer(me, top)) {
+        long ta = Timing.start();
+        boolean answer = hasAnswer(me, top);
+        Timing.mark("answer", ta);                          // round PERF1
+        if (answer) {
             return Decision.STOP;
         }
         notePassed(gui, top, owner);
         return Decision.PASS;
+    }
+
+    /** Round PERF1: Forge's own skipsPromptForStackOrPhase() for an empty stack (it reads the view too), plus the conditions
+     *  under which leaving out its scan changes nothing (see {@link #skipScan}). Called after full control and Slow returned. */
+    boolean skippedStep(PlayerControllerHuman pc, BridgeGui gui) {
+        if (gui == null || !autoPass || pc.isMacroActive()) {
+            return false;
+        }
+        YieldController yc = pc.getYieldController();
+        if (yc == null || yc.isYieldActive()) {
+            return false;
+        }
+        GameView gv = gui.getGameView();
+        if (gv == null || gv.peekStack() != null) {
+            return false;
+        }
+        forge.game.player.PlayerView turn = gv.getPlayerTurn();
+        forge.game.phase.PhaseType phase = gv.getPhase();
+        return turn != null && phase != null && gui.isUiSetToSkipPhase(turn, phase);
     }
 
     boolean fullControlAt(int turn) {
@@ -340,13 +411,22 @@ final class Passing {
                 return super.chooseSpellAbilityToPlay();
             }
             Decision d;
+            long td = Timing.start();
             try {
                 d = p.decide(this, (BridgeGui) g);
             } catch (RuntimeException e) {
                 System.err.println("bridge: passing rules failed, Forge decides: " + e);
                 d = Decision.DEFER;
             }
-            if (d == Decision.PASS) {
+            if (Timing.on) {                                // round PERF1
+                JsonObject t = Timing.line("decide", Timing.since(td));
+                t.addProperty("d", d.name());
+                Timing.send(t);
+            }
+            if (d == Decision.SKIP && "compare".equals(skipScan)) {
+                return compareSkip(p, (BridgeGui) g);
+            }
+            if (d == Decision.PASS || d == Decision.SKIP) {
                 g.awaitNextInput();
                 return null;                                // Forge's PhaseHandler: null = "I pass"
             }
@@ -356,7 +436,51 @@ final class Passing {
                     yc.clearActiveYieldAndDispatch();
                 }
             }
-            return super.chooseSpellAbilityToPlay();
+            return forgeChooses(p);
+        }
+
+        /** Forge's own chooseSpellAbilityToPlay (timed with --timing). */
+        private List<SpellAbility> forgeChooses(Passing p) {
+            if (!Timing.on) {
+                return super.chooseSpellAbilityToPlay();
+            }
+            p.forgeT0 = System.nanoTime();
+            List<SpellAbility> r = super.chooseSpellAbilityToPlay();
+            p.forgeEnded("pass");                           // still running = Forge passed without asking (auto-pass, skipped step)
+            return r;
+        }
+
+        /** Round PERF1, --skip-scan compare: Forge's own way, checked against what the skip would have done - pass, nothing
+         *  asked. Returns Forge's answer, so the game goes on exactly as with "off". */
+        private List<SpellAbility> compareSkip(Passing p, BridgeGui g) {
+            Game game = getGame();
+            int turn = game.getPhaseHandler().getTurn();
+            String phase = String.valueOf(game.getPhaseHandler().getPhase());
+            long seq = g.inputSeq();
+            List<SpellAbility> r = forgeChooses(p);
+            boolean asked = g.inputSeq() != seq;
+            int n = compareSame.get() + compareDiffer.get() + 1;
+            if (comparePlant > 0 && n % comparePlant == 0) {
+                asked = true;                               // tests: a planted difference compare mode must report
+            }
+            if (r == null && !asked) {
+                int same = compareSame.incrementAndGet();
+                if (same % 100 == 0) {
+                    System.err.println("passscan: compare " + same + " skipped priorities agreed, " + compareDiffer.get() + " differed");
+                }
+            } else {
+                compareDiffer.incrementAndGet();
+                System.err.println("bridge: passscan compare DIFFERENCE turn " + turn + " " + phase + ": Forge "
+                        + (asked ? "asked " + getPlayer().getName() : "returned " + r) + " where the skip would have passed");
+            }
+            return r;
+        }
+
+        static void compareSummary() {
+            if ("compare".equals(skipScan)) {
+                System.err.println("passscan: compare total " + compareSame.get() + " skipped priorities agreed, "
+                        + compareDiffer.get() + " differed");
+            }
         }
     }
 

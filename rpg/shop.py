@@ -19,13 +19,38 @@ starting deck comes with its basic lands owned (rpg.newgame adds every card of i
 Packs: the town's sets that have a pack pool (rpg/data/packs/<SET>.json, opened by Forge's own generator at build time); one pack
 drawn from the pool with the save's rng, every card added to the collection.
 
+Round PACK1 (Karl, 3 Nov 2026: "Add more options for purchasable packs"): besides a set's plain pack the shelf has
+  - its premium pack (rpg/data/packs/premium/<SET>.json: the set's own template with 3 commons fewer, 2 uncommons and an extra
+    rare or mythic, opened by Forge at build time);
+  - a bundle of 3 plain packs of one set at once (cheaper than three);
+  - Jumpstart theme packs: jumpstart_stock half-decks (20 cards, one theme) of Jumpstart, Jumpstart 2022 and 2025 whose colours are
+    all the town's (a colourless one never - J22's Urza's tron deck alone sells back for 930 gold), drawn at each restock like the
+    singles (stable_rng("jumpstart", town, restock number)), different themes, one of each; a bought one is gone until the next
+    restock (shops[town]["themes"]: the codes bought).
+Each kind opens with its own generator ("pack:<code>" as before for the plain pack, "pack:premium:<code>", "pack:bundle:<code>"),
+so the packs an older save will open are the same as before this round. price_problems() is the check that every kind costs more
+than its cards sell back for on average (claude/PACK1_2026-11-03.md section 4).
+
 Every purchase and sale changes the SaveGame in memory; the caller writes it (rpg.save.write) when the screen closes or at once.
 """
+import random
+
+from rpg import progress
 from rpg import cardpool, products, rules
-from rpg.collection import sell_problem
+from rpg.collection import deck_takes, sell_problem, take_out
 
 _CANDIDATES = {}
+_THEMES = {}                     # Round PACK2: theme_candidates per (pool, town colours, half-decks)
 BASIC_LANDS = ("Plains", "Island", "Swamp", "Mountain", "Forest", "Wastes")     # Round RPG7: what every shop sells, in this order
+
+
+BUNDLE_SAMPLE_SEED = 20261103                # Round PACK1: pack_values' sample of bundles
+BUNDLE_PACKS = 3                             # Round PACK1: plain packs in a bundle
+
+
+def fits_theme(half_colours, town_colours):
+    """Round PACK1: a theme pack fits a town when it has a colour and every colour is the town's."""
+    return bool(half_colours) and all(c in town_colours for c in half_colours)
 
 
 class Offer:
@@ -76,6 +101,7 @@ class Shop:
             tier_table = tiers.load(pool=self.pool)
         self.tiers = tier_table
         self.lists = lists or rules.vintage_lists()
+        self.taken = []                 # Round SELL1: [(deck name, copies)] the last sale took out of saved decks
 
     # ---- singles -------------------------------------------------------------------------------------------------------------
 
@@ -166,6 +192,87 @@ class Shop:
                 out.append((code, products.read_pool(code).get("name", code), self.numbers.pack_price))
         return out
 
+    def premium_packs(self):
+        """Round PACK1: [(set code, set name, price)] - the town's sets that have a premium pool."""
+        out = []
+        for code, name, _p in self.packs():
+            if products.has_premium(code):
+                out.append((code, name, self.numbers.premium_pack_price))
+        return out
+
+    def bundles(self):
+        """Round PACK1: [(set code, set name, price)] - a bundle of BUNDLE_PACKS plain packs of each set."""
+        return [(code, name, self.numbers.bundle_price) for code, name, _p in self.packs()]
+
+    def theme_candidates(self):
+        """Round PACK1: the Jumpstart half-decks this town may stock - every card in the card pool, at least one colour, every
+        colour the town's. Round PACK2: kept per (card pool, town colours) - the shelf asks every frame, and the answer only
+        changes with those (it was most of the packs tab's frame time)."""
+        key = (id(self.pool), self.town.colours, id(products.jumpstart()))
+        hit = _THEMES.get(key)
+        if hit is not None:
+            return list(hit)
+        out = []
+        for h in products.jumpstart():
+            if not all(self.pool.get(n) is not None for n, _k in h.cards):
+                continue
+            cols = products.colours(h, self.pool)
+            if cols and fits_theme(cols, self.town.colours):
+                out.append(h)
+        _THEMES[key] = tuple(out)
+        return out
+
+    def theme_stock(self):
+        """Round PACK1: [HalfDeck] the shop stocks this restock (bought ones included), different themes, in a stable order."""
+        rng = self.save.stable_rng("jumpstart", self.town.id, self.restock_number())
+        cands = sorted(self.theme_candidates(), key=lambda h: h.code)
+        rng.shuffle(cands)
+        out, themes = [], set()
+        for h in cands:
+            if h.theme in themes:
+                continue
+            out.append(h)
+            themes.add(h.theme)
+            if len(out) == self.numbers.jumpstart_stock:
+                break
+        return out
+
+    def themes(self):
+        """Round PACK1: [(half-deck, price)] still on the shelf (a bought one is gone until the next restock)."""
+        bought = set(self._state().get("themes") or [])     # Round PACK1: absent in an older save, or before a first buy
+        return [(h, self.numbers.jumpstart_price) for h in self.theme_stock() if h.code not in bought]
+
+    def shelf(self):
+        """Round PACK1: every pack the shop sells, as the packs tab lists them: [(kind, code, price)] - theme packs first, then for
+        each set its plain pack, premium pack and bundle."""
+        out = [("theme", h.code, price) for h, price in self.themes()]
+        prem = {c for c, _n, _p in self.premium_packs()}
+        for code, _name, price in self.packs():
+            out.append(("plain", code, price))
+            if code in prem:
+                out.append(("premium", code, self.numbers.premium_pack_price))
+            out.append(("bundle", code, self.numbers.bundle_price))
+        return out
+
+    def _pay(self, price, what):
+        if self.save.gold < price:
+            raise ShopError(f"{what} costs {price} gold; you have {self.save.gold}.")
+        self.save.gold -= price
+
+    def _add(self, cards, pack=None):
+        out = []
+        for name, rarity, foil in cards:
+            card = self.pool.get(name)
+            shown = card.name if card is not None else name
+            free = self.save.collection.is_free(shown)
+            new = progress.is_new(self.save, shown)      # Round PROG1: the one NEW rule (never owned before)
+            self.save.collection.add(shown, 1)
+            d = {"name": shown, "rarity": rarity, "foil": foil, "new": new, "free": free}
+            if pack is not None:
+                d["pack"] = pack                         # Round PACK1: which pack of a bundle (0, 1, 2)
+            out.append(d)
+        return out
+
     def buy_pack(self, code):
         """Buy and open one pack: [{"name", "rarity", "foil", "new", "free"}] in the pack's order, every card added."""
         if code not in [c for c, _n, _p in self.packs()]:
@@ -175,15 +282,41 @@ class Shop:
             raise ShopError(f"A pack costs {price} gold; you have {self.save.gold}.")
         cards = products.open_pack(code, self.save.rng("pack:" + code))
         self.save.gold -= price
+        return self._add(cards)
+
+    def buy_premium(self, code):
+        """Round PACK1: buy and open a premium pack of `code`."""
+        if code not in [c for c, _n, _p in self.premium_packs()]:
+            raise ShopError("This shop doesn't sell that premium pack.")
+        self._pay(self.numbers.premium_pack_price, "A premium pack")
+        return self._add(products.open_premium(code, self.save.rng("pack:premium:" + code)))
+
+    def buy_bundle(self, code):
+        """Round PACK1: buy BUNDLE_PACKS plain packs of `code` at once; each card dict says which pack it came from ("pack")."""
+        if code not in [c for c, _n, _p in self.packs()]:
+            raise ShopError("This shop doesn't sell that bundle.")
+        self._pay(self.numbers.bundle_price, f"A bundle of {BUNDLE_PACKS} packs")
         out = []
-        for name, rarity, foil in cards:
-            card = self.pool.get(name)
-            shown = card.name if card is not None else name
-            free = self.save.collection.is_free(shown)
-            new = not free and self.save.collection.count(shown) == 0
-            self.save.collection.add(shown, 1)
-            out.append({"name": shown, "rarity": rarity, "foil": foil, "new": new, "free": free})
+        for i, cards in enumerate(products.open_bundle(code, self.save.rng("pack:bundle:" + code), BUNDLE_PACKS)):
+            out += self._add(cards, pack=i)
         return out
+
+    def buy_theme(self, code):
+        """Round PACK1: buy a Jumpstart theme pack (half-deck code) on the shelf: its cards in Forge's order, every one added."""
+        half = next((h for h, _p in self.themes() if h.code == code), None)
+        if half is None:
+            if any(h.code == code for h in self.theme_stock()):
+                raise ShopError("That theme pack is sold out until the shop restocks.")
+            raise ShopError("This shop doesn't sell that theme pack.")
+        self._pay(self.numbers.jumpstart_price, "A theme pack")
+        st = self._state()
+        if not isinstance(st.get("themes"), list):
+            st["themes"] = []
+        st["themes"].append(half.code)
+        cards = []
+        for name, k in half.cards:
+            cards += [(name, "", False)] * k
+        return self._add(cards)
 
     # ---- selling -------------------------------------------------------------------------------------------------------------
 
@@ -191,13 +324,76 @@ class Shop:
         return self.numbers.sell_price(self.tiers.tier_of(name))
 
     def sell(self, name, k=1):
-        """Sell k copies; returns the gold received."""
+        """Sell k copies; returns the gold received. Round SELL1: copies a saved deck uses that you'd no longer own come out of that
+        deck (self.taken: [(deck name, copies)] from the last sale)."""
         why = sell_problem(name, k, self.save.collection, self.save.decks)
         if why:
             raise ShopError(why)
         each = self.sell_price(name)
         if each < 1:
             raise ShopError(f"No shop buys {name}.")
+        takes = deck_takes(name, k, self.save.collection, self.save.decks)
+        take_out(takes, name)
+        taken = {}
+        for d, _part, n in takes:
+            taken[d.get("name", "?")] = taken.get(d.get("name", "?"), 0) + n
+        self.taken = sorted(taken.items())
         self.save.collection.remove(name, k)
         self.save.gold += each * k
         return each * k
+
+
+# ---- Round PACK1: what each kind of pack sells back for -----------------------------------------------------------------------
+
+def sell_back(cards, sell_price):
+    """The gold the cards [(name, ...)] sell back for, every copy (basic lands 0)."""
+    return sum(sell_price(c[0]) for c in cards)
+
+
+def pack_values(numbers, pool=None, tier_table=None, towns=None):
+    """{(kind, where): [gold a pack's cards sell back for, one per pack in the pool]} for every kind of pack a shop sells: plain,
+    premium and bundle per set (a bundle = BUNDLE_PACKS plain packs drawn from the plain pool: as many bundles as the pool has packs,
+    drawn with a fixed seed), theme per town (the half-decks it may stock)."""
+    from rpg import tiers as _tiers
+    pool = pool or cardpool.load()
+    tier_table = tier_table or _tiers.load(pool=pool)
+
+    def each(name):
+        card = pool.get(name)
+        return numbers.sell_price(tier_table.tier_of(card.name if card is not None else name))
+
+    out = {}
+    for town in (towns.values() if isinstance(towns, dict) else towns or []):
+        for code in town.sets:
+            if products.has_packs(code) and ("plain", code) not in out:
+                plain = [sell_back(p, each) for p in products.read_pool(code)["packs"]]
+                out[("plain", code)] = plain
+                rng = random.Random(BUNDLE_SAMPLE_SEED)             # 200 bundles of BUNDLE_PACKS packs drawn from the pool
+                out[("bundle", code)] = [sum(rng.choice(plain) for _ in range(BUNDLE_PACKS)) for _ in plain]
+                if products.has_premium(code):
+                    out[("premium", code)] = [sell_back(p, each) for p in products.read_premium(code)["packs"]]
+        vals = []
+        for h in products.jumpstart():
+            if all(pool.get(n) is not None for n, _k in h.cards):
+                cols = products.colours(h, pool)
+                if cols and fits_theme(cols, town.colours):
+                    vals.append(sum(each(n) * k for n, k in h.cards))
+        out[("theme", town.id)] = vals
+    return out
+
+
+PRICE_KEY = {"plain": "pack_price", "premium": "premium_pack_price", "bundle": "bundle_price", "theme": "jumpstart_price"}
+MUST_BEAT = ("theme", "premium")             # Round PACK1 brief item 5: these must cost more than their mean sell-back
+
+
+def price_problems(numbers, values):
+    """Round PACK1: [sentence] for every kind in MUST_BEAT whose price is not above its mean sell-back somewhere."""
+    out = []
+    for (kind, where), vals in sorted(values.items()):
+        if kind not in MUST_BEAT or not vals:
+            continue
+        mean = sum(vals) / len(vals)
+        price = getattr(numbers, PRICE_KEY[kind])
+        if price <= mean:
+            out.append(f"{PRICE_KEY[kind]} {price} is not above the {mean:.1f} gold a {kind} pack ({where}) sells back for")
+    return out

@@ -66,6 +66,14 @@ public class Wire {
         emit(msg.toString());
     }
 
+    /** Round PERF1: a message already turned into text (the timing mode measures the text's size and the time to make it). */
+    public synchronized void sendText(String line) {
+        if (closed) {
+            return;
+        }
+        emit(line);
+    }
+
     /** Writes one line. RemoteWire queues it instead. */
     protected void emit(String line) {
         out.println(line);
@@ -166,6 +174,11 @@ public class Wire {
         } catch (Exception e) {
             System.err.println("bridge: bad command (no command name)");
             return;
+        }
+        if (Timing.on) {                                 // round PERF1: when the bridge read this command (tools/bench_board.py)
+            JsonObject t = Timing.line("rx", 0);
+            t.addProperty("c", c);
+            Timing.send(t);
         }
         if (c.equals("reply")) {
             Pending p;

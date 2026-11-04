@@ -94,6 +94,7 @@ DECK_DIR = paths.forge_decks_dir()             # round 28: local_dir()/forge_dec
 
 DEFAULT_WINDOW = (1360, 840)
 MAX_BAD_FRAMES = 60                       # this many frames in a row with an error (about a second): give up and close
+FINGER_EVENTS = tuple(getattr(pygame, n) for n in ("FINGERDOWN", "FINGERMOTION", "FINGERUP") if hasattr(pygame, n))   # bug-sell-scroll-2
 PERF_LOG = paths.log_file("perf_log.txt")      # round 28: local_dir()/logs/perf_log.txt (MANTICORE_DATA_DIR still wins)
 SAVES_DIR = paths.saves_dir()                  # round 28: user_dir()/saves (MANTICORE_DATA_DIR still wins)
 MIN_WINDOW = (900, 600)
@@ -263,7 +264,8 @@ LOG_TEXT = {flog.TEXT: gfx.LOG_TEXT_NORMAL, flog.DIM: gfx.LOG_TEXT_DIM, flog.ME:
             flog.CARD: gfx.LOG_TEXT_CARD, flog.GOOD: gfx.LOG_TEXT_GOOD, flog.BAD: gfx.LOG_TEXT_BAD}
 BG_ORDER = ("graveyard", "cathedral", "citadel", "ruins")          # the pictures a game can start on, in rotation order (Round AD1)
 ONLINE_PREF_KEYS = ("name", "port", "upnp", "address", "known_hosts", "guests", "ai",   # (MP2c: guests, ai)
-                    "relay", "use_relay")                                                # (MP2d: the relay's address:port)      # Round MP1: settings.json "online" (never the password)
+                    "relay", "use_relay",                                                # (MP2d: the relay's address:port)      # Round MP1: settings.json "online" (never the password)
+                    "direct")                                                            # (RLY2: the player chose to host without the relay)
 KNOWN_HOSTS_MAX = 20
 BG_CHOICES = ("rotate",) + BG_ORDER + ("plain",)                    # what the cog's Table setting cycles through
 BG_LABELS = {"rotate": "Rotate", "graveyard": "Graveyard", "cathedral": "Cathedral", "citadel": "Citadel", "ruins": "Ruins", "plain": "Plain"}
@@ -295,7 +297,7 @@ HELP_LINES = [
     ("S / Skip...", "Opens the Skip window: let the stack resolve, skip to your next turn, auto-pass and full control on or off, 'always pass' on the ability on the stack or 'always stop' on its card. An opponent's trigger passes unless you hold an answer to it."),
     ("U / Ctrl+Z / Undo", "Go back to an earlier moment of your turn, as far as its start: a list shows what you did (\"Main 1: before you cast Sol Ring\"), you pick one, and the game is rebuilt from the first turn with the same shuffle and your same clicks up to there - that takes a while in a long game, and your game stays as it is if the rebuilt one doesn't match. With mana floating, Undo first takes back that mana tap at once. Against AI opponents only; online it only takes back a mana tap."),
     ("M", "Sound on/off. Same switch as the cog's SOUND group; a toast confirms which."),
-    ("Click a player", "Target that player, or attack them, when Forge is asking for one."),
+    ("Click a player", "Target that player, or attack them. A creature you click first waits (WHO?) for its player."),
     ("Turn bar (top)", "Shows whose turn it is and which phase you are in (the lit pill). Below each pill are two dots: click the blue one to stop there on YOUR turn, the orange one to stop there on an OPPONENT's turn. Clicking the pill itself toggles the blue one."),
     ("Rings and numbers", "A pale blue-white ring: a permanent that just entered the battlefield (yours or theirs). A purple ring with a number: a trigger from that card is on the stack. A green ring: an ability someone activated. The number is the row in the stack panel (1 resolves first). Cog > Animations turns the flashing off and keeps the rings."),
     ("Hover / right-click", "Hover a card to see it large on the right. Right-click a card to keep it there."),
@@ -306,7 +308,7 @@ HELP_LINES = [
     ("Command zone", "The gold frame beside your hand holds your commander; click the card to cast it (Forge adds the tax). Opponents' command zones are next to their panels."),
     ("Chips on a panel", "A gold crown chip means that player is the monarch; other chips show the initiative, the Ring and emblems. Hover one to read what it does. A life total flashes red or green with -3 / +2 when it changes."),
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
-    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Concede... (asks: concede and stay on the table, or concede and close the program). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
+    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Quit... (asks: the main menu or the desktop - with a game going on, keep it for later (Resume last game on the deck screen) or concede it). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
     ("F11 / + / -", "Fullscreen / bigger and smaller text; Ctrl+0 puts the text back to 100%. With Ctrl, + / - is the card size "
                     "(UI7, HAND1, HAND2): hand and command-zone cards, and battlefield cards in one row, show bigger. All remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
@@ -656,24 +658,27 @@ class Slot:
 class Launcher:
     """Starts a Forge game for the deck screen (and for the command line): writes the .dck files and launches the engine."""
 
-    def __init__(self, runtime=None, name="Karl", seed=None, record=None):
+    def __init__(self, runtime=None, name=None, seed=None, record=None):
+        # Bug report from Erik, 2 Nov 2026 ("I was Karl"): the name used to default to "Karl" in every copy. None = not known
+        # yet: the table fills it in from settings.json's player_name, or asks (ForgeTable.ask_name_if_needed).
         self.runtime, self.name, self.seed, self.record = runtime, name, seed, record
 
-    def start(self, mine, opponents, fmt=None, rules=(), names=None):
+    def start(self, mine, opponents, fmt=None, rules=(), names=None, effects=None):
         """mine = (commanders, deck); opponents = [(commanders, deck), ...]; fmt (round FMT1) "commander" (None) or "brawl".
         Round CD3: rules = house rules (house_rules.py keys - Turbo Cube's emblem), written into every .dck file, where the
         session (and a resumed game) reads them. Round RPG8: names = each opponent's deck name (the bridge names the AI seat
-        "AI 1 (<name>)"); None = "Opponent 1", ... Returns a started ForgeSession."""
+        "AI 1 (<name>)"); None = "Opponent 1", ... Round PROG3: effects = the player's start effects (start_effects.py: the
+        Adventure's levels and perks), written into player.dck only - a foe never gets them. Returns a started ForgeSession."""
         fmt = formats.normal(fmt)
         os.makedirs(DECK_DIR, exist_ok=True)
         my_path = fc.write_deck_file(os.path.join(DECK_DIR, "player.dck"), mine[0], mine[1], "Player", self.runtime, fmt,
-                                     rules=rules)
+                                     rules=rules, effects=effects)
         names = list(names or [])
         opp_paths = [fc.write_deck_file(os.path.join(DECK_DIR, f"opponent{i}.dck"), o[0], o[1],
                                         (names[i - 1] if i <= len(names) and names[i - 1] else f"Opponent {i}"), self.runtime, fmt,
                                         rules=rules)
                      for i, o in enumerate(opponents, 1)]
-        return fc.ForgeSession(my_path, opp_paths, name=self.name, seed=self.seed, runtime=self.runtime,
+        return fc.ForgeSession(my_path, opp_paths, name=self.name or "Player", seed=self.seed, runtime=self.runtime,
                                record_path=self.record, fmt=fmt).start()
 
 
@@ -799,7 +804,10 @@ class ForgeTable:
         self.overlay = None                          # the settings pop-up or the bug report form: above everything, gets every click first
         self.keyboard = osk.Keyboard()               # round PEN1: the on-screen keyboard (opened by a window's Keyboard button)
         self.pan = panning.Panner()                  # round PEN1: a press held over a list that scrolls: a click or a drag
+        self._touch_mouse = False                    # task bug-sell-scroll-2: SDL turns touches into mouse events (touch=True) here
+        self._finger = None                          # ... else (touch id, finger id) of the finger pointing now
         self.reporter_name = ""                       # who the bug reports say they are from (remembered in settings.json)
+        self.player_name = ""                         # bug report from Erik ("I was Karl"): my name at the table (settings.json)
         self.cog_rect = None                         # where the settings cog was drawn
         self.report_folder = None                    # where bug reports are written (None: next to the program; tests point it elsewhere)
         self.deck_choice = {}                        # what was picked there last time (saved in settings.json)
@@ -858,6 +866,8 @@ class ForgeTable:
         self.desktop = desktop_size()       # round 27e: the screen this window opens on
         self._display_checked = time.monotonic()
         self._load_settings()
+        if self.launcher is not None and getattr(self.launcher, "name", "x") is None and self.player_name:
+            self.launcher.name = self.player_name    # bug report from Erik: the name the player gave, not "Karl"
         self.current_bg = self.resting_background()      # what the deck screen shows before any game starts
         self._fit_to_screen = not window_size       # round 27e: a size given by the caller (tests) is used as given
         if window_size:
@@ -918,6 +928,7 @@ class ForgeTable:
         self.overlay = None
         self.pinned = None                  # card id kept in the preview by a right-click
         self.last_preview = None            # the preview keeps showing the last card you looked at
+        self._attack_aim = None             # round ATK1: who you are attacking in this question, and creatures waiting for a player
         self.toast = None                   # (text, colour, until)
         self.slots = {}                     # player id -> [Slot]
         self.card_rects = {}                # card id -> rect on screen this frame (for combat lines)
@@ -1039,6 +1050,7 @@ class ForgeTable:
             if isinstance(data.get("decks"), dict):
                 self.deck_choice = data["decks"]
             self.reporter_name = str(data.get("reporter_name", ""))[:40]
+            self.player_name = forge_net.clean_name(str(data.get("player_name", "") or ""))
             done = data.get("tour_done", 0)
             self.tour_done = done if isinstance(done, int) and not isinstance(done, bool) else 0
             self.check_updates = bool(data.get("check_updates", True))            # Round 30
@@ -1077,6 +1089,8 @@ class ForgeTable:
             data["draft_cube"] = self.draft_cube
         if self.reporter_name:
             data["reporter_name"] = self.reporter_name
+        if self.player_name:
+            data["player_name"] = self.player_name
         if self.tour_done:
             data["tour_done"] = self.tour_done          # Round UX1
         data["check_updates"] = bool(self.check_updates)          # Round 30
@@ -2261,13 +2275,15 @@ class ForgeTable:
         tgt = self.target_prompt()
         if tgt and tgt["id"] == card.get("id"):
             self.draw_source_badge(rect, radius)
+        elif card.get("id") in self.attack_pending():          # round ATK1: clicked, waiting for the player it attacks
+            self.draw_source_badge(rect, radius, "WHO?")
 
-    def draw_source_badge(self, rect, radius):
+    def draw_source_badge(self, rect, radius, text="SOURCE"):
         """While choosing a target: the card whose ability it is wears an orange frame and a SOURCE tag, so it is not mistaken for
         a target (Forge lets it target itself, and it is glowing like every other legal target)."""
         pygame.draw.rect(self.screen, ORANGE, rect, max(4, int(min(rect.w, rect.h) * 0.05)), border_radius=radius)
         f = self.font("tiny", True)
-        label = gfx.pick_font(f, "SOURCE").render("SOURCE", True, gfx.INK_GOLD)
+        label = gfx.pick_font(f, text).render(text, True, gfx.INK_GOLD)
         pad = max(3, f.get_height() // 4)
         pill = pygame.Rect(0, 0, min(label.get_width() + 2 * pad, rect.w), label.get_height() + pad)
         pill.midtop = (rect.centerx, rect.y + max(2, rect.h // 40))
@@ -2603,6 +2619,131 @@ class ForgeTable:
         msg = prompt.get("message", "").lower()
         return bool(prompt.get("selecting") or "player" in msg or "attack" in msg)
 
+    # ---- round ATK1: attacking one of several opponents ---------------------------------------
+    # Bug report from Karl, 31 Oct 2026 ("Only letting me attack AI 1 during a 4 player pod"): Forge's attack question has a
+    # current defender (the first opponent at the start), a creature click declares that creature against it, and a player click
+    # only changes it for the NEXT creature. Karl clicked his creature, then the player he meant - every attack went to AI 1.
+    # Now, with two or more opponents, a creature clicked before you have chosen a player in this question waits ("WHO?") and goes
+    # to the player you click next; once you have chosen one, creatures go straight to them (Forge's own order, unchanged).
+
+    def attacking_now(self):
+        """True while Forge asks me to declare attackers."""
+        kind = self.input_kind()
+        if kind is not None:
+            return kind == "attack"
+        return bool(_ATTACK_PROMPT.match(" ".join(strip_ids(clean_text(self.prompt().get("message", ""))).split())))
+
+    def attack_opponents(self):
+        """The players I can attack: opponents still in the game."""
+        s = self.state or {}
+        return [p for p in s.get("players") or [] if p.get("id") != s.get("me") and not p.get("lost")]
+
+    def attack_pod(self):
+        """Round ATK1: the attack question is open and there is more than one opponent to attack."""
+        return bool(self.state) and self.attacking_now() and len(self.attack_opponents()) >= 2
+
+    def attack_aim(self):
+        """This attack question's choices: {"chosen": a player was clicked, "pending": creature ids waiting for a player}. A new
+        question (another inputSeq or turn) starts with nothing chosen."""
+        s = self.state or {}
+        key = (s.get("inputSeq"), s.get("turn"), s.get("activePlayer"))
+        if self._attack_aim is None or self._attack_aim["key"] != key:
+            self._attack_aim = {"key": key, "chosen": False, "pending": []}
+        return self._attack_aim
+
+    def attack_pending(self):
+        """Creature ids clicked in this attack question that wait for a player (only while that question is open)."""
+        if not self.attack_pod():
+            return []
+        mine = {c["id"] for c in ((self.session.me() or {}).get("zones") or {}).get("battlefield") or []}
+        return [cid for cid in self.attack_aim()["pending"] if cid in mine]
+
+    def attack_defender(self):
+        """The id of the player Forge says I am attacking right now (from its own words), or None."""
+        m = _ATTACK_PROMPT.match(" ".join(strip_ids(clean_text(self.prompt().get("message", ""))).split()))
+        if not m:
+            return None
+        for p in self.attack_opponents():
+            if strip_ids(clean_text(p.get("name", ""))).strip() == m.group("d").strip():
+                return p["id"]
+        return None
+
+    def hold_attacker(self, card):
+        """A click on one of my creatures in a pod's attack question before a player was chosen: it waits for the player instead of
+        attacking the first opponent. A second click lets it go. True when the click was taken here (nothing is sent)."""
+        if not self.attack_pod():
+            return False
+        aim = self.attack_aim()
+        me = (self.state or {}).get("me")
+        if aim["chosen"] or card.get("controller") != me or card.get("attacking"):
+            return False
+        mine = {c["id"] for c in ((self.session.me() or {}).get("zones") or {}).get("battlefield") or []}
+        if card["id"] not in mine or not (card.get("weak") or card.get("selectable")):
+            return False
+        if card["id"] in aim["pending"]:
+            aim["pending"].remove(card["id"])
+        else:
+            aim["pending"].append(card["id"])
+        return True
+
+    def aim_attack(self, pid=None, defender_card=None):
+        """Round ATK1: a player (or an opponent's planeswalker or battle) was clicked in a pod's attack question: it is now the one
+        I attack, and the creatures waiting for a player attack it. The defender's click goes first, so Forge has changed its
+        current defender when the creatures' clicks arrive (all in the same question, one after another)."""
+        s = self.session
+        if defender_card is not None:
+            s.click_card(defender_card)
+        else:
+            s.click_player(pid)
+        if not self.attack_pod():
+            return
+        me = (self.state or {}).get("me")
+        if pid is not None and (pid == me or pid not in {p["id"] for p in self.attack_opponents()}):
+            return                                              # Forge says no to that player; the creatures keep waiting
+        aim = self.attack_aim()
+        aim["chosen"] = True
+        for cid in self.attack_pending():
+            s.click_card(cid)
+        aim["pending"] = []
+
+    def attackable_card(self, card):
+        """An opponent's planeswalker or battle: Forge takes a click on it as "attack this" in the attack question."""
+        if card.get("controller") == (self.state or {}).get("me"):
+            return False
+        return bool(card.get("isPlaneswalker")) or "battle" in str(card.get("type") or card.get("typeLine") or "").lower()
+
+    def flush_attackers(self):
+        """OK with creatures still waiting: they attack the player Forge has now (as a click on them always did)."""
+        for cid in self.attack_pending():
+            self.session.click_card(cid)
+        if self._attack_aim is not None:
+            self._attack_aim["pending"] = []
+
+    def drop_attackers(self):
+        """Cancel / Full Send / Esc: the waiting creatures are let go (Full Send sends every creature anyway)."""
+        if self._attack_aim is not None:
+            self._attack_aim["pending"] = []
+
+    def attack_words(self, headline, hint):
+        """The bar's words while I attack in a pod (Forge's own say only "attacking AI 1")."""
+        if not self.attack_pod():
+            return headline, hint
+        pending = self.attack_pending()
+        cards = {c["id"]: c for c in ((self.session.me() or {}).get("zones") or {}).get("battlefield") or []}
+        first = self.attack_opponents()[0]
+        now = self.attack_defender()
+        now_name = short_name(next((p["name"] for p in self.attack_opponents() if p["id"] == now), first["name"]))
+        if pending:
+            who = cards[pending[0]].get("name", "it") if len(pending) == 1 else f"these {len(pending)} creatures"
+            verb = "does" if len(pending) == 1 else "do"
+            return (f"Who {verb} {who} attack?",
+                    f"Click that player's panel. (OK now: {'it attacks' if len(pending) == 1 else 'they attack'} {now_name}.)")
+        if not self.attack_aim()["chosen"]:
+            return ("Declare attackers  -  choose who to attack",
+                    "Click a player's panel, then the creatures that attack them (or a creature, then its player). OK when done.")
+        return (headline,
+                f"Click the creatures that attack {now_name}, or another player's panel to attack them next. OK when done.")
+
     # ---- player panels ---------------------------------------------------------------------
 
     def draw_player_panel(self, player, rect, mine):
@@ -2616,7 +2757,9 @@ class ForgeTable:
         active = s.get("activePlayer") == pid
         base = gfx.PANEL_MINE if mine else gfx.PANEL_OPP
         round_rect(scr, rect, base, 12, 2, GOLD if active else gfx.PANEL_EDGE, alpha=235)
-        if self.panel_targetable(player):
+        if self.attack_pod() and self.attack_aim()["chosen"] and pid == self.attack_defender():
+            gfx.glow(scr, rect, RED, 12, 3, 4)               # round ATK1: the player your creatures attack now
+        elif self.panel_targetable(player):
             gfx.glow(scr, rect, GOLD, 12, 2, 3)
         elif player.get("highlight"):                        # round 28d: a player you have picked in this question
             gfx.glow(scr, rect, GREEN, 12, 3, 4)
@@ -3328,6 +3471,7 @@ class ForgeTable:
         me = self.session.me()
         headline, hint, ok_label = prompt_view(p.get("message", ""), me["name"] if me else "", self.mulligans, bool(self.pool_items(me)), self.pay_trouble(), self.input_kind(),
                                           resolving_payment(s)) if s.get("prompt") else ("", "", None)
+        headline, hint = self.attack_words(headline, hint)     # round ATK1: who you attack, in a pod
         # buttons, right to left
         specs = []
         if ok.get("label"):
@@ -3830,6 +3974,42 @@ class ForgeTable:
                 return gfx.recall(key) or gfx.remember(key, gfx.rounded_image(big, w, h, radius))
         return gfx.card_face(card, w, h, radius, show_pt=True)
 
+    CARD_ASPECT = 680 / 488                                     # a card's height over its width (Scryfall's pictures)
+
+    def sideways_card(self, card):
+        """Round ROOM1 - bug report from Karl, 31 Oct 2026 ("Room cards are appearing sideways"): a split card printed sideways (the
+        Rooms, Fire // Ice). Scryfall's picture of it is upright but both halves read from bottom to top. An Aftermath card (Commit //
+        Memory) is not one: its first half is upright. From Scryfall's card data when it is here (layout "split"), else a Room by its
+        type line."""
+        if card.get("hidden") or card.get("faceDown") or not self.art_name(card):
+            return False
+        peek = getattr(getattr(self.art, "store", None), "peek_card", None)
+        info = None
+        for n in (card.get("name"), card.get("oracleName")):
+            if n and peek:
+                info = peek(n)
+                if info:
+                    break
+        if info:
+            return info.get("layout") == "split" and "Aftermath" not in (info.get("keywords") or [])
+        return "room" in str(card.get("type") or "").lower().replace("-", " ").split()
+
+    def focus_picture(self, card, r):
+        """(picture, where) for the focus panel. A sideways card with its real picture is turned a quarter clockwise, so it reads
+        like the printed card held sideways, as wide as the panel and centred in it (Karl, 2 Nov: in the focus panel only - the
+        hand and the battlefield keep the upright picture). Anything else fills the panel as before."""
+        if self.sideways_card(card) and self.art_name(card):
+            wide = min(r.w, int(r.h * self.CARD_ASPECT))         # the turned card's width (its height before turning)
+            w0, h0 = max(1, int(round(wide / self.CARD_ASPECT))), wide
+            aname = self.art_key(card)
+            # your own my_art picture is left as you made it (its orientation is unknown); Scryfall, MPC and imported card
+            # pictures are the printed card, upright
+            if not self.art.is_custom(aname) and self.art.preview(aname, w0, h0) is not None:
+                key = ("prev_side", aname, w0, h0)
+                surf = gfx.recall(key) or gfx.remember(key, pygame.transform.rotate(self.preview_surface(card, w0, h0), -90))
+                return surf, surf.get_rect(center=r.center)
+        return self.preview_surface(card, r.w, r.h), pygame.Rect(r)
+
     def draw_preview(self):
         if self.preview_mode != "always":                       # patch UI6: no panel; only the card slot under the stack
             self.draw_aux_card()
@@ -3846,9 +4026,11 @@ class ForgeTable:
             draw_text(scr, "Hover a card", r.centerx, r.centery, self.font("small"), DIM, "center")
             return
         radius = max(6, int(r.w * 0.05))
-        surf = self.preview_surface(card, r.w, r.h)
-        gfx.shadowed(scr, r, radius, 4, 110)
-        scr.blit(surf, r)
+        surf, dest = self.focus_picture(card, r)
+        if dest.size != r.size:                                  # round ROOM1: a sideways card sits in the panel's middle
+            round_rect(scr, r, gfx.LOG_BG, 12, 1, gfx.LOG_EDGE, alpha=200)
+        gfx.shadowed(scr, dest, radius, 4, 110)
+        scr.blit(surf, dest)
         if self.pinned is not None and card.get("id") == self.pinned:
             draw_text(scr, "pinned", r.right - 6, r.top + 4, self.font("tiny", True), GOLD, "topright", True)
         if self.art and not (card.get("hidden") or card.get("faceDown")) and self.art_name(card) and \
@@ -4755,8 +4937,10 @@ class ForgeTable:
         self.play_cue("ui.click")           # round 24
         s = self.session
         if name == "ok":
+            self.flush_attackers()                  # round ATK1: creatures still waiting for a player attack Forge's current one
             s.ok()
         elif name == "cancel":
+            self.drop_attackers()
             s.cancel()
         elif name == "undo":
             self.press_undo()
@@ -4770,8 +4954,8 @@ class ForgeTable:
             self.open_help()
         elif name == "newgame":
             self.ask_new_game()
-        elif name == "concede":
-            self.ask_concede()
+        elif name in ("quit", "concede"):            # bug-1566939794272161812: Concede... became Quit...
+            self.ask_quit()
         elif name == "full":
             self.toggle_fullscreen()
         elif name == "motion":
@@ -5101,7 +5285,9 @@ class ForgeTable:
         self.stats_folder = adv.duel_stats_dir(g.folder)
         self.stats_adventure = g.slot
         try:
-            problem = self.begin(mine, [theirs], labels=(deck_name, [duel.enemy_name]), fmt=duel.format, names=[duel.enemy_name])
+            problem = self.begin(mine, [theirs], labels=(deck_name, [duel.enemy_name]), fmt=duel.format, names=[duel.enemy_name],
+                                 effects=getattr(duel, "effects", None))     # Round PROG3: the player's levels and perks
+
         finally:
             self.stats_folder = self.stats_adventure = None
         if problem:
@@ -5234,7 +5420,7 @@ class ForgeTable:
         self.current_draft = draft_of(mine)                                       # round CD4: Play again / Edit deck
         return None
 
-    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None, rules=(), names=None):
+    def begin(self, my_deck, opp_decks, labels=None, printings=None, fmt=None, rules=(), names=None, effects=None):
         """End the current game (if any) and start a new one with these decks ((commanders, cards) each).
         labels (Round AD2b): (my deck's name, [each AI deck's name]) for the VS screen; Restart passes the last game's.
         printings (Round ALT1): [my deck's, each AI deck's] {card name lower: (set, cn)}; Restart passes the last game's.
@@ -5242,10 +5428,14 @@ class ForgeTable:
         rules (Round CD3): house rules (Turbo Cube's emblem); Restart passes the last game's. None: the launcher is called
         exactly as before.
         names (Round RPG8): the AI seats' deck names (the AI is "AI 1 (<name>)"); None: "Opponent 1", ... as before.
+        effects (Round PROG3): the player's seat's start effects (an Adventure duel's levels and perks); None/{}: the launcher is
+        called exactly as before.
         Returns None when it worked, or a message saying why not."""
         old = self.session
         self.end_adventure_duel()                             # Round RPG8: start_adventure_duel sets a new one after this
         kw = {"names": list(names)} if names else {}
+        if effects:
+            kw["effects"] = dict(effects)                     # Round PROG3 (none: the launcher's call exactly as before)
         fmt = formats.normal(fmt)
         rules = house_rules.normal(rules)
         try:
@@ -5324,7 +5514,8 @@ class ForgeTable:
         opps = [paths[n] for n in sorted((n for n in paths if re.fullmatch(r"opponent\d+\.dck", n)), key=lambda n: int(re.findall(r"\d+", n)[0]))]
         try:
             self.session.close()
-            session = fc.ForgeSession(paths["player.dck"], opps, name=start.get("name") or "Karl", seed=start.get("seed"),
+            session = fc.ForgeSession(paths["player.dck"], opps, name=start.get("name") or self.player_name or "Player",
+                                      seed=start.get("seed"),
                                       runtime=self.launcher.runtime)
             session.start()
         except Exception as e:
@@ -5423,7 +5614,41 @@ class ForgeTable:
 
     def online_defaults(self):
         prefs = dict(self.online_prefs)
-        prefs.setdefault("name", self.reporter_name or "")
+        prefs.setdefault("name", self.player_name or self.reporter_name or "")
+        prefs["relay_default"] = forge_net.default_relay()          # round RLY2: relay_config.json's relay, filled in and ticked
+        return prefs
+
+    # ---- bug report from Erik, 2 Nov 2026 ("I was Karl"): my own name -------------------------------------------------------
+    def ask_name_if_needed(self):
+        """The first time the main menu shows and no name is known (none in settings.json, none on the command line): ask."""
+        if self.launcher is None or getattr(self.launcher, "name", "x") is not None or self.player_name or self.modal:
+            return False
+        self.modal = fboot.NameDialog(self, first=True)
+        return True
+
+    def set_player_name(self, name):
+        """My name from now on: at the table, as the online name and on bug reports (each of those only when it had none of
+        its own yet, or had this same old name)."""
+        name = forge_net.clean_name(name)
+        if not name:
+            return
+        old = self.player_name
+        self.player_name = name
+        if self.launcher is not None:
+            self.launcher.name = name
+        if not self.reporter_name or self.reporter_name == old:
+            self.reporter_name = name
+        if not self.online_prefs.get("name") or self.online_prefs.get("name") == old:
+            self.online_prefs["name"] = name
+        self.save_settings()
+
+    def _remember_relay(self, relay):
+        """Round RLY2: what to keep of a host's relay choice. Hosting without the relay is remembered ("direct"); a relay the
+        player typed is kept only when it isn't the default one, so a moved default (a new relay_config.json) reaches them."""
+        prefs = {"direct": not relay, "use_relay": bool(relay)}
+        if relay:
+            typed = ("[%s]:%d" if ":" in str(relay[0]) else "%s:%d") % (relay[0], int(relay[1]))
+            prefs["relay"] = "" if typed == forge_net.default_relay() else typed
         return prefs
 
     def _online_deck_problem(self, entry):
@@ -5443,6 +5668,8 @@ class ForgeTable:
 
     def _remember_online(self, **prefs):
         self.online_prefs.update({k: v for k, v in prefs.items() if k in ONLINE_PREF_KEYS})
+        if prefs.get("name") and not self.player_name:      # bug report from Erik: a name typed to play online is my name
+            self.set_player_name(prefs["name"])
         self.save_settings()
 
     def host_game(self, entry, name, port, password, upnp, guests=1, ai=0, relay=None, resume=None):
@@ -5513,8 +5740,7 @@ class ForgeTable:
                               "deck": deck_meta(entry)}
         self.hosting_wait = onl.HostWait(session, password, port, upnp)
         self.online_save_folder, self.online_save_resumed, self.online_save_turn = folder, False, None
-        self._remember_online(name=name, port=port, upnp=bool(upnp), guests=guests, ai=ai, use_relay=bool(relay),
-                              **({"relay": "%s:%d" % tuple(relay)} if relay else {}))
+        self._remember_online(name=name, port=port, upnp=bool(upnp), guests=guests, ai=ai, **self._remember_relay(relay))
         self.set_title()
         return None
 
@@ -5528,9 +5754,10 @@ class ForgeTable:
         self.modal = self.online_draft = odscr.OnlineDraftFlow(self, "host", job=job, from_title=from_title,
                                                                prefs=self.online_defaults())
 
-    def host_draft(self, name, port, password, upnp):
+    def host_draft(self, name, port, password, upnp, relay=None):
         """The online draft window's "Open the draft": NetHost --draft on this PC, friends join without decks. (session, None)
-        or (None, a message). The window stays open (it is the lobby now)."""
+        or (None, a message). The window stays open (it is the lobby now). Round RLY2: relay = (address, port) hosts through
+        that relay, as Host online does."""
         runtime = self.launcher.runtime if self.launcher else None
         java = fc.find_java()
         try:
@@ -5544,7 +5771,8 @@ class ForgeTable:
             folder = None
         session = fc.HostSession(os.path.join(DECK_DIR, "draft_host.dck"), name, port, password, cert,
                                  os.path.join(DECK_DIR, "guest.dck"), upnp=upnp, code=version.code_fingerprint(), runtime=runtime,
-                                 draft=True, guests=3, **({"journal_path": online_save.journal_path(folder)} if folder else {}))
+                                 draft=True, guests=3, **({"journal_path": online_save.journal_path(folder)} if folder else {}),
+                                 **({"relay": relay} if relay else {}))
         try:
             self.session.close()
             session.start()
@@ -5561,7 +5789,7 @@ class ForgeTable:
         session.stats_info = {"id": online_stats_id(folder), "format": "commander_draft", "online": "host",
                               "deck": {"id": None, "name": ""}}
         self.online_save_folder, self.online_save_resumed, self.online_save_turn = folder, False, None
-        self._remember_online(name=name, port=port, upnp=bool(upnp))
+        self._remember_online(name=name, port=port, upnp=bool(upnp), **self._remember_relay(relay))
         self.set_title()
         return session, None
 
@@ -6093,17 +6321,92 @@ class ForgeTable:
             self.say(problem, RED, 8.0)
             self.open_menu()
 
-    def ask_concede(self):
-        """Cog > Concede...: give the game up (Forge counts it as a loss), then go to the main menu, stay on the table, or close the
-        program. Always asks first."""
-        if not self.game_in_progress():
-            self.say("There is no game in progress to concede.", DIM)
+    def ask_quit(self):
+        """Cog > Quit... (bug-1566939794272161812; Karl, 2-3 Nov 2026: "The settings menu should include the ability to quit then
+        choose quit to desktop or main menu", then "Ask each time" and "One Quit... button"). Replaces round 32's Concede...: go to
+        the main menu or to the desktop, and - while a game is going on - either keep it for later or concede it. Always asks first;
+        "Keep playing" (Esc) changes nothing. What "keep for later" means depends on the game (leave_game):
+          - a game against the AI: it stays unfinished in the journal, so the deck screen's "Resume last game" plays it back;
+          - an online game I host: the host's save (Round MP2b) stays, so Host online offers "Continue it";
+          - an online game I joined: only the host can keep it, so leaving is conceding (the host's engine concedes for a guest
+            who leaves - Round MP2a), and only the two Leave answers are offered;
+          - watching an online game: nothing to keep or concede - just stop watching;
+          - an Adventure duel: the Adventure's own rule for a duel that didn't finish (rpg/duel.py settle_pending) - it doesn't
+            count: nothing is won or lost and the foe can be fought again. Conceding it is a loss, as before."""
+        self.overlay = None
+        running = self.game_in_progress()
+        on_title = self.boot is not None and getattr(self.boot, "stage", None) == "menu" and not self.game_showing()
+        online = getattr(self.session, "online", None)
+        watching = bool(getattr(self.session, "spectator", False))
+        opts = []
+        if not running:
+            if not on_title:
+                opts.append(("Main menu", lambda: self.leave_game(), "normal"))
+            opts.append(("Desktop  (close the program)", lambda: self.leave_game(close=True), "normal"))
+            self.modal = dlg.OptionsDialog("Quit", "Go back to the main menu, or close the program.", opts, "Cancel")
             return
-        self.modal = dlg.OptionsDialog(
-            "Concede this game?", "You lose the game. Afterwards you can start another (cog > New game).",
-            [("Concede and return to the main menu", self.concede_to_title, "danger"),          # round 32 (Karl, 3 Oct)
-             ("Concede and stay on the table", self.concede, "danger"),
-             ("Concede and close the program", self.concede_and_close, "danger")], "Keep playing")
+        if watching:
+            text = "You stop watching; the game goes on without you."
+            opts = [("Main menu  -  stop watching", lambda: self.leave_game(), "normal"),
+                    ("Desktop  -  stop watching", lambda: self.leave_game(close=True), "normal")]
+        elif online == "guest":
+            text = ("Only the host can keep an online game for later, so leaving it concedes: you lose this game"
+                    + (" and the others play on." if int(getattr(self.session, "players", 2) or 2) > 2 else "."))
+            opts = [("Main menu  -  leave and concede", lambda: self.leave_game(concede=True), "danger"),
+                    ("Desktop  -  leave and concede", lambda: self.leave_game(concede=True, close=True), "danger")]
+        else:
+            if self.adventure_duel is not None:
+                keep = "leave the duel"
+                text = ("Leaving the duel unfinished doesn't count: nothing is won or lost, and you can fight this foe again. "
+                        "Conceding it is a loss.")
+            elif online == "host":
+                keep = "keep for later"
+                text = ("Keep for later: your friends are told you left, and Host online offers to continue this game from its "
+                        "save. Concede: you lose this game.")
+            else:
+                keep = "keep for later"
+                text = "Keep for later: \"Resume last game\" on the deck screen picks it up again. Concede: you lose this game."
+            opts = [(f"Main menu  -  {keep}", lambda: self.leave_game(), "normal"),
+                    ("Main menu  -  concede", lambda: self.leave_game(concede=True), "danger"),
+                    (f"Desktop  -  {keep}", lambda: self.leave_game(close=True), "normal"),
+                    ("Desktop  -  concede", lambda: self.leave_game(concede=True, close=True), "danger")]
+        self.modal = dlg.OptionsDialog("Quit", text, opts, "Keep playing")
+
+    ask_concede = ask_quit                       # the old name (round 32's Concede... button)
+
+    def leave_game(self, concede=False, close=False):
+        """Cog > Quit...'s answers (ask_quit). concede: give the game up first (Forge counts it as a loss). close: close the program
+        (shutdown() keeps whatever was not conceded: the journal unfinished, the stats "unfinished", an Adventure duel uncounted);
+        else the game's engine is ended here the same way and the title's main menu shows."""
+        if concede and self.game_in_progress():
+            if close:
+                self.concede_and_close()
+            else:
+                self.concede_to_title()
+            return
+        if close:
+            self.running = False                     # run() ends its loop, and shutdown() closes the engine
+            return
+        self.close_rewind_prestart()
+        if self.journal is not None:
+            self.journal.close()                     # left unfinished: the deck screen's "Resume last game" offers it
+        self.stats_close()                           # written down as unfinished (patch 44: not in the record)
+        self.end_adventure_duel()                    # an unfinished duel isn't settled: the save's pending duel doesn't count
+        if self.hosting_wait is not None:
+            self.cancel_hosting()                    # waiting for guests: nothing started, nothing to keep
+        self.online_save_folder = None               # a hosted game's save stays as it is (Round MP2b: Host online > Continue it)
+        try:
+            self.session.close()
+        except Exception:
+            pass
+        self.session = fc.ForgeSession("", [])
+        self.modal = self.overlay = self.end_screen = None
+        self.hosting_wait = None
+        self.invite_code = None
+        self.set_title()
+        self.title_ok = True
+        self.open_title()
+        self.boot.to_menu()
 
     def concede(self):
         self.session.concede()
@@ -6196,22 +6499,56 @@ class ForgeTable:
     def _pan_log(self, n):
         self.log_scroll += n * 3
 
+    # ---- task bug-sell-scroll-2: fingers ---------------------------------------------------------------------------------------
+    # Karl, 3 Nov 2026 (Surface Pro 11): a finger drag didn't move the Adventure's Sell list. Everything here reads mouse events;
+    # SDL normally makes them from the first finger on a touch screen (touch=True, sent before the finger event). Where it
+    # doesn't, the finger events themselves are turned into the same mouse events: the first finger only, and never once a
+    # touch=True mouse event has been seen (then SDL is doing it, and doing it twice would scroll twice and click twice).
+    # tools/input_probe.py shows which of the two a computer sends.
+    def finger_event(self, ev):
+        if getattr(self, "_touch_mouse", False):
+            return True
+        size = self.screen.get_size() if self.screen is not None else (0, 0)
+        pos = (int(round(getattr(ev, "x", 0.0) * size[0])), int(round(getattr(ev, "y", 0.0) * size[1])))
+        fid = (getattr(ev, "touch_id", 0), getattr(ev, "finger_id", 0))
+        cur = getattr(self, "_finger", None)
+        if ev.type == pygame.FINGERDOWN:
+            if cur is not None:
+                return True                              # a second finger: only the first one points
+            self._finger = fid
+            self.handle_event(pygame.event.Event(pygame.MOUSEMOTION, pos=pos, rel=(0, 0), buttons=[0, 0, 0], finger=True))
+            return self.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=pos, button=1, finger=True))
+        if cur != fid:
+            return True
+        if ev.type == pygame.FINGERMOTION:
+            return self.handle_event(pygame.event.Event(pygame.MOUSEMOTION, pos=pos, rel=(0, 0), buttons=[1, 0, 0], finger=True))
+        self._finger = None                              # FINGERUP
+        return self.handle_event(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=pos, button=1, finger=True))
+
     def handle_event(self, ev):
         """Process one pygame event. Returns False when the window should close."""
         if ev.type == pygame.QUIT:
             return False
+        if ev.type in FINGER_EVENTS:
+            return self.finger_event(ev)               # task bug-sell-scroll-2: a touch SDL didn't turn into mouse events
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION) and getattr(ev, "touch", False):
+            self._touch_mouse = True                     # SDL makes mouse events from touches here: those do the work
+            self._finger = None
         if ev.type in (pygame.KEYDOWN, pygame.KEYUP, pygame.MOUSEBUTTONDOWN, pygame.MOUSEWHEEL):
             self.note_modifier(ev)                     # patch 43: Ctrl / Ctrl+Shift taps
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+            # a touch's motion says nothing reliable about the mouse's buttons (SDL keeps a touch's state apart): while a press is
+            # held, a touch motion is a held motion (task bug-sell-scroll-2)
+            held = getattr(ev, "buttons", (1,))[0] or getattr(ev, "touch", False)
             owner = self.scroll_drag_owner()
             if owner is not None:                        # round UI8: a scroll bar's handle follows the pointer
-                if getattr(ev, "buttons", (1,))[0]:
+                if held:
                     owner.drag_motion(self, ev.pos)
                 else:                                    # the button went up where the window didn't see it (outside it)
                     owner.drag_release(self, ev.pos)
             elif self.pan.holding:                       # round PEN1: dragging a list with the pen / a finger / the mouse
-                if getattr(ev, "buttons", (1,))[0]:
+                if held:
                     self.pan.motion(ev.pos)
                 else:
                     self.pan.cancel()                    # released outside the window: neither a click nor more drag
@@ -6318,6 +6655,10 @@ class ForgeTable:
             card = data["card"]
             if tgt and tgt["id"] == card["id"]:
                 self.confirm_self_target(tgt)                       # the source is glowing like every legal target: ask first
+            elif self.hold_attacker(card):                          # round ATK1: it waits for the player it attacks
+                self.play_cue("card.pickup", self.pan_for(card["id"]))
+            elif self.attack_pod() and self.attackable_card(card):
+                self.aim_attack(defender_card=card["id"])           # round ATK1: an opponent's planeswalker or battle to attack
             else:
                 if card.get("selectable") or card.get("weak"):
                     self.press_dip(card["id"])          # round 23: visual-only; the click below is unaffected
@@ -6327,7 +6668,7 @@ class ForgeTable:
                     self.say(f"Holding priority over {card.get('name', 'it')}.", DIM, 2.5)
                 s.click_card(card["id"])
         elif kind == "player":
-            s.click_player(data["id"])
+            self.aim_attack(data["id"])                         # round ATK1: in a pod's attack question, waiting creatures follow
         elif kind == "button":
             self.press(data["name"])
         elif kind == "pool":
@@ -6339,11 +6680,11 @@ class ForgeTable:
         elif kind == "badge":                                     # a chip sits on the panel: a click there still means "this player"
             player = s.player(data.get("player")) if data.get("player") is not None else None
             if player and self.panel_targetable(player):
-                s.click_player(player["id"])
+                self.aim_attack(player["id"])
         elif kind in ("zone", "library"):
             player = s.player(data["player"])
             if player and self.panel_targetable(player):        # the piles sit on the panel: a click there still means "this player"
-                s.click_player(player["id"])
+                self.aim_attack(player["id"])
             elif kind == "zone":
                 self.open_zone(data["player"], data["zone"])
             else:
@@ -6436,10 +6777,13 @@ class ForgeTable:
                 self.pass_until_something()
         elif key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_KP_ENTER):
             if self.prompt().get("ok", {}).get("enabled"):
+                self.flush_attackers()                  # round ATK1
                 self.session.ok()
         elif key == pygame.K_ESCAPE:
             self.pinned = None
-            if self.prompt().get("cancel", {}).get("enabled") and self.cancel_is_safe():
+            if self.attack_pending():                   # round ATK1: Esc lets the waiting creatures go, nothing else
+                self.drop_attackers()
+            elif self.prompt().get("cancel", {}).get("enabled") and self.cancel_is_safe():
                 self.session.cancel()
         elif key == pygame.K_e:
             if self.prompt().get("cancel", {}).get("enabled") and self.cancel_label().startswith("end turn"):
@@ -6617,7 +6961,8 @@ class ForgeTable:
             with open(paths[name], "w", encoding="utf-8") as f:
                 f.write(text)
         opps = [paths[n] for n in sorted((n for n in paths if re.fullmatch(r"opponent\d+\.dck", n)), key=lambda n: int(re.findall(r"\d+", n)[0]))]
-        session = fc.ForgeSession(paths["player.dck"], opps, name=start.get("name") or "Karl", seed=start.get("seed"),
+        session = fc.ForgeSession(paths["player.dck"], opps, name=start.get("name") or self.player_name or "Player",
+                                  seed=start.get("seed"),
                                   runtime=self.launcher.runtime)
         session.stderr_path = fc.other_engine_log(getattr(self.session, "stderr_path", None))
         session.start()
@@ -7829,7 +8174,7 @@ def parse_args(argv):
     ap.add_argument("deck", nargs="?", default=None,
                     help="your deck: a text export or an Archidekt URL (leave it out to pick decks on the deck screen)")
     ap.add_argument("--opp", action="append", default=[], help="an AI opponent's deck (repeat for up to 3 opponents)")
-    ap.add_argument("--name", default="Karl", help="your name at the table")
+    ap.add_argument("--name", default=None, help="your name at the table (default: the one you gave, settings.json)")
     ap.add_argument("--seed", type=int, default=None, help="shuffle seed, for repeatable games")
     ap.add_argument("--record", default=None, help="write everything Forge sends to this file (debugging)")
     ap.add_argument("--runtime", default=None, help="folder with forge.jar and forge_bridge.jar")
@@ -7838,6 +8183,9 @@ def parse_args(argv):
     ap.add_argument("--soak", type=int, default=None, metavar="N",
                     help="play N soak-test games against Forge with the built-in bot (a canary first), write the summary to the soak "
                          "folder, and stop. Used by the installer's checks; exit code 0 means every game was valid")
+    ap.add_argument("--bench-board", action="store_true",
+                    help="round PERF1: time the wait after a click on boards of 60, 150 and 300 permanents, the old way and the new, "
+                         "print the tables, write them to the bench_board folder, and stop (takes 10-30 minutes)")
     ap.add_argument("--net-selftest", action="store_true",
                     help="round NETLOG1: can this PC host? Listen on the game's port and join it through each of this PC's "
                          "addresses, print the result, write it to connection_log.txt, and stop")
@@ -7862,6 +8210,11 @@ def selftest_argv(args):
     if args.timeout is not None:
         out += ["--timeout", str(args.timeout)]
     return out
+
+
+def bench_board_argv():
+    """Round PERF1: what `--bench-board` hands to tools.bench_board.main - every board size, 5 runs each, the old way and the new."""
+    return ["--runs", "5", "--both"]
 
 
 def soak_argv(games):
@@ -7908,6 +8261,10 @@ def main(argv):
         from tools import net_selftest
         print(version.describe())
         sys.exit(net_selftest.main(selftest_argv(args)))
+    if args.bench_board:                              # round PERF1: Manticore-cli.exe --bench-board
+        from tools import bench_board
+        print(version.describe())
+        sys.exit(bench_board.main(bench_board_argv()))
     if args.soak is not None:                         # round 29: Manticore-cli.exe --soak N (the console build; the windowed exe prints nothing)
         from tools import soak
         print(version.describe())

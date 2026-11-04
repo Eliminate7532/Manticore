@@ -1200,6 +1200,58 @@
    "licence_quote": "License(s): CC0 (links to http://creativecommons.org/publicdomain/zero/1.0/); Copyright/Attribution Notice: \"CC0 / Public Domain. No Rights Reserved. Free to use however you like with no attribution required.\" (read 25 Oct 2026)",
    "sha256": "f275350e329c28dcc76e9d3a01688d6dc6c0b2f49341da9a3ff701deb14a3430",
    "note": "Round RPG-NM: Karl's night-music pick (25 Oct 2026 00:1x UTC, page \"Adventure Night Music\"); claude/DECISIONS_2026-10-24.md, claude/RPG_NIGHT_MUSIC_CANDIDATES_2026-10-24.md - outskirts_night_1"
+  },
+  "snd1-creature-sfx": {
+   "url": "https://opengameart.org/sites/default/files/80-CC0-creature-SFX_0.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/80-cc0-creature-sfx",
+   "author": "rubberduck",
+   "licence": "CC0-1.0",
+   "title": "80 CC0 creature SFX",
+   "sha256": "5d4002eea42f278e76543bb36e8ddd2cb978588a13271984191d8228f5d26768",
+   "note": "Round SND1: its howl.ogg (the page lists \"1x howl\"); licence read on the page 3 Nov 2026: CC0"
+  },
+  "snd1-avalanche": {
+   "url": "https://opengameart.org/sites/default/files/25_sounds_from_avalanche_minigame.zip",
+   "kind": "zip",
+   "page": "https://opengameart.org/content/25-sounds-from-avalanche-minigame",
+   "author": "fvcalderan",
+   "licence": "CC0-1.0",
+   "title": "25 sounds from Avalanche minigame",
+   "sha256": "9aeabae513b24fb49429830bf2ffdab96ebafa9317eaaec22bdde3d7852263ce",
+   "note": "Round SND1: Misc/howl.ogg (the page: most sounds made with the author's own voice); licence read on the page 3 Nov 2026: CC0"
+  },
+  "snd1-wolf-monster": {
+   "url": "https://opengameart.org/sites/default/files/wolf_monster_6.mp3",
+   "kind": "file",
+   "page": "https://opengameart.org/content/wolf-monster-sound",
+   "author": "CaveboyTup",
+   "licence": "CC0-1.0",
+   "title": "Wolf monster sound",
+   "sha256": "ae5fe120c3e6e39f77af6f340e0ca2a93b27eb62884959e47eae9357c3556252",
+   "note": "Round SND1: the page says it is a horse snorting, modified to sound wolf-like; licence read on the page 3 Nov 2026: CC0"
+  },
+  "snd1-pd-rooster-medium": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Medium_rooster_crowing.ogg",
+   "kind": "file",
+   "page": "https://commons.wikimedia.org/wiki/File:Medium_rooster_crowing.ogg",
+   "author": "alys (pdsounds.org record 539, uploaded by Fae)",
+   "licence": "public-domain-dedication",
+   "title": "Medium rooster crowing",
+   "sha256": "318baa8a707dec66af08b6b7a4ed6b1a418cd792d1b4f52e7bf2cd502ee5befb",
+   "note": "Round SND1: allowed by Karl, 3 Nov 2026 10:3x CST ('Allow alys's recordings'): a public-domain dedication by its author on Wikimedia Commons, not CC0.",
+   "checked": "Read on the page 3 Nov 2026 (Licensing section): 'This work has been released into the public domain by its author, alys. This applies worldwide. In some countries this may not be legally possible; if so: alys grants anyone the right to use this work for any purpose, without any conditions, unless such conditions are required by law.'"
+  },
+  "snd1-pd-rooster-small": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Small_rooster_crowing.ogg",
+   "kind": "file",
+   "page": "https://commons.wikimedia.org/wiki/File:Small_rooster_crowing.ogg",
+   "author": "alys (pdsounds.org record 540, uploaded by Fae)",
+   "licence": "public-domain-dedication",
+   "title": "Small rooster crowing",
+   "sha256": "75deb3499d5af6237563629af901911775c4d6a6110fc315132d56239b9d0515",
+   "note": "Round SND1: allowed by Karl, 3 Nov 2026 10:3x CST ('Allow alys's recordings'): a public-domain dedication by its author on Wikimedia Commons, not CC0. A bantam Sebright rooster.",
+   "checked": "Read on the page 3 Nov 2026 (Licensing section): 'This work has been released into the public domain by its author, alys. This applies worldwide. In some countries this may not be legally possible; if so: alys grants anyone the right to use this work for any purpose, without any conditions, unless such conditions are required by law.'"
   }
  }
 }

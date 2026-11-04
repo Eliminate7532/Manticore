@@ -173,9 +173,9 @@
    "name": "Sound effects, ambience and music (CC0 recordings, Round AU1)",
    "version": "built by tools/build_sounds.py from the recordings listed in tools/sound_sources.json",
    "license": "CC0-1.0",
-   "copyright": "Public domain dedication (CC0 1.0) by each recording's author; credited in sounds/CREDITS.txt",
+   "copyright": "Public domain dedication (CC0 1.0) by each recording's author - except the two rooster recordings by alys (Wikimedia Commons), which their author released into the public domain in their own words (Round SND1B, allowed by Karl 3 Nov 2026); credited in sounds/CREDITS.txt",
    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-   "used_for": "Every sound the game plays (sounds/sfx, sounds/ambience, sounds/music). Sources: Kenney (kenney.nl), OpenGameArt.org and Freesound.org; each recording's page is in sounds/CREDITS.txt",
+   "used_for": "Every sound the game plays (sounds/sfx, sounds/ambience, sounds/music). Sources: Kenney (kenney.nl), OpenGameArt.org, Freesound.org and Wikimedia Commons; each recording's page is in sounds/CREDITS.txt",
    "shipped": "always",
    "group": "Sounds and music",
    "notice_file": "../sounds/CREDITS.txt",
@@ -206,6 +206,19 @@
    "shipped": "always",
    "group": "Artwork",
    "notice_file": "notices/rpg-art-simple-battles.txt",
+   "status": "verified"
+  },
+  {
+   "id": "rpg-art-chests",
+   "name": "Treasure chests 32x32 and 16x16 (Adventure treasure chests)",
+   "version": "chests_16x16.png sha256 8f22dba30860bf4d195574fcf487e585b7651b5f08d8665f9a6ad9a4a4ad17e5 (unmodified; assets/rpg/MANIFEST.sha256)",
+   "license": "CC0-1.0",
+   "copyright": "Public domain dedication (CC0 1.0) by Blarumyrran",
+   "url": "https://opengameart.org/content/treasure-chests-32x32-and-16x16",
+   "used_for": "The Adventure mode's treasure chests on the maps, closed and open (assets/rpg/chests/)",
+   "shipped": "always",
+   "group": "Artwork",
+   "notice_file": "notices/rpg-art-chests.txt",
    "status": "verified"
   },
   {
@@ -886,7 +899,7 @@
   {
    "id": "adventure-art",
    "title": "Adventure art",
-   "text": "The Adventure's map tiles, people, windows and pixel font are DawnLike by DragonDePlatino, on the DawnBringer palette by DawnBringer (CC-BY 4.0); its encounter backdrops and foes are Simple Battles by Hyptosis (CC-BY 3.0). Both come from OpenGameArt.org and are included unchanged; their licences are under Artwork."
+   "text": "The Adventure's map tiles, people, windows and pixel font are DawnLike by DragonDePlatino, on the DawnBringer palette by DawnBringer (CC-BY 4.0); its encounter backdrops and foes are Simple Battles by Hyptosis (CC-BY 3.0). Its treasure chests are Blarumyrran's \"Treasure chests 32x32 and 16x16\" (CC0). All three come from OpenGameArt.org and are included unchanged; their licences are under Artwork."
   },
   {
    "id": "mpc-autofill",

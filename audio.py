@@ -28,7 +28,11 @@ import pygame
 
 SAMPLE_RATE = 44100
 BUFFER = 512                                   # samples: about 11.6 ms of extra delay; smaller crackles on some Windows drivers
-BUS_CHANNELS = {"ui": 4, "sfx": 14, "stinger": 2, "ambience": 2}
+BUS_CHANNELS = {"ui": 4, "sfx": 14, "stinger": 2, "ambience": 2, "ambience_fx": 2}
+# Round SND1: a one-shot cue on the ambience bus (the Adventure's howl at dusk, its rooster at dawn) plays on channels of its own
+# ("ambience_fx" - the two "ambience" channels are the loops' cross-fade pair) at the ambience's level: the ambience bus's volume,
+# and silent with Cog > Ambience off, Sound off or M (stream_gain), as the loop under it is.
+ONE_SHOT_CHANNELS = {"ambience": "ambience_fx"}
 DUCK_ATTACK, DUCK_HOLD, DUCK_RELEASE = 0.06, 0.12, 0.35
 DEFAULT_VOLUMES = {"master": 0.8, "ui": 0.6, "sfx": 0.8, "stinger": 0.8, "music": 0.45, "ambience": 0.6}
 AMBIENCE_FADE = 2.5                            # seconds to cross-fade one table's ambience into the next
@@ -244,6 +248,8 @@ class AudioDirector:
         self._reap()
         if sum(1 for v in self.voices if v[1] == cid) >= cue.max_voices:
             return False
+        if cue.bus in ONE_SHOT_CHANNELS and self.stream_gain(cue.bus, now) <= 0.0:
+            return False                                             # Round SND1: Ambience off / Sound off: not played at all
         ch = self._channel(cue.bus, now)
         if ch is None:
             return False
@@ -258,7 +264,7 @@ class AudioDirector:
         right = base * 1.414 * math.sin((pan + 1) * math.pi / 4)
         for bus, gdb in cue.duck.items():                            # a big hit lowers the other buses, not itself
             self.ducks.append((bus, gdb, now))
-        g = self.bus_gain(cue.bus, now)
+        g = self.voice_gain(cue.bus, now)
         ch.play(cue.variants[k])
         ch.set_volume(min(1.0, left * g), min(1.0, right * g))
         self.voices.append((ch, cid, cue.bus, now, left, right))
@@ -267,8 +273,12 @@ class AudioDirector:
     def _reap(self):
         self.voices = [v for v in self.voices if v[0].get_busy()]
 
+    def voice_gain(self, bus, now):
+        """A one-shot's level: its bus's, or for a cue on the ambience bus the ambience's own (Round SND1)."""
+        return self.stream_gain(bus, now) if bus in ONE_SHOT_CHANNELS else self.bus_gain(bus, now)
+
     def _channel(self, bus, now):
-        chans = self.channels.get(bus) or []
+        chans = self.channels.get(ONE_SHOT_CHANNELS.get(bus, bus)) or []
         for ch in chans:
             if not ch.get_busy():
                 return ch
@@ -287,7 +297,7 @@ class AudioDirector:
         self.ducks = [d for d in self.ducks if now - d[2] < DUCK_ATTACK + DUCK_HOLD + DUCK_RELEASE]
         self._reap()
         for ch, _cid, bus, _t0, left, right in self.voices:
-            g = self.bus_gain(bus, now)
+            g = self.voice_gain(bus, now)                            # Round SND1: Ambience switched off mid-howl silences it
             ch.set_volume(min(1.0, left * g), min(1.0, right * g))
         self._update_ambience(now)
         self._update_music(now)

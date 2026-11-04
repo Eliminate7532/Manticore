@@ -4,10 +4,11 @@
     python tools/rpg_build_data.py cards            rpg/data/cards.json    every card Forge can play
     python tools/rpg_build_data.py tiers            rpg/data/tiers.json    power tiers from Forge's archetype data
     python tools/rpg_build_data.py packs [SET ...]  rpg/data/packs/*.json  booster pools opened by Forge's BoosterGenerator
+    python tools/rpg_build_data.py premium [SET ...] rpg/data/packs/premium/*.json  premium pools (round PACK1)
     python tools/rpg_build_data.py enemies [KIND ...] rpg/data/enemies/*.json enemy decks from Forge's archetype deck builder, checked
     python tools/rpg_build_data.py review [N]       the top N of the tier list, for Karl (gate 2)
     python tools/rpg_build_data.py compare [N]      the tier caps side by side (round RPG3): counts, the top N, what moves
-    python tools/rpg_build_data.py all              cards, tiers, packs
+    python tools/rpg_build_data.py all              cards, tiers, packs, premium
     python tools/rpg_build_data.py jar              rebuild java_rpg/rpg_tools.jar from java_rpg/src (needs a JDK)
 
 It runs java_rpg/rpg_tools.jar (forge.rpgtools.RpgData, built from java_rpg/src - NOT part of the game bridge, so building it never
@@ -41,6 +42,13 @@ ENEMY_TRIES = 4                  # decks Forge builds per archetype name; select
 PACKS_PER_SET = 200
 # The sets whose packs ship for the first region (phase 3 picks the towns' lists; these are core sets - gentle, every colour).
 DEFAULT_PACK_SETS = ("M10", "M11", "M12", "M13", "M14", "M15", "ORI", "M19", "M20", "M21")
+# Round PACK1 (Karl, 3 Nov 2026: more packs to buy): six more sets, two per town - the six core sets before M10 and after M21 the
+# shops didn't sell (claude/PACK1_2026-11-03.md section 2 says how they were chosen). Each is opened in a Java run of its own, so
+# adding a set never changes another set's pool; the ten above stay as they were built (one run).
+PACK1_SETS = ("8ED", "10E", "9ED", "6ED", "FDN", "7ED")
+# Round PACK1: premium packs - each set's own template with 3 commons fewer, 2 uncommons and 1 rare/mythic more (RpgData premium);
+# a seed of their own so the plain pools' stream is untouched.
+PREMIUM_SEED = 20261013
 
 
 def source_hash(src=SRC):
@@ -153,6 +161,28 @@ def build_packs(sets=None, count=PACKS_PER_SET, seed=PACK_SEED):
     return done
 
 
+def build_pack1_packs(sets=PACK1_SETS, count=PACKS_PER_SET, seed=PACK_SEED):
+    """Round PACK1: the new sets' plain pools, one Java run each."""
+    done = {}
+    for code in sets:
+        done.update(build_packs([code], count, seed))
+    return done
+
+
+def build_premium(sets=None, count=PACKS_PER_SET, seed=PREMIUM_SEED):
+    """Round PACK1: premium pools for every set a shop sells (or those named), one Java run each, in rpg/data/packs/premium/."""
+    sets = [s.upper() for s in (sets or (DEFAULT_PACK_SETS + PACK1_SETS))]
+    done = {}
+    for code in sets:
+        out = java_json("premium", seed, count, code)
+        got = products.write_pools(out, products.PREMIUM_DIR, forge_version(), [code])
+        entry = out["sets"].get(code, {})
+        print(f"  premium {code}: " + (f"{got[code]} packs ({entry.get('template')})" if code in got
+                                       else f"NOT written: {entry.get('error')}"))
+        done.update(got)
+    return done
+
+
 def build_enemies(seed=ENEMY_SEED, tries=ENEMY_TRIES, only=None):
     """Every kind, or only the kinds named (round RPG3: adding kinds must not rebuild - and so change - the ones already
     card-checked and soak-tested: Forge's builder draws from one random stream per run, so other names change the decks)."""
@@ -235,7 +265,7 @@ def compare(n=60):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("what", choices=("cards", "tiers", "packs", "enemies", "review", "compare", "all", "jar"))
+    ap.add_argument("what", choices=("cards", "tiers", "packs", "premium", "enemies", "review", "compare", "all", "jar"))
     ap.add_argument("args", nargs="*")
     a = ap.parse_args(argv)
     if a.what == "jar":
@@ -248,7 +278,13 @@ def main(argv=None):
     if a.what in ("tiers", "all"):
         build_tiers()
     if a.what in ("packs", "all"):
-        build_packs(a.args if a.what == "packs" else None)
+        if a.what == "packs" and a.args:
+            build_packs(a.args)
+        else:
+            build_packs(None)                # the ten first sets in one run, as they were built
+            build_pack1_packs()              # Round PACK1: each new set alone
+    if a.what in ("premium", "all"):
+        build_premium(a.args if a.what == "premium" else None)
     if a.what in ("enemies", "all"):
         build_enemies(only=a.args if a.what == "enemies" else None)
     if a.what == "review":

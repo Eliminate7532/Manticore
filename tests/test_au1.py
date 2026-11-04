@@ -40,6 +40,28 @@ def director():
 
 
 # ---- the files ---------------------------------------------------------------------------------------------------------------
+
+# Round SND1B (Karl, 3 Nov 2026 10:3x CST: "Allow alys's recordings"): CC0 stays the default; the one other licence allowed is an
+# author's own public-domain dedication, and only with that dedication's own words in the source's "checked" field and its page on
+# Wikimedia Commons (wikimedia.org), where the words were read.
+PD_WORDS = "released into the public domain by its author"
+
+
+def licence_problem(s):
+    """None when a tools/sound_sources.json record's licence is allowed, else why not."""
+    lic = s.get("licence")
+    if lic == "CC0-1.0":
+        return None
+    if lic == "public-domain-dedication":
+        from urllib.parse import urlparse
+        host = (urlparse(s.get("page", "")).hostname or "").lower()
+        if not (s.get("page", "").startswith("https://") and (host == "wikimedia.org" or host.endswith(".wikimedia.org"))):
+            return "a public-domain dedication must be read on its Wikimedia Commons page, not %r" % s.get("page")
+        if PD_WORDS not in s.get("checked", ""):
+            return "a public-domain dedication needs the dedication's own words in 'checked'"
+        return None
+    return "licence %r is neither CC0-1.0 nor an allowed public-domain dedication" % lic
+
 class AssetTests(unittest.TestCase):
     def test_every_cue_has_its_files_and_every_file_has_a_cue(self):
         cues = manifest()
@@ -136,7 +158,7 @@ class AssetTests(unittest.TestCase):
         for key in credited:
             self.assertIn(key, sources)
         for key, s in sources.items():
-            self.assertEqual(s["licence"], "CC0-1.0", key)
+            self.assertIsNone(licence_problem(s), key)
             self.assertTrue(s["page"].startswith("https://"), key)
             self.assertTrue(s["author"], key)
 
@@ -394,7 +416,7 @@ class TableTests(unittest.TestCase):
         frame(gui)
         b = {n: r for r, n in gui.overlay.buttons}
         self.assertEqual(b["music_on"].y, b["ambience_on"].y)
-        self.assertEqual(b["newgame"].y, b["concede"].y)
+        self.assertEqual(b["newgame"].y, b["quit"].y)          # bug-1566939794272161812: Concede... became Quit...
         with mock.patch.object(gui, "toggle_stream") as t:
             gui.overlay.click(gui, b["music_on"].center, 1)
             t.assert_called_once_with("music_on")

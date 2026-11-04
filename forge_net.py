@@ -34,6 +34,7 @@ import time
 
 DEFAULT_PORT = 36800                 # Forge's own network play uses 36743; stay clear of it
 DEFAULT_RELAY_PORT = 36900           # round MP2d: relay/manticore_relay.py's default
+RELAY_CONFIG = "relay_config.json"   # round RLY2: next to the program, {"relay": "address:port"} - the relay hosting uses by default
 INVITE_PREFIX = "MANT1-"
 PROTOCOL_V = 3                       # round MP2: rejoin, watch, heartbeats, leave (NetHost.PROTOCOL_V)
 #                                      round MP3a: 3 - the game's format and house rules in the welcome and the invite
@@ -189,6 +190,47 @@ def validate_port(text):
     if not 1024 <= p <= 65535:
         return None, "Use a port between 1024 and 65535."
     return p, None
+
+
+def parse_relay(text):
+    """Round RLY2: (address, port) of a relay written "address" or "address:port" (port 36900 when left out), or a short message
+    saying what's wrong."""
+    text = (text or "").strip()
+    if not text:
+        return "Type the relay's address (address:port)."
+    addr, _sep, port_text = text.rpartition(":")
+    if not addr or (text.count(":") > 1 and not text.startswith("[")):       # no port, or a bare IPv6 address
+        addr, port_text = text, str(DEFAULT_RELAY_PORT)
+    if addr.startswith("[") and addr.endswith("]"):
+        addr = addr[1:-1]
+    why = validate_address(addr)
+    if why:
+        return why
+    port, why = validate_port(port_text)
+    return why if why else (addr, port)
+
+
+def default_relay(folder=None):
+    """Round RLY2: "address:port" of the relay this copy hosts through unless the player chooses otherwise, or "" when none is
+    set up. MANTICORE_RELAY wins when it is set (even empty: tests run without a default relay); else relay_config.json in the
+    program folder. A missing, unreadable or broken file means no default relay - hosting then works as before (direct)."""
+    if folder is None and "MANTICORE_RELAY" in os.environ:
+        text = os.environ.get("MANTICORE_RELAY") or ""
+    else:
+        if folder is None:
+            import paths                                                    # no pygame; paths knows an installed copy's folder
+            folder = paths.program_dir()
+        try:
+            with open(os.path.join(folder, RELAY_CONFIG), "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except (OSError, ValueError):
+            return ""
+        text = str(cfg.get("relay") or "") if isinstance(cfg, dict) else ""
+    target = parse_relay(text)
+    if isinstance(target, str):
+        return ""
+    addr, port = target
+    return ("[%s]:%d" if ":" in addr else "%s:%d") % (addr, port)
 
 
 def behind_another_nat(ip):

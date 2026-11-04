@@ -15,6 +15,19 @@ Round RPG7: "basics_free" says which rule the save was made under (basic lands f
 basics_free true, and an older copy of the game refuses a version 2 save instead of reading it under the wrong rule and dropping
 its basic lands. A save is always read under its own rule; the basics_free a caller passes is only for a new SaveGame.
 
+Round PROG1: two new keys, each with a default, so a save from before loads as it was and the version stays 2 (an older copy of
+the game keeps them as unknown keys and writes them back): "found" - the Card Book's log, {normal name: {"name", "day", "map",
+"town"}} for every card the moment it first enters the collection (rpg.progress.note_found; a save from before has none, and its
+cards show as found before the Card Book) - and "bestiary": {foe kind: {"cards": {name: copies}}}, the cards won from each kind.
+A damaged value of either is mended to empty (said once in crash_log.txt), never a refused save.
+
+Round PROG2: one more key, the same way (default None, version still 2): "pending_pick" - a won duel's reward cards still to choose
+(rpg.rewards: {"groups": [[name, ...], ...], "kind", "enemy"}), so a game closed on the choosing screen offers the same cards again.
+
+Round PROG3: one more key, the same way (version still 2): "progress" - XP, levels and perks (rpg.levels: {"xp": n, "perks": [perk
+id, ...], "offers": [[perk id, ...], ...]}). A save from before has none: level 1, 0 XP, no perks. A damaged value is mended (said
+once): what can be read is kept.
+
 Randomness is the save's own: rng(purpose) gives a random.Random seeded from (seed, counter, purpose) by SHA-256 and moves the
 counter on, so the same save makes the same pack, reward and deck choice on any computer and any Python, and loading a save never
 re-rolls what was already rolled. stable_rng(*parts) doesn't move the counter (a shop's stock is drawn again every time it is
@@ -48,7 +61,8 @@ NAME_MAX = 24
 HEROES = ("Warrior", "Paladin", "Rogue", "Mage", "Engineer")   # Round RPG11: who you walk the map as (DawnLike's
                                                                    # five class sheets); an older save has none: the first
 KNOWN = ("format", "version", "slot", "name", "created", "updated", "seed", "rng_counter", "gold", "collection", "decks",
-         "active_deck", "start", "world", "shops", "record", "pending_duel", "forge", "basics_free")
+         "active_deck", "start", "world", "shops", "record", "pending_duel", "forge", "basics_free", "found", "bestiary",
+         "pending_pick", "progress")
 
 
 class SaveError(Exception):
@@ -127,11 +141,21 @@ class SaveGame:
         self.active_deck = None             # index into decks
         self.start = {}                     # {"half_decks": [codes]}
         self.world = {"region": 1, "map": None, "x": None, "y": None, "last_town": None, "towns_visited": []}
-        self.shops = {}                     # {town: {"restock": n, "bought": {"slot": n}}}
+        self.shops = {}                     # {town: {"restock": n, "bought": {"slot": n}, "themes": [code]}} (themes: Round PACK1)
         self.record = {"duels": 0, "wins": 0, "losses": 0, "draws": 0, "defeated": {}}
         self.pending_duel = None
         self.forge = ""
         self.extra = {}
+        self.found = {}                     # Round PROG1: the Card Book's log (rpg.progress)
+        self.bestiary = {}                  # Round PROG1: {kind: {"cards": {name: copies}}}
+        self.pending_pick = None            # Round PROG2: a won duel's reward cards still to choose (rpg.rewards), else None
+        self.progress = {"xp": 0, "perks": [], "offers": []}   # Round PROG3: XP, levels and perks (rpg.levels)
+        self.collection.on_add = self._noted
+
+    def _noted(self, name):
+        """Round PROG1: a card entered the collection - the Card Book writes down when and where, the first time (rpg.progress)."""
+        from rpg import progress
+        progress.note_found(self, name)
 
     # ---- randomness ----------------------------------------------------------------------------------------------------------
 
@@ -164,7 +188,9 @@ class SaveGame:
                   "updated": self.updated, "seed": self.seed, "rng_counter": self.rng_counter, "gold": self.gold,
                   "collection": self.collection.to_dict(), "decks": self.decks, "active_deck": self.active_deck,
                   "start": self.start, "world": self.world, "shops": self.shops, "record": self.record,
-                  "pending_duel": self.pending_duel, "forge": self.forge, "basics_free": self.collection.basics_free})
+                  "pending_duel": self.pending_duel, "forge": self.forge, "basics_free": self.collection.basics_free,
+                  "found": self.found, "bestiary": self.bestiary, "pending_pick": self.pending_pick,
+                  "progress": self.progress})
         return d
 
     @classmethod
@@ -200,9 +226,11 @@ class SaveGame:
         s.gold = gold
         coll = d.get("collection")
         _need(isinstance(coll, dict), "collection")
+        s.collection.on_add = None                  # Round PROG1: reading the save finds nothing new
         for n, k in coll.items():
             _need(isinstance(n, str) and n and _is_int(k, 1), "collection")
             s.collection.add(n, k)
+        s.collection.on_add = s._noted
         decks = d.get("decks")
         _need(isinstance(decks, list), "decks")
         for dk in decks:
@@ -239,12 +267,27 @@ class SaveGame:
                 bad = [f for f in fl if not (isinstance(f, str) and f)] if isinstance(fl, list) else fl
                 _repaired(d["slot"], "flags", f"flags that aren't words were dropped: {bad!r}"[:300])
                 w["flags"] = good
+        hg = w.get("held_gold")                      # Round GOLD1: {spot: gold} the foes hold since they beat you - absent in a
+        if hg is not None:                           # ... save from before (nothing held); a damaged entry is dropped, said once
+            good = {k: n for k, n in hg.items() if isinstance(k, str) and k and _is_int(n, 1)} if isinstance(hg, dict) else {}
+            if not isinstance(hg, dict) or len(good) != len(hg):
+                _repaired(d["slot"], "held_gold", "gold a foe held that isn't a whole number above 0 was dropped")
+            if good:
+                w["held_gold"] = good
+            else:
+                w.pop("held_gold")
         s.world = w
         shops = d.get("shops")
         _need(isinstance(shops, dict), "shops")
         for town, st in shops.items():
             _need(isinstance(st, dict) and _is_int(st.get("restock"), 0) and isinstance(st.get("bought"), dict), "shops")
             _need(all(isinstance(k, str) and _is_int(n, 1) for k, n in st["bought"].items()), "shops")
+            th = st.get("themes")                    # Round PACK1: the theme packs bought this restock - absent in a save from
+            if th is not None:                       # ... before (none bought); a damaged list is mended, said once
+                good = [c for c in th if isinstance(c, str) and c] if isinstance(th, list) else []
+                if not isinstance(th, list) or len(good) != len(th):
+                    _repaired(d["slot"], "shops", f"theme packs bought in {town} that aren't names were dropped")
+                    st["themes"] = good
         s.shops = shops
         r = d.get("record")
         _need(isinstance(r, dict) and all(_is_int(r.get(k), 0) for k in ("duels", "wins", "losses", "draws")), "record")
@@ -254,8 +297,95 @@ class SaveGame:
         _need(pd is None or isinstance(pd, dict), "pending_duel")
         s.pending_duel = pd
         s.forge = d.get("forge") or ""
+        s.found = _found_log(d, d["slot"])          # Round PROG1: absent in a save from before - {} (found before the Card Book)
+        s.bestiary = _bestiary(d, d["slot"])
+        s.pending_pick = _pending_pick(d, d["slot"])  # Round PROG2: absent in a save from before - None (nothing to choose)
+        s.progress = _progress(d, d["slot"])          # Round PROG3: absent in a save from before - level 1, 0 XP, no perks
         s.extra = {k: v for k, v in d.items() if k not in KNOWN}
         return s
+
+
+def _progress(d, slot):
+    """Round PROG3: XP and perks read leniently - a damaged part is mended (said once), never a refused save."""
+    v = d.get("progress")
+    out = {"xp": 0, "perks": [], "offers": []}
+    if v is None:
+        return out
+    bad = not isinstance(v, dict)
+    v = v if isinstance(v, dict) else {}
+    xp = v.get("xp", 0)
+    if isinstance(xp, int) and not isinstance(xp, bool) and xp >= 0:
+        out["xp"] = xp
+    else:
+        bad = True
+    perks = v.get("perks", [])
+    if isinstance(perks, list) and all(isinstance(x, str) and x for x in perks):
+        out["perks"] = list(perks)
+    else:
+        bad = True
+    offers = v.get("offers", [])
+    if isinstance(offers, list) and all(isinstance(g, list) and g and all(isinstance(x, str) and x for x in g) for g in offers):
+        out["offers"] = [list(g) for g in offers]
+    else:
+        bad = True
+    if bad:
+        _repaired(slot, "progress", "the XP and perks were damaged; what could be read is kept")
+    return out
+
+
+def _pending_pick(d, slot):
+    """Round PROG2: the reward still to choose, read leniently - {"groups": [[name, ...], ...], "kind", "enemy", ...} or None. A
+    damaged value is dropped (said once): the cards are lost, the save loads."""
+    v = d.get("pending_pick")
+    if v is None:
+        return None
+    groups = v.get("groups") if isinstance(v, dict) else None
+    if (isinstance(groups, list) and groups and all(isinstance(g, list) and g and all(isinstance(n, str) and n for n in g)
+                                                    for g in groups)):
+        return v
+    _repaired(slot, "pending_pick", "the reward cards still to choose were damaged and are dropped")
+    return None
+
+
+def _found_log(d, slot):
+    """Round PROG1: the "found" key read leniently - a damaged entry is dropped (said once), never a refused save."""
+    v = d.get("found")
+    if v is None:
+        return {}
+    if not isinstance(v, dict):
+        _repaired(slot, "found", f"the Card Book's log was {type(v).__name__}, not a table; it starts again empty")
+        return {}
+    out, bad = {}, 0
+    for k, e in v.items():
+        if (isinstance(k, str) and k and isinstance(e, dict) and isinstance(e.get("name"), str) and e["name"]
+                and (e.get("day") is None or _is_int(e.get("day"), 1))
+                and all(e.get(x) is None or isinstance(e.get(x), str) for x in ("map", "town"))):
+            out[k] = {x: e.get(x) for x in ("name", "day", "map", "town")}
+        else:
+            bad += 1
+    if bad:
+        _repaired(slot, "found", f"{bad} damaged line(s) of the Card Book's log were dropped")
+    return out
+
+
+def _bestiary(d, slot):
+    v = d.get("bestiary")
+    if v is None:
+        return {}
+    out, bad = {}, 0
+    if isinstance(v, dict):
+        for kind, e in v.items():
+            cards = e.get("cards") if isinstance(e, dict) else None
+            if isinstance(kind, str) and kind and isinstance(cards, dict) and all(
+                    isinstance(n, str) and n and _is_int(c, 1) for n, c in cards.items()):
+                out[kind] = {"cards": dict(cards)}
+            else:
+                bad += 1
+    else:
+        bad = 1
+    if bad:
+        _repaired(slot, "bestiary", "damaged entries of the bestiary were dropped")
+    return out
 
 
 def _read_file(path, pool, basics_free):

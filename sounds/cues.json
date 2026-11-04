@@ -907,6 +907,41 @@
    "files": [
     "music/rpg_outskirts_night.ogg"
    ]
+  },
+  "rpg.level_up": {
+   "bus": "stinger",
+   "gain_db": 0,
+   "files": [
+    "sfx/rpg.level_up.1.ogg"
+   ],
+   "cooldown_ms": 500,
+   "max_voices": 1,
+   "duck": {
+    "music": -8
+   },
+   "synth": {
+    "type": "chime",
+    "freq": 523,
+    "len": 1.0
+   }
+  },
+  "rpg.howl": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "files": [
+    "sfx/rpg.howl.1.ogg"
+   ],
+   "cooldown_ms": 20000,
+   "max_voices": 1
+  },
+  "rpg.rooster": {
+   "bus": "ambience",
+   "gain_db": 0,
+   "files": [
+    "sfx/rpg.rooster.1.ogg"
+   ],
+   "cooldown_ms": 20000,
+   "max_voices": 1
   }
  }
 }

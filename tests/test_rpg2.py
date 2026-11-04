@@ -383,7 +383,8 @@ class ShippedPackTests(unittest.TestCase):
     def test_every_shipped_pool(self):
         pool = cardpool.load()
         names = sorted(n[:-5] for n in os.listdir(products.PACKS_DIR) if n.endswith(".json"))
-        self.assertEqual(names, sorted(("M10", "M11", "M12", "M13", "M14", "M15", "ORI", "M19", "M20", "M21")))
+        self.assertEqual(names, sorted(("M10", "M11", "M12", "M13", "M14", "M15", "ORI", "M19", "M20", "M21",
+                                        "8ED", "10E", "9ED", "6ED", "FDN", "7ED")))      # Round PACK1: six more sets
         for code in names:
             data = products.read_pool(code)
             with self.subTest(set=code):
@@ -391,9 +392,17 @@ class ShippedPackTests(unittest.TestCase):
                 self.assertIn("9a6f776", data["forge"])
                 self.assertEqual(len(data["packs"]), 200)
                 for pack in data["packs"]:
+                    if code == "FDN":                        # Round PACK1: Foundations' packs are 14 cards, with two wildcards
+                        self.assertEqual(len(pack), 14)      # (any rarity) - Forge's own template
+                        self.assertEqual([c[0] for c in pack if pool.get(c[0]) is None], [])
+                        self.assertGreaterEqual(len([c for c in pack if c[3] in ("R", "M")]), 1, pack)
+                        continue
                     self.assertEqual(len(pack), 15)
                     self.assertEqual([c[0] for c in pack if pool.get(c[0]) is None], [])
                     # one rare or mythic slot; a foil (which takes a common's place) may be a second one
+                    if code in ("8ED", "10E", "9ED", "6ED", "7ED"):      # Round PACK1: there the rare itself may be the foil
+                        self.assertGreaterEqual(len([c for c in pack if c[3] in ("R", "M")]), 1, pack)
+                        continue
                     self.assertEqual(len([c for c in pack if c[3] in ("R", "M") and not (len(c) > 4 and c[4])]), 1, pack)
 
     def test_opening_a_pack_is_repeatable_from_a_seed(self):

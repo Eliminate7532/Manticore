@@ -68,7 +68,7 @@ class FakeTiers:
 POOL = pool()
 
 NUMBERS = {
-    "about": "test", "save_slots": 3, "start_gold": 100, "loss_gold_share": 0.25, "basic_lands_free": True,
+    "about": "test", "save_slots": 3, "start_gold": 100, "loss_gold_share": 0.2, "basic_lands_free": True,
     "single_price": {"1": 10, "2": 25, "3": 60, "4": 150, "5": 400}, "sell_share": 0.25, "pack_price": 80,
     "restock_after_duels": 2, "stock": {"1": 3, "2": 2, "3": 1}, "stock_copies": [1, 3], "shop_skip_prefixes": ["A-"],
     "rewards": {"regular": {"gold": [20, 40], "cards": 2}, "dungeon": {"gold": [50, 80], "cards": 2},
@@ -143,7 +143,7 @@ class NumbersTests(unittest.TestCase):
         self.assertEqual(n.sell_price(1), 2)                # 10 x 0.25 = 2.5, down
         self.assertEqual(numbers(single_price={"1": 1, "2": 2, "3": 3, "4": 4, "5": 5}).sell_price(1), 1)   # never 0
         self.assertEqual(n.sell_price(0), 0)
-        self.assertEqual(n.loss_cost(101), 25)              # 101 x 0.25 = 25.25, down
+        self.assertEqual(n.loss_cost(101), 20)              # 101 x 0.2 = 20.2, down (GOLD1: 0.25 was above the cap)
         self.assertEqual(n.loss_cost(3), 0)
         self.assertEqual(n.loss_cost(-5), 0)
         golds = {n.reward_gold("regular", random.Random(s)) for s in range(200)}
@@ -235,11 +235,14 @@ class CollectionTests(unittest.TestCase):
         small = {"name": "s", "main": [["Grizzly Bears", 4]], "sideboard": []}
         self.assertEqual([p.kind for p in collection.problems(small, c, POOL, lists())], ["size"])
 
-    def test_selling_is_refused_when_a_deck_needs_the_copies(self):
+    def test_selling_is_refused_only_for_copies_you_dont_own(self):
+        # Round SELL1 (Karl, 2 Nov 2026: "I should be able to sell all cards"): a deck using the copies no longer stops a sale -
+        # Shop.sell takes them out of the deck (tests/test_sell1.py). Before, 2 of these 4 Bears could not be sold.
         c = collection.Collection({"Grizzly Bears": 4}, pool=POOL)
         decks = [{"name": "Bears", "main": [["Grizzly Bears", 3]], "sideboard": []}]
         self.assertIsNone(collection.sell_problem("Grizzly Bears", 1, c, decks))
-        self.assertIn("Bears", collection.sell_problem("Grizzly Bears", 2, c, decks))
+        self.assertIsNone(collection.sell_problem("Grizzly Bears", 2, c, decks))
+        self.assertEqual(collection.deck_takes("Grizzly Bears", 2, c, decks), [(decks[0], "main", 1)])
         self.assertIn("own 4", collection.sell_problem("Grizzly Bears", 5, c, decks))
         self.assertIn("free basic land", collection.sell_problem("Forest", 1, c, decks))
         self.assertIn("can't sell 0", collection.sell_problem("Grizzly Bears", 0, c, decks))
@@ -581,9 +584,9 @@ class ShopTests(Temp):
         sh = self.shop(s)
         self.assertEqual(sh.sell("Selesnya Guildmage", 1), 15)              # tier 3: 60 x 0.25
         self.assertEqual((s.gold, s.collection.count("Selesnya Guildmage")), (15, 2))
-        with self.assertRaises(shop.ShopError) as cm:
-            sh.sell("Selesnya Guildmage", 1)
-        self.assertIn("Main", str(cm.exception))
+        self.assertEqual(sh.sell("Selesnya Guildmage", 1), 15)              # Round SELL1: the deck gives up a copy (it was refused)
+        self.assertEqual(s.decks[0]["main"], [["Selesnya Guildmage", 1]])
+        self.assertEqual(sh.taken, [("Main", 1)])
         s.collection.add("Chaos Orb", 1)
         with self.assertRaises(shop.ShopError) as cm:
             sh.sell("Chaos Orb", 1)
@@ -698,6 +701,9 @@ class DuelTests(Temp):
         self.start(s, kind="lotus_gang", encounter="boss")
         out = self.finish(s, "won")
         self.assertEqual(out["gold"], 200)
+        sig = [n for n, src in out["cards"] if src == "signature"]           # Round PROG2: the boss's card on top
+        self.assertEqual(sig, ["Llanowar Elves"])                            # (his highest tier, Black Lotus banned; not held to the band)
+        out["cards"] = [c for c in out["cards"] if c[1] != "signature"]
         self.assertEqual(len(out["cards"]), 3)
         for name, src in out["cards"]:
             self.assertEqual(src, "region")
@@ -713,8 +719,8 @@ class DuelTests(Temp):
             self.start(s)
             out = self.finish(s, result)
             with self.subTest(result=result):
-                self.assertEqual(out, {"result": result, "gold": -25, "cards": [], "moved_to": "blue_town"})
-                self.assertEqual((s.gold, s.world["map"], s.world["x"], s.world["y"]), (76, "blue_town", None, None))
+                self.assertEqual(out, {"result": result, "gold": -20, "cards": [], "moved_to": "blue_town"})
+                self.assertEqual((s.gold, s.world["map"], s.world["x"], s.world["y"]), (81, "blue_town", None, None))
                 self.assertEqual((s.record["losses"], s.record["duels"]), (1, 1))
 
     def test_a_draw_and_an_unfinished_duel(self):

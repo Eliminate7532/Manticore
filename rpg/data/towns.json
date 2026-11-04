@@ -1,12 +1,12 @@
 {
- "about": "Round RPG4: the region and its towns. PLACEHOLDERS: the names, colours and set lists are Claude's, for the game logic to run on; Karl names them when the region's content is written. A town's shop sells singles from its region's tier band (tiers, inclusive) leaning to its colours, and booster packs of its sets (only sets with a pack pool in rpg/data/packs/). An enemy's reward cards come from the same band. Round RPG9: enemy_decks says which of an enemy kind's deck lists a fight uses, by kind of encounter: jumpstart (three Jumpstart half-decks, like a starting deck, with its strongest spells swapped for basic lands - rpg/data/balance.json) or archetype (Forge's Pauper archetype decks) - on region 1 the map's regular foes play Jumpstart decks, the cave's dungeon foes and its boss archetype ones (Karl, 14 Oct 2026: Jumpstart foes first). Round RPG12 (23 Oct 2026): region 1 and its towns take the names of the story draft (claude/SPEC_RPG_SLICE_2026-10-23.md, claude/RPG_STORY_DRAFT_2026-10-23.md) - still Claude's placeholders for Karl to rename; the ids stay, so saves are unchanged.",
+ "about": "Round RPG4: the region and its towns. PLACEHOLDERS: the names, colours and set lists are Claude's, for the game logic to run on; Karl names them when the region's content is written. A town's shop sells singles from its region's tier band (tiers, inclusive) leaning to its colours, and booster packs of its sets (only sets with a pack pool in rpg/data/packs/). An enemy's reward cards come from the same band. Round RPG9: enemy_decks says which of an enemy kind's deck lists a fight uses, by kind of encounter: jumpstart (three Jumpstart half-decks, like a starting deck, with its strongest spells swapped for basic lands - rpg/data/balance.json) or archetype (Forge's Pauper archetype decks) - on region 1 the map's regular foes play Jumpstart decks, the cave's dungeon foes and its boss archetype ones (Karl, 14 Oct 2026: Jumpstart foes first). Round RPG12 (23 Oct 2026): region 1 and its towns take the names of the story draft (claude/SPEC_RPG_SLICE_2026-10-23.md, claude/RPG_STORY_DRAFT_2026-10-23.md) - still Claude's placeholders for Karl to rename; the ids stay, so saves are unchanged. Round PACK1 (3 Nov 2026): two more sets per town (Lantern Hollow 8ED, 10E; Brackwater 9ED, 6ED; Cinder Gate FDN, 7ED - the gentlest in the first town; claude/PACK1_2026-11-03.md section 2).",
  "start_town": "town_1",
  "regions": {
   "1": {"name": "The Ashfen Marches", "tiers": [1, 3], "enemy_decks": {"regular": "jumpstart", "dungeon": "archetype", "boss": "archetype"}}
  },
  "towns": [
-  {"id": "town_1", "name": "Lantern Hollow", "region": 1, "colours": "WG", "sets": ["M10", "M11", "M12"]},
-  {"id": "town_2", "name": "Brackwater", "region": 1, "colours": "UB", "sets": ["M13", "M14", "M15"]},
-  {"id": "town_3", "name": "Cinder Gate", "region": 1, "colours": "BR", "sets": ["ORI", "M19", "M20", "M21"]}
+  {"id": "town_1", "name": "Lantern Hollow", "region": 1, "colours": "WG", "sets": ["M10", "M11", "M12", "8ED", "10E"]},
+  {"id": "town_2", "name": "Brackwater", "region": 1, "colours": "UB", "sets": ["M13", "M14", "M15", "9ED", "6ED"]},
+  {"id": "town_3", "name": "Cinder Gate", "region": 1, "colours": "BR", "sets": ["ORI", "M19", "M20", "M21", "FDN", "7ED"]}
  ]
 }

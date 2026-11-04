@@ -19,6 +19,7 @@ import weakref
 from rpg import cardpool, data_path, rules
 
 PACKS_DIR = data_path("packs")
+PREMIUM_DIR = os.path.join(PACKS_DIR, "premium")      # Round PACK1: premium pools, built like the plain ones (RpgData premium)
 JUMPSTART_SETS = ("JMP", "J22", "J25")
 SET_NAMES = {"JMP": "Jumpstart", "J22": "Jumpstart 2022", "J25": "Jumpstart 2025"}
 _SHEET_RE = re.compile(r"^\[(.+)\]\s*$")
@@ -185,25 +186,66 @@ def offer(rng, decks=None, n=3, exclude=()):
 
 # ---- booster packs -------------------------------------------------------------------------------------------------------
 
-def pack_file(code):
-    return os.path.join(PACKS_DIR, f"{code.upper()}.json")
+def pack_file(code, folder=None):
+    return os.path.join(folder or PACKS_DIR, f"{code.upper()}.json")
 
 
 def has_packs(code):
     return os.path.isfile(pack_file(code))
 
 
-def read_pool(code):
-    """{"set", "name", "template", "seed", "forge", "packs": [[[name, set, number, rarity(, foil)], ...], ...]}"""
-    with open(pack_file(code), encoding="utf-8") as f:
-        return json.load(f)
+def has_premium(code):
+    """Round PACK1: a premium pool exists for this set."""
+    return os.path.isfile(pack_file(code, PREMIUM_DIR))
+
+
+_POOLS = {}
+
+
+def read_pool(code, folder=None):
+    """{"set", "name", "template", "seed", "forge", "packs": [[[name, set, number, rarity(, foil)], ...], ...]} (read once per
+    file and kept - a pool is never changed while the game runs)."""
+    path = pack_file(code, folder)
+    try:
+        stamp = os.path.getmtime(path)
+    except OSError:
+        stamp = None
+    hit = _POOLS.get(path)
+    if hit is None or hit[0] != stamp:
+        with open(path, encoding="utf-8") as f:
+            hit = (stamp, json.load(f))
+        _POOLS[path] = hit
+    return hit[1]
+
+
+def read_premium(code):
+    return read_pool(code, PREMIUM_DIR)
+
+
+def _cards(pack):
+    return [(c[0], c[3], bool(c[4]) if len(c) > 4 else False) for c in pack]
 
 
 def open_pack(code, rng):
     """One pack of set `code`: [(name, rarity, foil)], drawn from its pool by `rng` (random.Random)."""
     data = read_pool(code)
-    pack = rng.choice(data["packs"])
-    return [(c[0], c[3], bool(c[4]) if len(c) > 4 else False) for c in pack]
+    return _cards(rng.choice(data["packs"]))
+
+
+def open_premium(code, rng):
+    """Round PACK1: one premium pack of set `code` (its own pool, opened by Forge at build time)."""
+    return _cards(rng.choice(read_premium(code)["packs"]))
+
+
+def open_bundle(code, rng, packs=3):
+    """Round PACK1: `packs` plain packs of set `code` at once - [[(name, rarity, foil)], ...], one list per pack."""
+    data = read_pool(code)
+    return [_cards(rng.choice(data["packs"])) for _ in range(packs)]
+
+
+def theme_name(half):
+    """Round PACK1: "Above the Clouds - Jumpstart" (the theme and its set's name)."""
+    return f"{half.theme} - {SET_NAMES.get(half.set, half.set)}"
 
 
 def write_pools(java_out, folder, forge_version, sets_wanted):
