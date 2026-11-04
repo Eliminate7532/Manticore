@@ -1,0 +1,28 @@
+ONLINE SOAK: 16 game(s), 16 game_over
+started 2026-11-04 15:54, 2026-11-04 16:07
+version: Manticore 0.28.53.15 | commit 9d0b87f | code e02eb48e
+format: commander
+connection: direct (127.0.0.1)
+late questions released after game over: 4, in 2 game(s)
+connections cut (--drops): 7, came back by themselves: 7
+
+FAILURES (0 kind(s))
+WARNINGS (0 kind(s))
+
+GAMES
+  game 0: seed=42001 decks=aristocrats_teysa+go_wide_adeline turns=19 ended=game_over 32s fails=- warns=-
+  game 1: seed=42002 decks=spellslinger_veyran+stompy_goreclaw turns=27 ended=game_over 39s fails=- warns=-
+  game 2: seed=42003 decks=stompy_goreclaw+spellslinger_veyran turns=15 ended=game_over 23s fails=- warns=-
+  game 3: seed=42004 decks=stompy_goreclaw+go_wide_adeline+aristocrats_teysa (3 players, 1 online) turns=36 ended=game_over 38s fails=- warns=-
+  game 4: seed=42005 decks=stompy_goreclaw+aristocrats_teysa+voltron_light_paws+typal_lathril (4 players, 2 online) turns=33 ended=game_over 69s fails=- warns=-
+  game 5: seed=42006 decks=aristocrats_teysa+voltron_light_paws turns=25 ended=game_over 20s fails=- warns=- drops=2/2
+  game 6: seed=42007 decks=spellslinger_veyran+typal_lathril+aristocrats_teysa (3 players, 1 online) turns=36 ended=game_over 75s fails=- warns=- resumed@26
+  game 7: seed=42008 decks=stompy_goreclaw+typal_lathril turns=17 ended=game_over 23s fails=- warns=-
+  game 8: seed=42009 decks=aristocrats_teysa+typal_lathril turns=23 ended=game_over (guest conceded) 29s fails=- warns=- late=2 drops=1/1
+  game 9: seed=42010 decks=aristocrats_teysa+go_wide_adeline turns=20 ended=game_over (guest left) 21s fails=- warns=- late=2
+  game 10: seed=42011 decks=stompy_goreclaw+voltron_light_paws+aristocrats_teysa (3 players, 1 online) turns=38 ended=game_over 37s fails=- warns=- drops=1/1
+  game 11: seed=42012 decks=aristocrats_teysa+go_wide_adeline+voltron_light_paws+spellslinger_veyran (4 players, 3 online) turns=57 ended=game_over (guest left) 69s fails=- warns=-
+  game 12: seed=42013 decks=aristocrats_teysa+go_wide_adeline+spellslinger_veyran+voltron_light_paws (4 players, 3 online) turns=49 ended=game_over 84s fails=- warns=-
+  game 13: seed=42014 decks=go_wide_adeline+aristocrats_teysa turns=27 ended=game_over 32s fails=- warns=- drops=1/1
+  game 14: seed=42015 decks=spellslinger_veyran+go_wide_adeline turns=16 ended=game_over 16s fails=- warns=-
+  game 15: seed=42016 decks=aristocrats_teysa+typal_lathril+stompy_goreclaw+spellslinger_veyran (4 players, 2 online) turns=49 ended=game_over 150s fails=- warns=- drops=2/2
