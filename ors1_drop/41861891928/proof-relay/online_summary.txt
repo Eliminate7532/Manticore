@@ -1,0 +1,14 @@
+ONLINE SOAK: 2 game(s), 2 game_over
+started 2026-11-04 15:50, 2026-11-04 15:52
+version: Manticore 0.28.53.15 | commit 4570748 | code e02eb48e
+format: commander
+connection: through the relay at 163.192.120.37:36900, 2 of 2 game(s) joined through it
+late questions released after game over: 0, in 0 game(s)
+connections cut (--drops): 0, came back by themselves: 0
+
+FAILURES (0 kind(s))
+WARNINGS (0 kind(s))
+
+GAMES
+  game 0: seed=41001 decks=voltron_light_paws+aristocrats_teysa+spellslinger_veyran+stompy_goreclaw (4 players, 2 online) turns=35 ended=game_over 59s fails=- warns=- via=relay
+  game 1: seed=41002 decks=typal_lathril+go_wide_adeline turns=22 ended=game_over 27s fails=- warns=- via=relay
