@@ -1,0 +1,99 @@
+# Round ORS1: online soak through the Oracle relay on GitHub-hosted runners (see ors1/README.txt). Never on main.
+name: ORS1 online soak
+on:
+  push:
+    branches: ['claude/ors1*']
+    paths: ['ors1/plan.json', '.github/workflows/ors1_soak.yml']
+permissions:
+  contents: write
+concurrency:
+  group: ors1-${{ github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 1}
+      - id: p
+        run: echo "matrix=$(python3 -c 'import json;print(json.dumps(json.load(open("ors1/plan.json"))["jobs"]))')" >> "$GITHUB_OUTPUT"
+  soak:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    strategy:
+      fail-fast: false
+      matrix:
+        job: ${{ fromJson(needs.plan.outputs.matrix) }}
+    env:
+      MANTICORE_PORTABLE: '1'
+      PYTHONUNBUFFERED: '1'
+      FORGE_SHA: 9a6f776b84809522f81287fe962df0aca64a9c73
+      RELAY: 163.192.120.37:36900
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 1}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Python packages
+        run: python -m pip install --quiet -r requirements.txt
+      - id: fcache
+        uses: actions/cache@v4
+        with:
+          path: forge_runtime
+          key: forge-runtime-9a6f776-v1
+      - name: Build Forge 9a6f776 from source (only when not cached)
+        if: steps.fcache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          t0=$(date +%s)
+          mkdir -p /tmp/forge && cd /tmp/forge
+          git init -q && git remote add origin https://github.com/Card-Forge/forge.git
+          git fetch -q --depth 1 origin "$FORGE_SHA" && git checkout -q FETCH_HEAD
+          mvn -B -q -pl forge-gui-desktop -am package -DskipTests
+          cd "$GITHUB_WORKSPACE" && mkdir -p forge_runtime/res/languages
+          cp /tmp/forge/forge-gui-desktop/target/forge-gui-desktop-*-jar-with-dependencies.jar forge_runtime/forge.jar
+          for d in ai blockdata cardsfolder deckgendecks defaults editions effects formats lists setlookup tokenscripts; do
+            cp -r /tmp/forge/forge-gui/res/$d forge_runtime/res/; done
+          cp /tmp/forge/forge-gui/res/languages/en-US.properties forge_runtime/res/languages/
+          printf 'Forge 2.0.16-SNAPSHOT (commit %s)\nBuilt from source on a GitHub runner for round ORS1.\n' "$FORGE_SHA" > forge_runtime/VERSION.txt
+          echo "forge build seconds: $(( $(date +%s) - t0 ))"
+      - name: Probe the relay (relay jobs only)
+        id: probe
+        if: matrix.job.relay
+        run: |
+          for i in 1 2 3; do
+            echo "--- probe $i ($(date -u +%H:%M:%S) UTC)"
+            if python tools/relay_probe.py "$RELAY" --timeout 10 | tee -a probe.txt; then echo "ok=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+            sleep 60
+          done
+          echo "ok=0" >> "$GITHUB_OUTPUT"
+      - name: Online soak
+        if: ${{ !matrix.job.relay || steps.probe.outputs.ok == '1' }}
+        run: |
+          args="--seed ${{ matrix.job.seed }} --hours ${{ matrix.job.hours }} --out out"
+          if [ -n "${{ matrix.job.games }}" ]; then args="$args --games ${{ matrix.job.games }}"; fi
+          if [ "${{ matrix.job.relay }}" = "true" ]; then args="$args --relay $RELAY"; fi
+          echo "nproc $(nproc), $(free -g | awk '/Mem/{print $2}') GB" > facts.txt
+          date -u +"soak start %Y-%m-%dT%H:%M:%SZ" >> facts.txt
+          timeout --signal=INT --kill-after=120 "${{ matrix.job.timeout_min }}m" python tools/online_soak.py $args || echo "soak exit $?" >> facts.txt
+          date -u +"soak end %Y-%m-%dT%H:%M:%SZ" >> facts.txt
+      - name: Send the summary back (summary and per-game rows only)
+        if: always()
+        run: |
+          d="ors1_drop/${{ github.run_id }}/${{ matrix.job.name }}"
+          mkdir -p "$d"
+          cp out/online_summary.txt out/online_results.json "$d"/ 2>/dev/null || true
+          cp facts.txt probe.txt "$d"/ 2>/dev/null || true
+          if [ "${{ matrix.job.relay }}" = "true" ] && [ "${{ steps.probe.outputs.ok }}" != "1" ]; then echo relay_down > "$d/status.txt"; fi
+          echo "job ${{ job.status }}" >> "$d/status.txt"
+          cat "$d"/online_summary.txt 2>/dev/null | head -80 || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$d" && git commit -qm "ors1_drop: run ${{ github.run_id }} ${{ matrix.job.name }}"
+          for i in 1 2 3 4 5 6; do git pull -q --rebase origin "${{ github.ref_name }}" && git push -q origin HEAD:"${{ github.ref_name }}" && exit 0; sleep $((i*7)); done
+          exit 1

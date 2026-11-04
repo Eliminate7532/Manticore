@@ -1,0 +1,7 @@
+{
+  "label": "proof",
+  "jobs": [
+    {"name": "proof-direct", "seed": 41001, "games": 2, "hours": 0.3, "relay": false, "timeout_min": 40},
+    {"name": "proof-relay",  "seed": 41001, "games": 2, "hours": 0.3, "relay": true,  "timeout_min": 40}
+  ]
+}
