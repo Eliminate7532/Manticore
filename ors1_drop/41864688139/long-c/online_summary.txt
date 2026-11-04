@@ -1,0 +1,330 @@
+ONLINE SOAK: 311 game(s), 310 game_over, 1 resume_failed
+started 2026-11-04 16:10, 2026-11-04 20:40
+version: Manticore 0.28.53.15 | commit b4356bc | code e02eb48e
+format: commander
+connection: through the relay at 163.192.120.37:36900, 311 of 311 game(s) joined through it
+late questions released after game over: 95, in 49 game(s)
+connections cut (--drops): 137, came back by themselves: 137
+
+FAILURES (1 kind(s))
+  online_resume: 1 game(s)
+    game 62: continuing on turn 24: the play-back stopped early (action 291: seat 1 was never asked question 21)
+WARNINGS (2 kind(s))
+  ai_loop_guard: 1 game(s)
+    game 60: host: the AI loop guard stopped 1 repeat(s): Beastmaster Ascension
+  ai_think_timeout: 1 game(s)
+    game 304: host: engine log line 89: java.util.concurrent.TimeoutException at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:204) at forge.ai.AiController.chooseSpellAbilityToPlayF
+    game 304: host: engine log line 230: java.util.concurrent.TimeoutException at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:204) at forge.ai.AiController.chooseSpellAbilityToPlayF
+
+GAMES
+  game 0: seed=45001 decks=go_wide_adeline+typal_lathril turns=12 ended=game_over (guest left) 23s fails=- warns=- late=2 via=relay
+  game 1: seed=45002 decks=spellslinger_veyran+voltron_light_paws+stompy_goreclaw (3 players, 2 online) turns=29 ended=game_over 184s fails=- warns=- drops=1/1 resumed@21 via=relay
+  game 2: seed=45003 decks=voltron_light_paws+stompy_goreclaw+spellslinger_veyran (3 players, 2 online) turns=40 ended=game_over 81s fails=- warns=- via=relay
+  game 3: seed=45004 decks=aristocrats_teysa+typal_lathril turns=23 ended=game_over 34s fails=- warns=- drops=1/1 via=relay
+  game 4: seed=45005 decks=stompy_goreclaw+typal_lathril+spellslinger_veyran+go_wide_adeline (4 players, 2 online) turns=31 ended=game_over (host+guest conceded) 55s fails=- warns=- drops=1/1 via=relay
+  game 5: seed=45006 decks=aristocrats_teysa+spellslinger_veyran turns=33 ended=game_over 29s fails=- warns=- drops=1/1 via=relay
+  game 6: seed=45007 decks=typal_lathril+spellslinger_veyran turns=25 ended=game_over 30s fails=- warns=- via=relay
+  game 7: seed=45008 decks=spellslinger_veyran+go_wide_adeline+typal_lathril (3 players, 1 online) turns=36 ended=game_over 42s fails=- warns=- via=relay
+  game 8: seed=45009 decks=typal_lathril+go_wide_adeline turns=18 ended=game_over 41s fails=- warns=- drops=1/1 via=relay
+  game 9: seed=45010 decks=voltron_light_paws+typal_lathril+go_wide_adeline+aristocrats_teysa (4 players, 1 online) turns=47 ended=game_over 264s fails=- warns=- resumed@28 via=relay
+  game 10: seed=45011 decks=spellslinger_veyran+typal_lathril turns=20 ended=game_over 187s fails=- warns=- resumed@10 via=relay
+  game 11: seed=45012 decks=stompy_goreclaw+go_wide_adeline turns=17 ended=game_over 27s fails=- warns=- via=relay
+  game 12: seed=45013 decks=go_wide_adeline+spellslinger_veyran+aristocrats_teysa+stompy_goreclaw (4 players, 1 online) turns=38 ended=game_over 40s fails=- warns=- via=relay
+  game 13: seed=45014 decks=typal_lathril+spellslinger_veyran turns=25 ended=game_over 166s fails=- warns=- resumed@24 via=relay
+  game 14: seed=45015 decks=spellslinger_veyran+go_wide_adeline+voltron_light_paws (3 players, 1 online) turns=18 ended=game_over 25s fails=- warns=- via=relay
+  game 15: seed=45016 decks=voltron_light_paws+go_wide_adeline turns=16 ended=game_over (host conceded) 14s fails=- warns=- late=2 via=relay
+  game 16: seed=45017 decks=stompy_goreclaw+go_wide_adeline+aristocrats_teysa (3 players, 1 online) turns=31 ended=game_over 40s fails=- warns=- via=relay
+  game 17: seed=45018 decks=spellslinger_veyran+typal_lathril turns=16 ended=game_over 19s fails=- warns=- via=relay
+  game 18: seed=45019 decks=voltron_light_paws+stompy_goreclaw turns=29 ended=game_over 79s fails=- warns=- resumed@9 via=relay
+  game 19: seed=45020 decks=spellslinger_veyran+stompy_goreclaw turns=21 ended=game_over 26s fails=- warns=- drops=1/1 via=relay
+  game 20: seed=45021 decks=voltron_light_paws+aristocrats_teysa turns=22 ended=game_over 49s fails=- warns=- resumed@10 via=relay
+  game 21: seed=45022 decks=typal_lathril+stompy_goreclaw turns=16 ended=game_over 30s fails=- warns=- via=relay
+  game 22: seed=45023 decks=voltron_light_paws+stompy_goreclaw+aristocrats_teysa (3 players, 2 online) turns=16 ended=game_over (guest+guest2 conceded) 27s fails=- warns=- late=2 via=relay
+  game 23: seed=45024 decks=spellslinger_veyran+go_wide_adeline+typal_lathril+aristocrats_teysa (4 players, 3 online) turns=25 ended=game_over (guest+guest2+guest3 conceded) 48s fails=- warns=- late=3 via=relay
+  game 24: seed=45025 decks=aristocrats_teysa+voltron_light_paws+stompy_goreclaw (3 players, 1 online) turns=30 ended=game_over 38s fails=- warns=- via=relay
+  game 25: seed=45026 decks=typal_lathril+voltron_light_paws turns=20 ended=game_over 31s fails=- warns=- via=relay
+  game 26: seed=45027 decks=go_wide_adeline+aristocrats_teysa turns=28 ended=game_over 34s fails=- warns=- via=relay
+  game 27: seed=45028 decks=spellslinger_veyran+voltron_light_paws turns=33 ended=game_over 35s fails=- warns=- drops=2/2 via=relay
+  game 28: seed=45029 decks=aristocrats_teysa+go_wide_adeline turns=23 ended=game_over 22s fails=- warns=- via=relay
+  game 29: seed=45030 decks=typal_lathril+aristocrats_teysa turns=27 ended=game_over 55s fails=- warns=- via=relay
+  game 30: seed=45031 decks=go_wide_adeline+spellslinger_veyran turns=16 ended=game_over 14s fails=- warns=- via=relay
+  game 31: seed=45032 decks=aristocrats_teysa+go_wide_adeline turns=34 ended=game_over 35s fails=- warns=- drops=2/2 via=relay
+  game 32: seed=45033 decks=typal_lathril+stompy_goreclaw+voltron_light_paws (3 players, 1 online) turns=29 ended=game_over 62s fails=- warns=- drops=1/1 via=relay
+  game 33: seed=45034 decks=go_wide_adeline+typal_lathril turns=26 ended=game_over 32s fails=- warns=- via=relay
+  game 34: seed=45035 decks=typal_lathril+voltron_light_paws+spellslinger_veyran+go_wide_adeline (4 players, 2 online) turns=44 ended=game_over (guest left) 54s fails=- warns=- late=1 via=relay
+  game 35: seed=45036 decks=stompy_goreclaw+spellslinger_veyran turns=15 ended=game_over (host conceded) 25s fails=- warns=- late=2 drops=1/1 via=relay
+  game 36: seed=45037 decks=typal_lathril+aristocrats_teysa turns=21 ended=game_over 35s fails=- warns=- via=relay
+  game 37: seed=45038 decks=typal_lathril+aristocrats_teysa turns=16 ended=game_over 29s fails=- warns=- via=relay
+  game 38: seed=45039 decks=go_wide_adeline+aristocrats_teysa turns=11 ended=game_over (guest left) 18s fails=- warns=- late=2 via=relay
+  game 39: seed=45040 decks=aristocrats_teysa+go_wide_adeline turns=33 ended=game_over 31s fails=- warns=- drops=2/2 via=relay
+  game 40: seed=45041 decks=voltron_light_paws+go_wide_adeline turns=14 ended=game_over 31s fails=- warns=- via=relay
+  game 41: seed=45042 decks=voltron_light_paws+go_wide_adeline turns=22 ended=game_over 26s fails=- warns=- drops=1/1 via=relay
+  game 42: seed=45043 decks=voltron_light_paws+aristocrats_teysa turns=32 ended=game_over 122s fails=- warns=- resumed@11 via=relay
+  game 43: seed=45044 decks=aristocrats_teysa+go_wide_adeline+spellslinger_veyran (3 players, 1 online) turns=42 ended=game_over 71s fails=- warns=- drops=2/2 via=relay
+  game 44: seed=45045 decks=typal_lathril+spellslinger_veyran turns=16 ended=game_over 30s fails=- warns=- drops=1/1 via=relay
+  game 45: seed=45046 decks=voltron_light_paws+aristocrats_teysa turns=26 ended=game_over (guest conceded) 32s fails=- warns=- late=2 drops=1/1 via=relay
+  game 46: seed=45047 decks=aristocrats_teysa+spellslinger_veyran turns=36 ended=game_over 30s fails=- warns=- via=relay
+  game 47: seed=45048 decks=typal_lathril+go_wide_adeline turns=17 ended=game_over 36s fails=- warns=- via=relay
+  game 48: seed=45049 decks=go_wide_adeline+spellslinger_veyran turns=11 ended=game_over (guest left) 14s fails=- warns=- late=2 via=relay
+  game 49: seed=45050 decks=go_wide_adeline+typal_lathril turns=20 ended=game_over 20s fails=- warns=- via=relay
+  game 50: seed=45051 decks=spellslinger_veyran+go_wide_adeline turns=19 ended=game_over 25s fails=- warns=- drops=2/2 via=relay
+  game 51: seed=45052 decks=voltron_light_paws+stompy_goreclaw turns=15 ended=game_over 46s fails=- warns=- drops=1/1 resumed@6 via=relay
+  game 52: seed=45053 decks=typal_lathril+spellslinger_veyran turns=25 ended=game_over 43s fails=- warns=- via=relay
+  game 53: seed=45054 decks=stompy_goreclaw+aristocrats_teysa+spellslinger_veyran+go_wide_adeline (4 players, 2 online) turns=22 ended=game_over (guest left) 42s fails=- warns=- via=relay
+  game 54: seed=45055 decks=aristocrats_teysa+spellslinger_veyran turns=25 ended=game_over 35s fails=- warns=- drops=2/2 via=relay
+  game 55: seed=45056 decks=go_wide_adeline+stompy_goreclaw+aristocrats_teysa+voltron_light_paws (4 players, 2 online) turns=43 ended=game_over 155s fails=- warns=- resumed@23 via=relay
+  game 56: seed=45057 decks=typal_lathril+voltron_light_paws+stompy_goreclaw+go_wide_adeline (4 players, 3 online) turns=37 ended=game_over (host+guest+guest2 conceded) 114s fails=- warns=- late=2 drops=2/2 via=relay
+  game 57: seed=45058 decks=spellslinger_veyran+go_wide_adeline turns=28 ended=game_over 22s fails=- warns=- drops=1/1 via=relay
+  game 58: seed=45059 decks=aristocrats_teysa+go_wide_adeline turns=25 ended=game_over 84s fails=- warns=- resumed@21 via=relay
+  game 59: seed=45060 decks=spellslinger_veyran+aristocrats_teysa turns=19 ended=game_over 24s fails=- warns=- via=relay
+  game 60: seed=45061 decks=go_wide_adeline+spellslinger_veyran+typal_lathril (3 players, 1 online) turns=18 ended=game_over 21s fails=- warns=ai_loop_guard via=relay
+  game 61: seed=45062 decks=stompy_goreclaw+typal_lathril+spellslinger_veyran+go_wide_adeline (4 players, 3 online) turns=37 ended=game_over 76s fails=- warns=- via=relay
+  game 62: seed=45063 decks=typal_lathril+voltron_light_paws turns=24 ended=resume_failed 262s fails=online_resume warns=- resumed@24  -> /home/runner/work/Manticore/Manticore/out/game_062 via=relay
+  game 63: seed=45064 decks=spellslinger_veyran+aristocrats_teysa+stompy_goreclaw+voltron_light_paws (4 players, 3 online) turns=41 ended=game_over (guest left) 76s fails=- warns=- via=relay
+  game 64: seed=45065 decks=typal_lathril+spellslinger_veyran turns=31 ended=game_over 21s fails=- warns=- via=relay
+  game 65: seed=45066 decks=go_wide_adeline+typal_lathril turns=19 ended=game_over 31s fails=- warns=- via=relay
+  game 66: seed=45067 decks=typal_lathril+voltron_light_paws+spellslinger_veyran (3 players, 1 online) turns=32 ended=game_over 51s fails=- warns=- via=relay
+  game 67: seed=45068 decks=go_wide_adeline+aristocrats_teysa turns=21 ended=game_over 24s fails=- warns=- via=relay
+  game 68: seed=45069 decks=stompy_goreclaw+spellslinger_veyran turns=23 ended=game_over (guest left) 25s fails=- warns=- late=2 via=relay
+  game 69: seed=45070 decks=stompy_goreclaw+voltron_light_paws turns=19 ended=game_over 27s fails=- warns=- drops=1/1 via=relay
+  game 70: seed=45071 decks=typal_lathril+stompy_goreclaw turns=19 ended=game_over 29s fails=- warns=- drops=1/1 via=relay
+  game 71: seed=45072 decks=spellslinger_veyran+stompy_goreclaw+aristocrats_teysa+voltron_light_paws (4 players, 2 online) turns=35 ended=game_over 42s fails=- warns=- via=relay
+  game 72: seed=45073 decks=typal_lathril+aristocrats_teysa turns=14 ended=game_over (host conceded) 48s fails=- warns=- resumed@12 via=relay
+  game 73: seed=45074 decks=go_wide_adeline+voltron_light_paws turns=15 ended=game_over 26s fails=- warns=- via=relay
+  game 74: seed=45075 decks=spellslinger_veyran+aristocrats_teysa+stompy_goreclaw+typal_lathril (4 players, 3 online) turns=39 ended=game_over 205s fails=- warns=- resumed@15 via=relay
+  game 75: seed=45076 decks=spellslinger_veyran+go_wide_adeline turns=13 ended=game_over 20s fails=- warns=- via=relay
+  game 76: seed=45077 decks=go_wide_adeline+typal_lathril turns=30 ended=game_over 108s fails=- warns=- drops=2/2 resumed@10 via=relay
+  game 77: seed=45078 decks=spellslinger_veyran+typal_lathril+go_wide_adeline (3 players, 2 online) turns=37 ended=game_over 41s fails=- warns=- via=relay
+  game 78: seed=45079 decks=spellslinger_veyran+aristocrats_teysa+typal_lathril (3 players, 2 online) turns=55 ended=game_over 260s fails=- warns=- drops=1/1 resumed@29 via=relay
+  game 79: seed=45080 decks=stompy_goreclaw+voltron_light_paws+go_wide_adeline+spellslinger_veyran (4 players, 3 online) turns=31 ended=game_over 98s fails=- warns=- via=relay
+  game 80: seed=45081 decks=stompy_goreclaw+spellslinger_veyran turns=16 ended=game_over 26s fails=- warns=- via=relay
+  game 81: seed=45082 decks=voltron_light_paws+go_wide_adeline turns=23 ended=game_over 69s fails=- warns=- resumed@14 via=relay
+  game 82: seed=45083 decks=aristocrats_teysa+spellslinger_veyran turns=21 ended=game_over 19s fails=- warns=- drops=1/1 via=relay
+  game 83: seed=45084 decks=stompy_goreclaw+voltron_light_paws turns=15 ended=game_over 22s fails=- warns=- drops=1/1 via=relay
+  game 84: seed=45085 decks=voltron_light_paws+spellslinger_veyran+go_wide_adeline+aristocrats_teysa (4 players, 1 online) turns=40 ended=game_over (host conceded) 40s fails=- warns=- via=relay
+  game 85: seed=45086 decks=typal_lathril+go_wide_adeline+voltron_light_paws (3 players, 2 online) turns=45 ended=game_over 91s fails=- warns=- drops=1/1 via=relay
+  game 86: seed=45087 decks=typal_lathril+go_wide_adeline turns=14 ended=game_over 23s fails=- warns=- via=relay
+  game 87: seed=45088 decks=spellslinger_veyran+aristocrats_teysa turns=24 ended=game_over 30s fails=- warns=- drops=2/2 via=relay
+  game 88: seed=45089 decks=typal_lathril+go_wide_adeline turns=25 ended=game_over 30s fails=- warns=- drops=1/1 via=relay
+  game 89: seed=45090 decks=voltron_light_paws+aristocrats_teysa turns=34 ended=game_over 40s fails=- warns=- via=relay
+  game 90: seed=45091 decks=spellslinger_veyran+voltron_light_paws+typal_lathril (3 players, 1 online) turns=21 ended=game_over 31s fails=- warns=- via=relay
+  game 91: seed=45092 decks=stompy_goreclaw+typal_lathril turns=21 ended=game_over 32s fails=- warns=- via=relay
+  game 92: seed=45093 decks=voltron_light_paws+go_wide_adeline turns=20 ended=game_over 27s fails=- warns=- drops=1/1 via=relay
+  game 93: seed=45094 decks=typal_lathril+voltron_light_paws+spellslinger_veyran (3 players, 2 online) turns=38 ended=game_over 66s fails=- warns=- via=relay
+  game 94: seed=45095 decks=spellslinger_veyran+go_wide_adeline turns=18 ended=game_over (guest conceded) 22s fails=- warns=- late=2 drops=1/1 via=relay
+  game 95: seed=45096 decks=stompy_goreclaw+aristocrats_teysa turns=17 ended=game_over (guest conceded) 110s fails=- warns=- resumed@12 via=relay
+  game 96: seed=45097 decks=stompy_goreclaw+typal_lathril turns=22 ended=game_over 53s fails=- warns=- drops=1/1 resumed@6 via=relay
+  game 97: seed=45098 decks=aristocrats_teysa+typal_lathril turns=25 ended=game_over 35s fails=- warns=- drops=1/1 via=relay
+  game 98: seed=45099 decks=typal_lathril+voltron_light_paws turns=12 ended=game_over 23s fails=- warns=- via=relay
+  game 99: seed=45100 decks=spellslinger_veyran+voltron_light_paws+aristocrats_teysa+go_wide_adeline (4 players, 2 online) turns=38 ended=game_over 93s fails=- warns=- via=relay
+  game 100: seed=45101 decks=stompy_goreclaw+spellslinger_veyran turns=26 ended=game_over 30s fails=- warns=- via=relay
+  game 101: seed=45102 decks=stompy_goreclaw+voltron_light_paws turns=19 ended=game_over 30s fails=- warns=- drops=1/1 via=relay
+  game 102: seed=45103 decks=voltron_light_paws+aristocrats_teysa turns=52 ended=game_over 60s fails=- warns=- drops=1/1 via=relay
+  game 103: seed=45104 decks=voltron_light_paws+stompy_goreclaw turns=17 ended=game_over 39s fails=- warns=- via=relay
+  game 104: seed=45105 decks=typal_lathril+go_wide_adeline turns=22 ended=game_over 19s fails=- warns=- via=relay
+  game 105: seed=45106 decks=voltron_light_paws+go_wide_adeline turns=24 ended=game_over 128s fails=- warns=- resumed@16 via=relay
+  game 106: seed=45107 decks=voltron_light_paws+stompy_goreclaw turns=15 ended=game_over 66s fails=- warns=- resumed@12 via=relay
+  game 107: seed=45108 decks=aristocrats_teysa+spellslinger_veyran turns=15 ended=game_over (host conceded) 16s fails=- warns=- late=2 via=relay
+  game 108: seed=45109 decks=aristocrats_teysa+typal_lathril turns=18 ended=game_over 26s fails=- warns=- via=relay
+  game 109: seed=45110 decks=spellslinger_veyran+go_wide_adeline+aristocrats_teysa+typal_lathril (4 players, 3 online) turns=28 ended=game_over 130s fails=- warns=- drops=1/1 via=relay
+  game 110: seed=45111 decks=typal_lathril+stompy_goreclaw+voltron_light_paws+spellslinger_veyran (4 players, 3 online) turns=17 ended=game_over (guest+guest2+guest3 conceded) 46s fails=- warns=- late=2 via=relay
+  game 111: seed=45112 decks=go_wide_adeline+spellslinger_veyran turns=33 ended=game_over 23s fails=- warns=- drops=1/1 via=relay
+  game 112: seed=45113 decks=spellslinger_veyran+stompy_goreclaw turns=15 ended=game_over 38s fails=- warns=- resumed@8 via=relay
+  game 113: seed=45114 decks=typal_lathril+aristocrats_teysa turns=22 ended=game_over 33s fails=- warns=- via=relay
+  game 114: seed=45115 decks=typal_lathril+stompy_goreclaw turns=32 ended=game_over (guest left) 25s fails=- warns=- late=2 via=relay
+  game 115: seed=45116 decks=spellslinger_veyran+aristocrats_teysa turns=28 ended=game_over (host conceded) 18s fails=- warns=- late=2 drops=1/1 via=relay
+  game 116: seed=45117 decks=go_wide_adeline+aristocrats_teysa+typal_lathril (3 players, 2 online) turns=39 ended=game_over 77s fails=- warns=- via=relay
+  game 117: seed=45118 decks=aristocrats_teysa+typal_lathril+voltron_light_paws+spellslinger_veyran (4 players, 1 online) turns=65 ended=game_over 95s fails=- warns=- via=relay
+  game 118: seed=45119 decks=aristocrats_teysa+voltron_light_paws+stompy_goreclaw+typal_lathril (4 players, 1 online) turns=50 ended=game_over 83s fails=- warns=- drops=2/2 via=relay
+  game 119: seed=45120 decks=spellslinger_veyran+go_wide_adeline+typal_lathril+aristocrats_teysa (4 players, 3 online) turns=68 ended=game_over 182s fails=- warns=- resumed@20 via=relay
+  game 120: seed=45121 decks=voltron_light_paws+spellslinger_veyran turns=13 ended=game_over (guest left) 22s fails=- warns=- late=2 via=relay
+  game 121: seed=45122 decks=spellslinger_veyran+stompy_goreclaw turns=25 ended=game_over 28s fails=- warns=- via=relay
+  game 122: seed=45123 decks=aristocrats_teysa+typal_lathril turns=20 ended=game_over 21s fails=- warns=- via=relay
+  game 123: seed=45124 decks=stompy_goreclaw+voltron_light_paws+go_wide_adeline (3 players, 1 online) turns=24 ended=game_over 40s fails=- warns=- via=relay
+  game 124: seed=45125 decks=go_wide_adeline+typal_lathril turns=20 ended=game_over 24s fails=- warns=- drops=2/2 via=relay
+  game 125: seed=45126 decks=voltron_light_paws+spellslinger_veyran turns=32 ended=game_over 25s fails=- warns=- drops=1/1 via=relay
+  game 126: seed=45127 decks=aristocrats_teysa+typal_lathril turns=27 ended=game_over 26s fails=- warns=- via=relay
+  game 127: seed=45128 decks=spellslinger_veyran+voltron_light_paws turns=15 ended=game_over 29s fails=- warns=- drops=1/1 via=relay
+  game 128: seed=45129 decks=stompy_goreclaw+typal_lathril+voltron_light_paws+aristocrats_teysa (4 players, 2 online) turns=35 ended=game_over 71s fails=- warns=- drops=1/1 via=relay
+  game 129: seed=45130 decks=spellslinger_veyran+go_wide_adeline turns=20 ended=game_over 20s fails=- warns=- drops=1/1 via=relay
+  game 130: seed=45131 decks=go_wide_adeline+aristocrats_teysa+stompy_goreclaw (3 players, 1 online) turns=20 ended=game_over (guest conceded) 27s fails=- warns=- via=relay
+  game 131: seed=45132 decks=typal_lathril+spellslinger_veyran+voltron_light_paws+stompy_goreclaw (4 players, 2 online) turns=36 ended=game_over 106s fails=- warns=- via=relay
+  game 132: seed=45133 decks=voltron_light_paws+stompy_goreclaw+aristocrats_teysa+go_wide_adeline (4 players, 3 online) turns=40 ended=game_over 250s fails=- warns=- resumed@29 via=relay
+  game 133: seed=45134 decks=stompy_goreclaw+go_wide_adeline turns=18 ended=game_over 23s fails=- warns=- via=relay
+  game 134: seed=45135 decks=stompy_goreclaw+spellslinger_veyran turns=16 ended=game_over 22s fails=- warns=- via=relay
+  game 135: seed=45136 decks=spellslinger_veyran+voltron_light_paws+aristocrats_teysa (3 players, 1 online) turns=34 ended=game_over 36s fails=- warns=- via=relay
+  game 136: seed=45137 decks=voltron_light_paws+typal_lathril turns=24 ended=game_over 33s fails=- warns=- drops=1/1 via=relay
+  game 137: seed=45138 decks=stompy_goreclaw+spellslinger_veyran turns=18 ended=game_over 24s fails=- warns=- drops=1/1 via=relay
+  game 138: seed=45139 decks=go_wide_adeline+typal_lathril+stompy_goreclaw (3 players, 1 online) turns=24 ended=game_over 37s fails=- warns=- via=relay
+  game 139: seed=45140 decks=go_wide_adeline+spellslinger_veyran turns=20 ended=game_over 26s fails=- warns=- drops=1/1 via=relay
+  game 140: seed=45141 decks=go_wide_adeline+spellslinger_veyran turns=31 ended=game_over (guest conceded) 90s fails=- warns=- resumed@29 via=relay
+  game 141: seed=45142 decks=aristocrats_teysa+stompy_goreclaw turns=23 ended=game_over 73s fails=- warns=- resumed@19 via=relay
+  game 142: seed=45143 decks=voltron_light_paws+aristocrats_teysa turns=18 ended=game_over (guest conceded) 25s fails=- warns=- late=2 via=relay
+  game 143: seed=45144 decks=stompy_goreclaw+typal_lathril turns=12 ended=game_over (guest conceded) 22s fails=- warns=- late=2 via=relay
+  game 144: seed=45145 decks=voltron_light_paws+spellslinger_veyran turns=36 ended=game_over 24s fails=- warns=- drops=2/2 via=relay
+  game 145: seed=45146 decks=aristocrats_teysa+stompy_goreclaw turns=13 ended=game_over (guest conceded) 16s fails=- warns=- late=2 via=relay
+  game 146: seed=45147 decks=spellslinger_veyran+typal_lathril turns=25 ended=game_over 26s fails=- warns=- via=relay
+  game 147: seed=45148 decks=typal_lathril+go_wide_adeline turns=15 ended=game_over 20s fails=- warns=- drops=1/1 via=relay
+  game 148: seed=45149 decks=voltron_light_paws+stompy_goreclaw+typal_lathril+go_wide_adeline (4 players, 1 online) turns=26 ended=game_over 65s fails=- warns=- resumed@7 via=relay
+  game 149: seed=45150 decks=stompy_goreclaw+aristocrats_teysa+spellslinger_veyran+voltron_light_paws (4 players, 1 online) turns=36 ended=game_over (host conceded) 64s fails=- warns=- late=1 via=relay
+  game 150: seed=45151 decks=go_wide_adeline+aristocrats_teysa turns=26 ended=game_over 31s fails=- warns=- via=relay
+  game 151: seed=45152 decks=aristocrats_teysa+typal_lathril+voltron_light_paws+stompy_goreclaw (4 players, 2 online) turns=26 ended=game_over 61s fails=- warns=- via=relay
+  game 152: seed=45153 decks=voltron_light_paws+aristocrats_teysa turns=24 ended=game_over 30s fails=- warns=- via=relay
+  game 153: seed=45154 decks=typal_lathril+voltron_light_paws+spellslinger_veyran (3 players, 1 online) turns=33 ended=game_over 53s fails=- warns=- via=relay
+  game 154: seed=45155 decks=aristocrats_teysa+typal_lathril+voltron_light_paws+stompy_goreclaw (4 players, 3 online) turns=35 ended=game_over 114s fails=- warns=- drops=1/1 via=relay
+  game 155: seed=45156 decks=go_wide_adeline+spellslinger_veyran+voltron_light_paws (3 players, 1 online) turns=20 ended=game_over 41s fails=- warns=- via=relay
+  game 156: seed=45157 decks=aristocrats_teysa+spellslinger_veyran turns=38 ended=game_over 27s fails=- warns=- via=relay
+  game 157: seed=45158 decks=aristocrats_teysa+voltron_light_paws+typal_lathril+spellslinger_veyran (4 players, 2 online) turns=49 ended=game_over 78s fails=- warns=- via=relay
+  game 158: seed=45159 decks=spellslinger_veyran+go_wide_adeline turns=19 ended=game_over 27s fails=- warns=- drops=2/2 via=relay
+  game 159: seed=45160 decks=spellslinger_veyran+aristocrats_teysa turns=26 ended=game_over 26s fails=- warns=- drops=1/1 via=relay
+  game 160: seed=45161 decks=stompy_goreclaw+voltron_light_paws turns=27 ended=game_over 45s fails=- warns=- drops=1/1 via=relay
+  game 161: seed=45162 decks=typal_lathril+voltron_light_paws turns=18 ended=game_over (guest left) 34s fails=- warns=- late=2 drops=1/1 via=relay
+  game 162: seed=45163 decks=spellslinger_veyran+stompy_goreclaw turns=19 ended=game_over 23s fails=- warns=- drops=1/1 via=relay
+  game 163: seed=45164 decks=go_wide_adeline+spellslinger_veyran turns=22 ended=game_over 21s fails=- warns=- via=relay
+  game 164: seed=45165 decks=spellslinger_veyran+typal_lathril+aristocrats_teysa (3 players, 2 online) turns=39 ended=game_over 43s fails=- warns=- via=relay
+  game 165: seed=45166 decks=go_wide_adeline+voltron_light_paws turns=28 ended=game_over 45s fails=- warns=- drops=1/1 via=relay
+  game 166: seed=45167 decks=go_wide_adeline+spellslinger_veyran turns=22 ended=game_over (host conceded) 22s fails=- warns=- late=2 via=relay
+  game 167: seed=45168 decks=go_wide_adeline+stompy_goreclaw+aristocrats_teysa+typal_lathril (4 players, 1 online) turns=35 ended=game_over (guest conceded) 81s fails=- warns=- via=relay
+  game 168: seed=45169 decks=aristocrats_teysa+typal_lathril turns=22 ended=game_over 37s fails=- warns=- via=relay
+  game 169: seed=45170 decks=typal_lathril+voltron_light_paws turns=20 ended=game_over 23s fails=- warns=- via=relay
+  game 170: seed=45171 decks=typal_lathril+stompy_goreclaw turns=17 ended=game_over 35s fails=- warns=- via=relay
+  game 171: seed=45172 decks=voltron_light_paws+spellslinger_veyran turns=25 ended=game_over (host conceded) 36s fails=- warns=- late=2 via=relay
+  game 172: seed=45173 decks=stompy_goreclaw+go_wide_adeline turns=26 ended=game_over 28s fails=- warns=- via=relay
+  game 173: seed=45174 decks=go_wide_adeline+stompy_goreclaw turns=21 ended=game_over 34s fails=- warns=- via=relay
+  game 174: seed=45175 decks=spellslinger_veyran+voltron_light_paws turns=42 ended=game_over 28s fails=- warns=- via=relay
+  game 175: seed=45176 decks=spellslinger_veyran+stompy_goreclaw turns=20 ended=game_over 22s fails=- warns=- via=relay
+  game 176: seed=45177 decks=stompy_goreclaw+voltron_light_paws+typal_lathril+spellslinger_veyran (4 players, 3 online) turns=56 ended=game_over (host+guest2+guest3 conceded) 137s fails=- warns=- late=2 drops=1/1 via=relay
+  game 177: seed=45178 decks=stompy_goreclaw+typal_lathril turns=17 ended=game_over 28s fails=- warns=- via=relay
+  game 178: seed=45179 decks=aristocrats_teysa+voltron_light_paws turns=28 ended=game_over 119s fails=- warns=- resumed@27 via=relay
+  game 179: seed=45180 decks=go_wide_adeline+spellslinger_veyran turns=14 ended=game_over (guest conceded) 14s fails=- warns=- late=2 via=relay
+  game 180: seed=45181 decks=aristocrats_teysa+spellslinger_veyran turns=30 ended=game_over (host conceded) 32s fails=- warns=- late=2 via=relay
+  game 181: seed=45182 decks=stompy_goreclaw+go_wide_adeline turns=25 ended=game_over 25s fails=- warns=- drops=1/1 via=relay
+  game 182: seed=45183 decks=aristocrats_teysa+voltron_light_paws turns=23 ended=game_over 25s fails=- warns=- via=relay
+  game 183: seed=45184 decks=voltron_light_paws+spellslinger_veyran+stompy_goreclaw+go_wide_adeline (4 players, 2 online) turns=35 ended=game_over 74s fails=- warns=- via=relay
+  game 184: seed=45185 decks=spellslinger_veyran+go_wide_adeline turns=23 ended=game_over 25s fails=- warns=- drops=1/1 via=relay
+  game 185: seed=45186 decks=stompy_goreclaw+spellslinger_veyran turns=24 ended=game_over 32s fails=- warns=- via=relay
+  game 186: seed=45187 decks=typal_lathril+aristocrats_teysa+stompy_goreclaw+voltron_light_paws (4 players, 3 online) turns=13 ended=game_over (host+guest2+guest3 conceded) 37s fails=- warns=- late=2 via=relay
+  game 187: seed=45188 decks=typal_lathril+spellslinger_veyran turns=21 ended=game_over 35s fails=- warns=- via=relay
+  game 188: seed=45189 decks=voltron_light_paws+go_wide_adeline+aristocrats_teysa (3 players, 1 online) turns=27 ended=game_over (host conceded) 58s fails=- warns=- drops=1/1 resumed@8 via=relay
+  game 189: seed=45190 decks=go_wide_adeline+voltron_light_paws turns=21 ended=game_over 81s fails=- warns=- drops=1/1 resumed@15 via=relay
+  game 190: seed=45191 decks=aristocrats_teysa+spellslinger_veyran turns=20 ended=game_over (guest conceded) 21s fails=- warns=- late=2 drops=1/1 via=relay
+  game 191: seed=45192 decks=aristocrats_teysa+spellslinger_veyran+typal_lathril (3 players, 1 online) turns=41 ended=game_over 77s fails=- warns=- drops=2/2 resumed@20 via=relay
+  game 192: seed=45193 decks=stompy_goreclaw+voltron_light_paws turns=22 ended=game_over 54s fails=- warns=- via=relay
+  game 193: seed=45194 decks=spellslinger_veyran+typal_lathril turns=22 ended=game_over 32s fails=- warns=- via=relay
+  game 194: seed=45195 decks=stompy_goreclaw+go_wide_adeline+spellslinger_veyran+aristocrats_teysa (4 players, 3 online) turns=45 ended=game_over 296s fails=- warns=- drops=1/1 resumed@25 via=relay
+  game 195: seed=45196 decks=typal_lathril+aristocrats_teysa turns=18 ended=game_over 28s fails=- warns=- via=relay
+  game 196: seed=45197 decks=go_wide_adeline+stompy_goreclaw turns=19 ended=game_over 29s fails=- warns=- via=relay
+  game 197: seed=45198 decks=stompy_goreclaw+typal_lathril+aristocrats_teysa (3 players, 1 online) turns=30 ended=game_over (guest conceded) 43s fails=- warns=- late=1 via=relay
+  game 198: seed=45199 decks=typal_lathril+voltron_light_paws turns=25 ended=game_over 36s fails=- warns=- via=relay
+  game 199: seed=45200 decks=aristocrats_teysa+stompy_goreclaw+voltron_light_paws+spellslinger_veyran (4 players, 1 online) turns=53 ended=game_over (host conceded) 230s fails=- warns=- late=1 via=relay
+  game 200: seed=45201 decks=go_wide_adeline+voltron_light_paws turns=28 ended=game_over 26s fails=- warns=- via=relay
+  game 201: seed=45202 decks=voltron_light_paws+aristocrats_teysa turns=21 ended=game_over 31s fails=- warns=- via=relay
+  game 202: seed=45203 decks=spellslinger_veyran+aristocrats_teysa turns=26 ended=game_over 24s fails=- warns=- via=relay
+  game 203: seed=45204 decks=voltron_light_paws+stompy_goreclaw turns=15 ended=game_over 28s fails=- warns=- via=relay
+  game 204: seed=45205 decks=aristocrats_teysa+stompy_goreclaw turns=17 ended=game_over 32s fails=- warns=- via=relay
+  game 205: seed=45206 decks=spellslinger_veyran+stompy_goreclaw+go_wide_adeline+typal_lathril (4 players, 2 online) turns=35 ended=game_over (guest+guest2 conceded) 59s fails=- warns=- via=relay
+  game 206: seed=45207 decks=spellslinger_veyran+stompy_goreclaw+voltron_light_paws+go_wide_adeline (4 players, 1 online) turns=33 ended=game_over 160s fails=- warns=- resumed@11 via=relay
+  game 207: seed=45208 decks=stompy_goreclaw+typal_lathril turns=17 ended=game_over 42s fails=- warns=- via=relay
+  game 208: seed=45209 decks=typal_lathril+spellslinger_veyran turns=23 ended=game_over 30s fails=- warns=- via=relay
+  game 209: seed=45210 decks=stompy_goreclaw+typal_lathril turns=13 ended=game_over 25s fails=- warns=- via=relay
+  game 210: seed=45211 decks=go_wide_adeline+typal_lathril turns=17 ended=game_over 40s fails=- warns=- drops=1/1 via=relay
+  game 211: seed=45212 decks=typal_lathril+go_wide_adeline turns=30 ended=game_over 34s fails=- warns=- via=relay
+  game 212: seed=45213 decks=spellslinger_veyran+aristocrats_teysa turns=20 ended=game_over 33s fails=- warns=- drops=1/1 via=relay
+  game 213: seed=45214 decks=stompy_goreclaw+spellslinger_veyran+go_wide_adeline+voltron_light_paws (4 players, 3 online) turns=28 ended=game_over (host+guest+guest2 conceded) 98s fails=- warns=- drops=2/2 resumed@12 via=relay
+  game 214: seed=45215 decks=voltron_light_paws+typal_lathril turns=20 ended=game_over 27s fails=- warns=- via=relay
+  game 215: seed=45216 decks=spellslinger_veyran+stompy_goreclaw turns=16 ended=game_over (guest conceded) 23s fails=- warns=- late=2 via=relay
+  game 216: seed=45217 decks=spellslinger_veyran+aristocrats_teysa turns=18 ended=game_over 22s fails=- warns=- via=relay
+  game 217: seed=45218 decks=voltron_light_paws+go_wide_adeline turns=30 ended=game_over 27s fails=- warns=- via=relay
+  game 218: seed=45219 decks=voltron_light_paws+spellslinger_veyran turns=27 ended=game_over 28s fails=- warns=- via=relay
+  game 219: seed=45220 decks=stompy_goreclaw+voltron_light_paws turns=17 ended=game_over 27s fails=- warns=- via=relay
+  game 220: seed=45221 decks=voltron_light_paws+spellslinger_veyran+go_wide_adeline (3 players, 1 online) turns=27 ended=game_over 41s fails=- warns=- via=relay
+  game 221: seed=45222 decks=go_wide_adeline+voltron_light_paws turns=15 ended=game_over 19s fails=- warns=- drops=1/1 via=relay
+  game 222: seed=45223 decks=aristocrats_teysa+typal_lathril+stompy_goreclaw (3 players, 2 online) turns=29 ended=game_over 73s fails=- warns=- drops=2/2 via=relay
+  game 223: seed=45224 decks=typal_lathril+voltron_light_paws+go_wide_adeline+stompy_goreclaw (4 players, 1 online) turns=42 ended=game_over (guest conceded) 62s fails=- warns=- drops=1/1 via=relay
+  game 224: seed=45225 decks=go_wide_adeline+aristocrats_teysa turns=23 ended=game_over 186s fails=- warns=- resumed@18 via=relay
+  game 225: seed=45226 decks=go_wide_adeline+typal_lathril turns=21 ended=game_over 35s fails=- warns=- via=relay
+  game 226: seed=45227 decks=go_wide_adeline+stompy_goreclaw turns=20 ended=game_over 41s fails=- warns=- drops=1/1 via=relay
+  game 227: seed=45228 decks=typal_lathril+spellslinger_veyran turns=18 ended=game_over 30s fails=- warns=- drops=2/2 via=relay
+  game 228: seed=45229 decks=spellslinger_veyran+typal_lathril turns=27 ended=game_over 33s fails=- warns=- via=relay
+  game 229: seed=45230 decks=typal_lathril+stompy_goreclaw+spellslinger_veyran (3 players, 1 online) turns=42 ended=game_over 69s fails=- warns=- drops=2/2 via=relay
+  game 230: seed=45231 decks=go_wide_adeline+stompy_goreclaw turns=18 ended=game_over 32s fails=- warns=- via=relay
+  game 231: seed=45232 decks=stompy_goreclaw+aristocrats_teysa turns=19 ended=game_over 25s fails=- warns=- via=relay
+  game 232: seed=45233 decks=spellslinger_veyran+typal_lathril turns=27 ended=game_over (host conceded) 31s fails=- warns=- late=2 via=relay
+  game 233: seed=45234 decks=typal_lathril+aristocrats_teysa turns=29 ended=game_over 38s fails=- warns=- drops=1/1 via=relay
+  game 234: seed=45235 decks=spellslinger_veyran+stompy_goreclaw turns=20 ended=game_over 26s fails=- warns=- via=relay
+  game 235: seed=45236 decks=spellslinger_veyran+typal_lathril turns=12 ended=game_over (host conceded) 18s fails=- warns=- via=relay
+  game 236: seed=45237 decks=stompy_goreclaw+typal_lathril turns=18 ended=game_over 40s fails=- warns=- via=relay
+  game 237: seed=45238 decks=spellslinger_veyran+go_wide_adeline turns=18 ended=game_over 23s fails=- warns=- via=relay
+  game 238: seed=45239 decks=voltron_light_paws+go_wide_adeline turns=21 ended=game_over (host conceded) 130s fails=- warns=- drops=1/1 resumed@21 via=relay
+  game 239: seed=45240 decks=aristocrats_teysa+typal_lathril+voltron_light_paws+spellslinger_veyran (4 players, 2 online) turns=39 ended=game_over 88s fails=- warns=- via=relay
+  game 240: seed=45241 decks=voltron_light_paws+go_wide_adeline turns=18 ended=game_over 22s fails=- warns=- drops=1/1 via=relay
+  game 241: seed=45242 decks=spellslinger_veyran+typal_lathril turns=24 ended=game_over 27s fails=- warns=- drops=1/1 via=relay
+  game 242: seed=45243 decks=go_wide_adeline+aristocrats_teysa turns=23 ended=game_over (host conceded) 31s fails=- warns=- late=2 drops=1/1 via=relay
+  game 243: seed=45244 decks=stompy_goreclaw+aristocrats_teysa turns=18 ended=game_over 22s fails=- warns=- via=relay
+  game 244: seed=45245 decks=stompy_goreclaw+spellslinger_veyran+typal_lathril (3 players, 1 online) turns=26 ended=game_over 62s fails=- warns=- drops=1/1 resumed@14 via=relay
+  game 245: seed=45246 decks=voltron_light_paws+aristocrats_teysa turns=12 ended=game_over (guest conceded) 19s fails=- warns=- late=2 via=relay
+  game 246: seed=45247 decks=spellslinger_veyran+stompy_goreclaw+aristocrats_teysa+voltron_light_paws (4 players, 2 online) turns=43 ended=game_over 65s fails=- warns=- drops=2/2 via=relay
+  game 247: seed=45248 decks=typal_lathril+spellslinger_veyran turns=12 ended=game_over (guest conceded) 15s fails=- warns=- late=2 via=relay
+  game 248: seed=45249 decks=go_wide_adeline+spellslinger_veyran turns=17 ended=game_over (host conceded) 17s fails=- warns=- late=2 via=relay
+  game 249: seed=45250 decks=aristocrats_teysa+typal_lathril+voltron_light_paws+spellslinger_veyran (4 players, 1 online) turns=34 ended=game_over 59s fails=- warns=- drops=1/1 via=relay
+  game 250: seed=45251 decks=go_wide_adeline+spellslinger_veyran turns=13 ended=game_over (host conceded) 18s fails=- warns=- late=2 drops=1/1 via=relay
+  game 251: seed=45252 decks=stompy_goreclaw+aristocrats_teysa turns=16 ended=game_over 27s fails=- warns=- drops=1/1 via=relay
+  game 252: seed=45253 decks=aristocrats_teysa+voltron_light_paws turns=25 ended=game_over 23s fails=- warns=- drops=1/1 via=relay
+  game 253: seed=45254 decks=voltron_light_paws+stompy_goreclaw turns=14 ended=game_over (host conceded) 19s fails=- warns=- late=2 via=relay
+  game 254: seed=45255 decks=typal_lathril+spellslinger_veyran turns=16 ended=game_over (guest conceded) 15s fails=- warns=- late=2 via=relay
+  game 255: seed=45256 decks=aristocrats_teysa+voltron_light_paws turns=31 ended=game_over 54s fails=- warns=- resumed@10 via=relay
+  game 256: seed=45257 decks=stompy_goreclaw+go_wide_adeline turns=17 ended=game_over 24s fails=- warns=- via=relay
+  game 257: seed=45258 decks=go_wide_adeline+voltron_light_paws turns=22 ended=game_over 25s fails=- warns=- via=relay
+  game 258: seed=45259 decks=voltron_light_paws+stompy_goreclaw turns=28 ended=game_over 43s fails=- warns=- via=relay
+  game 259: seed=45260 decks=spellslinger_veyran+stompy_goreclaw turns=24 ended=game_over 23s fails=- warns=- drops=1/1 via=relay
+  game 260: seed=45261 decks=go_wide_adeline+stompy_goreclaw turns=20 ended=game_over 25s fails=- warns=- drops=2/2 via=relay
+  game 261: seed=45262 decks=typal_lathril+go_wide_adeline turns=29 ended=game_over 31s fails=- warns=- drops=2/2 via=relay
+  game 262: seed=45263 decks=spellslinger_veyran+go_wide_adeline turns=22 ended=game_over 16s fails=- warns=- via=relay
+  game 263: seed=45264 decks=typal_lathril+go_wide_adeline turns=17 ended=game_over 36s fails=- warns=- drops=2/2 via=relay
+  game 264: seed=45265 decks=voltron_light_paws+spellslinger_veyran turns=23 ended=game_over 26s fails=- warns=- drops=1/1 via=relay
+  game 265: seed=45266 decks=stompy_goreclaw+voltron_light_paws turns=17 ended=game_over 32s fails=- warns=- via=relay
+  game 266: seed=45267 decks=go_wide_adeline+voltron_light_paws+aristocrats_teysa (3 players, 1 online) turns=29 ended=game_over 52s fails=- warns=- drops=2/2 via=relay
+  game 267: seed=45268 decks=voltron_light_paws+spellslinger_veyran turns=21 ended=game_over (host conceded) 23s fails=- warns=- drops=1/1 via=relay
+  game 268: seed=45269 decks=voltron_light_paws+go_wide_adeline+typal_lathril+stompy_goreclaw (4 players, 2 online) turns=22 ended=game_over (guest+guest2 conceded) 49s fails=- warns=- drops=1/1 via=relay
+  game 269: seed=45270 decks=spellslinger_veyran+stompy_goreclaw turns=18 ended=game_over 28s fails=- warns=- via=relay
+  game 270: seed=45271 decks=spellslinger_veyran+aristocrats_teysa+go_wide_adeline (3 players, 2 online) turns=31 ended=game_over 77s fails=- warns=- drops=2/2 via=relay
+  game 271: seed=45272 decks=spellslinger_veyran+voltron_light_paws turns=29 ended=game_over 30s fails=- warns=- drops=2/2 via=relay
+  game 272: seed=45273 decks=go_wide_adeline+stompy_goreclaw turns=23 ended=game_over 35s fails=- warns=- via=relay
+  game 273: seed=45274 decks=stompy_goreclaw+aristocrats_teysa turns=22 ended=game_over 47s fails=- warns=- via=relay
+  game 274: seed=45275 decks=aristocrats_teysa+voltron_light_paws turns=21 ended=game_over 26s fails=- warns=- via=relay
+  game 275: seed=45276 decks=stompy_goreclaw+spellslinger_veyran+voltron_light_paws (3 players, 2 online) turns=36 ended=game_over 71s fails=- warns=- drops=2/2 via=relay
+  game 276: seed=45277 decks=spellslinger_veyran+stompy_goreclaw turns=15 ended=game_over 45s fails=- warns=- resumed@11 via=relay
+  game 277: seed=45278 decks=aristocrats_teysa+go_wide_adeline+voltron_light_paws+typal_lathril (4 players, 3 online) turns=44 ended=game_over 125s fails=- warns=- via=relay
+  game 278: seed=45279 decks=stompy_goreclaw+go_wide_adeline turns=20 ended=game_over 33s fails=- warns=- via=relay
+  game 279: seed=45280 decks=spellslinger_veyran+stompy_goreclaw turns=20 ended=game_over 46s fails=- warns=- resumed@12 via=relay
+  game 280: seed=45281 decks=typal_lathril+spellslinger_veyran turns=26 ended=game_over 31s fails=- warns=- drops=1/1 via=relay
+  game 281: seed=45282 decks=aristocrats_teysa+go_wide_adeline turns=32 ended=game_over 36s fails=- warns=- drops=2/2 via=relay
+  game 282: seed=45283 decks=voltron_light_paws+stompy_goreclaw+aristocrats_teysa (3 players, 2 online) turns=42 ended=game_over 102s fails=- warns=- via=relay
+  game 283: seed=45284 decks=voltron_light_paws+spellslinger_veyran turns=20 ended=game_over 31s fails=- warns=- via=relay
+  game 284: seed=45285 decks=aristocrats_teysa+voltron_light_paws turns=11 ended=game_over (guest left) 21s fails=- warns=- late=2 via=relay
+  game 285: seed=45286 decks=aristocrats_teysa+typal_lathril turns=25 ended=game_over 586s fails=- warns=- resumed@21 via=relay
+  game 286: seed=45287 decks=aristocrats_teysa+typal_lathril turns=21 ended=game_over 45s fails=- warns=- drops=1/1 via=relay
+  game 287: seed=45288 decks=go_wide_adeline+typal_lathril turns=26 ended=game_over (host conceded) 53s fails=- warns=- resumed@7 via=relay
+  game 288: seed=45289 decks=voltron_light_paws+stompy_goreclaw turns=21 ended=game_over 62s fails=- warns=- drops=2/2 resumed@8 via=relay
+  game 289: seed=45290 decks=spellslinger_veyran+stompy_goreclaw turns=21 ended=game_over 25s fails=- warns=- via=relay
+  game 290: seed=45291 decks=typal_lathril+aristocrats_teysa turns=26 ended=game_over 29s fails=- warns=- via=relay
+  game 291: seed=45292 decks=spellslinger_veyran+voltron_light_paws turns=31 ended=game_over (host conceded) 23s fails=- warns=- late=2 drops=2/2 via=relay
+  game 292: seed=45293 decks=aristocrats_teysa+voltron_light_paws+typal_lathril (3 players, 2 online) turns=22 ended=game_over 173s fails=- warns=- resumed@20 via=relay
+  game 293: seed=45294 decks=aristocrats_teysa+voltron_light_paws turns=39 ended=game_over 150s fails=- warns=- resumed@24 via=relay
+  game 294: seed=45295 decks=typal_lathril+aristocrats_teysa turns=15 ended=game_over (host conceded) 20s fails=- warns=- late=2 via=relay
+  game 295: seed=45296 decks=typal_lathril+go_wide_adeline+voltron_light_paws+spellslinger_veyran (4 players, 1 online) turns=44 ended=game_over 55s fails=- warns=- drops=2/2 via=relay
+  game 296: seed=45297 decks=spellslinger_veyran+go_wide_adeline+typal_lathril+stompy_goreclaw (4 players, 3 online) turns=61 ended=game_over (guest left) 115s fails=- warns=- late=1 via=relay
+  game 297: seed=45298 decks=voltron_light_paws+stompy_goreclaw turns=18 ended=game_over 30s fails=- warns=- via=relay
+  game 298: seed=45299 decks=spellslinger_veyran+go_wide_adeline turns=27 ended=game_over 38s fails=- warns=- drops=1/1 via=relay
+  game 299: seed=45300 decks=go_wide_adeline+spellslinger_veyran+voltron_light_paws (3 players, 2 online) turns=21 ended=game_over (guest+guest2 conceded) 41s fails=- warns=- late=2 drops=1/1 via=relay
+  game 300: seed=45301 decks=go_wide_adeline+typal_lathril+spellslinger_veyran (3 players, 1 online) turns=29 ended=game_over (guest conceded) 44s fails=- warns=- drops=1/1 via=relay
+  game 301: seed=45302 decks=aristocrats_teysa+stompy_goreclaw turns=20 ended=game_over (guest conceded) 28s fails=- warns=- late=2 via=relay
+  game 302: seed=45303 decks=go_wide_adeline+voltron_light_paws turns=27 ended=game_over 30s fails=- warns=- via=relay
+  game 303: seed=45304 decks=typal_lathril+voltron_light_paws turns=21 ended=game_over (guest left) 38s fails=- warns=- late=2 via=relay
+  game 304: seed=45305 decks=voltron_light_paws+stompy_goreclaw+typal_lathril+aristocrats_teysa (4 players, 2 online) turns=53 ended=game_over 267s fails=- warns=ai_think_timeout drops=2/2 via=relay
+  game 305: seed=45306 decks=aristocrats_teysa+spellslinger_veyran turns=38 ended=game_over 32s fails=- warns=- via=relay
+  game 306: seed=45307 decks=go_wide_adeline+spellslinger_veyran turns=21 ended=game_over 17s fails=- warns=- via=relay
+  game 307: seed=45308 decks=typal_lathril+stompy_goreclaw turns=18 ended=game_over 28s fails=- warns=- via=relay
+  game 308: seed=45309 decks=go_wide_adeline+spellslinger_veyran turns=32 ended=game_over 25s fails=- warns=- drops=1/1 via=relay
+  game 309: seed=45310 decks=stompy_goreclaw+spellslinger_veyran+aristocrats_teysa (3 players, 2 online) turns=21 ended=game_over (host+guest conceded) 32s fails=- warns=- late=3 via=relay
+  game 310: seed=45311 decks=spellslinger_veyran+aristocrats_teysa turns=31 ended=game_over (guest conceded) 33s fails=- warns=- late=2 via=relay
