@@ -1,0 +1,20 @@
+ONLINE SOAK: 2 game(s), 2 host_failed
+started 2026-11-04 15:49, 2026-11-04 15:49
+version: Manticore 0.28.53.15 | commit af6c96f | code e02eb48e
+format: commander
+connection: direct (127.0.0.1)
+late questions released after game over: 0, in 0 game(s)
+connections cut (--drops): 0, came back by themselves: 0
+
+FAILURES (2 kind(s))
+  engine_error: 2 game(s)
+    game 0: host: engine log line 0: nethost: Could not set up the encrypted connection: java.io.FileNotFoundException: out/net/host.p12 (No such file or directory)
+    game 1: host: engine log line 0: nethost: Could not set up the encrypted connection: java.io.FileNotFoundException: out/net/host.p12 (No such file or directory)
+  host_failed: 2 game(s)
+    game 0: {'t': 'host_failed', 'reason': 'tls', 'text': 'Could not set up the encrypted connection: java.io.FileNotFoundException: out/net/host.p12 (No such file or directory)'}
+    game 1: {'t': 'host_failed', 'reason': 'tls', 'text': 'Could not set up the encrypted connection: java.io.FileNotFoundException: out/net/host.p12 (No such file or directory)'}
+WARNINGS (0 kind(s))
+
+GAMES
+  game 0: seed=41001 decks=voltron_light_paws+aristocrats_teysa+spellslinger_veyran+stompy_goreclaw (4 players, 2 online) turns=0 ended=host_failed 0s fails=engine_error,host_failed warns=-  -> out/game_000
+  game 1: seed=41002 decks=go_wide_adeline+spellslinger_veyran turns=0 ended=host_failed 0s fails=engine_error,host_failed warns=-  -> out/game_001
