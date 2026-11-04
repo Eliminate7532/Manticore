@@ -1,7 +1,8 @@
 {
-  "label": "proof-3: 12 minutes each, same seed, direct vs relay",
+  "label": "long run: three soaks side by side through the Oracle relay, about 4.5 hours each",
   "jobs": [
-    {"name": "proof12-direct", "seed": 42001, "games": "", "hours": 0.2, "relay": false, "timeout_min": 40},
-    {"name": "proof12-relay",  "seed": 42001, "games": "", "hours": 0.2, "relay": true,  "timeout_min": 40}
+    {"name": "long-a", "seed": 43001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325},
+    {"name": "long-b", "seed": 44001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325},
+    {"name": "long-c", "seed": 45001, "games": "", "hours": 4.5, "relay": true, "timeout_min": 325}
   ]
 }
