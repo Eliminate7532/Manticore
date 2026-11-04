@@ -1,0 +1,3 @@
+nproc 4, 15 GB
+soak start 2026-11-04T16:10:57Z
+soak end 2026-11-04T20:42:15Z
