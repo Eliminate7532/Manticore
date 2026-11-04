@@ -1,0 +1,28 @@
+[
+ {
+  "index": 0,
+  "started": 1793807451.448011,
+  "seconds": 61.0,
+  "ended": "game_over",
+  "via": "direct",
+  "players": 4,
+  "guests": 2,
+  "drops": 0,
+  "reconnected": 0,
+  "fails": [],
+  "warns": []
+ },
+ {
+  "index": 1,
+  "started": 1793807512.9063187,
+  "seconds": 30.6,
+  "ended": "game_over",
+  "via": "direct",
+  "players": 2,
+  "guests": 1,
+  "drops": 0,
+  "reconnected": 0,
+  "fails": [],
+  "warns": []
+ }
+]
