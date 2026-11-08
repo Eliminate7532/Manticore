@@ -271,6 +271,7 @@ def save_message(dest, channel, msg, discord, known=frozenset(), thread=None, th
         atts.append(row)
     info = {"id": msg["id"], "channel": channel, "kind": kind, "time": snowflake_time(msg["id"]).isoformat(),
             "timestamp": msg.get("timestamp"), "poster": (msg.get("author") or {}).get("username"),
+            "poster_name": (msg.get("author") or {}).get("global_name"),
             "webhook": bool(msg.get("webhook_id")), "bot": bool((msg.get("author") or {}).get("bot")),
             "manual": by_hand(msg), "content": msg.get("content") or "", "attachments": atts,
             "type": msg.get("type", 0), "reply_to": ref, "thread": thread, "thread_parent_message": thread_parent,
