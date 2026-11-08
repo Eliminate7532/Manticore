@@ -36,6 +36,7 @@ import json
 import os
 import random
 import re
+import secrets
 import shutil
 import socket
 import sys
@@ -288,6 +289,7 @@ class OnlineResult:
         self.format = None           # round MP3a: the game's format (formats.py key)
         self.via = "direct"          # round RLY1: "relay" when the guests joined through --relay
         self.started = None          # round RLY1: time.time() when the game started (tools/relay_load.py measures overlap)
+        self.relay = False           # round RELAYPW1: the game was meant to go through a relay (its line then prints no seed)
 
     def fail_rules(self):
         return sorted({f["rule"] for f in self.findings if f["severity"] == "fail"})
@@ -296,8 +298,11 @@ class OnlineResult:
         return sorted({f["rule"] for f in self.findings if f["severity"] == "warn"})
 
     def line(self):
-        return "game %d: %sseed=%s decks=%s%s turns=%d ended=%s%s %.0fs fails=%s warns=%s%s%s%s%s" % (
-            self.index, ("%s " % self.format) if self.format and self.format != "commander" else "", self.seed,
+        # Round RELAYPW1: a relay game's line prints no seed (nothing its secrets could be worked out from); the game's index,
+        # decks, players and result are enough to find it again in the run's folder (game_NNN).
+        return "game %d: %s%sdecks=%s%s turns=%d ended=%s%s %.0fs fails=%s warns=%s%s%s%s%s" % (
+            self.index, ("%s " % self.format) if self.format and self.format != "commander" else "",
+            "" if (self.relay or self.via == "relay") else "seed=%s " % self.seed,
             "+".join(os.path.splitext(d)[0] for d in self.decks),
             (" (%d players, %d online)" % (self.players, self.guests)) if self.players > 2 else "", self.turns, self.ended,
             (" (%s)" % (self.conceded if " " in self.conceded else self.conceded + " conceded")) if self.conceded else "", self.seconds,
@@ -340,8 +345,11 @@ def _guest_target(host, port, relay):
 def run_game(index, rng, out_root, cert, args):
     seed = (args.seed + index) if args.seed is not None else fc.new_seed()
     relay = getattr(args, "relay_addr", None)                     # round RLY1: --relay HOST:PORT
-    # round RLY1: through a relay that may be on the internet, every game gets its own password (PASSWORD is in the source)
-    password = fn.make_password(random.Random(seed)) if relay else PASSWORD
+    # round RLY1: through a relay that may be on the internet, every game gets its own password (PASSWORD is in the source).
+    # Round RELAYPW1: drawn from the system's secure source, never from the seed - the seed is printed (the run's --seed and the
+    # game's index give it), so a seeded password could be worked out by anyone reading the log. Direct 127.0.0.1 games keep
+    # PASSWORD: nothing outside this machine can reach them, and reproducing a game needs only its seed.
+    password = fn.make_password(secrets.SystemRandom()) if relay else PASSWORD
     pool = getattr(args, "pool", None) or soak.deck_pool("sample", getattr(args, "format", "commander"))     # round MP3a
     # --pods (round MP2c): in this share of games the table has 3 or 4 players - 1-3 guests over the network, AI players for
     # the rest. Otherwise 1v1, as before.
@@ -351,6 +359,7 @@ def run_game(index, rng, out_root, cert, args):
     decks = rng.sample(pool, players) if len(pool) >= players else [rng.choice(pool) for _ in range(players)]
     result = OnlineResult(index, seed, [os.path.basename(d) for d in decks])
     result.players, result.guests = players, n_guests
+    result.relay = bool(relay)
     game_dir = os.path.join(out_root, "game_%03d" % index)
     os.makedirs(game_dir, exist_ok=True)
     host_rec = os.path.join(game_dir, "host.jsonl")
