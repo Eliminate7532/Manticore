@@ -19,8 +19,19 @@ What it writes (one folder per Discord message, oldest first):
                                                                 pictures and files (round BUG1b - Karl, 2 Nov: "things I manually
                                                                 add to the bug reports channel should be taken as if they were
                                                                 reported from the game"); message.json "manual": true
-    reports/other/<...>/message.json                            anything else - another bot or webhook (text only, no attachments)
-    intake_state.json                                           the newest message id read per channel
+    reports/reply/<...>/...                                     round INTAKE2: a message a person posted that answers a report
+                                                                already in reports/ - a Discord reply to it ("reply_to"), or a
+                                                                message in a thread started from it ("thread",
+                                                                "thread_parent_message") - with its pictures and files
+    reports/other/<...>/message.json                            anything else - another bot or webhook, or Discord's own notices
+                                                                ("started a thread"; text only, no attachments)
+    intake_state.json                                           the newest message id read per channel and per thread
+
+Threads (round INTAKE2, Karl 8 Nov 2026): each channel's threads are read too - the active ones (the server's active-threads
+list, kept to threads whose parent is the channel) and the archived public ones archived since the last run. The first run with
+threads reads those with activity in the last --backfill-days days. Needs the bot's View Channel + Read Message History on the
+channel (threads inherit them; listing archived public threads needs Read Message History); private threads are not read. When
+the threads can't be read, the channel's own messages are still written and pushed and the run ends red (exit code 1).
 The first run (no intake_state.json) reads the last --backfill-days days; later runs read only what is newer.
 Exit code: 0 (also when nothing was new), 1 on any failure (the job then shows red; nothing half-written is pushed).
 """
@@ -44,6 +55,9 @@ DISCORD_EPOCH_MS = 1420070400000
 STATE = "intake_state.json"
 BUG_ZIP = re.compile(r"^bugreport_[\w.-]*\.zip$", re.I)
 SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]")
+KINDS = ("bug", "idea", "reply", "other")
+PERSON_TYPES = (0, 19)                       # Discord message types a person types: a message, a reply (others are notices)
+THREAD_STARTER = 21                          # the copy of the start message Discord puts at the top of a thread
 
 
 class IntakeError(Exception):
@@ -61,19 +75,32 @@ def snowflake_time(sid):
 
 
 def by_hand(msg):
-    """A message a person typed into the channel: not the game's webhook, not a bot (round BUG1b)."""
-    return not msg.get("webhook_id") and not (msg.get("author") or {}).get("bot")
+    """A message a person typed into the channel: not the game's webhook, not a bot (round BUG1b), and not one of Discord's own
+    notices such as "<name> started a thread" (round INTAKE2: message types other than a plain message or a reply)."""
+    return (not msg.get("webhook_id") and not (msg.get("author") or {}).get("bot")
+            and msg.get("type", 0) in PERSON_TYPES)
 
 
-def kind_of(msg):
-    """'bug', 'idea' or 'other', from what the game posts (reporting.summary_text / idea_summary and the zip's name). Round
-    BUG1b: whatever a person posts by hand is a bug report too (Karl's own notes in the channel)."""
+def reply_to(msg):
+    """The id of the message this one is a Discord reply to (message_reference), or None. A thread's starter copy and a
+    forwarded message carry a reference too, but they are not replies."""
+    if msg.get("type", 0) != 19:
+        return None
+    return (msg.get("message_reference") or {}).get("message_id")
+
+
+def kind_of(msg, answers=None):
+    """'bug', 'idea', 'reply' or 'other', from what the game posts (reporting.summary_text / idea_summary and the zip's name).
+    Round BUG1b: whatever a person posts by hand is a bug report too (Karl's own notes in the channel). Round INTAKE2: unless it
+    answers a report already copied (`answers`: the id of that report, from reply_to or a thread's start) - then it is a reply."""
     content = (msg.get("content") or "").lstrip()
     names = [a.get("filename") or "" for a in msg.get("attachments") or []]
     if content.startswith("**Bug report from") or any(BUG_ZIP.match(n) for n in names):
         return "bug"
     if content.startswith("**Feature idea from"):
         return "idea"
+    if by_hand(msg) and answers:
+        return "reply"
     if by_hand(msg):
         return "bug"
     return "other"
@@ -143,8 +170,73 @@ class Discord:
                 unique.append(m)
         return unique
 
+    def _json(self, path, query=None):
+        url = "%s/%s" % (self.api, path) + ("?" + urllib.parse.urlencode(query) if query else "")
+        return json.loads(self._get(url).decode("utf-8"))
+
+    def channel(self, channel):
+        """The channel itself (its guild_id)."""
+        info = self._json("channels/%s" % channel)
+        if not isinstance(info, dict):
+            raise IntakeError("Discord's answer about the channel was not an object")
+        return info
+
+    def threads(self, channel, since):
+        """The channel's threads that may have new messages: every active one (the server's active-threads list, kept to this
+        parent) and every archived public one archived at or after `since` (a datetime). Each is Discord's thread object."""
+        guild = self.channel(channel).get("guild_id")
+        found = {}
+        if guild:
+            active = self._json("guilds/%s/threads/active" % guild)
+            for t in (active.get("threads") if isinstance(active, dict) else None) or []:
+                if str(t.get("parent_id")) == str(channel):
+                    found[t["id"]] = t
+        before = None
+        while True:
+            q = {"limit": PAGE}
+            if before:
+                q["before"] = before
+            page = self._json("channels/%s/threads/archived/public" % channel, q)
+            if not isinstance(page, dict):
+                raise IntakeError("Discord's answer about archived threads was not an object")
+            items = page.get("threads") or []
+            older = False
+            for t in items:
+                when = archive_time(t)
+                if when is not None and when < since:
+                    older = True
+                    continue
+                found.setdefault(t["id"], t)
+            if not items or older or not page.get("has_more"):
+                break
+            last = (items[-1].get("thread_metadata") or {}).get("archive_timestamp")
+            if not last or last == before:
+                break
+            before = last
+        return [found[k] for k in sorted(found, key=int)]
+
     def download(self, url):
         return self._get(url, auth=False)
+
+
+def archive_time(thread):
+    stamp = (thread.get("thread_metadata") or {}).get("archive_timestamp")
+    if not stamp:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def known_reports(dest):
+    """The Discord ids of every message already copied (any kind), from the folder names under dest/reports/."""
+    ids = set()
+    for kind in KINDS:
+        base = os.path.join(dest, "reports", kind)
+        if os.path.isdir(base):
+            ids.update(name.rsplit("_", 1)[-1] for name in os.listdir(base))
+    return ids
 
 
 def folder_name(msg):
@@ -152,9 +244,13 @@ def folder_name(msg):
     return "%s_%s" % (t, msg["id"])
 
 
-def save_message(dest, channel, msg, discord):
-    """Write one message (and, for bugs and ideas, its attachments) into dest/reports/<kind>/<folder>/. Returns the kind."""
-    kind = kind_of(msg)
+def save_message(dest, channel, msg, discord, known=frozenset(), thread=None, thread_parent=None):
+    """Write one message (and, for bugs, ideas and replies, its attachments) into dest/reports/<kind>/<folder>/. Returns the
+    kind. `known`: the ids already copied (a reply to one of them, or a message in a thread started from one, is a reply);
+    `thread`: the thread's id when the message is in a thread, `thread_parent`: the message that thread was started from."""
+    ref = reply_to(msg)
+    answers = next((m for m in (ref, thread_parent) if m and m in known), None)
+    kind = kind_of(msg, answers)
     folder = os.path.join(dest, "reports", kind, folder_name(msg))
     os.makedirs(folder, exist_ok=True)
     atts = []
@@ -175,8 +271,11 @@ def save_message(dest, channel, msg, discord):
         atts.append(row)
     info = {"id": msg["id"], "channel": channel, "kind": kind, "time": snowflake_time(msg["id"]).isoformat(),
             "timestamp": msg.get("timestamp"), "poster": (msg.get("author") or {}).get("username"),
+            "poster_name": (msg.get("author") or {}).get("global_name"),
             "webhook": bool(msg.get("webhook_id")), "bot": bool((msg.get("author") or {}).get("bot")),
-            "manual": by_hand(msg), "content": msg.get("content") or "", "attachments": atts}
+            "manual": by_hand(msg), "content": msg.get("content") or "", "attachments": atts,
+            "type": msg.get("type", 0), "reply_to": ref, "thread": thread, "thread_parent_message": thread_parent,
+            "answers": answers}
     with open(os.path.join(folder, "message.json"), "w", encoding="utf-8") as f:
         json.dump(info, f, indent=1, ensure_ascii=False)
     return kind
@@ -190,19 +289,76 @@ def load_state(dest):
         return {"channels": {}}
 
 
+def thread_parent_of(thread, msgs, known):
+    """The message a thread was started from: the reference of Discord's starter copy at its top, else the thread's own id when
+    that is a copied message (a thread started from a message has the message's id), else None."""
+    for m in msgs:
+        if m.get("type") == THREAD_STARTER and (m.get("message_reference") or {}).get("message_id"):
+            return m["message_reference"]["message_id"]
+    return thread["id"] if thread["id"] in known else None
+
+
+def read_threads(dest, ch, discord, threads_state, parents, since, floor, known, counts):
+    """Every new message in the channel's threads (round INTAKE2): changes threads_state / parents in place. A thread not seen
+    before is read from its start, but never from before `floor` (the backfill's first id)."""
+    for t in discord.threads(ch, since):
+        tid = t["id"]
+        last = threads_state.get(tid) or str(max(int(tid) - 1, floor))
+        if t.get("last_message_id") and int(t["last_message_id"]) <= int(last):
+            threads_state[tid] = last
+            continue
+        msgs = discord.messages_after(tid, last)
+        parent = parents.get(tid) or thread_parent_of(t, msgs, known)
+        if parent:
+            parents[tid] = parent
+        for m in msgs:
+            if m.get("type") == THREAD_STARTER:
+                continue
+            counts[save_message(dest, ch, m, discord, known, thread=tid, thread_parent=parent)] += 1
+            known.add(m["id"])
+        if msgs:
+            last = msgs[-1]["id"]
+        threads_state[tid] = last
+        counts["threads"] += 1
+
+
 def run(dest, channels, discord, backfill_days=7, now=None):
-    """Read every channel; write new messages and the state. Returns {"bug": n, "idea": n, "other": n}."""
+    """Read every channel and its threads; write new messages and the state. Returns {"bug": n, "idea": n, "reply": n,
+    "other": n, "threads": threads read, "thread_errors": [why, ...]}. A channel whose threads can't be read keeps its old
+    thread state (they are read again next time) - its own messages are written all the same."""
     now = now or datetime.datetime.now(datetime.timezone.utc)
     state = load_state(dest)
-    counts = {"bug": 0, "idea": 0, "other": 0}
+    counts = {"bug": 0, "idea": 0, "reply": 0, "other": 0, "threads": 0, "thread_errors": []}
+    known = known_reports(dest)
+    cutoff = now - datetime.timedelta(days=backfill_days)
+    floor = int(snowflake_for(cutoff))
+    first = "threads" not in state          # the first run with threads: read those active in the last backfill days
+    since = cutoff
+    if not first and state.get("last_run"):
+        try:
+            since = max(cutoff, datetime.datetime.fromisoformat(state["last_run"]) - datetime.timedelta(days=1))
+        except ValueError:
+            pass
+    threads_state = dict(state.get("threads") or {})
+    parents = dict(state.get("thread_parents") or {})
     for ch in channels:
-        last = state["channels"].get(ch) or snowflake_for(now - datetime.timedelta(days=backfill_days))
+        last = state["channels"].get(ch) or snowflake_for(cutoff)
         msgs = discord.messages_after(ch, last)
         for m in msgs:
-            counts[save_message(dest, ch, m, discord)] += 1
+            counts[save_message(dest, ch, m, discord, known)] += 1
+            known.add(m["id"])
         if msgs:
             last = msgs[-1]["id"]
         state["channels"][ch] = last
+        trial_threads, trial_parents = dict(threads_state), dict(parents)
+        try:
+            read_threads(dest, ch, discord, trial_threads, trial_parents, since, floor, known, counts)
+        except IntakeError as e:
+            counts["thread_errors"].append(str(e))
+            continue
+        threads_state, parents = trial_threads, trial_parents
+    if not (first and counts["thread_errors"]):
+        state["threads"], state["thread_parents"] = threads_state, parents
     state["last_run"] = now.isoformat(timespec="seconds")
     with open(os.path.join(dest, STATE), "w", encoding="utf-8") as f:
         json.dump(state, f, indent=1, sort_keys=True)
@@ -217,8 +373,9 @@ def git(args, cwd):
 def commit_and_push(dest, counts, branch, tries=5, sleep=time.sleep):
     """Commit what run() wrote and push; when someone pushed in between, rebase on theirs and try again."""
     git(["add", "-A"], dest)
-    total = sum(counts.values())
-    msg = "intake: %d new (bug reports %d, ideas %d, other %d)" % (total, counts["bug"], counts["idea"], counts["other"])
+    total = sum(counts.get(k, 0) for k in KINDS)
+    msg = "intake: %d new (bug reports %d, ideas %d, replies %d, other %d)" % (
+        total, counts["bug"], counts["idea"], counts.get("reply", 0), counts["other"])
     code, out = git(["commit", "-q", "-m", msg], dest)
     if code != 0 and "nothing to commit" not in out:
         raise IntakeError("git commit failed")
@@ -250,8 +407,12 @@ def main(argv=None, env=os.environ, now=None):
     except IntakeError as e:
         print("report intake FAILED: %s" % e)
         return 1
-    print("report intake: %d channel(s) read; new: %d bug report(s), %d idea(s), %d other message(s)"
-          % (len(channels), counts["bug"], counts["idea"], counts["other"]))
+    print("report intake: %d channel(s) read; new: %d bug report(s), %d idea(s), %d other message(s), %d reply(ies); "
+          "%d thread(s) read" % (len(channels), counts["bug"], counts["idea"], counts["other"], counts["reply"],
+                                 counts["threads"]))
+    if counts["thread_errors"]:
+        print("report intake FAILED for threads (the channel's own messages were copied): %s" % counts["thread_errors"][0])
+        return 1
     return 0
 
 
