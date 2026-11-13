@@ -65,6 +65,7 @@ class ResultsTests(PlayedBase):
     def test_a_won_duel_opens_the_results_screen_counting_the_gold_and_turning_the_cards(self):
         g, _l = self.setup_game()
         f = self.on_map(g, "ashfen_outskirts")
+        f.game.save.world["first_win_day"] = 10 ** 6        # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         gold0 = f.game.save.gold
         f = self.duel_to_result(g, won=True)
         self.assertEqual(f.sub, "result")
@@ -176,7 +177,7 @@ class ResultsTests(PlayedBase):
     def test_the_xp_slot_is_kept_and_now_holds_the_xp_bar(self):
         # Round PROG3 (expected change): PROG1 kept this slot empty for prog3; it now holds "Level n", the bar and "+20 XP".
         g, _l = self.setup_game()
-        self.on_map(g, "ashfen_outskirts")
+        self.on_map(g, "ashfen_outskirts").game.save.world["first_win_day"] = 10 ** 6     # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         f = self.duel_to_result(g, won=True)
         key(g, pygame.K_SPACE)
         frame(g)
@@ -184,7 +185,7 @@ class ResultsTests(PlayedBase):
         self.assertTrue(f.results.rect.contains(r))
         self.assertGreater(r.h, 0)
         self.assertTrue(r.contains(f.results.xp_bar_rect))
-        self.assertEqual(f.results.xp_words[:2], ["Level 1", "+20 XP"])           # a random foe is a dungeon fight: 20 XP
+        self.assertEqual(f.results.xp_words[:2], ["Level 2", "+40 XP"])           # a random foe is a dungeon fight: 40 XP (rc16, expected change: XP x2 - was "Level 1", "+20 XP"; 40 reaches level 2 at 30)
 
     def test_with_animations_off_it_opens_finished(self):
         g, _l = self.setup_game()

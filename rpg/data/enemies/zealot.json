@@ -525,7 +525,7 @@
     "J25 Healers 2",
     "J22 Demons 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Angel of Vitality",
@@ -562,13 +562,17 @@
     [
      "Ajani's Pridemate",
      1
-    ]
-   ],
-   "main": [
+    ],
+    [
+     "Revitalize",
+     1
+    ],
     [
      "Healer's Hawk",
      1
-    ],
+    ]
+   ],
+   "main": [
     [
      "Falconer Adept",
      1
@@ -611,7 +615,7 @@
     ],
     [
      "Plains",
-     20
+     21
     ],
     [
      "Qala, Ajani's Pridemate",
@@ -631,10 +635,6 @@
     ],
     [
      "Divine Arrow",
-     1
-    ],
-    [
-     "Revitalize",
      1
     ],
     [
@@ -687,14 +687,14 @@
     ],
     [
      "Swamp",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
+    "0": 32,
     "1": 26,
-    "2": 4
+    "2": 2
    }
   },
   {
@@ -705,7 +705,7 @@
     "JMP Doctor 2",
     "JMP Doctor 3"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Adeline, Resplendent Cathar",
@@ -741,6 +741,10 @@
     ],
     [
      "Revitalize",
+     2
+    ],
+    [
+     "Argivian Phalanx",
      1
     ]
    ],
@@ -751,10 +755,6 @@
     ],
     [
      "Mentor of the Meek",
-     1
-    ],
-    [
-     "Argivian Phalanx",
      1
     ],
     [
@@ -775,7 +775,7 @@
     ],
     [
      "Plains",
-     30
+     32
     ],
     [
      "Brightmare",
@@ -799,10 +799,6 @@
     ],
     [
      "Secure the Scene",
-     1
-    ],
-    [
-     "Revitalize",
      1
     ],
     [
@@ -832,9 +828,9 @@
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 26,
-    "2": 4
+    "0": 32,
+    "1": 25,
+    "2": 3
    }
   },
   {
@@ -845,7 +841,7 @@
     "JMP Dogs 2",
     "JMP Goblins 3"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Angel of Vitality",
@@ -882,6 +878,14 @@
     [
      "Pack Leader",
      1
+    ],
+    [
+     "Revitalize",
+     1
+    ],
+    [
+     "Goblin Arsonist",
+     1
     ]
    ],
    "main": [
@@ -906,10 +910,6 @@
      1
     ],
     [
-     "Revitalize",
-     1
-    ],
-    [
      "Take Up the Shield",
      1
     ],
@@ -923,7 +923,7 @@
     ],
     [
      "Plains",
-     20
+     21
     ],
     [
      "Isamaru, Hound of Konda",
@@ -998,23 +998,19 @@
      1
     ],
     [
-     "Goblin Arsonist",
-     1
-    ],
-    [
      "Thriving Bluff",
      1
     ],
     [
      "Mountain",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
+    "0": 32,
     "1": 25,
-    "2": 5
+    "2": 3
    }
   },
   {
@@ -1025,7 +1021,7 @@
     "J22 Cats 3",
     "JMP Discarding 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Ajani, Strength of the Pride",
@@ -1061,6 +1057,14 @@
     ],
     [
      "Isamaru, Hound of Konda",
+     1
+    ],
+    [
+     "Assassin's Strike",
+     1
+    ],
+    [
+     "Ingenious Leonin",
      1
     ]
    ],
@@ -1111,11 +1115,7 @@
     ],
     [
      "Plains",
-     20
-    ],
-    [
-     "Ingenious Leonin",
-     1
+     21
     ],
     [
      "King of the Pride",
@@ -1170,10 +1170,6 @@
      2
     ],
     [
-     "Assassin's Strike",
-     1
-    ],
-    [
      "Death's Approach",
      1
     ],
@@ -1183,25 +1179,25 @@
     ],
     [
      "Swamp",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 28,
+    "0": 32,
+    "1": 26,
     "2": 2
    }
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-23 09:32",
+  "when": "2026-11-07 23:49",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
-  "handicap": 9,
+  "handicap": 11,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": null
+  "tuned_by": "checkpoint/balance/tune_k4"
  }
 }

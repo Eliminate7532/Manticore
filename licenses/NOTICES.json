@@ -222,6 +222,19 @@
    "status": "verified"
   },
   {
+   "id": "rpg-gear-icons",
+   "name": "Adventure gear icons (Manticore's own pixel art, Round PROG4)",
+   "version": "drawn by tools/rpg_gear_icons.py from its character grids, on DawnBringer's 16-colour palette",
+   "license": "CC0-1.0",
+   "copyright": "Public domain dedication (CC0 1.0) by the Manticore project (drawn by Claude for Karl Riddell, 3 Nov 2026)",
+   "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "used_for": "The Adventure mode's gear icons: the Gear screen, the shop's Gear tab and the map's corner panel (assets/gear/)",
+   "shipped": "always",
+   "group": "Artwork",
+   "notice_file": "notices/rpg-gear-icons.txt",
+   "status": "verified"
+  },
+  {
    "id": "python",
    "name": "Python",
    "version": "3.14",
@@ -899,7 +912,7 @@
   {
    "id": "adventure-art",
    "title": "Adventure art",
-   "text": "The Adventure's map tiles, people, windows and pixel font are DawnLike by DragonDePlatino, on the DawnBringer palette by DawnBringer (CC-BY 4.0); its encounter backdrops and foes are Simple Battles by Hyptosis (CC-BY 3.0). Its treasure chests are Blarumyrran's \"Treasure chests 32x32 and 16x16\" (CC0). All three come from OpenGameArt.org and are included unchanged; their licences are under Artwork."
+   "text": "The Adventure's map tiles, people, windows and pixel font are DawnLike by DragonDePlatino, on the DawnBringer palette by DawnBringer (CC-BY 4.0); its encounter backdrops and foes are Simple Battles by Hyptosis (CC-BY 3.0). Its treasure chests are Blarumyrran's \"Treasure chests 32x32 and 16x16\" (CC0). All three come from OpenGameArt.org and are included unchanged; their licences are under Artwork. Its gear icons are Manticore's own pixel art (CC0)."
   },
   {
    "id": "mpc-autofill",

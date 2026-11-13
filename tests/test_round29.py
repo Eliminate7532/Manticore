@@ -291,7 +291,8 @@ def make_tree(root, natives=True):
              "THIRD_PARTY_NOTICES.txt", "README_FIRST.txt", "assets/fonts/f.ttf", "jre/legal/x.txt",
              "banned_commander.snapshot.json", "banned_brawl.snapshot.json", "banned_standard.snapshot.json", "START_HERE.txt",
              "forge_card_names.json",                                                # patch 38
-             "relay_config.json"]                                                    # round RLY2
+             "relay_config.json",                                                    # round RLY2
+             "java_rpg/rpg_tools.jar"]                                               # round SPAR1 (expected change)
     for i in range(cd.EXPECTED_SAMPLE_DECKS):
         files.append(f"sample_decks/d{i}.txt")
     files += cd.stock_cube_files()                                                   # round CD3

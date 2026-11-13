@@ -150,10 +150,14 @@ def same(asked, reported):
         return False
 
 
+TOKEN_WORDS = {TREASURE: "a Treasure", TOKEN + "c_a_clue_draw": "a Clue",           # Round PROG4: the tokens gear gives
+               TOKEN + "w_1_1_soldier": "a 1/1 Soldier"}
+
+
 def card_words(name):
-    """"a Treasure" for token:c_a_treasure_sac, else the card's name."""
-    if name.lower() == TREASURE:
-        return "a Treasure"
+    """"a Treasure" for token:c_a_treasure_sac (TOKEN_WORDS for the others named), else the card's name."""
+    if name.lower() in TOKEN_WORDS:
+        return TOKEN_WORDS[name.lower()]
     if name.lower().startswith(TOKEN):
         return "a " + name[len(TOKEN):].replace("_", " ") + " token"
     return name

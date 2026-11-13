@@ -1161,12 +1161,21 @@ class Explorer:
             raise MapError(f"Map {area.name!r} has no spawn.")
         return xy
 
+    def apply_speed(self):
+        """Round PROG4: the walker's speed with the worn gear's walk_speed (rpg.gear; 1.0 when none). Called on every new walker
+        and when the gear changes (the Gear screen)."""
+        if self.walker is None or self.area is None:
+            return
+        from rpg import gear
+        self.walker.speed = WALK_TILES_PER_SECOND * self.area.tw * gear.walk_speed(self.save)
+
     def _use(self, area, walker):
         if self.walker is not None:
             walker.facing = self.walker.facing                 # through an exit you face the way you were going
         elif self.save.world.get("facing") in FACINGS:
             walker.facing = self.save.world["facing"]
         self.area, self.walker = area, walker
+        self.apply_speed()                                        # Round PROG4: worn boots walk faster
         self.foes = {t.spot: Foe(area, t) for t in area.triggers if t.kind == "encounter"}
         self.movers = {}                                          # Round RPG17: nobody is walking on a new map
         self.presence = daynight.Presence(self._items(area))     # Round RPG16: a new map sets everything at once

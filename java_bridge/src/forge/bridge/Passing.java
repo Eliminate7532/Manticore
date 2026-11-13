@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -90,6 +91,93 @@ final class Passing {
     static final AtomicInteger compareSame = new AtomicInteger();
     static final AtomicInteger compareDiffer = new AtomicInteger();
 
+    /**
+     * Round PERF2 (Karl, 4 Nov 2026: "Forge's auto-pass pauses", PERF1's "found, your call"). {@code {"c":"pauses","mode":...}}
+     * per seat, {@code --pauses MODE} for every human seat at start (tests, the soak). When Forge passes priority for me by itself
+     * (its own auto-pass, a yield, an auto-yielded ability), PlayerControllerHuman.chooseSpellAbilityToPlay first sleeps "so the
+     * game doesn't jump ahead": 400 ms (FControlGamePlayback.resolveDelay) with something on the stack, 200 ms (phasesDelay) with
+     * an empty stack at a step this seat stops at. Its two per-controller preferences YIELD_SKIP_RESOLVE_DELAY and
+     * YIELD_SKIP_PHASE_DELAY switch them off. "normal" = Forge as it is (both false, today's behaviour, the default); "off" = both
+     * true; "short" = both true and the bridge sleeps half of what Forge would have, at the same moment (BridgeGui.awaitNextInput,
+     * which Forge calls right after its sleep). Patch 43's own passes (Decision.PASS / SKIP) never had a pause and still don't.
+     */
+    static final List<String> PAUSE_MODES = List.of("normal", "short", "off");
+    static volatile String defaultPauses = "normal";
+    /** This seat's mode; null = the command line's (defaultPauses). */
+    volatile String pauses = null;
+    /** Tests only (needs --dev): 1 = Off still pauses; 2 = Short sleeps Forge's whole pause. */
+    static volatile int pausePlant = 0;
+    /** The pause Forge would make if its chooseSpellAbilityToPlay, running now on this thread, passes by itself; null outside. */
+    static final ThreadLocal<int[]> PENDING = new ThreadLocal<>();
+    /** This game: how often Forge passed for me with a pause due (by kind), and the ms actually waited (Forge's or ours). */
+    final AtomicInteger phasePauses = new AtomicInteger();
+    final AtomicInteger resolvePauses = new AtomicInteger();
+    final AtomicLong pausedMs = new AtomicLong();
+
+    String pauseMode() {
+        String m = pauses;
+        return m != null ? m : defaultPauses;
+    }
+
+    /** Forge 9a6f776's own rule (PlayerControllerHuman.chooseSpellAbilityToPlay), without its two preferences. */
+    static int forgeDelay(PlayerControllerHuman pc) {
+        Game g = pc.getGame();
+        if (g == null) {
+            return 0;
+        }
+        if (!g.getStack().isEmpty()) {
+            return forge.gui.control.FControlGamePlayback.resolveDelay;
+        }
+        Player turn = g.getPhaseHandler().getPlayerTurn();
+        if (turn == null || pc.isUiSetToSkipPhase(turn.getView(), g.getPhaseHandler().getPhase())) {
+            return 0;
+        }
+        return forge.gui.control.FControlGamePlayback.phasesDelay;
+    }
+
+    /** Called by BridgeGui.awaitNextInput: if it is Forge's auto-pass inside this seat's chooseSpellAbilityToPlay, count the
+     *  pause and, in Short, make it (half). Never holds a lock while sleeping. */
+    void notePause() {
+        int[] p = PENDING.get();
+        if (p == null || p[0] <= 0) {
+            return;
+        }
+        int delay = p[0];
+        p[0] = 0;                                           // once per priority
+        if (delay >= forge.gui.control.FControlGamePlayback.resolveDelay) {
+            resolvePauses.incrementAndGet();
+        } else {
+            phasePauses.incrementAndGet();
+        }
+        String m = pauseMode();
+        long wait;
+        if ("normal".equals(m)) {
+            pausedMs.addAndGet(delay);                      // Forge has just slept it
+            return;
+        } else if ("short".equals(m)) {
+            wait = pausePlant == 2 ? delay : delay / 2;
+        } else {
+            wait = pausePlant == 1 ? delay : 0;
+        }
+        if (wait > 0) {
+            try {
+                Thread.sleep(wait);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            pausedMs.addAndGet(wait);
+        }
+    }
+
+    JsonObject pausesJson() {
+        JsonObject o = new JsonObject();
+        o.addProperty("mode", pauseMode());
+        o.addProperty("phase", phasePauses.get());
+        o.addProperty("resolve", resolvePauses.get());
+        o.addProperty("ms", pausedMs.get());
+        return o;
+    }
+
     /** Round PRI1 (Karl, 9 Oct 2026: "Slow"): this seat plays with the stops from before patch 43 - the old default stops
      *  (BridgeGui.slowMine / slowTheirs), nothing passed for me, auto-pass off - what --classic-stops does for the whole engine,
      *  but for one seat and switchable mid-game ({"c":"speed","mode":"slow"|"fast"}). "Fast" (false) is patch 43's rules. */
@@ -172,9 +260,9 @@ final class Passing {
             }
             return top.isTrigger() ? Decision.DEFER : Decision.PASS;      // my trigger: a stop if I can act (auto-pass decides)
         }
-        if (top.isSpell()) {
-            return Decision.DEFER;                          // an opponent's spell: a stop whenever I could respond
-        }
+        // bug-1567760778684272653 (Karl, 7 Nov 2026: "Only when I can answer"): an opponent's spell stops me only when I hold
+        // something that can target it (a counter, a redirect), the way triggers and abilities already work. Before, it was
+        // DEFER: Forge's auto-pass stopped me whenever I could do anything at all, at every spell of every opponent in a pod.
         long ta = Timing.start();
         boolean answer = hasAnswer(me, top);
         Timing.mark("answer", ta);                          // round PERF1
@@ -237,9 +325,12 @@ final class Passing {
         }
         yc.setPref(FPref.YIELD_AUTO_PASS_NO_ACTIONS, String.valueOf(autoPass && !full && !classicNow()));
         yc.setPref(FPref.YIELD_AUTO_PASS_RESPECTS_INTERRUPTS, String.valueOf(classicNow()));
+        boolean skip = !"normal".equals(pauseMode());       // round PERF2: Short makes its own (half) pause, Off none
+        yc.setPref(FPref.YIELD_SKIP_PHASE_DELAY, String.valueOf(skip));
+        yc.setPref(FPref.YIELD_SKIP_RESOLVE_DELAY, String.valueOf(skip));
     }
 
-    // ---- "do I hold an answer to this trigger / ability?" ----------------------------------------------------------------
+    // ---- "do I hold an answer to this spell / trigger / ability?" --------------------------------------------------------
 
     private static final ZoneType[] ANSWER_ZONES = {ZoneType.Hand, ZoneType.Battlefield, ZoneType.Command, ZoneType.Flashback};
 
@@ -247,15 +338,20 @@ final class Passing {
      *  Run under an AI controller, as Forge's own AvailableActions does, so working out a cost never prompts. */
     static boolean hasAnswer(Player me, SpellAbilityStackInstance top) {
         SpellAbility target = top.getSpellAbility();
-        boolean trigger = top.isTrigger();
+        String want = stackKind(top);
         AtomicBoolean found = new AtomicBoolean(false);
         LobbyPlayer lp = me.getOriginalLobbyPlayer();
-        me.runWithController(() -> found.set(scanForAnswer(me, target, trigger)),
+        me.runWithController(() -> found.set(scanForAnswer(me, target, want)),
                 new PlayerControllerAi(me.getGame(), me, lp));
         return found.get();
     }
 
-    private static boolean scanForAnswer(Player me, SpellAbility target, boolean trigger) {
+    /** Forge's TargetType word for the kind of stack item on top: "Spell", "Triggered" or "Activated". */
+    static String stackKind(SpellAbilityStackInstance top) {
+        return top.isSpell() ? "Spell" : top.isTrigger() ? "Triggered" : "Activated";
+    }
+
+    private static boolean scanForAnswer(Player me, SpellAbility target, String want) {
         for (ZoneType z : ANSWER_ZONES) {
             for (Card c : me.getCardsIn(z)) {
                 List<SpellAbility> abilities;
@@ -265,7 +361,7 @@ final class Passing {
                     continue;
                 }
                 for (SpellAbility sa : abilities) {
-                    if (sa == null || sa.isManaAbility() || !answers(sa, target, trigger, 0)) {
+                    if (sa == null || sa.isManaAbility() || !answers(sa, target, want, 0)) {
                         continue;
                     }
                     if (affordable(sa, me)) {
@@ -277,19 +373,19 @@ final class Passing {
         return false;
     }
 
-    static boolean answers(SpellAbility sa, SpellAbility target, boolean trigger, int depth) {
+    static boolean answers(SpellAbility sa, SpellAbility target, String want, int depth) {
         if (sa == null || depth > 6) {
             return false;
         }
         for (SpellAbility s = sa; s != null; s = s.getSubAbility()) {
-            if (targetsStackItem(s, target, trigger)) {
+            if (targetsStackItem(s, target, want)) {
                 return true;
             }
         }
         List<AbilitySub> choices = sa.getAdditionalAbilityList("Choices");      // modal spells ("choose one")
         if (choices != null) {
             for (AbilitySub ch : choices) {
-                if (answers(ch, target, trigger, depth + 1)) {
+                if (answers(ch, target, want, depth + 1)) {
                     return true;
                 }
             }
@@ -298,12 +394,12 @@ final class Passing {
     }
 
     /** Forge marks what a stack-targeting effect may target with TargetType: "Spell", "Activated", "Triggered" (with
-     *  restrictions after a dot). Counterspell says Spell, so it is no answer to a trigger; Stifle says Activated,Triggered. */
-    static boolean targetsStackItem(SpellAbility s, SpellAbility target, boolean trigger) {
+     *  restrictions after a dot). Counterspell says Spell, so it is no answer to a trigger; Stifle says Activated,Triggered, so it
+     *  is no answer to a spell. */
+    static boolean targetsStackItem(SpellAbility s, SpellAbility target, String want) {
         if (!s.usesTargeting() || !s.hasParam("TargetType")) {
             return false;
         }
-        String want = trigger ? "Triggered" : "Activated";
         boolean kind = false;
         for (String t : s.getParam("TargetType").split(",")) {
             if (t.trim().startsWith(want)) {
@@ -337,7 +433,7 @@ final class Passing {
 
     // ---- what the client is told ----------------------------------------------------------------------------------------
 
-    /** One line per opponent trigger / ability passed for me: {"t":"passed", "card", "cardId", "player", "kind"}. */
+    /** One line per opponent spell / trigger / ability passed for me: {"t":"passed", "card", "cardId", "player", "kind"}. */
     private void notePassed(BridgeGui gui, SpellAbilityStackInstance top, Player owner) {
         passed.incrementAndGet();
         int id = top.getId();
@@ -351,7 +447,7 @@ final class Passing {
         m.addProperty("card", src == null ? "?" : src.getName());
         m.addProperty("cardId", src == null ? -1 : src.getId());
         m.addProperty("player", owner == null ? "?" : owner.getName());
-        m.addProperty("kind", top.isTrigger() ? "trigger" : "ability");
+        m.addProperty("kind", top.isSpell() ? "spell" : top.isTrigger() ? "trigger" : "ability");
         try {
             gui.wire.send(m);
         } catch (RuntimeException e) {
@@ -369,6 +465,8 @@ final class Passing {
         o.addProperty("passTurn", gv != null && passTurn == gv.getTurn());
         o.addProperty("hold", holdNext);
         o.addProperty("passed", passed.get());
+        o.addProperty("pauses", pauseMode());            // round PERF2: Karl's Pauses setting reached this seat
+        o.add("paused", pausesJson());
         JsonArray names = new JsonArray();
         for (String n : alwaysStop) {
             names.add(n);
@@ -441,13 +539,18 @@ final class Passing {
 
         /** Forge's own chooseSpellAbilityToPlay (timed with --timing). */
         private List<SpellAbility> forgeChooses(Passing p) {
-            if (!Timing.on) {
-                return super.chooseSpellAbilityToPlay();
+            PENDING.set(new int[] {forgeDelay(this)});      // round PERF2: counted / made by BridgeGui.awaitNextInput
+            try {
+                if (!Timing.on) {
+                    return super.chooseSpellAbilityToPlay();
+                }
+                p.forgeT0 = System.nanoTime();
+                List<SpellAbility> r = super.chooseSpellAbilityToPlay();
+                p.forgeEnded("pass");                       // still running = Forge passed without asking (auto-pass, skipped step)
+                return r;
+            } finally {
+                PENDING.remove();
             }
-            p.forgeT0 = System.nanoTime();
-            List<SpellAbility> r = super.chooseSpellAbilityToPlay();
-            p.forgeEnded("pass");                           // still running = Forge passed without asking (auto-pass, skipped step)
-            return r;
         }
 
         /** Round PERF1, --skip-scan compare: Forge's own way, checked against what the skip would have done - pass, nothing

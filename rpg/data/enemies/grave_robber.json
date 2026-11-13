@@ -469,7 +469,7 @@
     "J22 Boneyard 2",
     "J22 Holy 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Gifted Aetherborn",
@@ -506,6 +506,14 @@
     [
      "Starnheim Aspirant",
      1
+    ],
+    [
+     "Gloom Sower",
+     1
+    ],
+    [
+     "Anointer of Valor",
+     1
     ]
    ],
    "main": [
@@ -519,10 +527,6 @@
     ],
     [
      "Vampire Neonate",
-     1
-    ],
-    [
-     "Gloom Sower",
      1
     ],
     [
@@ -543,7 +547,7 @@
     ],
     [
      "Swamp",
-     20
+     21
     ],
     [
      "Graveblade Marauder",
@@ -614,10 +618,6 @@
      1
     ],
     [
-     "Anointer of Valor",
-     1
-    ],
-    [
      "Light of Hope",
      1
     ],
@@ -631,13 +631,13 @@
     ],
     [
      "Plains",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 29,
+    "0": 32,
+    "1": 27,
     "2": 1
    }
   },
@@ -649,7 +649,7 @@
     "J25 Clerics 1",
     "JMP Milling"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Disfigure",
@@ -685,6 +685,14 @@
     ],
     [
      "Goremand",
+     1
+    ],
+    [
+     "Belltower Sphinx",
+     1
+    ],
+    [
+     "Revoke Demise",
      1
     ]
    ],
@@ -723,7 +731,7 @@
     ],
     [
      "Revoke Demise",
-     2
+     1
     ],
     [
      "Thriving Moor",
@@ -731,7 +739,7 @@
     ],
     [
      "Swamp",
-     20
+     21
     ],
     [
      "Taborax, Hope's Demise",
@@ -763,10 +771,6 @@
     ],
     [
      "Agonizing Syphon",
-     1
-    ],
-    [
-     "Belltower Sphinx",
      1
     ],
     [
@@ -807,13 +811,13 @@
     ],
     [
      "Island",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 29,
+    "0": 32,
+    "1": 27,
     "2": 1
    }
   },
@@ -825,7 +829,7 @@
     "J25 Vampires 1",
     "J22 Gross 1"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Gifted Aetherborn",
@@ -862,15 +866,19 @@
     [
      "Gloom Sower",
      1
+    ],
+    [
+     "Bloodtithe Collector",
+     1
+    ],
+    [
+     "Kalastria Nightwatch",
+     1
     ]
    ],
    "main": [
     [
      "Bloodbond Vampire",
-     1
-    ],
-    [
-     "Kalastria Nightwatch",
      1
     ],
     [
@@ -899,7 +907,7 @@
     ],
     [
      "Swamp",
-     30
+     32
     ],
     [
      "Scourge of the Undercity",
@@ -915,10 +923,6 @@
     ],
     [
      "Blood Burglar",
-     1
-    ],
-    [
-     "Bloodtithe Collector",
      1
     ],
     [
@@ -984,8 +988,8 @@
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 30
+    "0": 32,
+    "1": 28
    }
   },
   {
@@ -996,7 +1000,7 @@
     "JMP Vampires 2",
     "JMP Above the Clouds 3"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Gifted Aetherborn",
@@ -1032,6 +1036,14 @@
     ],
     [
      "Gloom Sower",
+     1
+    ],
+    [
+     "Blood Host",
+     1
+    ],
+    [
+     "Roaming Ghostlight",
      1
     ]
    ],
@@ -1078,11 +1090,7 @@
     ],
     [
      "Swamp",
-     20
-    ],
-    [
-     "Blood Host",
-     1
+     21
     ],
     [
      "Bloodbond Vampire",
@@ -1125,10 +1133,6 @@
      1
     ],
     [
-     "Roaming Ghostlight",
-     1
-    ],
-    [
      "Wall of Runes",
      1
     ],
@@ -1154,25 +1158,25 @@
     ],
     [
      "Island",
-     11
+     12
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 31,
-    "1": 28,
+    "0": 33,
+    "1": 26,
     "2": 1
    }
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-23 09:32",
+  "when": "2026-11-07 23:49",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
-  "handicap": 9,
+  "handicap": 11,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": null
+  "tuned_by": "checkpoint/balance/tune_k4"
  }
 }

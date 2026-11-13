@@ -15,13 +15,13 @@ morning when it was opened before 07:00.
 
 Readings of mine (Karl's to change): "a card from the band in the player's colours" is a card of the region's tier band that the
 player's deck can cast (rpg.rewards.castable), the best tier first when the band has it (like a quest's rare from the band);
-"gear" gives its number as gold until gear exists (Round PROG4) and says so; a pack is one of the region's packs opened at once.
+a pack is one of the region's packs opened at once. Round PROG4: "gear" names a piece (rpg/data/gear.json) - it is given (owned once:
+a piece owned already gives nothing more); a number there (PROG2's file, from before gear) is that much gold.
 """
 from rpg import clock
 
 TITLE = "Treasure"
 EMPTY_LINE = "The chest is empty."
-GEAR_LATER = "(Gear comes later; for now, its worth in gold.)"
 
 
 def opened_at(world, cid):
@@ -67,12 +67,11 @@ def open_chest(save, cid, entry, pool, tier_table, lists, numbers, band, now=Non
     if entry is None or is_open(w, cid, entry, refill_hour, now):
         return [], []
     lines, cards = [], []
-    gold = int(entry.get("gold") or 0) + int(entry.get("gear") or 0)
+    piece = entry.get("gear") if isinstance(entry.get("gear"), str) else None       # Round PROG4: a piece of gear
+    gold = int(entry.get("gold") or 0) + (int(entry.get("gear") or 0) if piece is None else 0)
     if gold:
         save.gold += gold
         lines.append(f"+{gold} gold.")
-        if entry.get("gear"):
-            lines.append(GEAR_LATER)
     rng = save.rng("chest:" + cid)
     if entry.get("card") == "band":
         pick = _band_card(save, pool, tier_table, lists, numbers, band, rewards.deck_colours(save.deck(), pool), rng)
@@ -90,6 +89,16 @@ def open_chest(save, cid, entry, pool, tier_table, lists, numbers, band, now=Non
             save.collection.add(shown, 1)
             got.append(shown)
         lines.append(f"A {products.read_pool(code).get('name', code)} pack: " + ", ".join(got) + ".")
+    if piece:
+        from rpg import gear
+        try:
+            given = gear.give(save, piece)
+        except (OSError, ValueError) as e:
+            from rpg import notes
+            notes.once("gear:read", f"gear.json couldn't be read, so no gear was given: {e}")
+            given = None
+        if given is not None:
+            lines.append(gear.found_line(given))
     if not lines:
         lines.append(EMPTY_LINE)
     w.setdefault("chests", {})

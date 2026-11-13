@@ -23,7 +23,7 @@ from gfx import CYAN, DIM, GOLD, GREEN, ORANGE, WHITE, clip_text, draw_text, rou
 
 class SettingsPopup(Dialog):
     """Hangs under the cog, in four groups. DISPLAY: text size and card size (round UI7, one row), the table background (Round AD1), full screen and animations (the last two are on/off switches that stay
-    put while you flip them). GAME: Speed (round PRI1: Fast | Slow), New game... and Quit... (each of the last two opens a small
+    put while you flip them). GAME: Speed (round PRI1: Fast | Slow), Pauses (round PERF2: Normal | Short | Off), New game... and Quit... (each of the last two opens a small
     window that asks what exactly). HELP: controls and
     help, bug or idea (Round FR1: the report window has a Suggest a feature tab), licences, the data folder, and the tour of the
     table (Round UX1). Anything outside it (or Esc) closes it."""
@@ -35,6 +35,10 @@ class SettingsPopup(Dialog):
         L, scr = gui.L, gui.screen
         fs = max(1.0, L.fs)
         w, pad, gap = int(340 * fs), int(12 * fs), int(8 * fs)
+        # Round PERF2: the GAME row holds Speed | Pauses | New game... | Quit..., each as wide as its longest label, so the pop-up
+        # grows (never past the window) when 340 x text scale is too narrow for the four - a 13th row doesn't fit (round 28)
+        game_need = self.game_widths(gui)
+        w = max(w, sum(game_need) + 3 * gap + 2 * pad + 2)
         head, sect = gui.ui_font("body", True), gui.ui_font("small", True)      # round 32: the display face
         sect_h = sect.get_height() + int(6 * fs)
         nrows, nsect = 12, 4                    # DISPLAY(5: text size, Table (round AD1), Full screen | Animations (round AU1) and 2 switches) +
@@ -137,11 +141,18 @@ class SettingsPopup(Dialog):
         heading("GAME")                         # Round UX1: New game... and Concede... share one row, so HELP has room for the tour
         # Round PRI1: Speed (Fast | Slow) joins them, three to the row - a 13th row doesn't fit at the smallest window (round 28),
         # and the three labels fit a third of the pop-up at every size the tests use (gold while Slow, like Log and Focus)
-        third = (inner - 2 * gap) // 3
-        self.button(gui, pygame.Rect(x, y, third, row_h), f"Speed: {gui.speed_label()}", "speed", True,
+        # Round PERF2: Pauses (Normal | Short | Off) joins them, four to the row, each as wide as it needs plus an equal share of the rest
+        spare = max(0, inner - 3 * gap - sum(game_need)) // 4
+        xs, gx = [], x
+        for need in game_need:
+            xs.append((gx, need + spare))
+            gx += need + spare + gap
+        self.button(gui, pygame.Rect(xs[0][0], y, xs[0][1], row_h), f"Speed: {gui.speed_label()}", "speed", True,
                     primary=gui.speed == "slow", fkey="small")
-        self.button(gui, pygame.Rect(x + third + gap, y, third, row_h), "New game...", "newgame", True, fkey="small")
-        quit_r = pygame.Rect(x + 2 * (third + gap), y, inner - 2 * (third + gap), row_h)
+        self.button(gui, pygame.Rect(xs[1][0], y, xs[1][1], row_h), f"Pauses: {gui.pauses_label()}", "pauses", True,
+                    primary=gui.pauses != __import__("forge_table").PAUSES_DEFAULT, fkey="small")   # rc16: gold when not the default (Short)
+        self.button(gui, pygame.Rect(xs[2][0], y, xs[2][1], row_h), "New game...", "newgame", True, fkey="small")
+        quit_r = pygame.Rect(xs[3][0], y, x + inner - xs[3][0], row_h)
         # bug-1566939794272161812 (Karl, 3 Nov 2026: "One Quit... button"): Concede... became Quit... - main menu or desktop, and
         # with a game going on, keep it for later or concede it (ForgeTable.ask_quit). Always on: there is always somewhere to go.
         self.button(gui, quit_r, "Quit...", "quit", True, fkey="small")
@@ -156,6 +167,15 @@ class SettingsPopup(Dialog):
         self.button(gui, pygame.Rect(x, y, half, row_h), "Tour of the table", "tour", gui.tour_available(), fkey="small")  # Round UX1
         self.switch(gui, pygame.Rect(x + half + gap, y, inner - half - gap, row_h), "Updates", "updates",
                     gui.check_updates, "small")                                                    # Round 30
+
+    @staticmethod
+    def game_widths(gui):
+        """Round PERF2: how wide each GAME button must be for its longest label (Speed, Pauses, New game..., Quit...)."""
+        import forge_table as ft
+        bw = lambda texts: max(gui.button_width(t, "small") for t in texts)
+        return [bw([f"Speed: {v}" for v in ft.SPEED_LABELS.values()]),
+                bw([f"Pauses: {v}" for v in ft.PAUSE_LABELS.values()]),
+                bw(["New game..."]), bw(["Quit..."])]
 
     def switch(self, gui, rect, label, name, on, fkey="body"):
         """A row with an on/off switch at its right end. The whole row is the click target. Half-width rows pass fkey="small"."""
@@ -239,6 +259,8 @@ class SettingsPopup(Dialog):
             gui.toggle_check_updates()                       # Round 30
         elif name == "speed":
             gui.toggle_speed()                               # round PRI1
+        elif name == "pauses":
+            gui.cycle_pauses(-1 if button == 3 else 1)              # round PERF2: right click goes back
         else:
             self.done = True
             gui.overlay = None

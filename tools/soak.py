@@ -187,7 +187,8 @@ def run_game(index, args, rng, out_root, watchdog_holder=None):
                                   faults=[args.fault] if args.fault else (),
                                   command=test_command, fmt=fmt,
                                   attack_cache=getattr(args, "attack_cache", None),   # round AI-ATTACK: compare / off
-                                  skip_scan=getattr(args, "skip_scan", None))         # round PERF1: compare / off
+                                  skip_scan=getattr(args, "skip_scan", None),         # round PERF1: compare / off
+                                  pauses=getattr(args, "pauses", None))               # round PERF2: normal / short / off
         session.stderr_path = os.path.join(game_dir, "forge_engine.log")
         if watchdog_holder is not None:
             watchdog_holder["session"] = session          # run()'s watchdog timer can now find this game's process
@@ -737,6 +738,8 @@ def main(argv=None):
     ap.add_argument("--skip-scan", choices=("on", "off", "compare"), default=None, dest="skip_scan",
                     help="round PERF1: skip Forge's 'can I act?' scan at steps the player doesn't stop at (compare = Forge's way, "
                          "every priority where Forge asked instead is a 'bridge: passscan compare DIFFERENCE' line)")
+    ap.add_argument("--pauses", choices=("normal", "short", "off"), default=None,
+                    help="round PERF2: Forge's auto-pass pauses for the soak seat (default: the bridge's, Normal)")
     ap.add_argument("--attack-cache", choices=("on", "off", "compare"), default=None, dest="attack_cache",
                     help="round AI-ATTACK: the AI attack planner's cache (compare = both ways, differences in each game's "
                          "forge_engine.log as 'attackcache: compare' lines; needs the bridge's dev mode, which this turns on)")

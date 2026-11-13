@@ -1,0 +1,8 @@
+Adventure gear icons
+====================
+Manticore's own pixel art (Round PROG4, 3 Nov 2026): the 13 icons of the Adventure's gear, 16 x 16 pixels each, in assets/gear/.
+They are drawn by tools/rpg_gear_icons.py from character grids written for Manticore, on DawnBringer's 16-colour palette (the
+palette of the Adventure's DawnLike art; a list of 16 colours, free to use). No other artwork was copied or traced.
+
+Licence: CC0 1.0 - Creative Commons Zero, a public domain dedication (licenses/texts/CC0-1.0.txt). To the extent possible under
+law, the Manticore project waives all copyright and related rights to these icons.

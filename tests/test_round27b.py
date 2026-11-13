@@ -359,7 +359,8 @@ class LiveFetchTests(unittest.TestCase):
                     search = gui.modal
                 elif gui.modal is None and msg.startswith("Do you want") and not paid:
                     paid = True
-                    key(gui, pygame.K_RETURN)                           # pay 1 life
+                    gui.press("ok")                                     # pay 1 life: the Yes button (rc17: Enter no longer
+                    # answers a cost question - bug-1568353208475066370, Karl 7 Nov: "Yes or No must be clicked")
                 elif gui.modal is None and msg.startswith("Priority") and s.state.get("stack") and not passed:
                     passed = True
                     key(gui, pygame.K_SPACE)                            # resolve the fetch with Space, as a player would

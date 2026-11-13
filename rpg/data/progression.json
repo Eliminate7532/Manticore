@@ -1,5 +1,5 @@
 {
- "about": "Round PROG1 (Karl, 2 Nov 2026: \"add ways to make progression more tangible and 'fun' JRPG style\"; the design is the Project doc claude/HANDOVER_PROGRESSION_2026-11-02.md). The Adventure's progression numbers, one file so Karl tunes them without code. EVERY value is a placeholder (Claude's estimate, 3 Nov 2026) until prog-tune measures them. results: how the screen after a duel plays out, in seconds. card_quality (Round PROG1b; it was meter, the deck-power meter, and a file with meter still reads): the Card quality line - change_seconds the +0.1 shows, decimals, and explain, the one line saying what it is (Karl to edit). rpg/progress.py checks this file when it is read and names any key it can't use. Round PROG2: rewards - how many cards each reward card is a choice of (choices_per_card); boss - whether a boss gives the 'Guards:' card he holds on top of his reward cards; chests - each treasure chest's contents by its id (the map's chest marker names it): gold (a number), card (\"band\": a card from the region's tier band in your deck's colours), pack (a set code with a pack pool, opened at once), gear (gold until gear exists, Round PROG4: the number is the gold), daily (true: it fills again at refill_hour each in-game morning; otherwise it opens once). Round PROG3: xp - XP a duel gives by kind of foe when won (regular, dungeon, rare, boss), a quest handed in (quest), a lost or conceded duel (loss) and a draw (draw). levels - the curve: level 2 at 'first' XP, each next level needs 'step' more than the last; 'cap' the highest level; every level above 1 adds life_per_level to the duel's starting life (base_life at level 1); every perk_every-th level deals a choice of perk_choices perks. perks - each perk's name, text (what the choice says), stackable (offered again once taken), available (false: never offered - the game can't do it yet; why_not says why) and effect: reward_choices (+N cards per reward pick), gold_bonus (a share added to a win's gold), loss_cut (Round GOLD1: how much smaller a loss is - 0.25 takes a quarter less of numbers.json's share for that kind of fight; it was loss_share, a share instead of numbers.json's), life / hand (added to the duel's start), battlefield (cards on your battlefield at the start; token:SCRIPT is one of Forge's token scripts). rpg/levels.py reads and checks these.",
+ "about": "Round PROG1 (Karl, 2 Nov 2026: \"add ways to make progression more tangible and 'fun' JRPG style\"; the design is the Project doc claude/HANDOVER_PROGRESSION_2026-11-02.md). The Adventure's progression numbers, one file so Karl tunes them without code. EVERY value is a placeholder (Claude's estimate, 3 Nov 2026) until prog-tune measures them. results: how the screen after a duel plays out, in seconds. card_quality (Round PROG1b; it was meter, the deck-power meter, and a file with meter still reads): the Card quality line - change_seconds the +0.1 shows, decimals, and explain, the one line saying what it is (Karl to edit). rpg/progress.py checks this file when it is read and names any key it can't use. Round PROG2: rewards - how many cards each reward card is a choice of (choices_per_card); boss - whether a boss gives the 'Guards:' card he holds on top of his reward cards; chests - each treasure chest's contents by its id (the map's chest marker names it): gold (a number), card (\"band\": a card from the region's tier band in your deck's colours), pack (a set code with a pack pool, opened at once), gear (Round PROG4: a piece's id in rpg/data/gear.json, given once; a number - PROG2's file - is that much gold), daily (true: it fills again at refill_hour each in-game morning; otherwise it opens once). Round PROG3: xp - XP a duel gives by kind of foe when won (regular, dungeon, rare, boss), a quest handed in (quest), a lost or conceded duel (loss) and a draw (draw). levels - the curve: level 2 at 'first' XP, each next level needs 'step' more than the last; 'cap' the highest level; every level above 1 adds life_per_level to the duel's starting life (base_life at level 1); every perk_every-th level deals a choice of perk_choices perks. perks - each perk's name, text (what the choice says), stackable (offered again once taken), available (false: never offered - the game can't do it yet; why_not says why) and effect: reward_choices (+N cards per reward pick), gold_bonus (a share added to a win's gold), loss_cut (Round GOLD1: how much smaller a loss is - 0.25 takes a quarter less of numbers.json's share for that kind of fight; it was loss_share, a share instead of numbers.json's), life / hand (added to the duel's start), battlefield (cards on your battlefield at the start; token:SCRIPT is one of Forge's token scripts), gear_slot (Round PROG4: Pack Mule - the Pack slot opens, rpg/data/gear.json). rpg/levels.py reads and checks these. Round PROG5 (Karl's answer 10, \"All four\"; rpg/extras.py reads and checks these): first_win - the gold and XP the first won duel of each in-game day adds (the clock's Day N). bounties - the board in Lantern Hollow: slots jobs at a time, one new job each in-game day; each job's text (what the clerk says), goal (quests.json's words: {\"beat\": kind, \"count\": n}; or {\"win\": n} with \"phase\" (won at night: \"night\") or \"map\" (won on one of these maps, | between them)) and reward (gold, xp, card: \"colours\" - a card of the region's band your deck can cast). trade_up - the card shop's Trade up: copies of one card for 1 random card a tier higher in your colours; past_band false keeps it inside the region's band (region 1: 1 -> 2 and 2 -> 3). gauntlet - the town gauntlet: its entry fee, how many duels, the regular foe kinds it draws from, and prizes by wins (gold, xp, pack: one of the town's packs, card: rare_from_band); its duels pay no foe's gold or cards, and a loss there takes no gold. Round SPAR1 (Karl, 3 Nov 2026: \"B as its own task after prog-tune\"; rpg/spar.py reads and checks these): sparring - the sparring yard in Lantern Hollow: duels, how many practice duels a spar plays (Forge's AI on both seats: your deck, level and gear against this region's regular foes); max_duels, the most a spar may be; timeout, seconds before a practice duel is a draw; against, each region's words for its foes in the result (\"Won 26 of 40 against the moor's foes\"). A spar gives no gold, cards or XP and moves no clock. Karl 4 Nov 2026, after the 8 h soak (claude/PROG_TUNE_OVERNIGHT_2026-11-04.md): xp is doubled (tools/rpg_soak_settings/xp_x2: regular 20, dungeon 40, rare 60, boss 120, quest 50, loss 4); the first win of the day's, the bounties' and the gauntlet's XP are as before (xp_x2 left them alone).",
  "results": {
   "banner_seconds": 0.5,
   "gold_count_seconds": 1.2,
@@ -26,7 +26,8 @@
     "daily": true
    },
    "moor_hollow": {
-    "gold": 60
+    "gold": 60,
+    "gear": "wildsong_horn"
    },
    "moor_cairn": {
     "card": "band"
@@ -40,18 +41,18 @@
    },
    "priest_hoard": {
     "gold": 100,
-    "gear": 80,
+    "gear": "ossuary_ward",
     "card": "band"
    }
   }
  },
  "xp": {
-  "regular": 10,
-  "dungeon": 20,
-  "rare": 30,
-  "boss": 60,
-  "quest": 25,
-  "loss": 2,
+  "regular": 20,
+  "dungeon": 40,
+  "rare": 60,
+  "boss": 120,
+  "quest": 50,
+  "loss": 4,
   "draw": 0
  },
  "levels": {
@@ -115,9 +116,10 @@
   },
   "pack_mule": {
    "name": "Pack Mule",
-   "text": "One more gear slot.",
-   "available": false,
-   "why_not": "gear comes in PROG4"
+   "text": "One more gear slot: the Pack, for any piece.",
+   "effect": {
+    "gear_slot": 1
+   }
   },
   "stout": {
    "name": "Stout",
@@ -126,6 +128,132 @@
    "effect": {
     "life": 3
    }
+  }
+ },
+ "first_win": {
+  "gold": 50,
+  "xp": 10
+ },
+ "bounties": {
+  "slots": 3,
+  "jobs": {
+   "robbers": {
+    "text": "Beat 2 Grave Robbers",
+    "goal": {
+     "beat": "grave_robber",
+     "count": 2
+    },
+    "reward": {
+     "gold": 40
+    }
+   },
+   "bandits": {
+    "text": "Beat 2 Ember Bandits",
+    "goal": {
+     "beat": "ember_bandit",
+     "count": 2
+    },
+    "reward": {
+     "gold": 40
+    }
+   },
+   "thornback": {
+    "text": "Beat a Thornback",
+    "goal": {
+     "beat": "thornback",
+     "count": 1
+    },
+    "reward": {
+     "xp": 25
+    }
+   },
+   "zealot": {
+    "text": "Beat a Zealot",
+    "goal": {
+     "beat": "zealot",
+     "count": 1
+    },
+    "reward": {
+     "xp": 25
+    }
+   },
+   "rats": {
+    "text": "Beat 2 Plague Rats",
+    "goal": {
+     "beat": "plague_rat",
+     "count": 2
+    },
+    "reward": {
+     "card": "colours"
+    }
+   },
+   "night": {
+    "text": "Win a duel at night",
+    "goal": {
+     "win": 1,
+     "phase": "night"
+    },
+    "reward": {
+     "gold": 50
+    }
+   },
+   "warrens": {
+    "text": "Win a duel in the Warrens",
+    "goal": {
+     "win": 1,
+     "map": "warrens_1|warrens_2"
+    },
+    "reward": {
+     "card": "colours"
+    }
+   },
+   "three": {
+    "text": "Win 3 duels",
+    "goal": {
+     "win": 3
+    },
+    "reward": {
+     "gold": 60,
+     "xp": 15
+    }
+   }
+  }
+ },
+ "trade_up": {
+  "copies": 4,
+  "past_band": false
+ },
+ "gauntlet": {
+  "fee": 50,
+  "duels": 3,
+  "foes": [
+   "ember_bandit",
+   "grave_robber",
+   "thornback",
+   "zealot"
+  ],
+  "prizes": {
+   "0": {},
+   "1": {
+    "gold": 25
+   },
+   "2": {
+    "gold": 50,
+    "pack": true
+   },
+   "3": {
+    "gold": 150,
+    "card": "rare_from_band",
+    "xp": 40
+   }
+  }
+ },
+ "sparring": {
+  "duels": 40,
+  "max_duels": 200,
+  "timeout": 120,
+  "against": {
+   "1": "the moor's foes"
   }
  }
 }

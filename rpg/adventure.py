@@ -205,6 +205,11 @@ class Game:
             out["perk"] = bool(levels.offers(self.save))
         except (OSError, ValueError):
             pass
+        try:                                       # Round PROG4: the gear worn (the corner panel draws their icons)
+            from rpg import gear
+            out["gear"] = [(sl.id, p.id, p.icon, p.name) for sl, p in gear.worn(self.save)]
+        except (OSError, ValueError):
+            pass
         return out
 
 
@@ -241,6 +246,22 @@ def fight_text(game, trigger):
         extra = reward_words(entry.get("reward"))
         if extra:
             win = win[:-1] + f", and {extra}."
+    if getattr(trigger, "gauntlet", False):              # Round PROG5: the town gauntlet - its own win and loss
+        from rpg import extras
+        lines = [extras.GAUNTLET_WIN, extras.GAUNTLET_LOSE]
+        try:
+            g, ex = extras.gauntlet_state(game.save.world), extras.read()
+            if g:
+                lines.insert(0, extras.GAUNTLET_NEXT.format(n=g["played"] + 1, duels=ex.duels, wins=g["wins"]).rsplit(" ", 1)[0])
+        except (OSError, ValueError):
+            pass
+        start = start_words(game)
+        if start:
+            lines.append(start)
+        wrong = game.deck_problems()
+        if wrong:
+            lines.append("Your deck can't be played yet: " + wrong[0].text)
+        return title, lines
     town = game.town_name(game.save.world.get("last_town") or game.world.start_town)
     where = f"back to {town}"
     inn = game.save.world.get("inn")                     # Round RPG15b: a loss wakes you at the inn you last rested at (rpg.duel)
@@ -259,6 +280,9 @@ def fight_text(game, trigger):
         lines.append(f"Beaten, it stays away for {days:g} day{'s' if days != 1 else ''}." if days else "Beaten, it may come back.")
     elif not trigger.once and not getattr(trigger, "random", False):   # Round RPG13: a random foe has no spot to come back to
         lines.append("Beaten, it comes back after your next visit to a town.")
+    carry = gear_carried(game, trigger)                  # Round PROG4: the piece of gear this foe gives when beaten
+    if carry:
+        lines.append(carry)
     start = start_words(game)                            # Round PROG3: your levels and perks at the duel's start
     if start:
         lines.append(start)
@@ -287,6 +311,24 @@ def start_words(game):
         return ""
 
 
+def gear_carried(game, trigger):
+    """Round PROG4: "Carries: <piece> (gear)." on the encounter screen of a rare foe or a boss whose piece isn't owned yet, else ""."""
+    from rpg import gear
+    rid = getattr(trigger, "rare", None)
+    if rid and rare_entry(trigger):
+        return gear.carries(game.save, "rares", rid)
+    if getattr(trigger, "encounter", None) == "boss":
+        return gear.carries(game.save, "bosses", getattr(trigger, "enemy", None))
+    return ""
+
+
+def quest_gear(game, quest_id):
+    """Round PROG4: the piece of gear a quest handed in gives (rpg/data/gear.json sources.quests). Returns the lines to say (the
+    save is written by the caller, as for the reward)."""
+    from rpg import gear
+    return gear.drop_for(game.save, "quests", quest_id) if quest_id else []
+
+
 def start_duel(game, trigger, now=None, index=None):
     """Mark the duel as going on and write the save; returns the rpg.duel.Duel. DuelError (a sentence) when it can't start.
     trigger: a map's encounter (rpg.explore.Trigger) or, Round RPG13, a random one (rpg.encounters.RandomFoe: no spot). index: the
@@ -299,6 +341,8 @@ def start_duel(game, trigger, now=None, index=None):
     d.life = (d.effects or {}).get("life", d.life)
     if getattr(trigger, "title", None) and isinstance(game.save.pending_duel, dict):
         game.save.pending_duel["name"] = trigger.title    # ... so the result names him
+    if getattr(trigger, "gauntlet", False) and isinstance(game.save.pending_duel, dict):
+        game.save.pending_duel["gauntlet"] = True         # Round PROG5: the town gauntlet's duel (rpg.extras)
     entry = rare_entry(trigger)
     if entry and isinstance(game.save.pending_duel, dict):          # Round RPG16: the result names it and pays its reward
         game.save.pending_duel["rare"] = trigger.rare
@@ -388,6 +432,8 @@ def finish_loaded(game, result):
     encounter = game.save.pending_duel.get("encounter")
     rid = game.save.pending_duel.get("rare")
     title = game.save.pending_duel.get("name")                              # Round RPG18b: a foe with its own name
+    gauntlet = bool(game.save.pending_duel.get("gauntlet"))                 # Round PROG5: the town gauntlet's duel
+    duel_map = game.save.pending_duel.get("map") or game.save.world.get("map")
     entry = _rare_table().get(rid) if isinstance(rid, str) else None
     out = duel.finish(game.save, result, game.numbers, game.world, pool=game.pool, tier_table=game.tiers(), lists=game.lists(),
                       offer=True)                                           # Round PROG2: the reward cards are a choice
@@ -395,22 +441,59 @@ def finish_loaded(game, result):
     if isinstance(title, str) and title:
         out["enemy"] = title
     kind_xp = "rare" if entry else (encounter if encounter in ("dungeon", "boss") else "regular")
+    from rpg import extras
+    try:                                                                    # Round PROG5: the first win of the in-game day
+        first = extras.first_win(game.save, out.get("result"))
+    except (OSError, ValueError) as e:
+        from rpg import notes
+        notes.once("extras:read", f"progression.json's PROG5 tables couldn't be read: {e}")
+        first = None
+    if first:
+        game.save.gold += first["gold"]
+        out["gold"] = int(out.get("gold") or 0) + first["gold"]
+        out["first_win"] = first
     try:                                                                    # Round PROG3: XP (and perhaps a level, a perk choice)
         from rpg import levels
         lv = levels.read()
-        out["xp"] = levels.gain(game.save, levels.xp_for(out.get("result"), kind_xp, lv), lv)
+        out["xp"] = levels.gain(game.save, levels.xp_for(out.get("result"), kind_xp, lv) + (first or {}).get("xp", 0), lv)
     except (OSError, ValueError) as e:
         from rpg import notes
         notes.once("levels:read", f"progression.json's levels couldn't be read, so no XP was given: {e}")
     if out.get("result") == "won":                                          # Round PROG1: the bestiary's page of this kind
         from rpg import progress
         progress.note_beaten(game.save, kind, [n for n, _src in out.get("cards") or ()])
+        try:                                                                # Round PROG5: the bounty board's jobs count it
+            from rpg import clock
+            done = extras.bounty_on_win(game.save.world, kind, duel_map, clock.phase(clock.now(game.save.world)))
+            if done:
+                out["bounty_lines"] = [extras.BOUNTY_DONE_LINE.format(text=t) for t in extras.job_texts(done)]
+        except (OSError, ValueError):
+            pass
+    if gauntlet:                                                            # Round PROG5: the gauntlet's count (and its prize)
+        try:
+            out["gauntlet"] = extras.after_gauntlet_duel(game, out.get("result")) or {}
+        except (OSError, ValueError) as e:
+            from rpg import notes
+            notes.once("extras:gauntlet", f"the gauntlet couldn't be settled: {e}")
     if entry:                                                               # Round RPG16: a rare foe
         out.update(enemy=entry["name"], rare=rid)
         if out.get("result") == "won":
             from rpg import rare
             rare.on_beaten(game.save.world, rid)
             out["extra_lines"] = give_reward(game, entry.get("reward"))
+    if out.get("result") == "won":                                          # Round PROG4: a boss's or a rare foe's gear (once)
+        from rpg import gear
+        found = gear.drop_for(game.save, "rares", rid) if entry else \
+            (gear.drop_for(game.save, "bosses", kind) if encounter == "boss" else [])
+        if found:
+            out["extra_lines"] = list(out.get("extra_lines") or ()) + found
+    try:
+        from rpg import gear
+        worn = gear.worn_line(game.save)
+    except (OSError, ValueError):
+        worn = ""
+    if worn and out.get("result") in ("won", "lost", "conceded", "draw"):   # Round PROG4: what you wore, on the results screen
+        out["worn"] = worn
     try:
         game.write()
     except OSError:
@@ -478,14 +561,20 @@ def outcome_lines(out, world_=None):
     if not out:
         return []
     enemy = out.get("enemy") or "the enemy"
+    worn = [out["worn"]] if out.get("worn") else []          # Round PROG4: "Worn: Copper Charm, Road Boots." (last line)
     r = out.get("result")
     if r == "won":
         if out.get("again"):                     # Round PROG2: the choice left open when the game closed
             lines = [f"Your reward from the {enemy} is still waiting."]
         else:
-            lines = [f"You beat the {enemy}: +{out.get('gold', 0)} gold."]
+            first = out.get("first_win") or {}
+            own = int(out.get("gold", 0) or 0) - int(first.get("gold", 0) or 0)
+            lines = [f"You beat the {enemy}" + ("." if out.get("gauntlet") is not None and not own else f": +{own} gold.")]
             if out.get("won_back"):              # Round GOLD1: the gold it took from you, in that count
                 lines.append(WON_BACK_LINE.format(n=out["won_back"], enemy=enemy))
+            if first:                            # Round PROG5: the first win of the in-game day
+                from rpg import extras
+                lines.append(extras.FIRST_WIN_LINE.format(gold=first.get("gold", 0), xp=first.get("xp", 0)))
         sig = [n for n, src in out.get("cards") or [] if src == "signature"]
         cards = [n for n, src in out.get("cards") or [] if src != "signature"]
         if sig:                                  # Round PROG2: the card the boss guarded
@@ -497,7 +586,10 @@ def outcome_lines(out, world_=None):
             n, per = len(offers), max(len(g) for g in offers)
             lines.append(f"Choose your reward card: 1 of {per}." if n == 1 else
                          f"Choose your {n} reward cards: 1 of each {per}.")
-        return lines + list(out.get("extra_lines") or ())
+        return lines + _extras_lines(out) + list(out.get("extra_lines") or ()) + worn
+    if r in ("lost", "conceded") and isinstance(out.get("gauntlet"), dict):      # Round PROG5: a gauntlet loss costs nothing
+        first = f"You conceded to the {enemy}." if r == "conceded" else f"The {enemy} beat you."
+        return [first] + _extras_lines(out) + worn
     if r in ("lost", "conceded"):
         town = out.get("moved_to")
         if town:
@@ -513,15 +605,20 @@ def outcome_lines(out, world_=None):
                 lines.append("You woke at the inn.")                 # the innkeeper's words follow in her box (rpg_screens)
             elif town:
                 lines.append(f"You are back in {town}.")
-            return lines
+            return lines + worn
         if out.get("inn"):                       # Round RPG14: you wake at the inn you last rested at (rpg.talk); the
             return [first, (f"You lost {lost} gold" if lost else "You had no gold to lose") +      # innkeeper's words follow
-                    " and woke at the inn."]                                                   # in her box (rpg_screens)
+                    " and woke at the inn."] + worn                                            # in her box (rpg_screens)
         second = (f"You lost {lost} gold" if lost else "You had no gold to lose") + (f" and are back in {town}." if town else ".")
-        return [first, second]
+        return [first, second] + worn
     if r == "draw":
-        return [f"A draw with the {enemy}: nothing won or lost."]
+        return [f"A draw with the {enemy}: nothing won or lost."] + _extras_lines(out) + worn
     return []
+
+
+def _extras_lines(out):
+    """Round PROG5: the bounty jobs a duel finished and the gauntlet's lines (its count, and its prize once it is over)."""
+    return list(out.get("bounty_lines") or ()) + list((out.get("gauntlet") or {}).get("lines") or ())
 
 
 # ---- the deck editor ----------------------------------------------------------------------------------------------------------

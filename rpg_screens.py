@@ -26,6 +26,7 @@ Everything is saved as it happens: a new game when Begin is pressed, a town when
 the deck when you leave the editor, your place on the map when you open the menu, a town or a fight, and when you leave.
 The rules and numbers are rpg/'s (no pygame there); this module draws and routes clicks. Every colour is a gfx.py token.
 """
+import os
 import time
 
 import pygame
@@ -52,6 +53,9 @@ from rpg.tiers import TIER_NAMES
 from rpg import worldsound
 from rpg import save as rsave
 from rpg import shop as rshop
+from rpg import gear as rgear
+from rpg import extras as rextras
+from rpg import spar as rspar
 
 CARD_ASPECT = 488 / 680
 TITLE = "Adventure"
@@ -59,6 +63,9 @@ INTRO = ("Walk the land, duel whatever blocks your way, and build your deck from
          "60-card game at 20 life against the AI, on the same table as your other games.")
 PICK_INTRO = ("Three Jumpstart half-decks make your first 60 cards, in at most two colours. Click the one you want; Show others "
               "offers three more.")
+UPGRADE_TAG = "  up"                     # Round STARTER1: after an upgraded card's line in the starting deck (Karl to edit)
+UPGRADE_NOTE = "{n} weak card{s} upgraded (green). "
+UPGRADE_HOVER = "{name} replaced: {outs}"
 MAP_KEYS = ("Tap: walk or act", "Arrows or WASD: walk", "Enter: talk", "H: hint", "Esc: menu")   # RPG14: talk; RPG15b: the hint;
 # Round RPG-TAP (Karl 27 Oct, a pen only on his Surface): a tap walks there, or up to a person, door or foe and acts
 PEN_REPEAT = 0.3                 # Round RPG-TAP: seconds - a second left press this soon after a map tap, at the same place, is the
@@ -67,8 +74,10 @@ WALK_KEYS = (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K
 PERK_ITEM = "Choose a perk"         # Round PROG3: the Menu's item while a perk waits, and the perk window's title
 PERK_LATER = "Later"
 PERK_HUD = "Perk ready: Menu"
+HUD_ICON = 16                       # Round PROG4: the worn gear's icons on the corner panel, in its UI pixels (the 16 px art as drawn)
 PAUSE_ITEMS = (("resume", "Back to the map", True), ("hint", "Hint", True), ("deck", "Deck", True), ("collection", "Collection", True),
                ("book", "Card Book", True), ("beasts", "Bestiary", True),           # Round PROG1
+               ("gear", "Gear", True),                                              # Round PROG4
                ("save", "Save", True), ("light", "Light", True), ("settings", "Settings", True),       # Round RPG14 (the spec's);
                ("leave", "Main menu", True))           # Round RPG15: "light" - its label says "Light: on" or "Light: off"
 # Round RPG15: the music each place asks for when its map names none, and the boss's (audio's "loop:<cue>" mode loops one track)
@@ -78,7 +87,20 @@ NIGHT_MUSIC_PHASES = ("dusk", "night")  # Round RPG-NM: the clock phases a map's
 VICTORY_STING, DEFEAT_STING = "music.rpg_victory", "music.rpg_defeat"
 WELCOME = ("Your 60 cards are your deck. This town's shop sells single cards, packs and basic lands, and buys cards back. "
            "Leave town to explore; walking into a foe asks before a duel starts.")
-TABS = (("singles", "Singles"), ("packs", "Packs"), ("lands", "Basic lands"), ("sell", "Sell"))
+TABS = (("singles", "Singles"), ("packs", "Packs"), ("lands", "Basic lands"), ("gear", "Gear"), ("trade", "Trade up"),
+        ("sell", "Sell"))   # PROG4: Gear; PROG5: Trade up
+SPAR_TITLE = "Sparring"                  # Round SPAR1: the sparring yard's windows (rpg.spar)
+GAUNTLET_TITLE = "The gauntlet"            # Round PROG5: the result window's title for the gauntlet's entry and prize
+# Round PROG4: the Gear screen's and the shop's Gear tab's words (Karl to edit; rpg/gear.py holds the rest)
+GEAR_SUB = "What you wear counts in every duel. Tap Wear to put a piece on, Take off to take it off."
+GEAR_WORN_HEAD = "Worn"
+GEAR_OWNED_HEAD = "Your gear"
+GEAR_NONE = "No gear yet. Town shops sell some; chests, bosses, quests and rare foes give the rest."
+GEAR_EMPTY_SLOT = "empty"
+GEAR_SHOP_TITLE = "Gear  -  common pieces; better ones are found"
+GEAR_SHOP_NONE = "You have every piece this shop sells."
+GEAR_BUY = "Buy"
+GEAR_WEAR, GEAR_OFF, GEAR_TO_PACK, GEAR_WORN_TAG = "Wear", "Take off", "In pack", "Worn"
 # Round PACK1: the packs tab's words for the new kinds (Karl to edit)
 PREMIUM_NAME = "{set} - premium pack"
 PREMIUM_SUB = "{code}   ·   more uncommons, an extra rare   ·   {price} gold"
@@ -96,6 +118,9 @@ HOLDS_BUNDLE = "{packs} packs of {cards} cards, each {template}."
 HOLDS_THEME = "{cards} cards, ready to play: {colours}."
 SHELF_HINT = "Tap a pack to see what it holds."
 PACK_BUY = "Buy and open"
+SINGLES_BUY = "Buy"                                      # task bug-1567699607696441414: the singles gallery
+SINGLES_SOLD_OUT = "sold out"
+SOLD_OUT_VEIL = 150                                      # the alpha of the shade over a sold-out card
 TEMPLATE_WORDS = (("consisting of ", ""), ("RareMythic", "rare or mythic"), ("BasicLand", "basic land"), ("Common", "common"),
                   ("Uncommon", "uncommon"), ("Rare", "rare"), ("Mythic", "mythic"), ("Special", "special"))
 SEP = "   ·   "                    # between the parts of a shop line's second half
@@ -113,7 +138,8 @@ NAV_KEYS = {pygame.K_UP: "up", pygame.K_DOWN: "down", pygame.K_PAGEUP: "pageup",
 DAWN_COLOUR = {tuple(GREEN): gfx.DB_GREEN, tuple(RED): gfx.DB_RED, tuple(ORANGE): gfx.DB_ORANGE, tuple(GOLD): gfx.DB_GOLD}
 # Round RPG14b: the shop, the pack, the deck editor and the Collection are drawn in DawnLike's window and SDS font (DawnGui); while
 # one of them draws, _DAWN["k"] is the frame's pixel size and the words' colours are DawnBringer's (DAWN_TEXT)
-DAWN_STAGES = ("town", "pack", "deck", "collection", "book", "beasts")     # Round PROG1: the Card Book and the bestiary
+DAWN_STAGES = ("town", "pack", "deck", "collection", "book", "beasts",    # Round PROG1: the Card Book and the bestiary
+               "gear")                                                    # Round PROG4: the Gear screen
 DAWN_TEXT = dict(DAWN_COLOUR)
 DAWN_TEXT.update({tuple(TEXT): gfx.DB_TEXT, tuple(DIM): gfx.DB_DIM, tuple(gfx.BTN_GOLD_FG): gfx.DB_GOLD})
 _DAWN = {"k": 0}
@@ -249,6 +275,24 @@ def card_picture(gui, name, card, w, h):
                           "colors": colours}, w, h, radius)
 
 
+_GEAR_ICONS = {}
+GEAR_ICON_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "gear")
+
+
+def gear_icon(icon, size):
+    """Round PROG4: a gear icon (assets/gear/<icon>.png, 16 x 16, tools/rpg_gear_icons.py) scaled to `size` px without smoothing
+    (pixel art); None when the file is missing (the row then shows the words only)."""
+    size = max(8, int(size))
+    key = (icon, size)
+    if key not in _GEAR_ICONS:
+        try:
+            img = pygame.image.load(os.path.join(GEAR_ICON_DIR, f"{icon}.png"))
+            _GEAR_ICONS[key] = pygame.transform.scale(img, (size, size))
+        except (OSError, pygame.error, FileNotFoundError):
+            _GEAR_ICONS[key] = None
+    return _GEAR_ICONS[key]
+
+
 def template_words(template):
     """Round PACK2: Forge's booster template ("consisting of 10 Common, 3 Uncommon, 1 RareMythic, and 1 BasicLand") in words."""
     t = template or ""
@@ -268,6 +312,33 @@ def face_of(half, pool):
         if key is None or k < key:
             best, key = card.name, k
     return best
+
+
+GALLERY_TWO_ROWS = 56             # Round SHOPMSG2: below this card height (x text scale) a gallery gives up its second row
+GALLERY_MIN_H = 40                # ... and below this (x text scale) no row is drawn at all (the gallery scrolls instead)
+
+
+def gallery_shape(height, width, label_h, label_w, gap, fs, aspect, max_h, count):
+    """The Singles / Packs gallery's grid in a `height` x `width` area (Round SHOPMSG2): (picture w, picture h, column pitch,
+    columns, row height, rows, rows that fit). Two rows when each picture can still be GALLERY_TWO_ROWS x fs tall, else one row as
+    tall as the area allows, never under GALLERY_MIN_H x fs - and only rows that fit whole are counted (0 when not even one does;
+    the old shelves always counted one, so its bottom ran under the message strip). A column is as wide as its price words even
+    when the picture is narrower (the picture is centred in it), so the words stay whole at big text without making the picture
+    taller than the room."""
+    two = (height - 2 * (label_h + gap)) // 2 - 1
+    one = height - (label_h + gap) - 1
+    ch = min(two if two >= int(GALLERY_TWO_ROWS * fs) else one, max_h)
+    ch = max(int(GALLERY_MIN_H * fs), ch)
+    cw = max(1, int(ch * aspect))
+    pitch = max(cw, label_w)
+    cols = max(1, (width + gap) // (pitch + gap))
+    if cols == 1 and pitch > width:                  # a very narrow window: the column shrinks to the area
+        pitch = max(8, width)
+        if cw > pitch:
+            cw = pitch
+            ch = int(cw / aspect)
+    row_h = ch + label_h + gap
+    return cw, ch, pitch, cols, row_h, (count + cols - 1) // cols, max(0, height // row_h)
 
 
 class AdventureFlow(dlg.Dialog):
@@ -291,6 +362,7 @@ class AdventureFlow(dlg.Dialog):
         self._bars_drawn = {}            # ... the bars drawn this frame: key -> (bar, unit px)
         self._fits = {}                  # ... list key -> (rows shown, rows in all) this frame, for the keys
         self.hover = None                # (name, card) under the mouse - shown big
+        self.upgrade_hover = None        # Round STARTER1: (name, [replaced]) of the upgraded card under the mouse
         self.explorer = None
         self.views = {}
         self.camera, self._cam_key = None, None
@@ -328,6 +400,9 @@ class AdventureFlow(dlg.Dialog):
         self._prefetched = set()
         self.retry = None                # a duel's result the table couldn't write: tried again (open_slot, write)
         self.tap = None                  # Round RPG-TAP: the rpg.tapwalk.TapWalk a tap on the map started (None: none)
+        self.sparring = None             # Round SPAR1: the practice duels under way (rpg.spar.Sparring), else None
+        self.spar_box = None             # ... their progress window (rpg_ui.MessageWindow with a bar)
+        self.last_spar = None            # ... the last spar's result (rpg.spar.Sparring.result), for the tests
         self._last_tap = None            # ... (time, pos) of the last left press that was a map tap (a pen tap told twice acts once)
         if slot is not None:
             self.open_slot(gui, slot, outcome=outcome, error=error, retry=retry)
@@ -470,6 +545,8 @@ class AdventureFlow(dlg.Dialog):
 
     def adventure_close(self):
         """The program is closing with this window open: where you stand is saved."""
+        if getattr(self, "sparring", None) is not None:       # Round SPAR1: a spar under way ends with the program
+            self.sparring.stop()
         if self.stage == "map" and self.explorer is not None:
             self.explorer.store()
         self.write()
@@ -765,24 +842,41 @@ class AdventureFlow(dlg.Dialog):
         nid = ex.facing_npc() if ex is not None else None
         if nid is None:
             return False
-        world = self.game.save.world
         if hasattr(ex, "talked_to"):
             ex.talked_to(nid)                     # Round RPG18b: a person walking carries on once the talk ends
+        return AdventureFlow.talk_with(self, gui, nid)       # (the class's own: tests call talk_to on a stand-in)
+
+    def talk_with(self, gui, nid):
+        """Round PROG5: the talk itself (talk_to's, and the gauntlet's warden after a gauntlet duel's results)."""
+        ex = self.explorer
+        world = self.game.save.world
         try:
             conv = talk.Conversation(nid, world)
         except (talk.TalkError, OSError, ValueError) as e:
             self.say(f"{nid} has nothing to say ({e}).", ORANGE)
             return True
         pages = list(conv.pages)
+        if nid == talk.BOUNTY_CLERK:                                 # Round PROG5: the board - posted, paid, listed
+            try:
+                posted = rextras.post_bounties(self.game.save)
+                paid = rextras.collect_bounties(self.game)
+                pages += rextras.split_pages(rextras.board_pages(self.game.save, posted, paid))
+                if paid:
+                    gui.play_cue("card.pickup")
+            except (OSError, ValueError) as e:
+                crashlog.note(f"Adventure: the bounty board couldn't be read: {type(e).__name__}: {e}")
+                pages.append(f"The board can't be read ({e}).")
         if conv.reward is not None:                                  # a quest handed in (its reward may be only a flag)
             given = adv.give_reward(self.game, conv.reward) if conv.reward.get("gold") or conv.reward.get("card") else []
             pages += [" ".join(given)] if given else []
             xp = adv.quest_xp(self.game)                             # Round PROG3: a quest handed in gives XP (said under the
-            if xp:                                                   # map, not in the person's words)
+            xp += adv.quest_gear(self.game, getattr(conv, "reward_quest", None))     # map, not in the person's words); PROG4:
+            if xp:                                                   # ... and the quest's piece of gear, the same way
                 self.say(" ".join(xp), GREEN)
         pages += list(conv.after)                                    # the quest's "done" words, once, after the reward
-        self.talk_shop = ex.facing_shop()                            # Round RPG15b: a shopkeeper's words, then the shop
-        ex.store()
+        self.talk_shop = ex.facing_shop() if ex is not None else None    # Round RPG15b: a shopkeeper's words, then the shop
+        if ex is not None:
+            ex.store()
         self.write()
         self.talk_conv = conv
         self.talk_box = rpg_ui.DialogueBox(conv.name, pages, time.monotonic(), choice=conv.choice, default=conv.choice_default)
@@ -804,6 +898,12 @@ class AdventureFlow(dlg.Dialog):
             if conv.rematch:
                 self.close_talk()
                 self.start_rematch(gui)
+            elif getattr(conv, "gauntlet", None):                        # Round PROG5: the warden's answer
+                self.close_talk()
+                self.gauntlet_do(gui, conv.gauntlet)
+            elif getattr(conv, "spar", False):                           # Round SPAR1: the yard master's "Spar"
+                self.close_talk()
+                self.spar_start(gui)
             elif more:
                 self.talk_box = rpg_ui.DialogueBox(conv.name, more, time.monotonic())
             else:
@@ -969,6 +1069,9 @@ class AdventureFlow(dlg.Dialog):
             return (name, pages) if pages else None
         if outcome.get("result") == "won" and outcome.get("encounter") == "boss":
             return self.boss_words(outcome.get("kind"), "boss", "defeated")
+        g = outcome.get("gauntlet")
+        if isinstance(g, dict) and g and not g.get("done"):           # Round PROG5: the warden asks for the next duel
+            return ("talk", talk.GAUNTLET_WARDEN)
         return None
 
     def start_rematch(self, gui):
@@ -982,6 +1085,115 @@ class AdventureFlow(dlg.Dialog):
         self.encounter = None
         self.sub = "fight"
         gui.play_cue("rpg.encounter")              # rpg_encounter.STING (a literal: test_au1 finds played cues by their text)
+
+    # ---- Round PROG5: the town gauntlet ----------------------------------------------------------------------------------------
+    def gauntlet_do(self, gui, what):
+        """The warden's answer: "enter" (pay and fight the first duel), "next" (the next duel), "stop" (the prize for the wins so far)."""
+        g = self.game
+        if what == "stop":
+            lines = rextras.stop_gauntlet(g)
+            self.write()
+            self.result = (GAUNTLET_TITLE, lines, GOLD)
+            self.sub = "result"
+            gui.play_cue("card.pickup")
+            return
+        if what == "enter":
+            try:
+                rextras.enter_gauntlet(g.save)
+            except (rextras.TradeError, OSError, ValueError) as e:
+                self.result = (GAUNTLET_TITLE, [str(e)], ORANGE)
+                self.sub = "result"
+                gui.play_cue("ui.error")
+                return
+            self.write()
+        foe = rextras.next_foe(g.save.world)
+        if foe is None:
+            return
+        self.fight = encounters.GauntletFoe(foe)
+        self.encounter = None
+        self.sub = "fight"
+        gui.play_cue("rpg.encounter")              # rpg_encounter.STING (a literal: test_au1 finds played cues by their text)
+
+    # ---- Round SPAR1: the sparring yard (rpg.spar) ----------------------------------------------------------------------------
+    def spar_start(self, gui, n=None):
+        """Yardmaster Corin's "Spar": N practice duels of your deck on a background thread (rpg.spar.Sparring), the progress
+        window meanwhile (Stop at any time). Your deck must be playable; no gold, cards, XP or time come of it."""
+        g = self.game
+        wrong = g.deck_problems() if g is not None else None
+        why = None
+        if g is None or g.save.deck() is None:
+            why = "You have no deck to spar with."
+        elif wrong:
+            why = f"Your deck can't be played yet: {wrong[0].text}"
+        else:
+            why = rspar.tool_problem()
+            why = rspar.NO_TOOL.format(what=why) if why else None
+        if why is None:
+            try:
+                save = g.save
+                seed = save.stable_rng("spar", len(save.sparring or ()), rspar.fingerprint(save.deck())).randrange(1 << 40)
+                self.sparring = rspar.Sparring(save, n=n, seed=seed).start()
+            except (rspar.SparError, OSError, ValueError) as e:
+                why = str(e)
+        if why is not None:
+            self.sparring = None
+            self.result = (SPAR_TITLE, [why], ORANGE)
+            self.sub = "result"
+            gui.play_cue("ui.error")
+            return False
+        self.spar_box = None
+        self.sub = "spar"
+        gui.play_cue("ui.click")
+        return True
+
+    def spar_lines(self):
+        sp = self.sparring
+        if sp is None:
+            return [], 0.0
+        done, total, wins, started = sp.progress()
+        if sp.stopped and not sp.finished:
+            return [rspar.STOPPING], done / total
+        if not started:
+            return [rspar.STARTING], 0.0
+        return [rspar.PLAYING.format(n=min(total, done + 1), total=total, wins=wins)], done / total
+
+    def spar_tick(self, gui):
+        """Each frame while sparring: once the run has ended, its result into the save (written) and the result window."""
+        sp = getattr(self, "sparring", None)
+        if sp is None or not sp.finished:
+            return False
+        self.sparring = None
+        res = sp.result()
+        rec = None
+        try:
+            rec = rspar.record(self.game.save, res)
+        except Exception as e:                               # the result is still said; it is only not kept
+            crashlog.note(f"Adventure: a spar's result couldn't be kept: {type(e).__name__}: {e}")
+        if rec is not None:
+            self.write()
+        self.last_spar = res
+        self.result = (SPAR_TITLE, rspar.result_lines(res), ORANGE if res.get("error") else GOLD)
+        self.message_box = None
+        self.sub = "result"
+        gui.play_cue("ui.error" if res.get("error") else "card.pickup")
+        return True
+
+    def spar_stop(self, gui):
+        sp = getattr(self, "sparring", None)
+        if sp is not None:
+            sp.stop()
+            gui.play_cue("ui.click")
+
+    def draw_spar(self, gui):
+        """The progress window over the map: what is being played, a bar, and Stop."""
+        if self.spar_tick(gui):
+            return self.draw_result_over(gui)
+        lines, frac = self.spar_lines()
+        box = getattr(self, "spar_box", None)
+        if box is None:
+            box = self.spar_box = rpg_ui.MessageWindow(SPAR_TITLE, lines, gfx.DB_GOLD, ok=rspar.STOP, bar=frac)
+        box.lines, box.bar = [str(x) for x in lines], frac
+        return list(box.draw(gui.screen))
 
     def open_pause(self, gui):
         """Esc on the map: the pause window (DawnLike's window and font): Back to the map / Your deck / Save / Settings / Save and
@@ -1016,7 +1228,10 @@ class AdventureFlow(dlg.Dialog):
             lines.append((f"{title}" + (f" - {mark}" if mark else ""), gfx.DB_TEXT if state != "done" else gfx.DB_DIM))
             if state != "done":
                 lines.append((line, gfx.DB_DIM))
-        if not book:
+        bounties = rextras.journal_lines(g.save)                  # Round PROG5: the board's jobs under way
+        for title, line in bounties:
+            lines.append((f"{title} - {line}", gfx.DB_TEXT))
+        if not book and not bounties:
             lines.append(("None yet. Talk to people in town.", gfx.DB_DIM))
         self.menu = rpg_ui.ListMenu("Menu", self.pause_items(gui), lines)
         self.sub = "pause"
@@ -1117,13 +1332,22 @@ class AdventureFlow(dlg.Dialog):
                 self.opened = (PREMIUM_NAME.format(set=name) if what == "premium" else BUNDLE_NAME.format(set=name), cards)
                 self.pack_page = 0
                 self.set_stage("pack")
+            elif what == "trade":                            # Round PROG5: 4 copies for 1 card a tier higher
+                g = self.game
+                ex = rextras.read()
+                got, tier, taken = rextras.trade_up(g.save, args[0], g.pool, g.tiers(), g.lists(), g.numbers, s.band, ex)
+                s.taken = taken
+                self.say(self.traded_words(args[0], ex.trade_copies, got, tier), GREEN if not taken else ORANGE)
+            elif what == "gearbuy":                          # Round PROG4: a common piece of gear
+                p = rgear.buy(self.game.save, args[0], self.game.save.world.get("region") or 1)
+                self.say(rgear.BOUGHT_LINE.format(name=p.name, price=p.price), GREEN)
             elif what == "theme":                            # Round PACK1: a Jumpstart theme pack
                 half = next((h for h in s.theme_stock() if h.code == args[0]), None)
                 cards = s.buy_theme(args[0])
                 self.opened = (products.theme_name(half) if half else args[0], cards)
                 self.pack_page = 0
                 self.set_stage("pack")
-        except rshop.ShopError as e:
+        except (rshop.ShopError, rgear.GearError, rextras.TradeError) as e:
             self.say(str(e), ORANGE)
             gui.play_cue("ui.error")
             return
@@ -1177,6 +1401,8 @@ class AdventureFlow(dlg.Dialog):
             self.shop_do(gui, "basic", land, k)
         elif head == "sell":
             self.shop_do(gui, "sell", rest)
+        elif head == "trade":                                # Round PROG5: Trade up
+            self.shop_do(gui, "trade", rest)
         elif name == "pack_done":
             self.opened = None
             self.pack_page = 0
@@ -1187,6 +1413,12 @@ class AdventureFlow(dlg.Dialog):
         elif name in ("book_done", "beasts_done"):           # Round PROG1: back from the Card Book / the bestiary
             self.book_big = None
             self.enter_map(gui)
+        elif name == "gear_done":                            # Round PROG4: back from the Gear screen
+            self.enter_map(gui)
+        elif head in ("gear_wear", "gear_pack", "gear_off"):     # Round PROG4: wear / take off a piece (one tap, one action)
+            self.gear_do(gui, head, rest)
+        elif head == "gearbuy":                              # Round PROG4: the shop's Gear tab
+            self.shop_do(gui, "gearbuy", rest)
         elif head == "bookc":                                # Round PROG1: the Card Book's colour filter (any of them)
             self.book_colours ^= {rest}
             self.scroll["book"] = 0
@@ -1216,6 +1448,10 @@ class AdventureFlow(dlg.Dialog):
             elif name == "perk_later":
                 self.sub = None
             return
+        if sub == "spar":                                         # Round SPAR1: Stop (the window's one button)
+            if name == "ok":
+                self.spar_stop(gui)
+            return
         if sub == "fight":
             self.encounter_do(gui, self.encounter.choose(name, time.monotonic()) if self.encounter is not None else name)
         elif sub == "result":
@@ -1237,7 +1473,9 @@ class AdventureFlow(dlg.Dialog):
             self.results = None
             self.sub = None
             after, self.after_result = self.after_result, None
-            if after and self.stage == "map":                        # Round RPG14: the innkeeper / a beaten boss speaks
+            if after and after[0] == "talk" and self.stage == "map":  # Round PROG5: a person speaks (the gauntlet's warden)
+                self.talk_with(gui, after[1])
+            elif after and self.stage == "map":                      # Round RPG14: the innkeeper / a beaten boss speaks
                 self.talk_conv, self.talk_after = None, None
                 self.talk_box = rpg_ui.DialogueBox(after[0], after[1], time.monotonic())
                 self.sub = "talk"
@@ -1281,6 +1519,10 @@ class AdventureFlow(dlg.Dialog):
                     self.explorer.store()
                 self.book_big = None
                 self.set_stage(name)
+            elif name == "gear":                     # Round PROG4: the Gear screen
+                if self.explorer is not None:
+                    self.explorer.store()
+                self.set_stage("gear")
             elif name == "leave":
                 self.leave(gui)
         elif sub == "confirm":
@@ -1339,6 +1581,9 @@ class AdventureFlow(dlg.Dialog):
                 self.shelf_pick = data
                 self.message = None
                 gui.play_cue("ui.click")
+            elif kind == "single" and button == 1:           # task bug-1567699607696441414: a tap on a card shows its details
+                self.singles_pick = data
+                gui.play_cue("ui.click")
             elif kind == "bookcard":                         # Round PROG1: a tap on a Card Book line shows it big (again: not)
                 self.book_big = None if self.book_big and self.book_big[0] == data[0] else data
             return
@@ -1362,6 +1607,10 @@ class AdventureFlow(dlg.Dialog):
             elif esc:                                # later: it waits in the Menu
                 self.sub = None
                 gui.play_cue("ui.dialog_close")
+            return
+        if self.sub == "spar":                       # Round SPAR1: only Esc stops it (Enter / Space don't: a stray key mustn't)
+            if esc:
+                self.spar_stop(gui)
             return
         if self.sub == "talk":                       # Round RPG14: the dialogue box
             if self.talk_box is not None:
@@ -1440,7 +1689,7 @@ class AdventureFlow(dlg.Dialog):
             if esc or enter:
                 self.press(gui, "collection_done")
             return
-        if st in ("book", "beasts"):                 # Round PROG1
+        if st in ("book", "beasts", "gear"):         # Round PROG1; Round PROG4: the Gear screen the same way
             if esc or enter:
                 self.press(gui, st + "_done")
             return
@@ -1482,7 +1731,7 @@ class AdventureFlow(dlg.Dialog):
 
     def wheel(self, gui, dy):
         key = {"town": "town:" + self.tab, "deck": "deckpool", "pick": None, "ready": None,
-               "collection": "collection", "book": "book", "beasts": "beasts"}.get(self.stage)               # Round RPG15c (review R1): the Collection scrolls
+               "collection": "collection", "book": "book", "beasts": "beasts", "gear": "gear"}.get(self.stage)               # Round RPG15c (review R1): the Collection scrolls
         if self.stage == "deck" and getattr(self, "decklist_rect", None) is not None and self.decklist_rect.collidepoint(gui.mouse):
             key = "decklist"
         if key:
@@ -1565,6 +1814,7 @@ class AdventureFlow(dlg.Dialog):
         L = gui.L
         self.rows = []
         self.hover = None
+        self.big_fixed = None                                 # Round STARTER1C: set by draw_ready only
         self.buttons = []
         self._pan_views = {}                                  # Round SELL1: the lists a pen or a finger can drag this frame
         self._bars_drawn, self._fits = {}, {}                 # task bug-sell-scroll-2: this frame's scroll bars and list sizes
@@ -1582,12 +1832,12 @@ class AdventureFlow(dlg.Dialog):
             self.buttons = []
             self.draw_sub(gui)
             return
-        if self.sub in ("talk", "pause", "result") and self.stage == "map" and self.explorer is not None:
+        if self.sub in ("talk", "pause", "result", "spar") and self.stage == "map" and self.explorer is not None:
             self.draw_map(gui)                       # Round RPG14: the map under the dialogue box / the pause window /
             self.buttons = []                        # the result window, all three in DawnLike's window and font
             if self.sub == "talk" and self.talk_box is not None:
                 self.buttons = list(self.talk_box.draw(gui.screen, time.monotonic()))
-            elif self.sub in ("pause", "result"):
+            elif self.sub in ("pause", "result", "spar"):
                 layer = pygame.Surface(gui.screen.get_size(), pygame.SRCALPHA)
                 layer.fill(gfx.DB_BG + (150,))
                 gui.screen.blit(layer, (0, 0))
@@ -1599,6 +1849,8 @@ class AdventureFlow(dlg.Dialog):
                     self.buttons = list(self.menu.draw(gui.screen))
                 elif self.sub == "result":
                     self.buttons = self.draw_result_over(gui)
+                elif self.sub == "spar":                      # Round SPAR1: the practice duels' progress
+                    self.buttons = self.draw_spar(gui)
             self.rect = gui.screen.get_rect()
             return
         if self.stage in DAWN_STAGES and self.game is not None:          # Round RPG14b
@@ -1915,13 +2167,26 @@ class AdventureFlow(dlg.Dialog):
             x -= self.gap
         return y
 
-    def draw_message(self, gui, x, y, w, bottom=None):
-        """The message under the stage's content: two lines from y, or (Round PROG1b, the deck editor) up to four ending at
-        `bottom`, so a longer line (what Card quality is) is said whole."""
+    MESSAGE_MAX_LINES = 6          # Round SHOPMSG1: the town's message grows to this many lines before its last line is shortened
+
+    def message_lines(self, gui, w, cap=2):
+        """The message wrapped to `w` px, at most `cap` lines (Round SHOPMSG1): what doesn't fit goes on the last line, shortened
+        with "..." - so nothing runs past the box, and nothing is lost below it unseen."""
+        if not self.message:
+            return []
+        small = gui.font("small", True)
+        lines = wrap_text(self.message[0], small, w)
+        if len(lines) > cap:
+            lines = lines[:cap - 1] + [clip_text(" ".join(lines[cap - 1:]), small, w)]
+        return lines
+
+    def draw_message(self, gui, x, y, w, bottom=None, lines=None):
+        """The message under the stage's content: two lines from y (or `lines`, Round SHOPMSG1: the town's box grows to fit), or
+        (Round PROG1b, the deck editor) up to four ending at `bottom`, so a longer line (what Card quality is) is said whole."""
         if self.message:
             small = gui.font("small", True)
-            text, colour = self.message
-            lines = wrap_text(text, small, w)[:4 if bottom is not None else 2]
+            _text, colour = self.message
+            lines = self.message_lines(gui, w, 4 if bottom is not None else (lines or 2))
             if bottom is not None:
                 y = bottom - len(lines) * small.get_height()
                 back = pygame.Rect(x - 4, y - 2, max(small.size(ln)[0] for ln in lines) + 8, len(lines) * small.get_height() + 4)
@@ -1937,6 +2202,11 @@ class AdventureFlow(dlg.Dialog):
         w = int(h * CARD_ASPECT)
         x = rect.x + self.pad if gui.mouse[0] > rect.centerx else rect.right - self.pad - w
         r = pygame.Rect(x, rect.y + int(rect.h * 0.2), w, h)
+        fixed = getattr(self, "big_fixed", None)
+        if fixed is not None and self.stage == "ready":     # Round STARTER1C: the starting-deck screen's own strip
+            r = pygame.Rect(fixed)
+            w, h = r.size
+        self.big_drawn = pygame.Rect(r)
         gfx.shadowed(gui.screen, r, radius=max(4, int(w * 0.05)))
         gui.screen.blit(card_picture(gui, name, card, w, h), r)
 
@@ -2127,14 +2397,59 @@ class AdventureFlow(dlg.Dialog):
         pad = self.pad
         f = self.flow
         deck = f.preview()
+        marks = f.upgraded()                                 # Round STARTER1
+        n_up = len(f.upgrades())
         total = sum(k for _n, k in deck)
-        sub = (f"{total} cards from " + ", ".join(h.theme for h in f.picks) + ". Begin saves the game in slot "
-               f"{self.slot} and opens the town.")
+        sub = (f"{total} cards from " + ", ".join(h.theme for h in f.picks) + ". "
+               + (UPGRADE_NOTE.format(n=n_up, s="" if n_up == 1 else "s") if n_up else "")
+               + f"Begin saves the game in slot {self.slot} and opens the town.")
         y = self.header(gui, rect, f"{f.name}'s starting deck", sub)
         foot = self.footer(gui, rect, left=[("Back", "back", True, False)],
                            right=[("Begin the adventure", "begin", True, True)])
-        self.draw_deck_text(gui, pygame.Rect(rect.x + pad, y, rect.w - 2 * pad, foot - self.gap - y), deck, f._pool())
-        self.draw_message(gui, rect.x + pad, foot - self.gap - 2 * gui.font("small").get_height(), rect.w - 2 * pad)
+        self.upgrade_hover = None
+        small = gui.font("small")
+        # Round STARTER1: with upgrades, the list stops a line short of the message so the hover line has its own room
+        bottom = foot - self.gap - (3 * small.get_height() if marks else 0)
+        area = pygame.Rect(rect.x + pad, y, rect.w - 2 * pad, max(small.get_height(), bottom - y))
+        # Round STARTER1C (Karl, 8 Nov 2026): the card preview has its own strip at the right, so the list never runs under it
+        # (at 1360x840 @200% the second column ran under the picture); the list takes the rest, in the font and columns that
+        # fit it all (small, then tiny - names shortened to the column if they must be).
+        big = self.ready_big_rect(rect, area)
+        self.big_fixed = big
+        area = pygame.Rect(area.x, area.y, max(1, big.x - self.gap - area.x), area.h)
+        fkey, min_col = self.ready_list_font(gui, area, deck, f._pool())
+        self.ready_list_area = area
+        self.draw_deck_text(gui, area, deck, f._pool(), marks=marks, font_key=fkey, min_col=min_col)
+        if self.upgrade_hover:                               # Round STARTER1: what the hovered upgrade replaced
+            name, outs = self.upgrade_hover
+            words = UPGRADE_HOVER.format(name=name, outs=", ".join(sorted(set(outs))))
+            draw_text(gui.screen, clip_text(words, small, area.w), area.x, area.bottom + small.get_height() // 4, small,
+                      GREEN)
+        self.draw_message(gui, rect.x + pad, foot - self.gap - 2 * small.get_height(), rect.w - 2 * pad)
+
+    def ready_big_rect(self, rect, area):
+        """Round STARTER1C: where the starting-deck screen shows the hovered card - a strip at the area's right, as tall as
+        draw_big's picture would be (55% of the window) or as the area, never wider than 30% of it."""
+        h = min(int(rect.h * 0.55), area.h)
+        w = int(h * CARD_ASPECT)
+        if w > int(area.w * 0.3):
+            w = int(area.w * 0.3)
+            h = int(w / CARD_ASPECT)
+        return pygame.Rect(area.right - w, area.y, w, h)
+
+    def ready_list_font(self, gui, area, deck, pool):
+        """Round STARTER1C: (font key, column width) for the starting-deck list: the first of "small" then "tiny" whose lines fit
+        the area (flow_deck's rules): small with columns of at least 200 x text scale, then tiny at 200, 150, 120 (names cut to
+        the column); the last when none does (draw_deck_text then stops at the area's end, as before)."""
+        blocks = self.deck_blocks(deck, pool)
+        tries = [("small", 200), ("tiny", 200), ("tiny", 150), ("tiny", 120)]
+        for key, base in tries:
+            min_col = max(1, int(base * self.fs))
+            lh = gui.font(key).get_height()
+            cols = max(1, min(4, area.w // min_col))
+            if self.flow_deck(blocks, max(1, area.h // lh), cols) is not None:
+                return key, min_col
+        return tries[-1][0], max(1, int(tries[-1][1] * self.fs))
 
     def draw_collection(self, gui, rect):
         """Round RPG14: the pause window's Collection - every card you own, by type, with how many (the deck editor builds
@@ -2172,6 +2487,107 @@ class AdventureFlow(dlg.Dialog):
             self.button(gui, pygame.Rect(x, y, w, fh), label, f"bookt:{t}", True, self.book_tier == t, fkey="tiny")
             x += w + 4
         return y + fh + int(8 * self.fs)
+
+    # ---- Round PROG4: the Gear screen (the pause window's) and the shop's Gear tab ----------------------------------------------
+    def gear_do(self, gui, what, arg):
+        """One tap on the Gear screen: gear_wear:<piece> (its own slot), gear_pack:<piece> (the Pack slot), gear_off:<slot>. The save
+        is written and the walk speed follows at once."""
+        s = self.game.save
+        try:
+            if what == "gear_off":
+                pid = rgear.take_off(s, arg)
+                p = rgear.read().piece(pid) if pid else None
+                if p is not None:
+                    self.say(rgear.OFF_LINE.format(name=p.name), GREEN)
+            else:
+                sl = rgear.wear(s, arg, "pack" if what == "gear_pack" else None)
+                self.say(rgear.WORE_LINE.format(name=rgear.read().piece(arg).name, slot=sl.name), GREEN)
+        except (rgear.GearError, OSError, ValueError) as e:
+            self.say(str(e), ORANGE)
+            gui.play_cue("ui.error")
+            return
+        if self.explorer is not None:
+            self.explorer.apply_speed()
+        self.write()
+        gui.play_cue("card.pickup")
+
+    def gear_rows(self):
+        """The Gear screen's lines: ("head", words) / ("slot", Slot, Piece or None) / ("piece", Piece, worn slot id or None) /
+        ("none", words)."""
+        g = self.game
+        gr = rgear.read()
+        worn = dict((sl.id, p) for sl, p in rgear.worn(g.save, gr))
+        rows = [("head", GEAR_WORN_HEAD)]
+        for sl in rgear.open_slots(g.save, gr):
+            rows.append(("slot", sl, worn.get(sl.id)))
+        rows.append(("head", GEAR_OWNED_HEAD))
+        mine = rgear.owned(g.save, gr)
+        if not mine:
+            rows.append(("none", GEAR_NONE))
+        for p in mine:
+            rows.append(("piece", p, rgear.worn_in(g.save, p.id, gr)))
+        return rows
+
+    def draw_gear(self, gui, rect):
+        """Round PROG4: the slots and what is worn in each (Take off), then every piece you own (Wear / In pack, or Worn). One tap
+        = one action; drag or the wheel to scroll."""
+        g = self.game
+        y = self.header(gui, rect, rgear.GEAR_TITLE, GEAR_SUB)
+        foot = self.footer(gui, rect, right=[("Back to the map", "gear_done", True, True)])
+        small = gui.font("small")
+        msg_h = 2 * small.get_height() + self.gap
+        self.draw_message(gui, rect.x + self.pad, foot - msg_h, rect.w - 2 * self.pad)
+        y += gui.font("tiny").get_height()                  # room for the list's "1-5 of 16" note under the words above
+        area = pygame.Rect(rect.x + self.pad, y, rect.w - 2 * self.pad, foot - msg_h - self.gap - y)
+        try:
+            rows = self.gear_rows()
+            gr = rgear.read()
+            pack_open = any(sl.any for sl in rgear.open_slots(g.save, gr))
+        except Exception as e:                               # never a crash: said instead
+            crashlog.note(f"Adventure: the Gear screen: {type(e).__name__}: {e}")
+            draw_text(gui.screen, clip_text(f"The gear can't be shown: {e}", small, area.w), area.x, area.y, small, ORANGE)
+            return
+        for i, r in self.list_rows(gui, area, "gear", len(rows), self.row_h(gui)):
+            row = rows[i]
+            if row[0] == "head":
+                draw_text(gui.screen, clip_text(row[1], gui.font("body", True), r.w), r.x, r.centery, gui.font("body", True),
+                          GOLD, "midleft")
+            elif row[0] == "none":
+                draw_text(gui.screen, clip_text(row[1], small, r.w), r.x, r.centery, small, DIM, "midleft")
+            elif row[0] == "slot":
+                sl, p = row[1], row[2]
+                text = f"{sl.name}: {p.name}" if p else f"{sl.name}: {GEAR_EMPTY_SLOT}"
+                self.draw_row(gui, r, text, p.text if p else "", [(GEAR_OFF, f"gear_off:{sl.id}", p is not None, False)],
+                              icon=p.icon if p else "")
+            else:
+                p, where = row[1], row[2]
+                sub = f"{gr.slot_name(p.slot)}{SEP}{p.rarity}{SEP}{p.text}"
+                if where:
+                    buttons = [(GEAR_WORN_TAG, f"gear_worn:{p.id}", False, False)]
+                else:
+                    buttons = [(GEAR_WEAR, f"gear_wear:{p.id}", True, True)]
+                    if pack_open:
+                        buttons.append((GEAR_TO_PACK, f"gear_pack:{p.id}", True, False))
+                self.draw_row(gui, r, p.name, sub, buttons, icon=p.icon)
+
+    def draw_tab_gear(self, gui, area):
+        """Round PROG4: the shop's Gear tab - the region's common pieces you don't own yet, with their price and what they do."""
+        g = self.game
+        try:
+            offers = rgear.shop_offers(g.save, g.save.world.get("region") or 1)
+            gr = rgear.read()
+        except Exception as e:
+            crashlog.note(f"Adventure: the shop's Gear tab: {type(e).__name__}: {e}")
+            draw_text(gui.screen, clip_text(f"The gear can't be shown: {e}", gui.font("small"), area.w), area.x, area.y,
+                      gui.font("small"), ORANGE)
+            return
+        self.list_title(gui, area, GEAR_SHOP_TITLE)
+        if not offers:
+            draw_text(gui.screen, GEAR_SHOP_NONE, area.x, area.y, gui.font("small"), DIM)
+        for i, r in self.list_rows(gui, area, "town:gear", len(offers), self.row_h(gui)):
+            p = offers[i]
+            sub = f"{gr.slot_name(p.slot)}{SEP}{p.price} gold{SEP}{p.text}"
+            self.draw_row(gui, r, p.name, sub, [(GEAR_BUY, f"gearbuy:{p.id}", g.save.gold >= p.price, True)], icon=p.icon)
 
     def draw_book(self, gui, rect):
         """Round PROG1: every card you have ever owned - its picture, tier, copies owned and in your deck, where and when you first
@@ -2274,13 +2690,13 @@ class AdventureFlow(dlg.Dialog):
             cards = ", ".join(n + (f" x{k}" if k > 1 else "") for n, k in row.cards) if row.cards else BEAST_NO_CARDS
             draw_text(scr, clip_text("Cards won: " + cards, small, room), tx, ty, small, TEXT if row.cards else DIM)
 
-    def draw_deck_text(self, gui, area, deck, pool, scroll_key=None):
+    def draw_deck_text(self, gui, area, deck, pool, scroll_key=None, marks=None, font_key="small", min_col=None):
         """A deck as text in columns by type ("Creature (14)", then "2  Llanowar Elves" lines); the mouse shows a card big.
         Round RPG15c (review R1): with a scroll_key the columns grow as tall as the list needs and the area scrolls (self.scroll,
         in lines, the wheel), so every card can be reached; returns how many cards are out of view (0 without a scroll_key)."""
         if scroll_key is not None:
             return self.draw_deck_scrolled(gui, area, deck, pool, scroll_key)
-        scr, small, bold = gui.screen, gui.font("small"), gui.font("small", True)
+        scr, small, bold = gui.screen, gui.font(font_key), gui.font(font_key, True)
         groups = {}
         for name, k in deck:
             card = pool.get(name)
@@ -2291,9 +2707,10 @@ class AdventureFlow(dlg.Dialog):
                 items = sorted(groups[g], key=lambda e: (e[2].mana_value if e[2] else 99, e[0].lower()))
                 blocks.append((f"{g} ({sum(k for _n, k, _c in items)})", items))
         lh = small.get_height()
-        cols = max(1, min(4, area.w // int(260 * self.fs)))
+        cols = max(1, min(4, area.w // (min_col or int(260 * self.fs))))
         cw = (area.w - self.gap * (cols - 1)) // cols
         x, y, c = area.x, area.y, 0
+        self.deck_line_rects = []                            # Round STARTER1C: where each line went (the tests' check)
         for head, items in blocks:
             need = lh * (len(items) + 1)
             if y + min(need, 3 * lh) > area.bottom and c < cols - 1:
@@ -2311,9 +2728,20 @@ class AdventureFlow(dlg.Dialog):
                     else:
                         break
                 r = pygame.Rect(x, y, cw, lh)
-                draw_text(scr, clip_text(f"{k}  {name}", small, cw), x, y, small, TEXT)
+                self.deck_line_rects.append((name, r))
+                up = (marks or {}).get(name)
+                if up:                                       # Round STARTER1: an upgraded card, in green with a short tag
+                    tag = UPGRADE_TAG
+                    tw = small.size(tag)[0]
+                    line = clip_text(f"{k}  {name}", small, max(20, cw - tw))
+                    draw_text(scr, line, x, y, small, GREEN)
+                    draw_text(scr, tag, x + small.size(line)[0], y, small, DIM)
+                else:
+                    draw_text(scr, clip_text(f"{k}  {name}", small, cw), x, y, small, TEXT)
                 if r.collidepoint(gui.mouse):
                     self.hover = (name, card)
+                    if up:
+                        self.upgrade_hover = (name, up)
                 y += lh
             y += lh // 2
         return 0
@@ -2501,16 +2929,27 @@ class AdventureFlow(dlg.Dialog):
         cw = rpg_ui.font().size("M")[0]
         most = max(4, (W // 2 // s - 2 * pad - 8) // cw)               # characters a line may have: the window stays <= W / 2
         lines = [(t if len(t) <= most else t[:most - 3] + "...", c) for t, c in lines]
-        w = max(len(t) for t, _c in lines) * cw + 2 * pad
-        h = 2 * pad + len(lines) * rpg_ui.PITCH_UI - 2
+        worn = list(info.get("gear") or ())                              # Round PROG4: the worn gear's icons, a row under the words
+        icon_h = HUD_ICON + 2 if worn else 0
+        w = max(max(len(t) for t, _c in lines) * cw, len(worn) * (HUD_ICON + 2)) + 2 * pad
+        h = 2 * pad + len(lines) * rpg_ui.PITCH_UI - 2 + icon_h
         box = pygame.Surface((w, h), pygame.SRCALPHA)
         rpg_ui.window(box, box.get_rect())
         words = []
         for i, (t, c) in enumerate(lines):
             words.append((t, rpg_ui.text(box, t, pad, pad + i * rpg_ui.PITCH_UI, c)))
+        icons = []
+        iy = pad + len(lines) * rpg_ui.PITCH_UI
+        for j, (_slot, pid, icon, _name) in enumerate(worn):
+            img = gear_icon(icon, HUD_ICON)
+            spot = pygame.Rect(pad + j * (HUD_ICON + 2), iy, HUD_ICON, HUD_ICON)
+            if img is not None:
+                box.blit(img, spot)
+            icons.append((pid, spot))
         x0 = y0 = 4 * s
         rect = rpg_ui._blit_scaled(scr, box, s, (x0, y0))
         self.hud_words = [(t, pygame.Rect(x0 + r.x * s, y0 + r.y * s, r.w * s, r.h * s)) for t, r in words]
+        self.hud_icons = [(pid, pygame.Rect(x0 + r.x * s, y0 + r.y * s, r.w * s, r.h * s)) for pid, r in icons]   # PROG4
         return rect
 
     # town
@@ -2545,12 +2984,18 @@ class AdventureFlow(dlg.Dialog):
                 right -= self.gap
         y += tab_h + self.gap
         small = gui.font("small")
-        msg_h = 2 * small.get_height() + self.gap
-        share = 1.0 if self.tab == "packs" else 0.66         # Round PACK1: a pack has no card to show at the right - the whole width
+        # Round SHOPMSG2 (Karl, 8 Nov 2026: "Grow the strip + fix gallery"): the strip under the lists keeps two lines for the
+        # message, and grows by a line for each line past two (up to MESSAGE_MAX_LINES; past that the last line ends in "...") -
+        # the lists' area shrinks by as much, so the message never covers them.
+        msg_w = rect.w - 2 * pad
+        lines = self.message_lines(gui, msg_w, self.MESSAGE_MAX_LINES)
+        msg_h = max(2 * small.get_height(), max(2, len(lines)) * gui.font("small", True).get_height()) + self.gap
+        self.msg_strip = pygame.Rect(rect.x + pad, rect.bottom - pad - msg_h + self.gap, msg_w, msg_h - self.gap)
+        share = 1.0 if self.tab in ("packs", "gear", "singles") else 0.66   # Round PACK1: a pack has no card to show at the right -
+        # the whole width; Round PROG4: nor has a piece of gear; the singles gallery shows its details itself
         area = pygame.Rect(rect.x + pad, y + small.get_height(), int((rect.w - 2 * pad) * share), rect.bottom - pad - msg_h - y - small.get_height())
-        self.draw_message(gui, rect.x + pad, rect.bottom - pad - msg_h + self.gap, rect.w - 2 * pad)
         getattr(self, "draw_tab_" + self.tab)(gui, area)
-        if self.hover is None and self.tab != "packs":
+        if self.hover is None and self.tab not in ("packs", "gear", "singles"):
             side_x = area.right + 2 * self.gap
             draw_text(scr, clip_text("Point at a card to see it here.", small, rect.right - pad - side_x), side_x, area.y, small, DIM)
         if self.hover is not None:                           # the card under the mouse, big, in the room at the right
@@ -2563,15 +3008,26 @@ class AdventureFlow(dlg.Dialog):
                 gfx.shadowed(scr, r, radius=max(4, int(w * 0.05)))
                 scr.blit(card_picture(gui, name, card, w, h), r)
             self.hover = None                                # shown here, not again by draw()
+        # The message last (Round SHOPMSG1: drawn whole, every line inside the window), in its strip under the lists.
+        self.draw_message(gui, self.msg_strip.x, self.msg_strip.y, msg_w, lines=max(2, len(lines)))
 
     def row_h(self, gui):
         return max(self.bh, gui.font("body").get_height() + int(14 * self.fs)) + int(4 * self.fs)
 
-    def draw_row(self, gui, r, text, sub, buttons, name=None):
-        """One shop line: the text (and a dim second part), buttons at the right ((label, name, enabled, primary))."""
+    def draw_row(self, gui, r, text, sub, buttons, name=None, icon=None):
+        """One shop line: the text (and a dim second part), buttons at the right ((label, name, enabled, primary)). Round PROG4:
+        `icon` (a gear icon's name) is drawn before the text."""
         scr, fs = gui.screen, self.fs
         body, small = gui.font("body"), gui.font("small")
         box = r.inflate(0, -int(4 * fs))
+        lead = 0
+        if icon is not None:                                 # "" keeps the icon's room empty (a slot with nothing worn)
+            side = max(16, min(box.h - int(8 * fs), int(32 * fs)))
+            img = gear_icon(icon, side)
+            if img is not None:
+                scr.blit(img, img.get_rect(midleft=(box.x + int(8 * fs), box.centery)))
+            lead = side + int(8 * fs)
+            box = pygame.Rect(box.x + lead, box.y, box.w - lead, box.h)
         hot = box.collidepoint(gui.mouse)
         round_rect(scr, box, gfx.PANEL_DEEP if not hot else gfx.PANEL, 6, 1, gfx.PANEL_EDGE)
         x = box.right - int(8 * fs)
@@ -2603,18 +3059,123 @@ class AdventureFlow(dlg.Dialog):
             self.hover = (name, self.game.pool.get(name))
 
     def draw_tab_singles(self, gui, area):
+        """Task bug-1567699607696441414 (kr.bot.01, 5 Nov 2026: "the shop page for singles should show each card like a gallery";
+        Karl, 7 Nov: "Gallery replaces list"): the singles as a grid of card pictures, like the Packs shelf - the price and the
+        copies left under each card; a tap on a card shows it large at the right with its tier, what you own, and Buy. The first
+        card is shown until another is tapped. Pictures come through the art loader in the background (card_picture)."""
         s, g = self.shop, self.game
+        scr, fs, gap = gui.screen, self.fs, self.gap
         offers = s.singles()
         self.prefetch(gui, [o.name for o in offers])
-        self.list_title(gui, area, f"Singles  -  restocked every {g.numbers.restock_after_duels} duels")
+        small = gui.font("small")
+        tiny = gui.font("tiny")
+        title = f"Singles  -  restocked every {g.numbers.restock_after_duels} duels"
+        self._title_text = None
         if not offers:
-            draw_text(gui.screen, "Nothing for sale.", area.x, area.y, gui.font("small"), DIM)
-        for i, r in self.list_rows(gui, area, "town:singles", len(offers), self.row_h(gui)):
-            o = offers[i]
-            owned = g.save.collection.count(o.name) or 0
-            sub = f"tier {o.tier}   ·   {o.price} gold   ·   {o.left} left" + (f"   ·   you own {owned}" if owned else "")
-            ok = o.left > 0 and g.save.gold >= o.price
-            self.draw_row(gui, r, o.name, sub, [("Buy", f"buy:{o.slot}", ok, True)], name=o.name)
+            draw_text(scr, clip_text(title, tiny, area.w), area.x, area.y - 2, tiny, DIM, "bottomleft")
+            draw_text(scr, "Nothing for sale.", area.x, area.y, small, DIM)
+            self.note_pan("town:singles", pygame.Rect(area.x, area.y, area.w, 1), False, 1)
+            self._fits["town:singles"] = (1, 0)
+            return
+        slots = [o.slot for o in offers]
+        if getattr(self, "singles_pick", None) not in slots:
+            self.singles_pick = slots[0]                     # the first card until another is tapped: its Buy is always there
+        pick = next(o for o in offers if o.slot == self.singles_pick)
+        det_w = max(int(area.w * 0.32), min(area.w // 2, gui.button_width(SINGLES_BUY) + 2 * self.pad))
+        grid = pygame.Rect(area.x, area.y, area.w - det_w - 2 * gap, area.h)
+        det = pygame.Rect(grid.right + 2 * gap, area.y, det_w, area.h)
+        px = max(1, _DAWN["k"] or 1)
+        label_h = 2 * small.get_height() + int(4 * fs) + 3 * px
+        label_w = max(max(small.size(self.single_price(o))[0], small.size(self.single_left(o))[0]) for o in offers)
+
+        def shape(width):
+            return gallery_shape(grid.h, width, label_h, label_w, gap, fs, CARD_ASPECT, int(300 * fs), len(offers))
+
+        cw, ch, pitch, cols, row_h, rows, fit = shape(grid.w)
+        if rows > fit:                                       # room for the scroll bar, as the Packs shelf
+            bar_w = max(int(scr.get_height() * BAR_MIN_SHARE), max(10, int(BAR_WIDTH * max(1.0, fs))))
+            cw, ch, pitch, cols, row_h, rows, fit = shape(max(1, grid.w - bar_w - gap))
+        if fit < 1:                                          # Round SHOPMSG2: not even one whole row fits - none is drawn
+            self.note_pan("town:singles", pygame.Rect(grid.x, grid.y, grid.w, 1), False, 1)
+            self._fits["town:singles"] = (0, rows)
+            self.draw_single_details(gui, det, pick)
+            return
+        top = max(0, min(self.scroll.get("town:singles", 0), max(0, rows - fit)))
+        self.scroll["town:singles"] = top
+        view = self.scroll_bar(gui, "town:singles", grid, rows, fit, top, row_h)
+        grid = pygame.Rect(grid.x, grid.y, view.w, grid.h)
+        self.note_pan("town:singles", pygame.Rect(grid.x, grid.y, grid.w, fit * row_h), rows > fit, row_h)
+        room = grid.w
+        if rows > fit:                                       # "1-8 of 12" always shown; the title is shortened for it
+            note = f"{top * cols + 1}-{min(len(offers), (top + fit) * cols)} of {len(offers)}"
+            nr = draw_text(scr, note, grid.right, grid.y - 2, tiny, DIM, "bottomright")
+            room = nr.x - grid.x - gap
+        draw_text(scr, clip_text(title, tiny, max(1, room)), grid.x, grid.y - 2, tiny, DIM, "bottomleft")
+        span = cols * pitch + (cols - 1) * gap
+        x0 = grid.x + max(0, (grid.w - span) // 2)
+        for j in range(top * cols, min(len(offers), (top + fit) * cols)):
+            o = offers[j]
+            col_x = x0 + (j % cols) * (pitch + gap)
+            r = pygame.Rect(col_x + (pitch - cw) // 2, grid.y + (j // cols - top) * row_h, cw, ch)
+            scr.blit(card_picture(gui, o.name, g.pool.get(o.name), cw, ch), r)
+            if o.left <= 0:                                  # sold out: the card dimmed
+                veil = pygame.Surface(r.size, pygame.SRCALPHA)
+                veil.fill((*gfx.SHADOW, SOLD_OUT_VEIL))
+                scr.blit(veil, r)
+            if o.slot == pick.slot:                          # picked: a light frame, as a picked pack
+                pygame.draw.rect(scr, gfx.DB_TEXT, r.inflate(6 * px, 6 * px), max(2, 2 * px))
+            elif r.collidepoint(gui.mouse):
+                pygame.draw.rect(scr, gfx.DB_DIM, r.inflate(4 * px, 4 * px), px)
+            y = r.bottom + 3 * px + int(2 * fs)
+            draw_text(scr, clip_text(self.single_price(o), small, pitch), r.centerx, y, small,
+                      GOLD if g.save.gold >= o.price and o.left > 0 else DIM, "midtop")
+            draw_text(scr, clip_text(self.single_left(o), small, pitch), r.centerx, y + small.get_height(), small,
+                      DIM if o.left > 0 else ORANGE, "midtop")
+            self.rows.append((r.union(pygame.Rect(col_x, r.bottom, pitch, label_h)), "single", o.slot))
+        self.draw_single_details(gui, det, pick)
+
+    @staticmethod
+    def single_price(o):
+        return f"{o.price} gold"
+
+    @staticmethod
+    def single_left(o):
+        return f"{o.left} left" if o.left > 0 else SINGLES_SOLD_OUT
+
+    def draw_single_details(self, gui, det, o):
+        """The picked single at the right: the card large, its name, tier, price, copies left, what you own, and Buy."""
+        scr, pad = gui.screen, self.pad
+        g = self.game
+        small, body = gui.font("small"), gui.font("body")
+        rpg_ui.window(scr, det, max(1, _DAWN["k"] or 1))
+        inner = det.inflate(-2 * pad, -2 * pad)
+        owned = g.save.collection.count(o.name) or 0
+        tier = f"Tier {o.tier}" + (f" ({TIER_NAMES[o.tier]})" if o.tier in TIER_NAMES else "")
+        lines = []
+        for t, font, colour in ((o.name, body, TEXT), (str(tier), small, DIM), (self.single_price(o), body, GOLD),
+                                (self.single_left(o), small, DIM if o.left > 0 else ORANGE),
+                                (f"You own {owned}" if owned else "You own none yet", small, DIM)):
+            for ln in wrap_text(t, font, inner.w):
+                lines.append((ln, font, colour))
+        bh = self.bh
+        words_h = sum(f.get_height() for _l, f, _c in lines)
+        room = inner.h - words_h - bh - 3 * self.gap
+        h = min(room, int(inner.w / CARD_ASPECT))
+        w = int(h * CARD_ASPECT)
+        y = inner.y
+        if h >= int(40 * self.fs):
+            r = pygame.Rect(inner.centerx - w // 2, inner.y, w, h)
+            gfx.shadowed(scr, r, radius=max(4, int(w * 0.05)))
+            scr.blit(card_picture(gui, o.name, g.pool.get(o.name), w, h), r)
+            y = r.bottom + self.gap
+        for ln, font, colour in lines:
+            if y + font.get_height() > inner.bottom - bh - self.gap:
+                break
+            draw_text(scr, clip_text(ln, font, inner.w), inner.x, y, font, colour)
+            y += font.get_height()
+        ok = o.left > 0 and g.save.gold >= o.price
+        bw = min(inner.w, gui.button_width(SINGLES_BUY))
+        self.button(gui, pygame.Rect(inner.x, min(inner.bottom - bh, y + self.gap), bw, bh), SINGLES_BUY, f"buy:{o.slot}", ok, True)
 
     def draw_tab_packs(self, gui, area):
         """Round PACK2 (Karl, 3 Nov 2026: "a visual image of what those packs look like"): the shelf - each kind of pack as its
@@ -2638,22 +3199,21 @@ class AdventureFlow(dlg.Dialog):
         label_w = max(small.size(f"{p} gold")[0] for _k, _c, p in shelf)
 
         def shape(width):
-            wh = max(int(48 * fs), min((grid.h - 2 * (label_h + gap)) // 2 - 1, int(320 * fs)))    # two rows, when they fit
-            ww = int(wh * pack_art.ASPECT)
-            if ww < label_w:                                 # big text: a wrapper is at least as wide as its price
-                ww = min(label_w, width)
-                wh = int(ww / pack_art.ASPECT)
-            cols = max(1, (width + gap) // (ww + gap))
-            if cols == 1 and ww > width:                     # a very narrow window: the wrapper shrinks to the column
-                ww = max(8, width)
-                wh = int(ww / pack_art.ASPECT)
-            row_h = wh + label_h + gap
-            return ww, wh, cols, row_h, (len(shelf) + cols - 1) // cols, max(1, grid.h // row_h)
+            return gallery_shape(grid.h, width, label_h, label_w, gap, fs, pack_art.ASPECT, int(320 * fs), len(shelf))
 
-        ww, wh, cols, row_h, rows, fit = shape(grid.w)
+        ww, wh, pitch, cols, row_h, rows, fit = shape(grid.w)
         if rows > fit:                                       # rc15b (PACK2 x bug-sell-scroll-2): room for the scroll bar
             bar_w = max(int(gui.screen.get_height() * BAR_MIN_SHARE), max(10, int(BAR_WIDTH * max(1.0, fs))))
-            ww, wh, cols, row_h, rows, fit = shape(max(1, grid.w - bar_w - gap))
+            ww, wh, pitch, cols, row_h, rows, fit = shape(max(1, grid.w - bar_w - gap))
+        faces = self.pack_faces(shelf, halves)
+        if fit < 1:                                          # Round SHOPMSG2: not even one whole row fits - none is drawn
+            pick = getattr(self, "shelf_pick", None)
+            if pick not in [(k, c) for k, c, _p in shelf]:
+                pick = self.shelf_pick = None
+            self.note_pan("town:packs", pygame.Rect(grid.x, grid.y, grid.w, 1), False, 1)
+            self._fits["town:packs"] = (0, rows)
+            self.draw_shelf_details(gui, det, pick, shelf, names, halves, faces)
+            return
         top = max(0, min(self.scroll.get("town:packs", 0), max(0, rows - fit)))
         self.scroll["town:packs"] = top
         view = self.scroll_bar(gui, "town:packs", grid, rows, fit, top, row_h)     # the bar every Adventure list has
@@ -2664,9 +3224,8 @@ class AdventureFlow(dlg.Dialog):
             note = f"{top * cols + 1}-{min(len(shelf), (top + fit) * cols)} of {len(shelf)}"
             if tiny.size(note)[0] <= grid.right - (getattr(self, "_title_end", None) or grid.x) - gap:
                 draw_text(scr, note, grid.right, grid.y - 2, tiny, DIM, "bottomright")
-        span = cols * ww + (cols - 1) * gap
+        span = cols * pitch + (cols - 1) * gap
         x0 = grid.x + max(0, (grid.w - span) // 2)
-        faces = self.pack_faces(shelf, halves)
         self.prefetch(gui, [k for k in faces.values() if k])
         pick = getattr(self, "shelf_pick", None)
         px = max(1, _DAWN["k"] or 1)
@@ -2674,7 +3233,8 @@ class AdventureFlow(dlg.Dialog):
             pick = self.shelf_pick = None
         for j in range(top * cols, min(len(shelf), (top + fit) * cols)):
             kind, code, price = shelf[j]
-            r = pygame.Rect(x0 + (j % cols) * (ww + gap), grid.y + (j // cols - top) * row_h, ww, wh)
+            col_x = x0 + (j % cols) * (pitch + gap)
+            r = pygame.Rect(col_x + (pitch - ww) // 2, grid.y + (j // cols - top) * row_h, ww, wh)
             title, sub = self.wrapper_words(kind, code, names, halves)
             face = faces.get((kind, code))
             pic = self.pack_picture(gui, face, int(ww * 0.7), int(ww * 0.7 / pack_art.CARD_ASPECT))
@@ -2686,9 +3246,9 @@ class AdventureFlow(dlg.Dialog):
             elif r.collidepoint(gui.mouse):
                 pygame.draw.rect(scr, gfx.DB_DIM, r.inflate(4 * px, 4 * px), px)
             words = f"{price} gold"
-            draw_text(scr, clip_text(words, small, max(ww, label_w)), r.centerx, r.bottom + 3 * px + int(2 * fs), small,
+            draw_text(scr, clip_text(words, small, pitch), r.centerx, r.bottom + 3 * px + int(2 * fs), small,
                       GOLD if g.save.gold >= price else DIM, "midtop")
-            self.rows.append((r.union(pygame.Rect(r.x, r.bottom, r.w, label_h)), "shelf", (kind, code)))
+            self.rows.append((r.union(pygame.Rect(col_x, r.bottom, pitch, label_h)), "shelf", (kind, code)))
         self.draw_shelf_details(gui, det, pick, shelf, names, halves, faces)
 
     def pack_faces(self, shelf, halves):
@@ -2895,6 +3455,40 @@ class AdventureFlow(dlg.Dialog):
             words += " Add cards before you duel."
         return words
 
+    def traded_words(self, name, copies, got, tier):
+        """Round PROG5: what a trade says - and, as a sale does (SELL1), which deck it took copies out of."""
+        words = rextras.TRADE_DONE.format(copies=copies, name=name, got=got, tier=tier)
+        for deck_name, n in getattr(self.shop, "taken", None) or []:
+            d = next((d for d in self.game.save.decks if d.get("name") == deck_name), None)
+            size = sum(int(k) for _n, k in d.get("main", [])) if d else None
+            words += f" Taken out of '{deck_name}'" + (f": {size} cards now." if size is not None else ".")
+        if getattr(self.shop, "taken", None) and self.game.deck_problems():
+            words += " Add cards before you duel."
+        return words
+
+    def trade_list(self):
+        g, s = self.game, self.shop
+        return rextras.trade_rows(g.save, g.tiers(), s.band, adv.deck_uses(g))
+
+    def draw_tab_trade(self, gui, area):
+        """Round PROG5: Trade up - every card you own enough copies of, at a tier the region trades up from."""
+        try:
+            ex = rextras.read()
+            rows = self.trade_list()
+        except (OSError, ValueError) as e:
+            draw_text(gui.screen, f"Trade up can't be read: {e}", area.x, area.y, gui.font("small"), RED)
+            return
+        self.list_title(gui, area, rextras.TRADE_TITLE.format(copies=ex.trade_copies))
+        if not rows:
+            tiers = sorted(rextras.trade_tiers(self.shop.band, ex))
+            draw_text(gui.screen, rextras.TRADE_NONE.format(copies=ex.trade_copies, tiers=" or ".join(map(str, tiers))),
+                      area.x, area.y, gui.font("small"), DIM)
+        label = f"Trade {ex.trade_copies}"
+        for i, r in self.list_rows(gui, area, "town:trade", len(rows), self.row_h(gui)):
+            name, tier, have, used = rows[i]
+            sub = f"tier {tier} -> {tier + 1}   ·   you own {have}" + (f"   ·   your deck uses {used}" if used else "")
+            self.draw_row(gui, r, name, sub, [(label, f"trade:{name}", True, False)], name=name)
+
     def draw_tab_sell(self, gui, area):
         rows = self.sell_list()
         self.list_title(gui, area, "Sell  -  a card your deck uses comes out of the deck")       # Round SELL1
@@ -3073,12 +3667,32 @@ class AdventureFlow(dlg.Dialog):
             said = wrap_text(self.quality_explain(), tiny, inner.w)
             if len(said) <= 4 and inner.h - (len(said) + 6) * tiny.get_height() > 10 * lh:
                 head += [("explain", ln, DIM, tiny) for ln in said]      # under it when it fits whole; else a tap says it
-        foot = head + self.shape_items(gui, main, inner.w) + foot
-        self._curve_compact = False
-        heights = [self.shape_curve_h(gui) if kind == "curve" else f.get_height() for kind, _t, _c, f in foot]
-        if inner.h - sum(heights) < 6 * lh:                  # the deck list would keep under 6 lines: the curve without bars
-            self._curve_compact = True
-            heights = [self.shape_curve_h(gui) if kind == "curve" else f.get_height() for kind, _t, _c, f in foot]
+        shape = self.shape_items(gui, main, inner.w)
+        spar_lines = self.spar_history(e.as_deck())                         # Round SPAR1: the yard's measured win chance
+        tries = []
+        if spar_lines:                                       # the whole history, then the last only, then one short line
+            full = []
+            for i, said in enumerate(spar_lines):
+                full += [("spar", ln, TEXT if i == 0 else DIM, tiny) for ln in wrap_text(said, tiny, inner.w)[:3 if i == 0 else 2]]
+            last = [x for x in full if x[2] == TEXT]
+            short = [("spar", ln, TEXT, tiny) for ln in wrap_text(rspar.short_line(self.game.save, e.as_deck()), tiny, inner.w)[:2]]
+            tries = [full, last, short]
+
+        def sized(items):
+            self._curve_compact = False
+            hs = [self.shape_curve_h(gui) if kind == "curve" else f.get_height() for kind, _t, _c, f in items]
+            if inner.h - sum(hs) < 6 * lh:                   # the deck list would keep under 6 lines: the curve without bars
+                self._curve_compact = True
+                hs = [self.shape_curve_h(gui) if kind == "curve" else f.get_height() for kind, _t, _c, f in items]
+            return hs
+        foot = head + shape + foot
+        heights = sized(foot)
+        for k, extra in enumerate(tries):                    # the first that leaves the deck list 6 lines (else the short one)
+            hs = sized(head + extra + shape + foot[len(head) + len(shape):])
+            if inner.h - sum(hs) >= 6 * lh or k == len(tries) - 1:
+                foot = head + extra + shape + foot[len(head) + len(shape):]
+                heights = hs
+                break
         foot_top = inner.bottom - sum(heights)
         y_f = foot_top
         self.shape_drawn = {"lines": [], "curve": None}
@@ -3120,6 +3734,16 @@ class AdventureFlow(dlg.Dialog):
         if len(lines) > fit:
             note = clip_text(f"lines {top + 1}-{min(len(lines), top + fit)} of {len(lines)}", tiny, inner.w)
             draw_text(scr, note, inner.right, foot_top - lh // 4, tiny, DIM, "bottomright")
+
+    def spar_history(self, deck):
+        """Round SPAR1: "Last sparred: Day 4, 65% (50-78%)" (+ "Before: ...") for this deck; [] when never sparred."""
+        try:
+            return rspar.history_lines(self.game.save, deck)
+        except Exception as e:                               # it must never stop the editor
+            if not getattr(self, "_spar_noted", False):
+                self._spar_noted = True
+                crashlog.note(f"Adventure: the deck's sparring history: {type(e).__name__}: {e}")
+            return []
 
     # ---- Round PROG1b: the deck's shape (rpg.shape), under Card quality in the deck editor ----
     def shape_items(self, gui, main, width):
@@ -3181,6 +3805,10 @@ class AdventureFlow(dlg.Dialog):
         tf, body = gui.font("title", True), gui.font("body")
         if self.sub == "perk":                                    # Round PROG3: choose a perk
             self.draw_perk(gui)
+            return
+        if self.sub == "spar":                                    # Round SPAR1: the practice duels' progress (any stage)
+            self.buttons = self.draw_spar(gui)
+            self.rect = scr.get_rect()
             return
         if self.sub == "result" and self.results is not None:     # Round PROG1: the results screen over any other stage
             self.buttons = self.draw_result_over(gui)

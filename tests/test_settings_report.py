@@ -88,6 +88,7 @@ class CogTests(Base):
                           "sound", "hover_tick", "music_on", "ambience_on",        # round 24 (AD1: Sound | Hover tick share a row; AU1: Music | Ambience)
                           "vol_down", "vol_up",
                           "speed",                                                                              # round PRI1: Speed | New game | Concede
+                          "pauses",                                                                             # round PERF2: Pauses joins the row
                           "newgame", "quit", "help", "report", "licenses",
                           "data_folder",                                                                        # round 28
                           "tour", "updates"])                                                                   # round UX1, 30

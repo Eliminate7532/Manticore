@@ -351,7 +351,8 @@ class CogTests(unittest.TestCase):
                     pop = gui.overlay
                     rects = {n: r for r, n in pop.buttons}
                     names = [n for _r, n in pop.buttons]
-                    self.assertEqual(names[names.index("speed"):names.index("speed") + 3], ["speed", "newgame", "quit"])
+                    # round PERF2: Pauses joined the row, after Speed (tests/test_perf2.py CogTests checks all four)
+                    self.assertEqual(names[names.index("speed"):names.index("speed") + 4], ["speed", "pauses", "newgame", "quit"])
                     sp, ng, co = rects["speed"], rects["newgame"], rects["quit"]
                     self.assertEqual(sp.y, ng.y)
                     self.assertEqual(sp.y, co.y)

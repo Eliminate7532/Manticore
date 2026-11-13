@@ -36,7 +36,8 @@ from rpg import data_path
 PROGRESSION_FILE = data_path("progression.json")
 PLAIN_LIFE = 20                         # the Adventure's duel without levels (rpg.duel.LIFE, Forge's Constructed)
 XP_KINDS = ("regular", "dungeon", "rare", "boss", "quest", "loss", "draw")
-PERK_EFFECTS = ("reward_choices", "gold_bonus", "loss_cut", "life", "hand", "battlefield")   # GOLD1: loss_cut, not loss_share
+PERK_EFFECTS = ("reward_choices", "gold_bonus", "loss_cut", "life", "hand", "battlefield",   # GOLD1: loss_cut, not loss_share
+                "gear_slot")      # Round PROG4: Pack Mule - the Pack slot opens (rpg.gear: the slot names the perk)
 
 
 class Perk:
@@ -69,6 +70,8 @@ class Perk:
         for k in ("reward_choices", "life", "hand"):
             if k in eff:
                 _whole(eff[k], f"{where}.effect.{k}", 1, 20)
+        if "gear_slot" in eff:                                            # Round PROG4
+            _whole(eff["gear_slot"], f"{where}.effect.gear_slot", 1, 1)
         for k in ("gold_bonus",):
             if k in eff and not _fraction(eff[k]):
                 raise ValueError(f"{where}.effect.{k}: a share from 0 to 1 is needed, not {eff[k]!r}")
@@ -250,10 +253,23 @@ def perks_of(save, lv=None):
     return [lv.perks[k] for k in state(save)["perks"] if k in lv.perks]
 
 
+def _gear(save):
+    """Round PROG4: the worn gear's effects (rpg.gear.effects) - {} when gear.json can't be read (the duel as without it, said once)."""
+    try:
+        from rpg import gear
+        return gear.effects(save)
+    except (OSError, ValueError) as e:
+        from rpg import notes
+        notes.once("gear:read", f"gear.json couldn't be read, so no gear counts: {e}")
+        return {}
+
+
 def duel_effects(save, lv=None):
     """The player's seat's start effects in an Adventure duel (start_effects.py's dict): life = base_life + life_per_level for each
-    level above 1 + the perks' life; hand = 7 + the perks' hand (only when it isn't 7); the perks' battlefield cards. At level 1 with
-    no perks this is {}: the duel exactly as before (no --start-effects; an older bridge still plays it)."""
+    level above 1 + the perks' life + the worn gear's life (Round PROG4); hand = 7 + the perks' and the gear's hand (only when it
+    isn't 7); the perks' and then the gear's battlefield cards; the gear's command-zone relics. Each worn piece counts once
+    (rpg.gear.effects). At level 1 with no perks and no gear this is {}: the duel exactly as before (no --start-effects; an older
+    bridge still plays it). Life never goes below 1 nor hand below 0 (a trade-off piece can't make the bridge refuse the duel)."""
     lv = lv or read()
     level_now = level(save, lv)
     life = lv.base_life + lv.life_per_level * (level_now - 1)
@@ -263,6 +279,13 @@ def duel_effects(save, lv=None):
         life += int(k.effect.get("life", 0))
         hand += int(k.effect.get("hand", 0))
         bf += list(k.effect.get("battlefield", ()))
+    ge = _gear(save)
+    life += int(ge.get("life", 0))
+    hand += int(ge.get("hand", 0))
+    bf += list(ge.get("battlefield", ()))
+    cz = list(ge.get("command", ()))
+    life = max(1, min(999, life))
+    hand = max(0, min(20, hand))
     out = {}
     if life != PLAIN_LIFE:                   # the plain duel's 20 life needs nothing from the bridge (an older one still plays it)
         out["life"] = life
@@ -270,18 +293,25 @@ def duel_effects(save, lv=None):
         out["hand"] = hand
     if bf:
         out["battlefield"] = bf
+    if cz:
+        out["command"] = cz
     return out
 
 
 def reward_choices(save, base, lv=None):
+    """Cards offered per reward pick: the base + the perks' (Keen Eye) + the worn gear's (Round PROG4: Seeker's Monocle)."""
     lv = lv or read()
-    return base + sum(int(k.effect.get("reward_choices", 0)) for k in perks_of(save, lv))
+    return base + sum(int(k.effect.get("reward_choices", 0)) for k in perks_of(save, lv)) + \
+        int(_gear(save).get("reward_choices", 0))
 
 
 def win_gold(save, gold, lv=None):
+    """A won duel's gold: the perks' bonus (Bounty Hunter: +10%), then times the worn gear's gold_mult (Round PROG4: Merchant's
+    Token), rounded once."""
     lv = lv or read()
     bonus = sum(float(k.effect.get("gold_bonus", 0)) for k in perks_of(save, lv))
-    return int(round(gold * (1 + bonus))) if bonus else gold
+    mult = float(_gear(save).get("gold_mult", 1.0))
+    return int(round(gold * (1 + bonus) * mult)) if (bonus or mult != 1.0) else gold
 
 
 def loss_share(save, numbers, kind="regular", lv=None):

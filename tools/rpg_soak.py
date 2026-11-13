@@ -104,15 +104,16 @@ class ForgeDuels:
             self.decks[key] = path
         return self.decks[key]
 
-    def play(self, mine, theirs, seed):
-        """mine, theirs: lists of card names (copies repeated). Returns {"winner": "A" (mine) | "B" | "draw", "turns", "ms"} or
-        {"error": ...}."""
+    def play(self, mine, theirs, seed, spec=""):
+        """mine, theirs: lists of card names (copies repeated); spec: seat A's start effects (PROG3's SPEC, the 6th column; "" none).
+        Returns {"winner": "A" (mine) | "B" | "draw", "turns", "ms"} or {"error": ...}."""
         self.n += 1
         pid = f"d{self.n}"
         a, b = self._dck("bot", mine), self._dck("foe", theirs)
         if self.proc.poll() is not None:
             return {"error": f"Java stopped (exit {self.proc.returncode}); see {self.java_log.name}"}
-        self.proc.stdin.write("\t".join((pid, a, b, "1", str(seed))) + "\n")
+        cols = [pid, a, b, "1", str(seed)] + ([spec] if spec else [])
+        self.proc.stdin.write("\t".join(cols) + "\n")
         self.proc.stdin.flush()
         limit = time.time() + self.timeout + 240          # Forge's own limit, plus the model's start for the first duel
         while time.time() < limit:
@@ -158,8 +159,9 @@ class StandInDuels:
         self.turns = turns
         self.calls = []
 
-    def play(self, mine, theirs, seed):
+    def play(self, mine, theirs, seed, spec=""):
         self.calls.append((list(mine), list(theirs), seed))
+        self.specs = getattr(self, "specs", []) + [spec]
         return {"winner": self.decide(mine, theirs, self.rng), "turns": self.turns, "ms": 1}
 
     def close(self):
@@ -205,16 +207,45 @@ def _rank_good(card, tier):
     return (-tier, card.mana_value, card.name)          # highest tier first, then the lowest mana value
 
 
-def rebuild_deck(deck, collection, pool, tier_table, lists):
+KIND_ORDER = ("Creature", "Planeswalker", "Battle", "Instant", "Sorcery", "Artifact", "Enchantment")
+REBUILD_RULES = ("shape", "tier", "none")
+MV_SLACK = 1                                       # PROG-TUNE: a swap keeps the mana value within this (Karl, 3 Nov 06:59)
+
+
+def card_kind(card):
+    """The card's one type for the deck rule: Creature for any creature (an artifact creature too), else the first of KIND_ORDER in
+    its type line."""
+    front = card.type_line.split(" - ")[0]
+    for k in KIND_ORDER:
+        if k in front.split():
+            return k
+    return front.split()[-1] if front.split() else "?"
+
+
+def _fits(rule, out_card, in_card):
+    """May in_card replace out_card? tier (RPG-SOAK1's rule): any; shape (PROG-TUNE, Karl 3 Nov 06:59: "swap a card only for one of
+    the same card type and a mana value within 1, keeping the creature count and the curve"): the same card_kind and a mana value
+    within MV_SLACK."""
+    if rule != "shape":
+        return True
+    return card_kind(out_card) == card_kind(in_card) and abs(out_card.mana_value - in_card.mana_value) <= MV_SLACK
+
+
+def rebuild_deck(deck, collection, pool, tier_table, lists, rule="shape"):
     """The bot's deck rebuild, in place. Returns [(out, in)] swaps. The rule:
     - the deck's colours are the colours its non-land cards have now (a starting deck has two at most, the RPG9 rule), and stay so;
     - candidates are owned non-land cards, on-colour (or colourless), ranked by the tier table, not banned or restricted, with copies
       the deck doesn't use yet (and at most 4 a name in the deck, 1 for a restricted card - none are candidates);
-    - repeat: take the deck's weakest non-land card (lowest tier, then highest mana value; an unranked card counts as tier 0) and
-      the best candidate (highest tier, then lowest mana value); swap one copy when the candidate's tier is higher; stop otherwise;
+    - rule "tier" (RPG-SOAK1): repeat: the deck's weakest non-land card (lowest tier, then highest mana value; an unranked card
+      counts as tier 0) is swapped for the best candidate (highest tier, then lowest mana value) when that one's tier is higher;
+    - rule "shape" (PROG-TUNE, the default): the same, but a card may only be swapped for a candidate of the same card type
+      (card_kind) and a mana value within MV_SLACK, so the creature count and the curve stay; the deck's cards are tried weakest
+      first, and the first that has a better fitting candidate is swapped;
     - lands and the deck's size never change; a rebuild whose deck fails the RPG's rules or ownership (rpg.collection.problems) is
       undone."""
     from rpg.collection import problems
+    if rule == "none":
+        return []
     main = [[n, int(k)] for n, k in deck.get("main", [])]
     before = [list(x) for x in main]
     cols = deck_colours(main, pool)
@@ -223,17 +254,16 @@ def rebuild_deck(deck, collection, pool, tier_table, lists):
         in_deck = {}
         for n, k in main:
             in_deck[n] = in_deck.get(n, 0) + k
-        weak = None
+        weak = []
         for n, k in main:
             c = pool.get(n)
             if c is None or c.is_land or k <= 0:
                 continue
-            r = _rank_weak(c, tier_table.tier_of(c.name) or 0)
-            if weak is None or r < weak[0]:
-                weak = (r, n)
-        if weak is None:
+            weak.append((_rank_weak(c, tier_table.tier_of(c.name) or 0), n, c))
+        weak.sort()
+        if not weak:
             break
-        best = None
+        cands = []
         for name in collection.names():
             c = pool.get(name)
             if c is None or c.is_land or c.is_basic or not on_colour(c, cols):
@@ -247,22 +277,27 @@ def rebuild_deck(deck, collection, pool, tier_table, lists):
             have = collection.count(c.name) or 0
             if used >= have or used >= 4:
                 continue
-            r = _rank_good(c, t)
-            if best is None or r < best[0]:
-                best = (r, c.name, t)
-        if best is None or best[2] <= weak[0][0]:
+            cands.append((_rank_good(c, t), c.name, t, c))
+        cands.sort()
+        pick = None
+        for wr, wn, wc in (weak if rule == "shape" else weak[:1]):
+            best = next((x for x in cands if _fits(rule, wc, x[3]) and x[1] != wn), None)
+            if best is not None and best[2] > wr[0]:
+                pick = (wn, best[1])
+                break
+        if pick is None:
             break
         for row in main:
-            if row[0] == weak[1] and row[1] > 0:
+            if row[0] == pick[0] and row[1] > 0:
                 row[1] -= 1
                 break
-        row = next((r for r in main if r[0] == best[1]), None)
+        row = next((r for r in main if r[0] == pick[1]), None)
         if row is None:
-            main.append([best[1], 1])
+            main.append([pick[1], 1])
         else:
             row[1] += 1
         main = [r for r in main if r[1] > 0]
-        swaps.append((weak[1], best[1]))
+        swaps.append(pick)
     if not swaps:
         return []
     trial = dict(deck, main=main)
@@ -273,26 +308,129 @@ def rebuild_deck(deck, collection, pool, tier_table, lists):
     return swaps
 
 
-def improves(card, deck_main, pool, tier_table):
-    """Would this card go into the deck (on-colour non-land, tier above the deck's weakest non-land card)?"""
+def improves(card, deck_main, pool, tier_table, rule="shape"):
+    """Would this card go into the deck (on-colour non-land, a tier above a deck card it may replace: the deck's weakest non-land
+    card for rule tier, any deck card of the same type and a mana value within MV_SLACK for rule shape)?"""
     if card is None or card.is_land:
         return False
     cols = deck_colours(deck_main, pool)
     if not on_colour(card, cols):
         return False
     t = tier_table.tier_of(card.name)
-    weakest = min(((tier_table.tier_of(n) or 0) for n, _k in deck_main
-                   if pool.get(n) is not None and not pool.get(n).is_land), default=0)
-    return t is not None and t > weakest
+    if t is None:
+        return False
+    outs = [pool.get(n) for n, _k in deck_main if pool.get(n) is not None and not pool.get(n).is_land]
+    if rule == "shape":
+        outs = [c for c in outs if _fits(rule, c, card) and c.name != card.name]
+    weakest = min(((tier_table.tier_of(c.name) or 0) for c in outs), default=None)
+    return weakest is not None and t > weakest
 
 
 # ---- shopping ----------------------------------------------------------------------------------------------------------------
 
-def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, rebuild=True):
+PERK_ORDER = ("stout", "quick_draw", "hoard", "thick_skin", "bounty", "keen_eye", "pack_mule", "haggler", "fleet_foot")
+GEAR_SCORE = {"life": 1.0, "hand": 3.0, "battlefield": 1.5, "command": 2.0, "reward_choices": 0.5, "gold_mult": 0.0,
+              "walk_speed": 0.0}                     # PROG-TUNE: the bot's equip rule - what a piece is worth in a duel [estimate]
+
+
+def gear_score(piece):
+    """A piece's worth to the bot: duel effects only (life 1 a point, a card in hand 3, a permanent at the start 1.5, a relic 2)."""
+    e = piece.effect
+    v = 0.0
+    for k, w in GEAR_SCORE.items():
+        if k not in e:
+            continue
+        x = e[k]
+        if isinstance(x, list):
+            v += w * len(x)
+        elif isinstance(x, bool):
+            v += w
+        elif k in ("gold_mult", "walk_speed"):
+            continue
+        else:
+            v += w * x
+    return v
+
+
+def progress_step(save):
+    """PROG-TUNE: the bot's progression rules, for every type, whenever it can: take every waiting perk (PERK_ORDER, the first
+    offered), and wear the best owned piece in each open slot (gear_score; a piece that scores 0 or less is left off). Returns
+    {"perks": [ids taken], "worn": [ids put on]}."""
+    from rpg import levels, gear
+    out = {"perks": [], "worn": []}
+    try:
+        lv = levels.read()
+        for _ in range(10):
+            offs = levels.offers(save)
+            if not offs:
+                break
+            grp = offs[0]
+            pid = next((x for x in PERK_ORDER if x in grp), grp[0])
+            levels.choose(save, pid, lv)
+            out["perks"].append(pid)
+    except (OSError, ValueError):
+        pass
+    try:
+        gr = gear.read()
+        own = [p for p in gear.owned(save, gr) if p is not None and gear_score(p) > 0]
+        for slot in gear.open_slots(save, gr):
+            worn_now = dict((sl.id, pc) for sl, pc in gear.worn(save, gr))
+            fit = [p for p in own if gear.can_wear_in(p, slot)]
+            if not fit:
+                continue
+            best = max(fit, key=lambda p: (gear_score(p), p.id))
+            cur = worn_now.get(slot.id)
+            if cur is not None and gear_score(cur) >= gear_score(best):
+                continue
+            if any(pc.id == best.id for pc in worn_now.values()):
+                continue
+            gear.wear(save, best.id, slot.id, gr)
+            out["worn"].append(best.id)
+    except (OSError, ValueError, Exception) as e:          # GearError is an Exception
+        if type(e).__name__ not in ("GearError", "OSError", "ValueError"):
+            raise
+    return out
+
+
+def pack_menu(shop):
+    """PROG-TUNE: every pack product the town sells, as (kind, code, price, buy function): plain packs, premium packs, bundles of 3
+    and the Jumpstart theme packs on the shelf (Round PACK1)."""
+    out = []
+    for code, _n, price in shop.packs():
+        out.append(("pack", code, price, shop.buy_pack))
+    for code, _n, price in shop.premium_packs():
+        out.append(("premium", code, price, shop.buy_premium))
+    for code, _n, price in shop.bundles():
+        out.append(("bundle", code, price, shop.buy_bundle))
+    try:
+        for half, price in shop.themes():
+            out.append(("theme", half.code, price, shop.buy_theme))
+    except Exception:
+        pass
+    return out
+
+
+def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, rebuild=True, rule="shape", game=None,
+               visit=0, seed=0):
     """The bot's purchases at a town visit, by type. Returns {"bought": [names], "packs": n, "sold": [(name, k)], "spent", "got",
-    "rebuilds"}. rebuild False (--rebuild none): the deck is never touched."""
+    "rebuilds", "gear": [ids], "trades": [(out, in)], "bounty_gold", "pack_visits": [...]} . rebuild False (--rebuild none): the
+    deck is never touched.
+    PROG-TUNE additions: every type has the bounty board's finished jobs paid (it talks to the clerk at every visit); the shopper
+    also buys the town's gear (best gear_score per gold first) after its singles; the gambler buys ONE pack kind a visit, taken in
+    turn from pack_menu by (seed + visit) - so every kind gets bought across runs - and trades up (4 copies of a card it doesn't
+    use for 1 a tier higher) before selling its chaff. Nobody enters the gauntlet (its duels need the warden's screens)."""
     from rpg.shop import Shop, ShopError
-    out = {"bought": [], "packs": 0, "sold": [], "spent": 0, "got": 0, "rebuilds": 0}
+    out = {"bought": [], "packs": 0, "sold": [], "spent": 0, "got": 0, "rebuilds": 0, "gear": [], "trades": [],
+           "bounty_gold": 0, "pack_visits": []}
+    if game is not None:
+        try:
+            from rpg import extras
+            g0 = save.gold
+            extras.post_bounties(save)
+            out["bounties_paid"] = len(extras.collect_bounties(game))
+            out["bounty_gold"] = save.gold - g0
+        except (OSError, ValueError):
+            pass
     if player not in ("shopper", "gambler"):
         return out
     shop = Shop(save, town_id, world, numbers, pool=pool, tier_table=tier_table, lists=lists)
@@ -302,7 +440,7 @@ def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, r
     if player == "shopper":
         for _ in range(40):
             offers = [o for o in shop.singles() if o.left > 0 and o.price <= save.gold
-                      and improves(pool.get(o.name), deck["main"], pool, tier_table)]
+                      and improves(pool.get(o.name), deck["main"], pool, tier_table, rule)]
             if not offers:
                 break
             o = sorted(offers, key=lambda o: (-o.tier, o.price, o.name))[0]
@@ -312,24 +450,64 @@ def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, r
                 break
             out["bought"].append(o.name)
             out["spent"] += o.price
-            if rebuild and rebuild_deck(deck, save.collection, pool, tier_table, lists):
+            if rebuild and rebuild_deck(deck, save.collection, pool, tier_table, lists, rule):
                 out["rebuilds"] += 1
+        try:
+            from rpg import gear
+            gr = gear.read()
+            region = save.world.get("region") or 1
+            for _ in range(10):
+                offs = [p for p in gear.shop_offers(save, region, gr) if p.price <= save.gold and gear_score(p) > 0]
+                if not offs:
+                    break
+                p = max(offs, key=lambda p: (gear_score(p) / max(1, p.price), -p.price, p.id))
+                gear.buy(save, p.id, region, gr)
+                out["gear"].append(p.id)
+                out["spent"] += p.price
+        except (OSError, ValueError) as e:
+            pass
+        except Exception as e:
+            if type(e).__name__ != "GearError":
+                raise
     else:
-        packs = shop.packs()
-        if packs:
-            code, _name, price = packs[0]
+        menu = pack_menu(shop)
+        g_before = save.gold
+        pv = None
+        if menu:
+            kind, code, price, buy = menu[(seed + visit) % len(menu)]
+            pv = {"kind": kind, "code": code, "price": price, "n": 0, "gold_before": g_before}
             while save.gold >= 2 * price:
                 try:
-                    shop.buy_pack(code)
+                    buy(code)
                 except ShopError:
                     break
                 out["packs"] += 1
+                pv["n"] += 1
                 out["spent"] += price
-        if rebuild and rebuild_deck(deck, save.collection, pool, tier_table, lists):
+        if rebuild and rebuild_deck(deck, save.collection, pool, tier_table, lists, rule):
             out["rebuilds"] += 1
         from rpg.collection import deck_counts
-        used = {k: v for k, (_n, v) in deck_counts(deck).items()}
         from rpg.cardpool import normal_name
+        used = {k: v for k, (_n, v) in deck_counts(deck).items()}
+        if game is not None:
+            try:
+                from rpg import extras
+                ex = extras.read()
+                for _ in range(20):
+                    rows = [r for r in extras.trade_rows(save, tier_table, shop.band, used, ex) if r[3] == 0]
+                    if not rows:
+                        break
+                    name = sorted(rows, key=lambda r: (r[1], r[0]))[0][0]
+                    got, _t, _taken = extras.trade_up(save, name, pool, tier_table, lists, numbers, shop.band, ex)
+                    out["trades"].append((name, got))
+            except (OSError, ValueError):
+                pass
+            except Exception as e:
+                if type(e).__name__ != "TradeError":
+                    raise
+            if out["trades"] and rebuild and rebuild_deck(deck, save.collection, pool, tier_table, lists, rule):
+                out["rebuilds"] += 1
+                used = {k: v for k, (_n, v) in deck_counts(deck).items()}
         for name in sorted(save.collection.names()):
             c = pool.get(name)
             if c is None or c.is_basic or save.collection.is_free(name):
@@ -338,7 +516,7 @@ def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, r
             in_use = used.get(normal_name(name), 0)
             if in_use:
                 continue
-            if not (c.is_land or not improves(c, deck["main"], pool, tier_table)):
+            if not (c.is_land or not improves(c, deck["main"], pool, tier_table, rule)):
                 continue
             k = have - 1                                   # keep one copy (the Card Book's "ever owned" stays honest)
             if k < 1 or shop.sell_price(name) < 1:
@@ -349,6 +527,10 @@ def shop_visit(player, save, town_id, world, numbers, pool, tier_table, lists, r
                 continue
             out["sold"].append((name, k))
             out["got"] += got
+        if pv is not None:
+            pv["gold_after"] = save.gold
+            pv["flip"] = save.gold > g_before and pv["n"] > 0
+            out["pack_visits"].append(pv)
     return out
 
 
@@ -443,7 +625,7 @@ def verdict(runs, duels, expect_forge=True):
     shoppers = [r for r in runs if r.get("player") == "shopper"]
     if shoppers and not any(r.get("bought") for r in shoppers):
         why.append("no shopper ever bought a card")
-    tiered = [r for r in runs if r.get("rebuild_policy", "tier") == "tier"]
+    tiered = [r for r in runs if r.get("rebuild_policy", "tier") in ("tier", "shape")]
     if tiered and not any(r.get("rebuilds") for r in tiered) and any(r.get("wins") for r in tiered):
         why.append("no deck was ever rebuilt")
     bad_loss = [d for d in duels if d.get("result") == "lost"
@@ -527,10 +709,19 @@ def make_bot_class():
     from tests.test_forge_table import frame, key
     import rpg_screens as rs
     from rpg import clock, newgame, talk, economy, tiers, cardpool, rules
+    from rpg import duel as rduel, levels as rlevels, gear as rgear
+    import start_effects
+    # PROG-TUNE: the walker keeps gear-free speed. The harness lines the walker up on each tile's middle, and a walker x1.35
+    # (Wayfarer Boots) steps past the middle and back for ever (seen at Lantern Hollow's gate). Speed changes nothing the soak
+    # measures (minutes are 11 a duel), so gear's walk_speed is held at 1.0 here; every other effect of the gear is the game's.
+    rgear.walk_speed = lambda save, gr=None: 1.0
 
     TOWN, OUT, W1, W2 = sw.TOWN, sw.OUT, sw.W1, sw.W2
 
     class Bot(sw.SliceWalkTests):
+        rebuild_policy = "shape"
+        ignore_effects = False
+
         def runTest(self):
             pass
 
@@ -553,12 +744,21 @@ def make_bot_class():
             sv = f.game.save
             pd = dict(sv.pending_duel or {})
             gold0, clk, power = sv.gold, clock.now(sv.world), deck_power(sv.deck()["main"], self.pool, self.tiers)
+            effects = call.get("effects") or None
+            spec = start_effects.spec(effects) if effects else ""
+            if getattr(self, "ignore_effects", False):          # planted error (tests): the duel tool never gets them
+                spec = ""
+            held0 = rduel.held_by(sv, pd.get("spot")) or 0
+            share0 = rlevels.loss_share(sv, self.numbers, pd.get("encounter") or "regular")   # GOLD1 + Thick Skin
+            xp0, fw0 = rlevels.state(sv)["xp"], sv.world.get("first_win_day")
+            level0 = rlevels.level(sv)
+            worn0 = [p.id for _s, p in rgear.worn(sv)]
             res = None
             seeds = []
             for i in range(1 + DRAW_REPLAYS):
                 seed = self.rng.randrange(1 << 40)
                 seeds.append(seed)
-                res = self.engine.play(mine, theirs, seed)
+                res = self.engine.play(mine, theirs, seed, spec)
                 if res.get("winner") in ("A", "B") or res.get("error"):
                     break
             won = res.get("winner") == "A"
@@ -577,33 +777,69 @@ def make_bot_class():
                    "ms": res.get("ms"), "error": res.get("error"), "engine": self.engine.name, "seeds": seeds,
                    "gold_before": gold0, "gold_after": sv.gold, "gold_change": sv.gold - gold0, "map": pd.get("map"),
                    "clock": clk, "power": power, "cards": sv.collection.total(),
-                   "loss_share": self.numbers.loss_shares.get(pd.get("encounter") or "regular", self.numbers.loss_shares["regular"])}  # GOLD1
+                   "loss_share": 0.0 if pd.get("gauntlet") else share0,
+                   "spec": spec, "level": level0, "deck_key": __import__("hashlib").sha1("|".join(sorted(mine)).encode()).hexdigest()[:12], "xp_before": xp0, "xp_after": rlevels.state(sv)["xp"],
+                   "level_after": rlevels.level(sv), "worn": worn0, "perks": list(rlevels.state(sv)["perks"]),
+                   "held_back": held0 if won else 0, "first_win": won and sv.world.get("first_win_day") != fw0}
             self.duels.append(rec)
             self.emit(rec)
             if won:
                 self.gold_won += max(0, sv.gold - gold0)
             else:
                 self.gold_lost += max(0, gold0 - sv.gold)
+            self.choose_picks(g.modal)
             key(g, pygame.K_RETURN)
-            for _ in range(5):
+            for _ in range(6):
                 if g.modal.sub == "talk":
                     self.say_all(g, answer=True)
                 elif g.modal.sub == "result":
+                    self.choose_picks(g.modal)
                     key(g, pygame.K_RETURN)
                 else:
                     break
+            self.progress(g.modal)
             if won:
                 self.rebuild(g.modal)
             return won
 
+        def choose_picks(self, f):
+            """PROG2's pick 1 of 3: in each group the card that would go into the deck by the deck rule (improves), the highest
+            tier first; else the highest-tier on-colour card; else the first."""
+            res = getattr(f, "results", None)
+            if res is None or not getattr(res, "offers", None):
+                return
+            sv = f.game.save
+            deck = sv.deck()
+            main = deck["main"] if deck else []
+            cols = deck_colours(main, self.pool)
+            for gi, grp in enumerate(res.offers):
+                best, bkey = 0, None
+                for i, c in enumerate(grp):
+                    card = self.pool.get(c["name"])
+                    if card is None:
+                        continue
+                    t = self.tiers.tier_of(card.name) or 0
+                    k = (improves(card, main, self.pool, self.tiers, self.rebuild_policy), on_colour(card, cols), t, -i)
+                    if bkey is None or k > bkey:
+                        best, bkey = i, k
+                res.picks[gi] = best
+            self.picks_made += len(res.offers)
+
+        def progress(self, f):
+            got = progress_step(f.game.save)
+            self.perks_taken += got["perks"]
+            self.gear_worn += got["worn"]
+            if got["perks"] or got["worn"]:
+                f.game.write()
+
         def rebuild(self, f):
-            if getattr(self, "rebuild_policy", "tier") == "none":
+            if getattr(self, "rebuild_policy", "shape") == "none":
                 return
             sv = f.game.save
             deck = sv.deck()
             if deck is None:
                 return
-            swaps = rebuild_deck(deck, sv.collection, self.pool, self.tiers, self.lists)
+            swaps = rebuild_deck(deck, sv.collection, self.pool, self.tiers, self.lists, self.rebuild_policy)
             if swaps:
                 self.rebuilds += 1
                 self.swaps += swaps
@@ -613,16 +849,23 @@ def make_bot_class():
             sv = f.game.save
             town = sv.world.get("last_town") or self.world.start_town
             g0 = sv.gold
+            self.visits += 1
             got = shop_visit(self.player, sv, town, self.world, self.numbers, self.pool, self.tiers, self.lists,
-                             rebuild=getattr(self, "rebuild_policy", "tier") != "none")
+                             rebuild=getattr(self, "rebuild_policy", "shape") != "none", rule=self.rebuild_policy,
+                             game=f.game, visit=self.visits, seed=self.seed)
+            self.gear_bought += got["gear"]
+            self.trades += got["trades"]
+            self.bounty_gold += got["bounty_gold"]
+            self.pack_visits += got["pack_visits"]
+            self.progress(f)
             self.rebuilds += got["rebuilds"]
             self.bought += got["bought"]
             self.packs += got["packs"]
             self.sold += got["sold"]
             self.spent += got["spent"]
             self.got_sold += got["got"]
-            if got["packs"] and sv.gold > g0:
-                self.loop_gain += sv.gold - g0
+            if got["packs"] and sv.gold > g0 + got["bounty_gold"]:
+                self.loop_gain += sv.gold - g0 - got["bounty_gold"]
             self.rebuild(f)
             f.game.write()
 
@@ -635,7 +878,7 @@ def make_bot_class():
             if f.sub == "talk":
                 self.say_all(g, answer=True); return "talk"
             if f.sub == "result":
-                key(g, pygame.K_RETURN); return "result"
+                self.choose_picks(f); key(g, pygame.K_RETURN); return "result"
             if f.sub is not None:
                 raise RuntimeError(f"unexpected window {f.sub}")
             return None
@@ -733,6 +976,8 @@ def make_bot_class():
             self.after_end = getattr(self, "after_end", AFTER_END)
             self.bought, self.sold = [], []
             self.packs = self.rebuilds = self.spent = self.got_sold = self.loop_gain = 0
+            self.seed, self.visits, self.bounty_gold, self.picks_made = seed, 0, 0, 0
+            self.perks_taken, self.gear_worn, self.gear_bought, self.trades, self.pack_visits = [], [], [], [], []
             self.gold_won = self.gold_lost = 0
             self.pool = cardpool.load()
             self.lists = rules.vintage_lists()
@@ -816,13 +1061,18 @@ def make_bot_class():
                    "minutes_est": FIXED_MINUTES + MINUTES_PER_DUEL * len(self.duels),
                    "gold_start": gold0, "gold_end": sv.gold, "gold_won": self.gold_won, "gold_lost": self.gold_lost,
                    "gold_spent": self.spent, "gold_sold": self.got_sold, "bought": self.bought, "packs": self.packs,
-                   "sold": self.sold, "rebuilds": self.rebuilds, "rebuild_policy": getattr(self, "rebuild_policy", "tier"), "swaps": self.swaps[:200],
+                   "sold": self.sold, "rebuilds": self.rebuilds, "rebuild_policy": getattr(self, "rebuild_policy", "shape"), "swaps": self.swaps[:200],
                    "power_start": power0, "power_end": power1,
                    "power_gain": None if power0 is None or power1 is None else round(power1 - power0, 3),
                    **{f"tier{t}": by_tier[t] for t in by_tier}, "cards_end": sv.collection.total(),
                    "clock_end": clock.now(sv.world), "stuck": stuck, "loop": self.loop_gain > 0, "loop_gain": self.loop_gain,
                    "frames": self.frames, "tiles": round(self.walked, 1), "error": error,
-                   "problems": self.problems[-3:], "deck_end": sv.deck()["main"]}
+                   "problems": self.problems[-3:], "deck_end": sv.deck()["main"],
+                   "level_end": rlevels.level(sv), "xp_end": rlevels.state(sv)["xp"], "perks": self.perks_taken,
+                   "gear_worn": [p.id for _s, p in rgear.worn(sv)], "gear_bought": self.gear_bought, "gear_owned":
+                   [p.id for p in rgear.owned(sv)], "trades": self.trades, "bounty_gold": self.bounty_gold, "pack_visits": self.pack_visits, "picks_made": self.picks_made,
+                   "level_at": {str(L): next((d["n"] for d in self.duels if (d.get("level_after") or 1) >= L), None)
+                                for L in (3, 5, 10)}}
             self.emit(rec)
             return rec
 
@@ -841,14 +1091,41 @@ def load_numbers_override(path):
         adv.economy.read_numbers = economy.read_numbers
 
 
+_PROG_READ = {}
+
+
+def apply_progression(path):
+    """--progression FILE / a settings folder's progression.json: rpg.levels, rpg.extras and rpg.progress read this file instead of
+    rpg/data/progression.json, for this process (None: the shipped file again)."""
+    from rpg import levels, extras, progress
+    for mod in (levels, extras, progress):
+        orig = _PROG_READ.setdefault(mod.__name__, mod.read)
+        if path:
+            mod.read = lambda p=None, _o=orig, _f=path: _o(p or _f)
+        else:
+            mod.read = orig
+
+
 def load_progression(path):
-    """--progression FILE: rpg/data/progression.json (prog3) for the run only. Until prog3 exists nothing reads it: a missing file
-    is accepted and ignored; an existing one is only noted. Returns a sentence for the summary."""
+    """A sentence for the summary's header."""
     if not path:
-        return "progression: none"
+        return "progression: shipped"
     if not os.path.exists(path):
-        return f"progression: {path} (missing - ignored; prog3 hasn't made rpg/data/progression.json)"
-    return f"progression: {path} (read by nothing yet: this build has no levels or gear)"
+        raise SystemExit(f"--progression {path}: no such file")
+    return f"progression: {path}"
+
+
+def settings_dirs(paths):
+    """--setting DIR (several): [(name, numbers.json or None, progression.json or None)] - a folder under tools/rpg_soak_settings/
+    with either file or both (a missing one is the shipped file)."""
+    out = []
+    for d in paths or []:
+        d = os.path.abspath(d)
+        if not os.path.isdir(d):
+            raise SystemExit(f"--setting {d}: not a folder")
+        nf, pf = os.path.join(d, "numbers.json"), os.path.join(d, "progression.json")
+        out.append((os.path.basename(d.rstrip(os.sep)), nf if os.path.exists(nf) else None, pf if os.path.exists(pf) else None))
+    return out
 
 
 def child(args):
@@ -862,10 +1139,13 @@ def child(args):
     Bot = make_bot_class()
     end_at = time.time() + args.seconds if args.seconds else None
     try:
-        for settings, numbers_file, player, seed in jobs:
+        for job in jobs:
+            settings, numbers_file, player, seed = job[:4]
+            prog_file = job[4] if len(job) > 4 else None
             if end_at and time.time() > end_at:
                 break
             importlib_reset_numbers(numbers_file)
+            apply_progression(prog_file)
             name = f"{settings}__{player}__{seed}"
             path = os.path.join(folder, "records", name + ".jsonl")
             with open(path, "w", encoding="utf-8") as fo:
@@ -875,6 +1155,7 @@ def child(args):
                 bot.cap = args.duels
                 bot.after_end = args.after_end
                 bot.rebuild_policy = args.rebuild
+                bot.ignore_effects = args.ignore_effects
                 bot.setUp()
                 t0 = time.time()
                 try:
@@ -918,9 +1199,14 @@ def prune(root, keep=KEEP_RUNS):
 
 
 def settings_list(args):
-    out = [("built", None)]
+    """[(name, numbers file or None, progression file or None)]: --setting folders, else built + --numbers files (each with
+    --progression, if given)."""
+    pf = os.path.abspath(args.progression) if getattr(args, "progression", None) else None
+    if getattr(args, "setting", None):
+        return settings_dirs(args.setting)
+    out = [("built", None, pf)]
     for p in args.numbers or []:
-        out.append((os.path.splitext(os.path.basename(p))[0], os.path.abspath(p)))
+        out.append((os.path.splitext(os.path.basename(p))[0], os.path.abspath(p), pf))
     if args.numbers and not args.with_built:
         out = out[1:]
     return out
@@ -931,14 +1217,17 @@ def main(argv=None):
     ap.add_argument("--player", action="append", choices=PLAYERS)
     ap.add_argument("--numbers", action="append", help="a numbers.json for the run only (several: one sweep each)")
     ap.add_argument("--with-built", action="store_true", help="with --numbers: also run the shipped numbers.json")
-    ap.add_argument("--progression", help="rpg/data/progression.json for the run only (ignored while it doesn't exist)")
+    ap.add_argument("--progression", help="a progression.json for the run only (with --numbers / the shipped numbers)")
+    ap.add_argument("--setting", action="append", help="a folder with numbers.json and/or progression.json (several: one sweep "
+                    "each; e.g. tools/rpg_soak_settings/as_built)")
+    ap.add_argument("--ignore-effects", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--runs", type=int, default=0, help="runs per player type and settings file (0: as many as --hours allows)")
     ap.add_argument("--duels", type=int, default=DUEL_CAP, help="the most duels one run may take")
     ap.add_argument("--after-end", choices=("grind", "stop"), default=AFTER_END,
                     help="after the slice's end: keep grinding the outskirts until --duels (default), or stop")
-    ap.add_argument("--rebuild", choices=("tier", "none"), default="tier",
-                    help="the deck rule after wins and purchases: tier (rebuild_deck, default) or none (the control: the "
-                         "starting deck all run long)")
+    ap.add_argument("--rebuild", choices=REBUILD_RULES, default="shape",
+                    help="the deck rule after wins and purchases: shape (PROG-TUNE, default: a swap keeps the card type and the "
+                         "mana value within 1), tier (RPG-SOAK1's rule) or none (the control: the starting deck all run long)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--hours", type=float, default=0)
@@ -973,9 +1262,9 @@ def main(argv=None):
     per = args.runs or 1000
     jobs = []
     for i in range(per):
-        for s, nf in sets:
+        for s, nf, pf in sets:
             for p in players:
-                jobs.append((s, nf, p, args.seed + i))
+                jobs.append((s, nf, p, args.seed + i, pf))
     w = max(1, args.workers)
     shares = [jobs[i::w] for i in range(w)]
     t0 = time.time()
@@ -988,7 +1277,7 @@ def main(argv=None):
             json.dump(share, f)
         cmd = [sys.executable, os.path.abspath(__file__), "--child", "--jobs", jf, "--worker", str(i),
                "--out", folder, "--duels", str(args.duels), "--timeout", str(args.timeout), "--after-end", args.after_end,
-               "--rebuild", args.rebuild]
+               "--rebuild", args.rebuild] + (["--ignore-effects"] if args.ignore_effects else [])
         if args.hours:
             cmd += ["--seconds", str(args.hours * 3600)]
         if args.stand_in:
@@ -1002,7 +1291,7 @@ def main(argv=None):
             p.terminate()
     summ = summarize(read_records(folder), expect_forge=not args.stand_in)
     header = (f"Adventure soak {os.path.basename(folder)}: players {', '.join(players)}; settings "
-              f"{', '.join(s for s, _ in sets)}; {prog}; {len(jobs) if args.runs else 'as many runs as fit in ' + str(args.hours) + ' h'}"
+              f"{', '.join(s for s, _n, _p in sets)}; {prog}; {len(jobs) if args.runs else 'as many runs as fit in ' + str(args.hours) + ' h'}"
               f"; {time.time() - t0:.0f} s")
     txt = summary_text(summ, header)
     if args.compare:

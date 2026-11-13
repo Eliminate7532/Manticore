@@ -389,6 +389,7 @@ class ScreenGoldTests(ScreenBase):
         key(g, pygame.K_RETURN)
         f = self.on_map(g, "ashfen_outskirts")
         foe = next(fo for fo in f.explorer.encounters() if fo.spot == foe.spot)
+        f.game.save.world["first_win_day"] = 10 ** 6        # Round PROG5 (expected change): the day's first win paid already
         f = self.duel(g, foe, won=True)
         lines = f.result[1]
         gained = f.results.info["gold_change"]

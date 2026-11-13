@@ -11,6 +11,10 @@ world at the start town.
 
 The offers come from the new game's own seed, so a test (or a bug report) can replay them exactly.
 
+Round STARTER1 (Karl, 4 Nov 2026: "Upgrade picked halves"): preview() and finish() give the picked halves with their weakest spells
+upgraded (rpg/starter.py; how many per half and the tier cap in numbers.json "starter_upgrade"), also from the seed. The save's
+start records what was swapped ("upgrades"). The foes' Jumpstart decks are not upgraded (rpg/enemies.py).
+
 Round RPG9 (Karl, 14 Oct 2026: "Two colours max"): the three picks use at most MAX_COLOURS colours between them - offer() and
 all_choices() leave out a half-deck that would make a third colour, and pick() refuses one with a sentence saying why. A half-deck's
 colours are those of its non-land cards (products.colours). Karl's deck of 13 Oct (Angels, Beasts, Spirits: white, green and blue,
@@ -23,7 +27,7 @@ save.world["hero"].
 import os
 import time
 
-from rpg import cardpool, economy, products, rules
+from rpg import cardpool, economy, products, rules, starter
 from rpg.save import HEROES, SaveError, SaveGame, check_name
 
 OFFER_SIZE = 3            # half-decks shown at a time (my estimate: three cards side by side fit any window)
@@ -46,6 +50,7 @@ class NewGameFlow:
         self.picks = []                  # HalfDeck
         self.rerolls = 0
         self._offer = None
+        self._built = None               # Round STARTER1: (pick codes, deck, swaps), worked out once per set of picks
 
     # ---- data, loaded when first needed --------------------------------------------------------------------------------------
 
@@ -155,11 +160,51 @@ class NewGameFlow:
         self.name = None
         return None
 
+    def _numbers(self):
+        if self.numbers is None:
+            self.numbers = economy.read_numbers()
+        return self.numbers
+
+    def _build(self):
+        """Round STARTER1: (deck, swaps) for the picks so far - the picked halves upgraded (rpg/starter.py, K and the tier cap from
+        numbers.json "starter_upgrade"), then made into a deck by products.starter_deck. From the new game's seed: the same
+        picks give the same deck."""
+        key = tuple(h.code for h in self.picks)
+        if self._built is None or self._built[0] != key:
+            nums = self._numbers()
+            deck, swaps = starter.starting_deck(self.picks, self.seed, nums.starter_per_half, self._pool(), self._lists(),
+                                                decks=self.decks(), max_tier=self.upgrade_max_tier(),
+                                                never=nums.starter_never)
+            self._built = (key, deck, swaps)
+        return self._built[1], self._built[2]
+
+    def upgrade_max_tier(self):
+        """Round STARTER1: the upgrade's tier cap - numbers.json's max_tier, never above the start region's band (towns.json: what
+        its shops and rewards give; region 1 is 1-3, so 3 today)."""
+        cap = self._numbers().starter_max_tier
+        try:
+            world = self.world or economy.read_world()
+            cap = min(cap, world.band(world.town(world.start_town).region)[1])
+        except (OSError, KeyError, ValueError):
+            pass
+        return cap
+
     def preview(self):
-        """[(name, count)] - the deck the picks so far make (the full starting deck once three are picked)."""
+        """[(name, count)] - the deck the picks so far make (the full starting deck once three are picked). Round STARTER1: with
+        each picked half's weakest spells upgraded."""
         if not self.picks:
             return []
-        return products.starter_deck(self.picks, self._pool(), self._lists())
+        return self._build()[0]
+
+    def upgrades(self):
+        """Round STARTER1: [starter.Swap] - what the upgrade changed in the picks so far ([] before the first pick, or K 0)."""
+        if not self.picks:
+            return []
+        return list(self._build()[1])
+
+    def upgraded(self):
+        """Round STARTER1: {name the deck got: [names it replaced]} - the preview's marks."""
+        return starter.upgraded_names(self.upgrades())
 
     # ---- the save ------------------------------------------------------------------------------------------------------------
 
@@ -167,7 +212,7 @@ class NewGameFlow:
         """The new SaveGame (not written yet - rpg.save.write does that)."""
         if self.step != "done":
             raise ValueError(f"the new game isn't finished (step {self.step!r})")
-        numbers = self.numbers or economy.read_numbers()
+        numbers = self._numbers()
         world = self.world or economy.read_world()
         pool = self._pool()
         deck = self.preview()
@@ -179,7 +224,8 @@ class NewGameFlow:
         save.decks = [{"name": "Starting deck", "main": [[(pool.get(n).name if pool.get(n) else n), k] for n, k in deck],
                        "sideboard": []}]
         save.active_deck = 0
-        save.start = {"half_decks": [h.code for h in self.picks]}
+        save.start = {"half_decks": [h.code for h in self.picks],
+                      "upgrades": [s.as_list() for s in self.upgrades()]}   # Round STARTER1: [half, out, in, tiers, source]
         save.gold = numbers.start_gold
         town = world.start_town
         save.world = {"region": world.town(town).region, "map": town, "x": None, "y": None, "last_town": town,

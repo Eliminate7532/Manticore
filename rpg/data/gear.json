@@ -1,0 +1,148 @@
+{
+ "about": "Round PROG4 (Karl, 2 Nov 2026: gear from \"Everywhere\" - common pieces in town shops for gold; better ones in chests, from bosses and quests; the design is the Project doc claude/HANDOVER_PROGRESSION_2026-11-02.md section 3.4). EVERY name, word, price and number here is a placeholder (Claude's draft, 3 Nov 2026) for Karl to edit; prog-tune measures the numbers. slots: where a piece is worn, in the order the Gear screen lists them; a slot with \"perk\" opens only once that perk is taken (Pack Mule) and with \"any\": true holds a piece of any slot. pieces: name, slot, rarity (common: sold in town shops; uncommon / rare: found), region (the first region it belongs to), price (gold in a shop; a found piece's price is only shown), icon (assets/rpg/gear/<icon>.png, drawn by tools/rpg_gear_icons.py - Manticore's own work, CC0), text (what the piece says it does, one line) and effect. effect keys: life (+/- starting life in an Adventure duel), hand (+/- cards in the opening hand), battlefield (cards on your battlefield at the start: a real card in our Forge copy or token:SCRIPT, one of Forge's token scripts), command (real cards in your command zone at the start - the relics here are Wizards' Conspiracy cards, whose abilities work from the command zone), reward_choices (+N cards offered per reward pick), gold_mult (a won duel's gold times N), walk_speed (your walking speed on the map times N). sources: where the found pieces come from - bosses (foe kind -> piece, given when he is beaten), rares (rare foe id, rpg/data/rare_spawns.json -> piece, dropped the first time it is beaten) and quests (quest id -> piece, given with the quest's reward); a chest names its piece in progression.json (chests.list.<id>.gear). A piece is owned once: one found again is not given twice. rpg/gear.py reads and checks this file.",
+ "slots": [
+  {"id": "weapon", "name": "Weapon"},
+  {"id": "offhand", "name": "Off-hand"},
+  {"id": "amulet", "name": "Amulet"},
+  {"id": "armour", "name": "Armour"},
+  {"id": "boots", "name": "Boots"},
+  {"id": "pack", "name": "Pack", "any": true, "perk": "pack_mule"}
+ ],
+ "pieces": {
+  "militia_spear": {
+   "name": "Militia Spear",
+   "slot": "weapon",
+   "rarity": "common",
+   "region": 1,
+   "price": 70,
+   "icon": "spear",
+   "text": "Start each duel with a 1/1 Soldier.",
+   "effect": {"battlefield": ["token:w_1_1_soldier"]}
+  },
+  "tallow_lantern": {
+   "name": "Tallow Lantern",
+   "slot": "offhand",
+   "rarity": "common",
+   "region": 1,
+   "price": 55,
+   "icon": "lantern",
+   "text": "Start each duel with a Clue.",
+   "effect": {"battlefield": ["token:c_a_clue_draw"]}
+  },
+  "copper_charm": {
+   "name": "Copper Charm",
+   "slot": "amulet",
+   "rarity": "common",
+   "region": 1,
+   "price": 40,
+   "icon": "charm",
+   "text": "Start each duel with 2 more life.",
+   "effect": {"life": 2}
+  },
+  "padded_jerkin": {
+   "name": "Padded Jerkin",
+   "slot": "armour",
+   "rarity": "common",
+   "region": 1,
+   "price": 60,
+   "icon": "jerkin",
+   "text": "Start each duel with 3 more life.",
+   "effect": {"life": 3}
+  },
+  "road_boots": {
+   "name": "Road Boots",
+   "slot": "boots",
+   "rarity": "common",
+   "region": 1,
+   "price": 45,
+   "icon": "boots",
+   "text": "Walk 20% faster.",
+   "effect": {"walk_speed": 1.2}
+  },
+  "ossuary_ward": {
+   "name": "Ossuary Ward",
+   "slot": "amulet",
+   "rarity": "uncommon",
+   "region": 1,
+   "price": 150,
+   "icon": "ward",
+   "text": "Relic: Sentinel Dispatch - a 1/1 Construct with defender at the first upkeep.",
+   "effect": {"command": ["Sentinel Dispatch"]}
+  },
+  "wildsong_horn": {
+   "name": "Wildsong Horn",
+   "slot": "offhand",
+   "rarity": "uncommon",
+   "region": 1,
+   "price": 150,
+   "icon": "horn",
+   "text": "Relic: Hymn of the Wilds - your first creature spell each turn costs 1 less, but you can't cast instants or sorceries.",
+   "effect": {"command": ["Hymn of the Wilds"]}
+  },
+  "bannerman_pike": {
+   "name": "Bannerman's Pike",
+   "slot": "weapon",
+   "rarity": "uncommon",
+   "region": 1,
+   "price": 160,
+   "icon": "pike",
+   "text": "Relic: Hold the Perimeter - a 1/2 Soldier with defender at your first upkeep; each foe gets a 1/1 Goblin that can't block.",
+   "effect": {"command": ["Hold the Perimeter"]}
+  },
+  "wayfarer_boots": {
+   "name": "Wayfarer's Boots",
+   "slot": "boots",
+   "rarity": "uncommon",
+   "region": 1,
+   "price": 140,
+   "icon": "wayboots",
+   "text": "Walk 35% faster and start each duel with 1 more life.",
+   "effect": {"walk_speed": 1.35, "life": 1}
+  },
+  "merchants_token": {
+   "name": "Merchant's Token",
+   "slot": "amulet",
+   "rarity": "uncommon",
+   "region": 1,
+   "price": 180,
+   "icon": "coin",
+   "text": "15% more gold from won duels.",
+   "effect": {"gold_mult": 1.15}
+  },
+  "seekers_monocle": {
+   "name": "Seeker's Monocle",
+   "slot": "amulet",
+   "rarity": "rare",
+   "region": 1,
+   "price": 300,
+   "icon": "monocle",
+   "text": "Each reward card is a pick of 1 more.",
+   "effect": {"reward_choices": 1}
+  },
+  "gorsehide_cloak": {
+   "name": "Gorsehide Cloak",
+   "slot": "armour",
+   "rarity": "rare",
+   "region": 1,
+   "price": 280,
+   "icon": "cloak",
+   "text": "Start each duel with 5 more life, but walk 10% slower.",
+   "effect": {"life": 5, "walk_speed": 0.9}
+  },
+  "black_censer": {
+   "name": "Priest's Black Censer",
+   "slot": "offhand",
+   "rarity": "rare",
+   "region": 1,
+   "price": 320,
+   "icon": "censer",
+   "text": "One more card in your opening hand, but start each duel with 3 less life.",
+   "effect": {"hand": 1, "life": -3}
+  }
+ },
+ "sources": {
+  "bosses": {"grave_priest": "black_censer"},
+  "rares": {"mother_of_rats": "seekers_monocle", "red_sash": "merchants_token", "old_gorsehide": "gorsehide_cloak"},
+  "quests": {"lamplighters_debt": "bannerman_pike", "the_dark_hall": "wayfarer_boots"}
+ }
+}

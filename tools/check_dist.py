@@ -48,7 +48,8 @@ REQUIRED_FILES = ["Manticore{exe}", "Manticore-cli{exe}", "jre/bin/java{exe}", "
                   "banned_commander.snapshot.json", "banned_brawl.snapshot.json",
                   "banned_standard.snapshot.json",                  # round CON1
                   "forge_card_names.json",                         # patch 38: Forge's card-name index, made by the build
-                  "relay_config.json"]                             # round RLY2: the relay Host online uses by default
+                  "relay_config.json",                             # round RLY2: the relay Host online uses by default
+                  "java_rpg/rpg_tools.jar"]                        # round SPAR1: the sparring yard's duel tool (rpg.spar)
 REQUIRED_DIRS = ["sample_decks", "assets/fonts", "forge_runtime/res/cardsfolder", "jre/legal"]
 FORBIDDEN_TOP = [".git", "portable.txt", "settings.json", "my_decks", "bug_report_config.json", "soak_runs", "cache"]
 

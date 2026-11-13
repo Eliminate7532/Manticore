@@ -482,8 +482,13 @@ class HostWait:
                 done, total = s.replay_progress
                 lines.append(("Restoring the saved game%s  (%d of %d actions)" % (dots, done, total) if total else
                               "Restoring the saved game" + dots, body, WHITE))
-            names = [g.get("name") for g in (s.seat_list or [])] or [n for _seat, n, _d in s.resume.get("guests") or []]
+            names = s.waited_for() if hasattr(s, "waited_for") else (
+                [g.get("name") for g in (s.seat_list or [])] or [n for _seat, n, _d in s.resume.get("guests") or []])
             missing = [n for n in names if n not in (s.guests_joined or [])]
+            out = sorted(s.out_guests()) if hasattr(s, "out_guests") else []
+            if out:                                # Round RESUME2: a guest who had lost isn't waited for
+                lines.append(("%s %s out of the game - not waiting for %s" % (
+                    " and ".join(out), "is" if len(out) == 1 else "are", "them"), small, DIM))
             if missing:
                 lines.append(("Waiting for %s to join again%s" % (" and ".join(missing), dots if not s.resuming else ""),
                               body if not s.resuming else small, WHITE))
@@ -729,7 +734,8 @@ class JoinDialog(dlg.Dialog):
             return
         self.connecting_to = "%s:%d" % (address, port)
         self.watching = watch
-        self.message = ("Connecting to %s%s..." % (self.connecting_to, " (a draft)" if drafting else ""), DIM)
+        bring = "" if (watch or drafting) else " with %s" % (getattr(self.entry, "name", "") or "your chosen deck")
+        self.message = ("Connecting to %s%s%s..." % (self.connecting_to, " (a draft)" if drafting else "", bring), DIM)
         self.job = JoinJob(session).start()
 
     def poll(self, gui):
@@ -759,14 +765,13 @@ class JoinDialog(dlg.Dialog):
             intro = wrap_text("Join a friend who is hosting a game. %s - you can still watch." % self.deck_problem.rstrip("."),
                               small, tw)
         else:
-            intro = wrap_text("Join a friend who is hosting a game, or watch one. You play: %s." % (
-                getattr(self.entry, "name", "") or "your chosen deck"), small, tw)
+            intro = wrap_text("Join a friend who is hosting a game, or watch one.", small, tw)
         note = wrap_text("Without an invite code, this program can't check that the address is really your friend's PC "
                          "the first time." if self.by_hand else "The invite code holds your friend's address, the port, the "
                          "password and their PC's fingerprint.", small, tw)
         msg = wrap_text(self.message[0], small, tw)[:3] if self.message else []
         bh = int(max(42, 46 * L.fs))
-        rows = len(self.order())
+        rows = len(self.order()) + 1                     # bug-1567732410072956951: + the "Your deck" row
         need = (20 + title.get_height() + 8 + len(intro) * small.get_height() + gap + rows * (rh + gap) + rh + gap
                 + len(note) * small.get_height() + gap + 3 * small.get_height() + gap + bh + 20)
         rect = self.panel(gui, pw, min(need, L.H - 40), real=True)
@@ -778,8 +783,17 @@ class JoinDialog(dlg.Dialog):
             y += small.get_height()
         y += gap
         labels = {"code": "Invite code", "address": "Address", "port": "Port", "password": "Password", "name": "Your name"}
-        lw = _label_w(gui, [labels[n] for n in self.order()], body)
+        lw = _label_w(gui, [labels[n] for n in self.order()] + ["Your deck"], body)
         busy = self.job is not None
+        # bug-1567732410072956951: say plainly which deck Join brings (the deck screen's YOUR DECK), with a way back to change it
+        draw_text(scr, "Your deck", x, y + rh // 2, body, WHITE, "midleft")
+        cw_ = max(gui.button_width("Change deck", "small"), int(130 * L.fs))
+        self.button(gui, pygame.Rect(rect.right - 26 - cw_, y, cw_, rh), "Change deck", "change_deck", not busy, fkey="small")
+        dw = rect.right - 26 - cw_ - 12 - (x + lw)
+        self.deck_line = deck_line(self.entry)
+        draw_text(scr, clip_text(self.deck_line, body, dw), x + lw, y + rh // 2, body, RED if self.deck_problem else GOLD,
+                  "midleft")
+        y += rh + gap
         for name in self.order():
             draw_text(scr, labels[name], x, y + rh // 2, body, WHITE, "midleft")
             fx = x + lw
@@ -835,6 +849,8 @@ class JoinDialog(dlg.Dialog):
             self.by_hand = not self.by_hand
             self.focus = self.order()[0]
             self.message = None
+        elif name == "change_deck":                # back to the deck screen, where YOUR DECK is chosen
+            self.done = True
         elif name == "join":
             self.join(gui)
         elif name == "watch":
@@ -861,6 +877,17 @@ class JoinDialog(dlg.Dialog):
         else:
             self.fields[self.focus].key(gui, ev)
             self.message = None
+
+
+def deck_line(entry):
+    """bug-1567732410072956951: the Join dialog's "Your deck" line - the deck's name, then its commander(s) when it has any."""
+    if entry is None:
+        return "no deck chosen - choose one on the deck screen"
+    name = getattr(entry, "name", "") or "your chosen deck"
+    cmd = [c for c in (getattr(entry, "commanders", None) or []) if c]
+    if cmd and formats.has_commander(getattr(entry, "format", None) or formats.DEFAULT):
+        return "%s  -  %s" % (name, " + ".join(cmd))
+    return name
 
 
 def relay_line(rel, relay):

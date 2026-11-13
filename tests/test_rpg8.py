@@ -228,6 +228,7 @@ class LogicTests(Base):
 
     def test_a_duel_is_marked_on_disk_before_it_starts_and_settled_from_its_result(self):
         g = new_game(None)
+        g.save.world["first_win_day"] = 10 ** 6       # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         t = self.trigger(g)
         d = adv.start_duel(g, t)
         self.assertEqual(on_disk(self.folder)["pending_duel"]["kind"], t.enemy)    # written before the game starts

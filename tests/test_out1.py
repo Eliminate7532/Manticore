@@ -40,7 +40,8 @@ class SourceTests(unittest.TestCase):
         self.assertIn("hasLost()", body)
         self.assertIn(".stop()", body)
         main = read("Main.java")
-        concede = main[main.index("static void concedeWhenSafe("):]
+        # round RESUME2: the body is in RESUME1's overload (the three-argument one only calls it)
+        concede = main[main.index("static void concedeWhenSafe(BridgeGui gui, IGameController gc, long since, Runnable"):]
         concede = concede[:concede.index("\n    }\n")]
         after = concede[concede.index("gc.concede();"):]
         self.assertIn("BridgeGui.releaseIfOut(", after)

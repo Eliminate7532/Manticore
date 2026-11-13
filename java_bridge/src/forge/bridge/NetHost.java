@@ -102,7 +102,8 @@ public class NetHost {
     static final Set<String> REMOTE_ALLOWED = Set.of("ok", "cancel", "card", "player", "mana", "undo", "alpha", "concede", "flush",
             "stops", "yield", "autoyield", "trigger", "autopass", "yieldreset",
             "hold", "passturn", "fullcontrol", "alwaysstop",                                   // patch 43
-            "speed");                                                                          // round PRI1
+            "speed",                                                                           // round PRI1
+            "pauses");                                                                         // round PERF2
 
     static int blockSeconds = 60;
     static int graceSeconds = 60;                           // round MP2: how long a dropped guest's seat is held
@@ -411,6 +412,7 @@ public class NetHost {
         if (feeder.diverged != null) {
             m.addProperty("diverged", feeder.diverged);
         }
+        m.add("out", markOutSeats(feeder.diverged == null ? feeder.entries : List.of()));   // stopped early: only who lost                        // round RESUME2: the saved guests nobody waits for
         // Round NET-RESUME (O1, the online soak of 24 Oct, games 5 and 7): all of this used to run in one invokeLater, queued on
         // Swing's thread behind the play-back's last click. When that click makes Forge ask something there ("Choose an
         // ability", ...), Swing's thread waits for the answer, and the welcome back and the re-asking that would let anyone
@@ -430,6 +432,47 @@ public class NetHost {
                     welcomeBack(g);
                 }
             }
+        }
+    }
+
+    /** Round RESUME2 (Karl, 8 Nov: "skip guests who are out"): at the end of a play-back, every saved guest whose player has
+     *  lost (it left the pod and was conceded for, or lost the ordinary way) is marked out: the host's table doesn't wait for it
+     *  (HostSession.everyone_back reads this list from replay_done), the host's Cancel doesn't count it, and a guest coming back
+     *  under another name takes a seat that is still in the game first. A guest who had dropped or left but whose player has NOT
+     *  lost (a drop in a 1v1, or a guest gone before its concede happened) is still waited for, as before. The out guest may
+     *  still join again and watch its seat. A seat counts as out when the saved journal has a concede for it (its own, or the
+     *  one NetHost made when it left) or when its player has lost by now - the journal too, because the play-back's last
+     *  commands run on Swing's thread after the feeder is done, and a concede waits for a safe moment (Main.concedeWhenSafe).
+     *  Returns [{"seat","name"}, ...]. */
+    static com.google.gson.JsonArray markOutSeats(List<ResumeFeeder.Entry> entries) {
+        java.util.Set<Integer> conceded = new java.util.HashSet<>();
+        for (ResumeFeeder.Entry e : entries) {
+            JsonElement c = e.cmd.get("c");
+            if (c != null && c.isJsonPrimitive() && "concede".equals(c.getAsString())) {
+                conceded.add(e.seat);
+            }
+        }
+        com.google.gson.JsonArray out = new com.google.gson.JsonArray();
+        for (SeatWire g : guests) {
+            if (conceded.contains(g.seat) || playerLost(g.gui)) {
+                g.out = true;
+                JsonObject o = new JsonObject();
+                o.addProperty("seat", g.seat);
+                o.addProperty("name", g.name);
+                out.add(o);
+                System.err.println("nethost: " + g.name + " is out of the saved game - not waiting for them");
+            }
+        }
+        return out;
+    }
+
+    /** Round RESUME2: this seat's player has lost (conceded, or lost the ordinary way). */
+    static boolean playerLost(BridgeGui g) {
+        try {
+            IGameController gc = g == null ? null : g.getGameController();
+            return gc instanceof forge.game.player.PlayerController pc && pc.getPlayer() != null && pc.getPlayer().hasLost();
+        } catch (Throwable t) {
+            return false;
         }
     }
 
@@ -457,9 +500,9 @@ public class NetHost {
                     break;
                 }
             }
-            if (seat == null) {
-                for (SeatWire g : guests) {
-                    if (!g.attached() && !g.gone.get()) {
+            for (int pass = 0; seat == null && pass < 2; pass++) {
+                for (SeatWire g : guests) {                   // round RESUME2: a seat still in the game first, an out one last
+                    if (!g.attached() && !g.gone.get() && (pass == 1 || !g.out)) {
                         seat = g;
                         break;
                     }
@@ -554,7 +597,7 @@ public class NetHost {
         if (c.equals("cancel_host")) {
             boolean everyoneBack = true;
             for (SeatWire g : guests) {
-                everyoneBack &= g.attached();
+                everyoneBack &= g.attached() || g.out;          // round RESUME2: nobody waits for a guest who is out
             }
             if (!started || (!resumeGuests.isEmpty() && !everyoneBack)) {   // round MP2b: a resumed game not under way yet
                 JsonObject bye = new JsonObject();             // round MP2c: guests already waiting hear that it's off
@@ -942,7 +985,9 @@ public class NetHost {
             refuse(s, out, "rejoin", "This game does not know that seat.");
             return;
         }
-        if (gameOver || seat.gone.get() || leaving.get()) {
+        BridgeGui sgui = seat.gui;
+        boolean overForSeat = sgui != null && sgui.gameOverMsg != null;   // round RESUME2: Forge has finished it and said so
+        if (seat.gone.get() || leaving.get() || (gameOver && !overForSeat)) {
             refuse(s, out, "gone", "That game has ended.");
             return;
         }
@@ -951,7 +996,11 @@ public class NetHost {
         out.write(welcome(seat, true) + "\n");
         out.flush();
         synchronized (seat.announce) {                          // round MP2e: after any "dropped" of the old connection
-            seat.attach(s, reader.withLimit(REMOTE_LINE_MAX), cmd -> guestCommand(seat, cmd), NetHost::guestConnectionEnded);
+            JsonObject missedOver;
+            synchronized (sgui != null ? sgui.gameOverLock : seat.announce) {   // round RESUME2: see the note above watch()
+                seat.attach(s, reader.withLimit(REMOTE_LINE_MAX), cmd -> guestCommand(seat, cmd), NetHost::guestConnectionEnded);
+                missedOver = sgui != null ? sgui.gameOverMsg : null;     // went out before this connection existed
+            }
             java.util.concurrent.ScheduledFuture<?> g = seat.graceTask;
             if (g != null) {
                 g.cancel(false);
@@ -981,7 +1030,12 @@ public class NetHost {
                 return;
             }
             seat.send(ready(false));
-            System.err.println("nethost: " + seat.name + " reconnected (" + seat.pendingCount() + " question(s) asked again)");
+            boolean resent = missedOver != null;               // round RESUME2: the game ended while it was away
+            if (resent) {
+                seat.send(missedOver);
+            }
+            System.err.println("nethost: " + seat.name + " reconnected (" + seat.pendingCount() + " question(s) asked again"
+                    + (resent ? "; game over sent again" : "") + ")");
             JsonObject back = new JsonObject();
             back.addProperty("t", "peer_back");
             back.addProperty("who", "guest");
@@ -998,6 +1052,14 @@ public class NetHost {
         }
         seat.resendPending();
     }
+
+    // Round RESUME2 (RESUME1's 1 h soak, game 23: online_mismatch "game over on host only"): a guest whose connection was cut
+    // just as the game ended came back to a snapshot that said gameOver, but the game_over message had gone out while it had no
+    // connection (SeatWire drops lines then), and nobody sent it again. rejoin now attaches the new connection and reads
+    // BridgeGui.gameOverMsg under BridgeGui.gameOverLock, the lock finishGame sends it under: a game_over that went out before
+    // the new connection existed is sent again on it; one sent after goes out on the new connection by itself - never twice on
+    // one connection. A rejoin to a game Forge has already finished for that seat is no longer refused ("gone"). The guest's
+    // table shows its end screen once either way (ForgeTable.shown_over).
 
     /** Round MP2: a spectator. Gets an all-face-down view of every player's hidden cards and may not play. */
     static void watch(SSLSocket s, Writer out, LineReader reader, JsonObject hello) throws IOException {
@@ -1672,13 +1734,34 @@ public class NetHost {
         javax.swing.SwingUtilities.invokeLater(() -> {
             try {
                 IGameController gc = g == null ? null : g.getGameController();
-                if (gc != null && Main.match != null && Main.match.getGame() != null && !Main.match.getGame().isGameOver()) {
-                    Main.concedeWhenSafe(g, gc, System.currentTimeMillis());      // see Main.concedeWhenSafe
+                boolean out = gc instanceof forge.game.player.PlayerController pc && pc.getPlayer() != null
+                        && pc.getPlayer().hasLost();              // already conceded or lost: nothing to concede or journal
+                if (gc != null && !out && Main.match != null && Main.match.getGame() != null
+                        && !Main.match.getGame().isGameOver()) {
+                    // round RESUME1: the concede goes into the journal as if the guest had sent it - at the moment it really
+                    // happens (on Swing's thread, as every journalled command), so the play-back concedes at the same point
+                    // of the game (round RESUME2: its position in the journal is what does it; the "seqs" field is gone).
+                    // Without it a game continued from the save still
+                    // had this player in it, and the play-back stopped at the next question the original asked someone else
+                    // (ORS1, seed 43063: "seat 3 never reached question 91").
+                    Main.concedeWhenSafe(g, gc, System.currentTimeMillis(),
+                            () -> journal(seat.seat, leftConcede()));   // see Main.concedeWhenSafe
                 }
             } catch (Throwable t) {
                 System.err.println("nethost: conceding for " + seat.name + " failed: " + t);
             }
         });
+    }
+
+    /** Round RESUME1: the journal line for a guest who left and was conceded for: {"c":"concede","left":true}. A play-back applies
+     *  it like the guest's own Concede (Main.handle ignores "left"; an older bridge applies it too). Round RESUME2 (Karl, 8 Nov):
+     *  no "seqs" any more - RESUME1's plant showed the wait on it was not what made the play-back right; the line's place in
+     *  the journal (written right before gc.concede()) is. A ResumeFeeder of this version ignores "seqs" in RESUME1's saves. */
+    static JsonObject leftConcede() {
+        JsonObject c = new JsonObject();
+        c.addProperty("c", "concede");
+        c.addProperty("left", true);
+        return c;
     }
 
     // ---- small helpers -----------------------------------------------------------------------------------------------

@@ -741,7 +741,7 @@
     "J22 Speedy",
     "J25 Wizards 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Augur of Bolas",
@@ -777,6 +777,14 @@
     ],
     [
      "Naban, Dean of Iteration",
+     1
+    ],
+    [
+     "Remand",
+     1
+    ],
+    [
+     "Markov Warlord",
      1
     ]
    ],
@@ -827,7 +835,7 @@
     ],
     [
      "Mountain",
-     20
+     21
     ],
     [
      "Bolt Hound",
@@ -835,10 +843,6 @@
     ],
     [
      "Warcry Phoenix",
-     1
-    ],
-    [
-     "Markov Warlord",
      1
     ],
     [
@@ -890,10 +894,6 @@
      1
     ],
     [
-     "Remand",
-     1
-    ],
-    [
      "Starlight Snare",
      1
     ],
@@ -903,14 +903,14 @@
     ],
     [
      "Island",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 28,
-    "2": 2
+    "0": 32,
+    "1": 27,
+    "2": 1
    }
   },
   {
@@ -921,7 +921,7 @@
     "JMP Goblins 4",
     "J25 Clerics 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Battle Cry Goblin",
@@ -957,6 +957,14 @@
     ],
     [
      "Goblin Instigator",
+     1
+    ],
+    [
+     "Archfiend's Vessel",
+     1
+    ],
+    [
+     "Goblin Arsonist",
      1
     ]
    ],
@@ -1003,7 +1011,7 @@
     ],
     [
      "Mountain",
-     20
+     21
     ],
     [
      "Goblin Commando",
@@ -1019,10 +1027,6 @@
     ],
     [
      "Ornery Goblin",
-     1
-    ],
-    [
-     "Goblin Arsonist",
      1
     ],
     [
@@ -1047,10 +1051,6 @@
     ],
     [
      "Bonecaller Cleric",
-     1
-    ],
-    [
-     "Archfiend's Vessel",
      1
     ],
     [
@@ -1083,14 +1083,13 @@
     ],
     [
      "Swamp",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 28,
-    "2": 2
+    "0": 32,
+    "1": 28
    }
   },
   {
@@ -1101,7 +1100,7 @@
     "JMP Dragons 1",
     "J22 Cycling 1"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Terror of the Peaks",
@@ -1133,6 +1132,14 @@
     ],
     [
      "Drannith Stinger",
+     1
+    ],
+    [
+     "Go for Blood",
+     1
+    ],
+    [
+     "Thrill of Possibility",
      1
     ]
    ],
@@ -1171,7 +1178,7 @@
     ],
     [
      "Mountain",
-     31
+     33
     ],
     [
      "Dragonloft Idol",
@@ -1179,10 +1186,6 @@
     ],
     [
      "Bathe in Dragonfire",
-     1
-    ],
-    [
-     "Thrill of Possibility",
      1
     ],
     [
@@ -1218,10 +1221,6 @@
      1
     ],
     [
-     "Go for Blood",
-     1
-    ],
-    [
      "Shredded Sails",
      1
     ],
@@ -1232,9 +1231,8 @@
    ],
    "sideboard": [],
    "tiers": {
-    "0": 31,
+    "0": 33,
     "1": 26,
-    "2": 2,
     "3": 1
    }
   },
@@ -1246,7 +1244,7 @@
     "JMP Goblins 1",
     "J25 Wizards 2"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Augur of Bolas",
@@ -1279,13 +1277,17 @@
     [
      "Aether Channeler",
      1
-    ]
-   ],
-   "main": [
+    ],
     [
      "Dropkick Bomber",
      1
     ],
+    [
+     "Goblin Instigator",
+     1
+    ]
+   ],
+   "main": [
     [
      "General Kreat, the Boltbringer",
      1
@@ -1324,7 +1326,7 @@
     ],
     [
      "Mountain",
-     20
+     21
     ],
     [
      "Beetleback Chief",
@@ -1336,10 +1338,6 @@
     ],
     [
      "Boggart Brute",
-     1
-    ],
-    [
-     "Goblin Instigator",
      1
     ],
     [
@@ -1396,25 +1394,25 @@
     ],
     [
      "Island",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
+    "0": 32,
     "1": 23,
-    "2": 7
+    "2": 5
    }
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-23 09:32",
+  "when": "2026-11-07 23:49",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
-  "handicap": 9,
+  "handicap": 11,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": null
+  "tuned_by": "checkpoint/balance/tune_k4"
  }
 }

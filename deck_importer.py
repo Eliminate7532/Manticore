@@ -148,11 +148,15 @@ _SECTION_HEADER = re.compile(
 # Trailing decoration that deck sites add after the card name, stripped
 # repeatedly until none is left:
 #   "[Ramp]" / "[Commander{top}]"   category tags
+#   "^Don't Have,#f47373^"          Archidekt label (name, colour) - round ARCH1: a tester's Archidekt export had one after the
+#                                   category tag on 7 lines, which hid the [Commander{top}] tag and left the labels in the names
 #   "*F*"                           foil marker
 #   "(C21) 263"                     set code + collector number
 #   "(Extended Art)"                any other trailing parenthesised note
+_CATEGORY_TAG = re.compile(r"\s*\[[^\]]*\]\s*$")
 _TRAILING_DECORATION = [
-    re.compile(r"\s*\[[^\]]*\]\s*$"),
+    _CATEGORY_TAG,
+    re.compile(r"\s*\^[^^]*\^\s*$"),
     re.compile(r"\s+\*[A-Za-z]+\*\s*$"),
     re.compile(r"\s+\([A-Za-z0-9]{2,6}\)(?:\s+\S+)?\s*$"),
     re.compile(r"\s*\([^)]*\)\s*$"),
@@ -179,6 +183,23 @@ def printing_of(name):
                 changed = True
                 break
     return found
+
+
+def _category_tags(name):
+    """Round ARCH1: every "[...]" category tag among a line's trailing decoration, wherever it sits in it - "[Commander{top}]"
+    can be followed by an Archidekt label or a foil marker. Peels in the same order as _strip_printing_info."""
+    tags, changed = [], True
+    while changed:
+        changed = False
+        for pattern in _TRAILING_DECORATION:
+            m = pattern.search(name)
+            if m:
+                if pattern is _CATEGORY_TAG:
+                    tags.append(m.group(0).strip())
+                name = name[:m.start()]
+                changed = True
+                break
+    return tags
 
 
 def _strip_printing_info(name):
@@ -303,9 +324,10 @@ def import_from_text(text_block, printings=None, sideboard=None, fmt=None):
         else:
             qty, name = 1, line
 
-        # Archidekt-style text exports can tag the commander like "[Commander{top}]".
-        # (Format assumed, not yet verified against a real export.)
-        tagged_commander = bool(re.search(r"\[[^\]]*\bCommander\b[^\]]*\]\s*$", name))
+        # Archidekt-style text exports tag the commander like "[Commander{top}]" - seen in a tester's real export (round
+        # ARCH1, 12 Nov 2026), where an Archidekt label ("^Getting,#2ccce4^") came after the tag, so the tag is looked for
+        # among all the trailing decoration, not only at the very end of the line.
+        tagged_commander = any(re.search(r"\bCommander\b", tag) for tag in _category_tags(name))
 
         if printings is not None:
             p = printing_of(name)

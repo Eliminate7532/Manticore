@@ -91,9 +91,47 @@ def bundled_runtime_expected():
     return bool(getattr(sys, "frozen", False)) or os.path.isdir(os.path.join(paths.program_dir(), "jre"))
 
 
+JAVA_OVERRIDE_ENV = "MANTICORE_JAVA"      # round ARM1: a developer's / tester's switch, read only when set
+
+
+def java_override():
+    """Round ARM1 (Karl, 4 Nov 2026: "Arm64 Java for Surface"): MANTICORE_JAVA=<path to java.exe, or to a JDK/JRE folder> makes
+    ANY copy - the installed one included - start that Java instead of its own, so the Surface can time the x64 jre/ (under
+    Windows' emulation) against a native Arm64 JDK with the same Manticore-cli.exe --bench-board. Ignored unless set. A folder
+    means <folder>/bin/java(.exe). Returns (path or None, problem or None): set but not a usable Java 17+ is a problem, never a
+    silent fall back - the bench must not time the wrong Java without saying so."""
+    raw = (os.environ.get(JAVA_OVERRIDE_ENV) or "").strip().strip('"')
+    if not raw:
+        return None, None
+    path = raw
+    if os.path.isdir(raw):
+        path = os.path.join(raw, "bin", "java.exe" if os.name == "nt" else "java")
+    if not os.path.isfile(path):
+        return None, "%s=%s: no java there" % (JAVA_OVERRIDE_ENV, raw)
+    major = java_major(path)
+    if major < MIN_JAVA:
+        return None, "%s=%s: Java %s, needs %d or newer" % (JAVA_OVERRIDE_ENV, raw, major or "unreadable", MIN_JAVA)
+    return path, None
+
+
+def java_arch(java):
+    """Round ARM1: the os.arch a java executable reports (amd64, aarch64, ...), '' if it can't be read. An x64 java.exe running
+    under Windows on Arm's emulation still says amd64."""
+    try:
+        out = subprocess.run([java, "-XshowSettings:properties", "-version"], capture_output=True, text=True, timeout=20,
+                             env=_clean_env()).stderr
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    m = re.search(r"^\s*os\.arch\s*=\s*(\S+)", out or "", re.M)
+    return m.group(1) if m else ""
+
+
 def find_java():
-    """Path of a Java 17+ executable, or None. An installed copy (bundled_runtime_expected) uses ONLY its own jre/ - None when
-    that is missing or won't start; any other copy tries JAVA_HOME, then PATH."""
+    """Path of a Java 17+ executable, or None. MANTICORE_JAVA (round ARM1), when set, wins for every copy - None if it doesn't
+    point at a usable Java. Otherwise an installed copy (bundled_runtime_expected) uses ONLY its own jre/ - None when that is
+    missing or won't start; any other copy tries JAVA_HOME, then PATH."""
+    if os.environ.get(JAVA_OVERRIDE_ENV, "").strip():
+        return java_override()[0]
     if bundled_runtime_expected():
         path = bundled_java_path()
         return path if os.path.isfile(path) and java_major(path) >= MIN_JAVA else None
@@ -206,6 +244,9 @@ def runtime_problem(runtime=None):
     runtime = runtime or os.environ.get("FORGE_RUNTIME") or DEFAULT_RUNTIME
     installed = bundled_runtime_expected()           # Round 29: a friend has no Python, so never tell them to run setup_forge.py
     if not find_java():
+        override = java_override()[1]
+        if override:                                  # round ARM1: the developer's switch is set but wrong - say so
+            return f"{override}. Unset {JAVA_OVERRIDE_ENV} to use the program's own Java."
         if installed:
             where = os.path.dirname(os.path.dirname(os.path.dirname(bundled_java_path())))
             if os.path.isfile(bundled_java_path()):
@@ -589,7 +630,7 @@ class ForgeSession:
     def __init__(self, deck_path, opponent_paths, name="You", seed=None, runtime=None, record_path=None,
                  java=None, memory_mb=None, command=None, dev=False, faults=(), loop_cap=None, fmt=None,
                  classic_stops=False, rules=None, threat_ai=None, plan_cache=None, forge_undo=None, attack_cache=None,
-                 effects=None, timing=False, skip_scan=None):
+                 effects=None, timing=False, skip_scan=None, pauses=None):
         import formats
         import house_rules
         import start_effects
@@ -671,6 +712,7 @@ class ForgeSession:
         # Round PERF1: --timing makes the bridge send {"t":"timing"} lines (tools/bench_board.py); kept here, newest 20000.
         self.timing = bool(timing)
         self.skip_scan = skip_scan          # round PERF1: "off" (Forge's own scan at every priority) or "compare" (both, logged)
+        self.pauses = pauses                # round PERF2: every human seat's starting Pauses ("normal" | "short" | "off"); None = Normal
         self.timings = deque(maxlen=20000)
         # Patch 43: the bridge passes priority for me when nothing meaningful is happening (Passing.java). classic_stops=True asks for
         # every stop as before (the card check's scripted boards rely on them); "passing" is what the bridge's "ready" line says.
@@ -803,6 +845,8 @@ class ForgeSession:
             args.append("--timing")                       # round PERF1: timing lines for tools/bench_board.py
         if self.skip_scan:
             args += ["--skip-scan", str(self.skip_scan)]  # round PERF1: see Passing.skipScan ("on" is the bridge's default)
+        if self.pauses:
+            args += ["--pauses", str(self.pauses)]        # round PERF2: see Passing.PAUSE_MODES ("normal" is the bridge's default)
         if self.dev:
             args.append("--dev")
             for f in self.faults:
@@ -1230,6 +1274,12 @@ class ForgeSession:
         end step; each opponent's upkeep, attackers and end step; everything on the stack), nothing passed for me, auto-pass
         off; "fast" = patch 43's. It is an ordinary command, so the journal keeps it and Resume / Undo's rebuild send it again."""
         return self.send(c="speed", mode="slow" if mode == "slow" else "fast")
+
+    def set_pauses(self, mode):
+        """Round PERF2, Karl's Pauses setting for my seat: Forge's own pause when it passes priority for me by itself (0.4 s with
+        something on the stack, 0.2 s at a step I stop at) - "normal" as Forge has it, "short" half, "off" none. An ordinary
+        command, so the journal keeps it and Resume / Undo's rebuild send it again (the pause is timing only)."""
+        return self.send(c="pauses", mode=mode if mode in ("normal", "short", "off") else "normal")
 
     def passing_state(self):
         """{classic, slow, fullControl, turnControl, passTurn, hold, passed, alwaysStop} from the newest snapshot ({} before patch 43;
@@ -1860,10 +1910,21 @@ class HostSession(ForgeSession):
             return                  # round MP2b: the play-back answers these itself; what is still asked comes again at the end
         super().handle(m)
 
+    def out_guests(self):
+        """Round RESUME2: names of the saved guests who are out of the continued game (their player had lost - left a pod and
+        was conceded for, or lost the ordinary way), from the bridge's replay_done "out". Nobody waits for them. Empty until
+        the play-back is done (and from a bridge before RESUME2)."""
+        return {o.get("name") for o in (self.replay_result or {}).get("out") or [] if isinstance(o, dict) and o.get("name")}
+
+    def waited_for(self):
+        """Round RESUME2: the saved guests the host still waits for (every saved guest but those out), in seat order."""
+        names = [g.get("name") for g in self.seat_list] or [n for _s, n, _d in (self.resume or {}).get("guests") or []]
+        out = self.out_guests()
+        return [n for n in names if n not in out]
+
     def everyone_back(self):
-        """Round MP2b: every guest of the resumed game has joined again."""
-        names = {g.get("name") for g in self.seat_list} or {n for _s, n, _d in (self.resume or {}).get("guests") or []}
-        return names <= set(self.guests_joined)
+        """Round MP2b: every guest of the resumed game has joined again - round RESUME2: every guest still in the game."""
+        return set(self.waited_for()) <= set(self.guests_joined)
 
     def _note_online(self, t, m):
         super()._note_online(t, m)

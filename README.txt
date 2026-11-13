@@ -500,6 +500,10 @@ Prompt bar (above your hand): a big headline saying what the game wants right no
 main phase", "Pay {G} - Llanowar Elves", "Choose blockers ...") and a small hint line under it
 ("Play a land or cast a spell (glowing cards), or Pass priority."). Forge's OK button is
 relabelled "Pass priority" when that is what it does.
+Right column (focus card, stack, game log): the arrow at the left of the stack's or the log's heading folds that panel to its
+heading and back (the focus card's arrow sits beside the card, or a "Hide card" button in the heading under it); a click on a
+folded heading opens it. Drag the border under the focus card or under the stack to share the height; a right-click on a
+border puts it back as designed. Folded panels and dragged heights are remembered (settings.json "right_panels").
 Game log (right column; Cog > Log can turn it into a corner overlay or hide it): a dark bar for each turn ("Turn 6 - AI 1"), a small label for each step
 (Main 1, Attackers, Blockers, Damage ...), and one plain-English line per event: "You cast Sol Ring",
 "AI 1 attacks you with Wall of Blossoms", "Your life: 40 to 37 (-3)". You are in blue, opponents in
@@ -609,6 +613,10 @@ ONLY THE STOPS THAT MATTER (patch 43, Karl's decisions of 5-6 Oct 2026; java_bri
     - An opponent's trigger or activated ability stops you only if you hold an answer to it: a card you can play now that can
       target it (Stifle, Tale's End, Disallow...). Counterspell can't, so it doesn't count. The board's feed says "Passed for you:
       AI 2's Rhystic Study trigger" for each one passed.
+    - An opponent's spell works the same way (Karl, 7 Nov 2026, bug-1567760778684272653): a stop only if you hold something
+      you can cast now that can target it (Counterspell, Negate, Misdirection). A removal spell or any other instant in hand no
+      longer stops you at every spell of every opponent; for that, tap Ctrl (full control this turn) or mark the card
+      "always stop". The feed says "Passed for you: AI 1's Grizzly Bears spell".
     - Any card can be marked "always stop" (Skip window, with that card's item on the stack; remembered): its spells, triggers
       and abilities then stop you whenever you could act.
     - Default stops: your Main 1 and Main 2, and each opponent's end step. The turn bar's dots still add any stop.
@@ -920,7 +928,10 @@ thinks: one attack plan for identical creatures, one "can it regenerate?" answer
 headers and tests/test_ait2.py); from round AI-ATTACK, AiAttackController.java (the AI's attack planner
 works out what depends only on the board once per plan instead of once per attacker and blocker: its header
 and tests/test_ai_attack.py); from bug-1567033887345877012, ComputerUtilMana.java (paying mana - the AI's and
-the Auto button's - sacrifices a creature only after every other source: its header and tests/test_bug_sac_mana.py).
+the Auto button's - sacrifices a creature only after every other source: its header and tests/test_bug_sac_mana.py); from
+round ENG-SCUTE, CardCopyService.java (a last-known-information copy of a card forgets the last state its replacement
+abilities were given, so Forge's snapshots no longer chain up - Doubling Season with Scute Swarm ran Java out of memory:
+its header and tests/test_eng_scute.py).
 
 PUBLISHING THE SOURCE AND RELEASES (round PUB1)
 -----------------------------------------------
@@ -1138,9 +1149,11 @@ FILES - new table and engine
                          ComputerUtilCard and ComputerUtil (src/forge/ai/: the AI's combat predictions keep what
                          doesn't change while it thinks) and, from round AI-ATTACK, AiAttackController (src/forge/ai/:
                          the attack planner works out board-only answers once per plan) and ComputerUtilMana
-                         (src/forge/ai/: a creature is sacrificed for mana only after every other source); the game puts the bridge jar FIRST on the Java class path
+                         (src/forge/ai/: a creature is sacrificed for mana only after every other source) and, from round
+                         ENG-SCUTE, CardCopyService (src/forge/game/card/: Forge's last-known-information snapshots no longer
+                         chain up); the game puts the bridge jar FIRST on the Java class path
                          so they replace Forge's own copies. When Forge is updated, re-copy them from the new Forge
-                         and re-apply the marked changes (tests/test_patch45.py, tests/test_ait2.py, tests/test_ai_attack.py and tests/test_bug_sac_mana.py go red until
+                         and re-apply the marked changes (tests/test_patch45.py, tests/test_ait2.py, tests/test_ai_attack.py, tests/test_bug_sac_mana.py and tests/test_eng_scute.py go red until
                          they are redone).
                          Changed a .java file? Rebuild the jar (python setup_forge.py, needs a JDK)
                          and commit it with the change: the jar carries a stamp of the sources it was built from, and
@@ -1196,6 +1209,24 @@ its own emulation; before that the installer said "This program does not support
 running". How well it plays there isn't known yet: Karl's Surface Pro 11 is the first test. Windows 10 on Arm can't run it.
 Unsigned: SmartScreen says "Windows protected your PC" (Run anyway; on some PCs it's behind "More info"). A PC with Smart App
 Control on blocks it with no way past, which only code signing fixes.
+
+RELEASING (Round REL1: one command)
+-----------------------------------
+tools\release.py does every step of the release runbook (Project doc claude/RELEASE_RUNBOOK.md) in order, on this PC, from
+the commander_sim folder, and asks once before testers get anything. Always the dry run first:
+    python tools\release.py --branch <the release branch> --notes "One or two lines for testers." --dry-run
+    python tools\release.py --branch <the release branch> --notes "One or two lines for testers."
+Steps: checks (Windows, this folder, a clean tree, gh signed in, Documents\manticore_public is the public repository, and not at
+:05-:08 or :35-:38 - it waits out the backup task), test (setup_forge, --version, quick_tests; a pass is remembered for that
+commit), version (the release commit's VERSION must be higher than the published latest.json - checked before the merge, so a
+refusal leaves main as it was), merge (main fast-forwarded and pushed; anything else refused), build
+(build_installer --test), feed (make_update_feed; a warning above 211 characters), public (export, robocopy /MIR /XD .git .github,
+commit and push the public repository), publish ("Publish Manticore <v> to testers? [y/N]", then gh release create --latest, or
+upload if the release exists), check (latest.json read back: the version and the installer's sha256).
+It stops at the first failure and prints the line to carry on: the same command with --from <step>. --yes skips the question,
+--no-wait refuses instead of waiting for the backup minutes, --public-dir names another public folder. Every command and its output
+go to release_logs\<version>_<time>.txt (not committed, not backed up, not exported; tokens blanked). The manual steps stay in the
+runbook as the fallback.
 
 UPDATES (Round 30: an installed copy updates itself)
 ----------------------------------------------------

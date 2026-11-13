@@ -70,6 +70,14 @@ class RematchFoe(RandomFoe):
     backdrop = "dungeon"
 
 
+class GauntletFoe(RematchFoe):
+    """Round PROG5: one of the town gauntlet's duels (rpg.extras) - a regular foe, in the hall, no spot on the map; its result goes
+    to the gauntlet (no foe's gold or cards; a loss costs no gold)."""
+    __slots__ = ()
+    tag = "GAUNTLET"
+    gauntlet = True
+
+
 def parse_table(text):
     """'plague_rat 3, grave_robber 1' -> [("plague_rat", 3), ("grave_robber", 1)]. A kind without a number weighs 1.
     EncounterError says what is wrong."""

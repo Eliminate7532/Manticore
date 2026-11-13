@@ -81,6 +81,11 @@ public final class StartEffects {
             c = FModel.getMagicDb().getAllTokens().getToken(name.substring(6).trim());
         } else {
             c = FModel.getMagicDb().getCommonCards().getCard(name);
+            if (c == null) {
+                // Round PROG4: the gear's relics are Conspiracy cards (Sentinel Dispatch, Hold the Perimeter ...); Forge keeps those in
+                // its variant card database, not the common one
+                c = FModel.getMagicDb().getVariantCards().getCard(name);
+            }
         }
         if (c == null) throw new IllegalArgumentException("no card or token named '" + name + "' in this Forge");
         return c;

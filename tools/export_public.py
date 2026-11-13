@@ -46,7 +46,8 @@ TOP_LEVEL_SKIP = {"forge_runtime", "cache", "forge_decks", "forge_bundle", "bug_
                    "docs", ".github",                      # Round PUB1: Karl's working notes; his own CI (see the docstring)
                    "build", "dist", "installer_out",      # Round 29: the installer build holds the bundled Discord webhook
                    "net",                                  # Round MP1: the online host's private key
-                   ".worktrees", ".sessions"}              # Round PAR1: the sessions' desks (whole copies) and their board
+                   ".worktrees", ".sessions",
+                   "release_logs"}                         # Round REL1: tools\release.py's logs and test stamp              # Round PAR1: the sessions' desks (whole copies) and their board
 ANYWHERE_SKIP = {"__pycache__", ".git", ".pytest_cache"}
 SKIP_FILES = {"forge_engine.log", "backup.log", "crash_log.txt", "crash_log.old.txt", "crash_native.txt", "perf_log.txt",
               "connection_log.txt", "connection_log.1.txt", "connection_log.2.txt", "connection_log.3.txt",   # round NETLOG1

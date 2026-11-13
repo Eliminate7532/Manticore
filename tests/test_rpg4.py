@@ -448,7 +448,8 @@ class NewGameTests(unittest.TestCase):
         self.assertEqual((s.gold, s.slot, s.name), (100, 2, "Karl"))
         self.assertEqual(s.world, {"region": 1, "map": "green_town", "x": None, "y": None, "last_town": "green_town",
                                    "towns_visited": ["green_town"], "hero": "Warrior"})     # Round RPG11: the hero
-        self.assertEqual(s.start, {"half_decks": ["TST Cats 1", "TST Elves 1", "TST Elves 2"]})
+        self.assertEqual(s.start, {"half_decks": ["TST Cats 1", "TST Elves 1", "TST Elves 2"],
+                                   "upgrades": []})          # Round STARTER1: what the upgrade swapped (none here)
         self.assertEqual(s.forge, "Forge test")
 
 

@@ -37,15 +37,20 @@ I = npc name=Elder_Hesk id=elder cell=2,16 when=phase:night on w
 a = encounter kind=grave_robber spot=night_yard when=phase:night home=The_back_yards_of_Lantern_Hollow on ,
 #! Round PROG2: a small chest that fills again every morning (07:00)
 C = chest id=yard_crate on ,
+#! Round PROG5: the bounty board's clerk on the square and the gauntlet's warden in the duel hall
+N = npc name=Clerk_Ada id=bounty_clerk cell=4,9 on _
+U = npc name=Warden_Holt id=gauntlet_warden cell=5,12 on +
+#! Round SPAR1: the sparring yard (a fenced square north of the square) and its master
+Y = npc name=Yardmaster_Corin id=yard_master cell=6,4 on ,
 [map]
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 TTTT,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TTTT
-TT,HHHHHHHHHHH,,C,,,,,,,,,,HHHHHHHHHHTTT
-TT,HewwwwwAwoH,,,,,,,,,,,,,HskwSwkwsH,TT
-TT,HwwwwwKKKoH,,,,*,,,,,,,,HwKK3KKKwH,TT
-TT,HewwwhwwwwH,,,,,,,,*,,,,HwwwwwwwwH,TT
-TT,HwcncwwwwwH,,,,,,,,,,,,,HwwwhwwwwH,TT
+TT,HHHHHHHHHHH,,C,,|||||||,HHHHHHHHHHTTT
+TT,HewwwwwAwoH,,,,,|,,,,,|,HskwSwkwsH,TT
+TT,HwwwwwKKKoH,,,,*|,,Y,,|,HwKK3KKKwH,TT
+TT,HewwwhwwwwH,,,,,|,,,,,|,HwwwwwwwwH,TT
+TT,HwcncwwwwwH,,,,,||,,,||,HwwwhwwwwH,TT
 TT,Hwwww7wwxwH,,,,,,,,,,,,,Hwww4wwwxH,TT
 TT,HHHHHDHHHHH,**,,,,,,,*,,HHHHDHHHHH,TT
 TT,,,,,,1=,,,,,,,,,,,,,,,*,,,,,==,,,,,TT
@@ -55,12 +60,12 @@ TT,HewhwH=====___________p=======,,,i,TT
 TT,HwwwwD,,,,,_____~______==========2==X
 TT,HwncwH,,,,,______W_____=========G===X
 TT,HHHHHH,,**,___E________,,,,,==,,Bi,TT
-TT,,,,,,,,,,,,____________,*,,,==,,,,,TT
+TT,,,,,,,,,,,,_N__________,*,,,==,,,,,TT
 TT,,,,,=======________J___*,,,,==,,,,,TT
 TT,HHHHDHHHHH,,,,,,i_i,,,,,,HHHDHHH,,,TT
 TT,Hxww6wwwoH,,,,,,___,,,,,,HewwwwH,,,TT
 TT,HwwwwhwwwH,,#####D#####,,HwwhIwH,,,TT
-TT,HwwwwwwwwH,,#+++++++++#,,HwwwcnH,,,TT
+TT,HwwwwwwwwH,,#+++++++U+#,,HwwwcnH,,,TT
 TT,HwKK5KKKwH,,#+!+++++!+#,,HowwwwH,,,TT
 TT,HswwQwwwsH,,#++++M++++#,,HHHHHHH,,,TT
 TT,HHHHHHHHHH,,#++nnnnn++#,,,,,,,,,,,,TT

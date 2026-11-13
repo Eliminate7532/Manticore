@@ -463,7 +463,7 @@
     "JMP Tree Hugging 1",
     "J25 Vampires 4"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Vampire Nighthawk",
@@ -495,6 +495,14 @@
     ],
     [
      "Exsanguinate",
+     1
+    ],
+    [
+     "Wall of Blossoms",
+     1
+    ],
+    [
+     "Vampire of the Dire Moon",
      1
     ]
    ],
@@ -545,11 +553,7 @@
     ],
     [
      "Forest",
-     20
-    ],
-    [
-     "Wall of Blossoms",
-     1
+     21
     ],
     [
      "Ambassador Oak",
@@ -604,10 +608,6 @@
      1
     ],
     [
-     "Vampire of the Dire Moon",
-     1
-    ],
-    [
      "Bleed Dry",
      1
     ],
@@ -621,14 +621,14 @@
     ],
     [
      "Swamp",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
+    "0": 32,
     "1": 26,
-    "2": 4
+    "2": 2
    }
   },
   {
@@ -639,7 +639,7 @@
     "J25 Landfall 2",
     "JMP Milling"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Giant Growth",
@@ -676,6 +676,14 @@
     [
      "Thundering Spineback",
      1
+    ],
+    [
+     "Colossal Dreadmaw",
+     1
+    ],
+    [
+     "Kazandu Stomper",
+     1
     ]
    ],
    "main": [
@@ -685,10 +693,6 @@
     ],
     [
      "Armored Kincaller",
-     1
-    ],
-    [
-     "Colossal Dreadmaw",
      1
     ],
     [
@@ -717,7 +721,7 @@
     ],
     [
      "Forest",
-     20
+     21
     ],
     [
      "Sutina, Speaker of the Tajuru",
@@ -729,10 +733,6 @@
     ],
     [
      "Kazandu Nectarpot",
-     1
-    ],
-    [
-     "Kazandu Stomper",
      1
     ],
     [
@@ -801,13 +801,13 @@
     ],
     [
      "Island",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 26,
+    "0": 32,
+    "1": 24,
     "2": 3,
     "3": 1
    }
@@ -820,7 +820,7 @@
     "J22 Elves 3",
     "J22 Treasure 1"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Lys Alana Huntmaster",
@@ -857,13 +857,17 @@
     [
      "Rapacious Dragon",
      1
-    ]
-   ],
-   "main": [
+    ],
+    [
+     "Brazen Freebooter",
+     1
+    ],
     [
      "Domesticated Hydra",
      1
-    ],
+    ]
+   ],
+   "main": [
     [
      "Ordeal of Nylea",
      1
@@ -902,7 +906,7 @@
     ],
     [
      "Forest",
-     20
+     21
     ],
     [
      "Woodland Champion",
@@ -961,10 +965,6 @@
      1
     ],
     [
-     "Brazen Freebooter",
-     1
-    ],
-    [
      "Sudden Breakthrough",
      1
     ],
@@ -982,13 +982,13 @@
     ],
     [
      "Mountain",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 28,
+    "0": 32,
+    "1": 26,
     "2": 2
    }
   },
@@ -1000,7 +1000,7 @@
     "JMP Elves 2",
     "JMP Above the Clouds 1"
    ],
-   "handicap": 9,
+   "handicap": 11,
    "swapped": [
     [
      "Dwynen's Elite",
@@ -1036,6 +1036,14 @@
     ],
     [
      "Colossal Dreadmaw",
+     1
+    ],
+    [
+     "Roaming Ghostlight",
+     1
+    ],
+    [
+     "Capture Sphere",
      1
     ]
    ],
@@ -1082,7 +1090,7 @@
     ],
     [
      "Forest",
-     20
+     21
     ],
     [
      "Silhana Wayfinder",
@@ -1125,10 +1133,6 @@
      1
     ],
     [
-     "Roaming Ghostlight",
-     1
-    ],
-    [
      "Wall of Runes",
      1
     ],
@@ -1149,34 +1153,30 @@
      1
     ],
     [
-     "Capture Sphere",
-     1
-    ],
-    [
      "Thriving Isle",
      1
     ],
     [
      "Island",
-     10
+     11
     ]
    ],
    "sideboard": [],
    "tiers": {
-    "0": 30,
-    "1": 27,
+    "0": 32,
+    "1": 25,
     "2": 3
    }
   }
  ],
  "jumpstart_balance": {
-  "when": "2026-10-23 09:32",
+  "when": "2026-11-07 23:49",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "seed": 303,
   "keep": 4,
-  "handicap": 9,
+  "handicap": 11,
   "target": 0.65,
   "rule": "two",
-  "tuned_by": null
+  "tuned_by": "checkpoint/balance/tune_k4"
  }
 }

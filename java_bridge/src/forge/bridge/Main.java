@@ -137,6 +137,13 @@ public class Main {
                     else System.err.println("bridge: unknown --skip-scan " + v);
                     break;
                 }
+                case "--pauses": {                                                          // round PERF2, see Passing.PAUSE_MODES
+                    String v = args[++i].toLowerCase(java.util.Locale.ROOT);
+                    if (Passing.PAUSE_MODES.contains(v)) Passing.defaultPauses = v;
+                    else System.err.println("bridge: unknown --pauses " + v);
+                    break;
+                }
+                case "--pauses-plant": Passing.pausePlant = Integer.parseInt(args[++i]); break;   // tests only (needs --dev)
                 case "--question-flush": BridgeGui.questionFlush = !"off".equalsIgnoreCase(args[++i]); break;   // round PERF1
                 case "--skip-scan-plant": Passing.comparePlant = Integer.parseInt(args[++i]); break;   // tests only (needs --dev)
                 case "--sample": sampleFile = args[++i]; break;                             // round PERF1: a stack sampler (needs --dev)
@@ -200,6 +207,10 @@ public class Main {
             Passing.comparePlant = 0;                        // round PERF1: a planted difference only in a test's dev session
             System.err.println("bridge: --skip-scan-plant ignored (the bridge was not started with --dev)");
         }
+        if (Passing.pausePlant != 0 && !dev) {
+            Passing.pausePlant = 0;                          // round PERF2: a planted pause only in a test's dev session
+            System.err.println("bridge: --pauses-plant ignored (the bridge was not started with --dev)");
+        }
         if (sampleFile != null) {                                // round PERF1: dev only
             if (dev) Timing.startSampler(sampleFile, 10);
             else System.err.println("bridge: --sample ignored (the bridge was not started with --dev)");
@@ -251,6 +262,7 @@ public class Main {
         ready.addProperty("planCache", PlanCache.mode);      // round AIT2
         ready.addProperty("attackCache", AttackCache.mode);  // round AI-ATTACK
         ready.addProperty("skipScan", Passing.skipScan);     // round PERF1
+        ready.addProperty("pauses", Passing.defaultPauses);  // round PERF2
         ready.addProperty("questionFlush", BridgeGui.questionFlush);
         ready.addProperty("attackBudget", AttackCache.budgetSeconds);
         ready.addProperty("lastState", true);                // round LAST1: this bridge answers savestate / loadstate
@@ -349,6 +361,12 @@ public class Main {
     static final long CONCEDE_WAIT_MS = 10_000;
 
     static void concedeWhenSafe(BridgeGui gui, IGameController gc, long since) {
+        concedeWhenSafe(gui, gc, since, null);
+    }
+
+    /** Round RESUME1: as above; atConcede (if any) runs on Swing's thread right before the concede itself - NetHost journals a
+     *  guest who left there, at the moment the concede really happens (round RESUME2: no question numbers any more). */
+    static void concedeWhenSafe(BridgeGui gui, IGameController gc, long since, Runnable atConcede) {
         forge.game.Game g = gc instanceof forge.game.player.PlayerController pc ? pc.getGame() : null;
         if (g != null && g.isGameOver()) {
             return;
@@ -359,13 +377,16 @@ public class Main {
             if (!safe) {
                 System.err.println("gamesync: conceding although the game thread is busy (waited " + CONCEDE_WAIT_MS / 1000 + " s)");
             }
+            if (atConcede != null) {
+                atConcede.run();
+            }
             gc.concede();
             if (gc instanceof forge.player.PlayerControllerHuman h) {
                 BridgeGui.releaseIfOut(h);                 // round OUT1: the question open at the concede, in a game that goes on
             }
             return;
         }
-        javax.swing.Timer t = new javax.swing.Timer(40, e -> concedeWhenSafe(gui, gc, since));
+        javax.swing.Timer t = new javax.swing.Timer(40, e -> concedeWhenSafe(gui, gc, since, atConcede));
         t.setRepeats(false);
         t.start();
     }
@@ -588,6 +609,13 @@ public class Main {
                 gui.passing.slow = cmd.has("mode") && "slow".equals(cmd.get("mode").getAsString());
                 gui.passing.syncAutoPass(gc.getYieldController(), gui.passing.fullControlNow(gui.getGameView()));
                 gui.markDirty();                           // takes effect at this seat's next priority (Passing.decide)
+                break;
+            }
+            case "pauses": {                                   // round PERF2: {"mode": "normal" | "short" | "off"} - Karl's Pauses, this seat
+                String v = cmd.has("mode") ? cmd.get("mode").getAsString().toLowerCase(java.util.Locale.ROOT) : "normal";
+                gui.passing.pauses = Passing.PAUSE_MODES.contains(v) ? v : "normal";
+                gui.passing.syncAutoPass(gc.getYieldController(), gui.passing.fullControlNow(gui.getGameView()));
+                gui.markDirty();                           // takes effect at this seat's next priority
                 break;
             }
             case "alwaysstop": {                               // patch 43: {"names": [...], "on": true|false} - by card name

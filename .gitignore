@@ -58,6 +58,9 @@ bug_report_config.bundled.json
 build/
 dist/
 installer_out/
+
+# tools\release.py (Round REL1): its command logs and the "quick_tests passed for this commit" stamp.
+release_logs/
 installer/sandbox/results/
 installer/sandbox/*.wsb
 

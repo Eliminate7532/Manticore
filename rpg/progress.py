@@ -91,8 +91,14 @@ def _chest(cid, v):
     bad = [k for k in v if k not in CHEST_KEYS]
     if bad:
         raise ValueError(f"{where}: {bad[0]!r} isn't one of {', '.join(CHEST_KEYS)}")
+    gear = v.get("gear", 0)                   # Round PROG4: a piece's id (rpg/data/gear.json); a number (PROG2's file) is gold
+    if isinstance(gear, str):
+        if not gear:
+            raise ValueError(f"{where}.gear: a piece's id, not an empty word")
+    else:
+        gear = _whole(gear, where + ".gear", 0, 100000)
     out = {"gold": _whole(v.get("gold", 0), where + ".gold", 0, 100000),
-           "gear": _whole(v.get("gear", 0), where + ".gear", 0, 100000),
+           "gear": gear,
            "card": v.get("card"), "pack": v.get("pack"), "daily": v.get("daily", False)}
     if out["card"] not in (None, "band"):
         raise ValueError(f"{where}.card: only \"band\" (a card from the region's band in your colours), not {out['card']!r}")

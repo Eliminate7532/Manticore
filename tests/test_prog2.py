@@ -343,15 +343,16 @@ class ChestTests(PlayedBase):
         f.explorer.refresh(force=True)
         self.assertFalse(dict((t.chest, o) for t, o in f.explorer.chests())["yard_crate"])
 
-    def test_gear_gives_gold_for_now_and_a_pack_opens(self):
+    def test_gear_gives_the_piece_and_a_pack_opens(self):         # Round PROG4: the gear is a piece now (it was its gold)
         r8.new_game(None)
         g, _n = adv.Game.load(1, pool=self.pool)
         s = g.save
         gold = s.gold
         lines, cards = chests.open_chest(s, "priest_hoard", progress.read().chests["priest_hoard"], g.pool, g.tiers(),
                                          g.lists(), g.numbers, (1, 3), now=1000, refill_hour=7)
-        self.assertEqual(s.gold, gold + 180)
-        self.assertIn(chests.GEAR_LATER, lines)
+        self.assertEqual(s.gold, gold + 100)
+        self.assertIn("ossuary_ward", s.gear["owned"])
+        self.assertTrue(any(ln.startswith("New gear: Ossuary Ward") for ln in lines), lines)
         self.assertEqual(len(cards), 1)
         lines, cards = chests.open_chest(s, "cave_cache", progress.read().chests["cave_cache"], g.pool, g.tiers(),
                                          g.lists(), g.numbers, (1, 3), now=1000, refill_hour=7)
@@ -496,7 +497,7 @@ class FitTests(PlayedBase):
                         self.assertFalse(a.colliderect(b), f"buttons overlap {a} {b}")
                 key(g, pygame.K_RETURN)
                 self.assertIsNone(f.sub)
-                f.result, f.sub, f.message_box = (chests.TITLE, ["+100 gold.", "+80 gold.", chests.GEAR_LATER,
+                f.result, f.sub, f.message_box = (chests.TITLE, ["+100 gold.", "New gear: Ossuary Ward (Amulet). Wear it from the Menu: Gear.",
                                                                   "New card: Swords to Plowshares."], rs.GOLD), "result", None
                 frame(g)
                 for r, n in f.buttons:

@@ -10,7 +10,7 @@ at a time (claude/CLICKS_AND_STATS_2026-10-05.md, section 0), built in java_brid
                      Ctrl+click, Y), the feed of passed triggers, the second-stop offer, the Skip window, the button's label
   LiveTests          real Forge: an opponent's trigger passes unless I hold an answer (Stifle yes, Counterspell no), "always stop",
                      holding priority, my own trigger stops me only when I can act, the new default stops, full control, Shift+Enter,
-                     an opponent's spell stops me only when I could respond, and --classic-stops gives the old stops back
+                     an opponent's spell stops me only when I hold an answer to it (bug-1567760778684272653), and --classic-stops gives the old stops back
 """
 import json
 import os
@@ -57,8 +57,9 @@ class SourceTests(unittest.TestCase):
         src = read("Passing.java")
         decide = src[src.index("Decision decide("):src.index("boolean fullControlAt(")]
         # in this order: full control, Shift+Enter, empty stack -> Forge, always stop, mine, an opponent's spell, an answer
-        order = ["if (full)", "passTurn == turn", "stack.isEmpty()", "alwaysStop.contains", "if (mine)", "top.isSpell()",
-                 "hasAnswer(me, top)"]
+        # (an opponent's spell goes to hasAnswer too since bug-1567760778684272653, Karl 7 Nov 2026)
+        order = ["if (full)", "passTurn == turn", "stack.isEmpty()", "alwaysStop.contains", "if (mine)", "hasAnswer(me, top)"]
+        self.assertNotIn("top.isSpell()", decide)
         at = [decide.index(o) for o in order]
         self.assertEqual(at, sorted(at))
         self.assertIn("top.isTrigger() ? Decision.DEFER : Decision.PASS", decide)
@@ -222,7 +223,7 @@ class TableTests(unittest.TestCase):
 
     def test_enter_is_ok_when_forge_is_not_giving_me_priority(self):
         st = priority_state(input="InputConfirm")
-        st["prompt"]["message"] = "Do you want to pay 2 life?"
+        st["prompt"]["message"] = "Do you want to copy Lightning Bolt?"   # not a cost: bug-1568353208475066370 keeps those keyless
         gui, s = self.make(st)
         self.key(gui, pygame.K_RETURN)
         self.assertEqual([c["c"] for c in s.sent if c["c"] in ("ok", "yield")], ["ok"])
@@ -507,14 +508,14 @@ class LiveTests(unittest.TestCase):
 
     def test_the_default_stops_and_an_opponents_spell(self):
         log = []
-        self.setup("humanbattlefield=Island;Island", "humanhand=Opt", "aibattlefield=Forest;Forest;Forest",
+        self.setup("humanbattlefield=Island;Island", "humanhand=Opt;Counterspell", "aibattlefield=Forest;Forest;Forest",
                    "aihand=Grizzly Bears")
         self.at_main1()
         self.assertEqual({k: sorted(v) for k, v in self.s.state["stops"].items()}, {"mine": ["MAIN1", "MAIN2"], "theirs": ["END_OF_TURN"]})
         seq = self.s.state.get("inputSeq")
         self.s.pass_turn()
         st = self.watch(20, until=lambda st: bool(st.get("stack")), log=log, after_seq=seq)
-        self.assertEqual(stack_names(st), [("Grizzly Bears", "S")], "an opponent's spell I could respond to (Opt)")
+        self.assertEqual(stack_names(st), [("Grizzly Bears", "S")], "an opponent's spell I can answer (Counterspell)")
         self.assertFalse(any(not mine and ph in ("UPKEEP", "COMBAT_DECLARE_ATTACKERS") for _t, ph, mine, _s in log), log)
         st = self.watch(20, until=lambda st: st.get("phase") == "END_OF_TURN", auto_ok=True, log=log)
         self.assertEqual(st.get("phase"), "END_OF_TURN", "the opponent's end step, Opt in hand")

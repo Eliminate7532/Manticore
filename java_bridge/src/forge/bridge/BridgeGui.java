@@ -143,6 +143,7 @@ public class BridgeGui extends AbstractGuiGame {
 
     @Override
     public void awaitNextInput() {
+        passing.notePause();                         // round PERF2: Forge's auto-pass pause counted (and made, in Short), no lock held
         synchronized (awaitLock) {                  // the first call makes the timer; later calls also queue here
             Object timer = awaitTimer();
             if (timer == null) {                     // nothing can clear the task before the first schedule
@@ -821,8 +822,19 @@ public class BridgeGui extends AbstractGuiGame {
         m.addProperty("peakLiveMb", HeapWatch.peakLiveMb());
         m.addProperty("maxHeapMb", HeapWatch.maxMb());
         m.add("result", Outcome.describe(Main.match == null ? null : Main.match.getGame()));    // patch 44: stats
-        wire.send(m);
+        m.add("pauses", passing.pausesJson());                   // round PERF2: Forge's auto-pass pauses this seat had
+        System.err.println("pauses: " + passing.pausesJson());
+        synchronized (gameOverLock) {                    // round RESUME2: kept, for a guest who rejoins after it went out
+            gameOverMsg = m;
+            wire.send(m);
+        }
     }
+
+    /** Round RESUME2: this seat's game_over message once Forge has finished the game (null before). An online guest whose
+     *  connection was cut just as the game ended missed it (SeatWire drops lines while there is no connection); NetHost.rejoin
+     *  sends it again (resendGameOver). Both happen under gameOverLock, so it goes out once per connection. */
+    volatile JsonObject gameOverMsg;
+    final Object gameOverLock = new Object();
 
     // ---- questions the engine asks the human ----------------------------------------------
 

@@ -5,18 +5,21 @@ This tracks planned features in rough priority order. Update as things
 get built or priorities shift.
 Marks: [ ] open, [~] partly done, [x] done, [-] dropped by Karl (not built; the line under it says when).
 
-WHERE THINGS STAND (3 Nov 2026; Round RM3) - one page. The history follows, phase by phase.
+WHERE THINGS STAND (4 Nov 2026; Round RM3, the top updated by RC16) - one page. The history follows, phase by phase.
 How to keep it current: a round or release that lands adds its [x] line below AND moves its line here (NOW -> done, NEXT -> NOW).
 Sources: the task list (claude/tasks, `ledger.py list`), claude/BIG_PICTURE_2026-11-03.md, claude/DECISIONS_2026-11-03.md.
 --------------------------------------------------------------------------------------------------------------------------------
-LATEST RELEASE: 0.28.53.14 (2 Nov; relay by default, NAME1, ATK1, ROOM1, GOLD1, PLOT1, SELL1) - CLAUDE.md "Release 0.28.53.14".
-NOW (being built, 3-4 Nov - release 0.28.53.15, Karl 3 Nov 09:33 "Start B now", 18:48 "Merge everything that's done into this release"):
-  - RC15 + RC15B (built 3-4 Nov, wait for Karl's Windows run): one branch claude/rc-0.28.53.15 - the engine bugs, progression parts
-    1-3, RPG-SOAK1, the bug branches of 2-3 Nov, google-probe, RM3 (RC15), then GOLD1 (gold lost), PACK1, PACK2, PROG1b, SND1/1B/1C,
-    PERF1, BUG1/1b and RLY1's tooling (RC15B); one bridge jar. Project claude/RELEASE_0.28.53.15_2026-11-03.md, claude/RC15B_2026-11-03.md.
-NEXT (queued on the task list, after 0.28.53.15 - the Adventure chain, claude/DECISIONS_2026-11-03.md):
-  - prog4 (gear and relics; built on claude/round-prog4, not in 0.28.53.15), prog5 (daily win, bounties), prog-tune (the soak's
-    numbers), spar1 (sparring).
+LATEST RELEASE: 0.28.53.15 (4 Nov; the engine bugs, Adventure progression 1-3 + PROG1b, GOLD1, PACK1/2, SND1, PERF1, BUG1) -
+  CLAUDE.md "Release candidate 0.28.53.15" and its second merge; Project claude/RELEASE_0.28.53.15_2026-11-03.md, RC15B_2026-11-03.md.
+NOW (being built, 4 Nov - release 0.28.53.16, Karl 4 Nov 03:0x CST "After the 8 h soak (with the gold and XP picks)"):
+  - RC16B (task rc16b, 8 Nov; waits for Karl's Windows run and tools/release.py): one branch claude/rc-0.28.53.16b - rc16 (PROG4,
+    PROG5, PROG-TUNE, SPAR1, REL1/REL1B, ENG-SCUTE, PERF2, ARM1's switch, Karl's picks) + STARTER1/1B/1C + five bug fixes; one
+    bridge jar. Project claude/RELEASE_0.28.53.16B_2026-11-07.md (supersedes RELEASE_0.28.53.16_2026-11-04.md's commands).
+  - RC17 (task rc17, 8 Nov, Karl "Queue it now"; released after .16): claude/rc-0.28.53.17 from rc16b - the Singles gallery and
+    SHOPMSG1/2, the right panels, the multiplayer spell stop, the optional-cost prompt, RESUME1/2, RELAYPW1; one bridge jar;
+    ARCH1 added 12 Nov (Archidekt exports with labels import). Project claude/RELEASE_0.28.53.17_2026-11-08.md.
+NEXT (queued on the task list):
+  - fb3 (Forge on its release day, 13 Nov, its own task); ors1 (online soak tooling). RLY3 waits for the relay's rebuild (LATER, A).
 LATER (claude/BIG_PICTURE_2026-11-03.md section 6):
   - A: the relay on Oracle's Always Free tier, then RLY3 (no invite codes or passwords; protocol 4; branch claude/rly3) -
     Karl, 3 Nov 10:25: "A will be done later"; reminder 23 Nov 10:00 CST (claude/RLY1_2026-11-02.md, RLY2_RLY3_2026-11-02.md).
@@ -535,8 +538,8 @@ Each Forge bump round (FB1, 2 Oct 2026: 3a74143 -> fb4d809, before the alpha - s
 [ ] F4. Pick the new commit; rebuild the bridge (compile errors show API changes); re-check each Forge internal we hook
         into and re-apply MulliganService, InputPayMana (patch 45: tests/test_patch45.py checks the copy against the bundled
         Forge commit and forge.jar's members), PumpAllAi, ComputerUtilCard and ComputerUtil (round AIT2: tests/test_ait2.py,
-        the same checks), AiAttackController (round AI-ATTACK: tests/test_ai_attack.py, the same checks) and any other
-        patched class.
+        the same checks), AiAttackController (round AI-ATTACK: tests/test_ai_attack.py, the same checks), CardCopyService
+        (round ENG-SCUTE: tests/test_eng_scute.py, the same checks) and any other patched class.
 [ ] F5. Full suite + live tests + recorded fixtures (re-record only where a question's shape changed on purpose).
 [ ] F6. Card-check sweep of all alpha decks, then 2-3 soak nights (tools\nightly.py) - VALID, nothing unexplained.
 [ ] F7. Regenerate licence notices (tools\build_notices.py --release checks forge.jar's library list) and the bundle.
@@ -1048,3 +1051,58 @@ PHASE AD - Look and feel, Diablo 1 (Vermis) (decided 2026-09-27; spec docs/SONNE
     In 0.28.53.15 (RC15B): the public export no longer needs /XF report_intake.py.
 [x] RLY1 tooling (2 Nov): relay/cloud_init.yaml, the cloud net test, tools/ci_drop.py, docs - no game code. docs/rounds/RLY1.md;
     claude/RLY1_2026-11-02.md. In 0.28.53.15 (RC15B).
+[x] PROG4 (3-4 Nov): Adventure gear and relics - six slots, the Gear screen, the shop's Gear tab, the corner icons; pieces from
+    shops, chests, bosses, quests and rare foes; effects through the duel's start effects (bridge jar rebuilt). docs/rounds/PROG4.md;
+    claude/PROG4_2026-11-03.md. In 0.28.53.16 (RC16).
+[x] PROG5 (3-4 Nov): the first win of the day, the bounty board, trade-up (four copies for one better card) and the town gauntlet.
+    docs/rounds/PROG5.md; claude/PROG5_2026-11-03.md. In 0.28.53.16 (RC16).
+[x] PROG-TUNE (3-4 Nov): the Adventure soak sees levels, perks, gear, picks and PROG5's sources; the deck rule by type and mana value;
+    tools/rpg_soak_settings/ (as_built, option_a, option_a_gold1, xp_x2) and tools/rpg_soak_tables.py; the 8 h soak on Karl's PC
+    (claude/PROG_TUNE_2026-11-03.md, PROG_TUNE_OVERNIGHT_2026-11-04.md). Karl's picks, 4 Nov: gold = option A + GOLD1's losses
+    (a regular foe pays 40-80, shops restock after 3 duels and keep 4 tier-3 singles), XP x2 (rpg/data/numbers.json and
+    progression.json). In 0.28.53.16 (RC16).
+[x] SPAR1 (4 Nov): the sparring yard in Lantern Hollow - a deck against the region's foes, win chance and history in the deck
+    editor (rpg/spar.py, tools/rpg_spar.py). docs/rounds/SPAR1.md; claude/SPAR1_2026-11-03.md. In 0.28.53.16 (RC16).
+[x] REL1, REL1B (3-4 Nov): tools/release.py - one command on Karl's PC runs RELEASE_RUNBOOK's steps (one "publish? y/N"); REL1B
+    checks the version before the merge. docs/rounds/REL1.md; claude/REL1_2026-11-03.md, REL1B_2026-11-04.md. In 0.28.53.16 (RC16).
+[x] ENG-SCUTE (4 Nov): the Brawl soak's Scute Swarm OutOfMemoryError - Doubling Season's last-state chain cleared in a copy of
+    Forge's CardCopyService (bridge jar rebuilt). claude/ENG_SCUTE_2026-11-04.md. In 0.28.53.16 (RC16).
+[x] PERF2 (4 Nov): Forge's auto-pass pauses become a setting, Cog > GAME > Pauses: Normal / Short / Off (bridge). Karl, 4 Nov: the
+    default is Short. docs/rounds/PERF2.md; claude/PERF2_2026-11-04.md. In 0.28.53.16 (RC16).
+[x] ARM1 (4 Nov): research on native Arm64 Java for the Surface, and the dev switch MANTICORE_JAVA (forge_client) for Karl's bench;
+    the shipping plan waits for his number. claude/ARM1_2026-11-04.md. In 0.28.53.16 (RC16): the switch only.
+[x] Release candidate 0.28.53.16 (task rc16, 4 Nov 2026; Karl 03:0x CST "After the 8 h soak (with the gold and XP picks)"): branch
+    claude/rc-0.28.53.16 from main 9f7c930 - the seven rounds above and the three picks; one bridge jar, rpg_tools.jar rebuilt. Not
+    merged: Karl runs quick_tests on Windows, then tools/release.py. Not in it: rly3 (relay rebuild), fb3 (13 Nov), ors1.
+    CLAUDE.md "Release candidate 0.28.53.16"; Project claude/RELEASE_0.28.53.16_2026-11-04.md.
+[x] STARTER1 + STARTER1B + STARTER1C (5-8 Nov): stronger Adventure starting decks - each picked Jumpstart half gives up its 4 weakest
+    spells for stronger cards of the same type and mana value (K 4, numbers.json starter_upgrade, up to tier 3), Moat never an
+    upgrade (Karl 7 Nov: "Stronger: 4 swaps", "Only Moat"); the first map's foes re-made at handicap 11 (Karl 8 Nov: kept); exactly
+    60 cards and the starting-deck screen's preview strip (STARTER1C). Project claude/STARTER1_2026-11-05.md, STARTER1B_2026-11-07.md,
+    STARTER1C_2026-11-08.md. In 0.28.53.16 (RC16B).
+[x] Five bug fixes (4-6 Nov reports): the table's mulligan words follow the bridge's free-first rule (bug-1567709499526226001 and
+    its duplicate bug-1567714045170159718 - one implementation kept), online tables draw your own deck's printings
+    (bug-1567727149127831654), the Join dialog's "Your deck" row + Change deck (bug-1567732410072956951), SurveilGuard - the AI keeps
+    no surveil card it can't pay life for (bug-1568367922328510465, bridge). docs/bugs/. In 0.28.53.16 (RC16B).
+    Not built: the Host dialog's intro still says only "You play: X" (duplicate report bug-1567737375520727192).
+[x] Release candidate 0.28.53.16 rebuilt (task rc16b, 8 Nov 2026; Karl 7 Nov: "Fold them in first"): branch claude/rc-0.28.53.16b
+    from claude/rc-0.28.53.16 (7ce41b4) - STARTER1/1B/1C and the five fixes; one bridge jar. Replaces claude/rc-0.28.53.16 as the
+    branch Karl releases. Not merged: Karl runs quick_tests on Windows, then tools/release.py. Not in it (0.28.53.17): the four bug
+    tasks answered on 7 Nov, resume1, relaypw1, shopmsg1, rly3, fb3, ors1's tooling. CLAUDE.md "Release candidate 0.28.53.16";
+    Project claude/RELEASE_0.28.53.16B_2026-11-07.md.
+[x] The Adventure shop's Singles as a card gallery (bug-1567699607696441414; Karl 7 Nov: "Gallery replaces list") and its long
+    messages drawn whole, the strip growing past two lines, galleries drawing only whole rows (SHOPMSG1, SHOPMSG2). In 0.28.53.17.
+[x] The right column's three panels (focus card, stack, game log) fold, their borders drag, the layout is remembered
+    (bug-1567718618249035777, panels-live). In 0.28.53.17.
+[x] Multiplayer stops: an opponent's spell stops you only when you hold something that can target it (bug-1567760778684272653,
+    Passing.java). Optional-cost questions ("pay 2 life?") name their card; Space/Enter don't answer them (bug-1568353208475066370).
+    In 0.28.53.17.
+[x] RESUME1 + RESUME2: a concede is journalled when it happens; continuing a saved online game skips guests who are out; game over
+    is resent to a guest who rejoins. RELAYPW1: the online soak's relay passwords come from secrets. In 0.28.53.17.
+[x] ARCH1 (12 Nov 2026, a new tester's report): an Archidekt text export whose lines end in a label ("^Don't Have,#f47373^")
+    imports - the [Commander{top}] tag before the label is found, the labels leave the card names. docs/rounds/ARCH1.md. In 0.28.53.17
+    (Karl, 12 Nov: "goes into 0.28.53.17 before I release it").
+[x] Release candidate 0.28.53.17 (task rc17, 8 Nov 2026; Karl 8 Nov: "Queue it now"): branch claude/rc-0.28.53.17 from
+    claude/rc-0.28.53.16b (8f60d30) - the six branches above; one bridge jar. Not merged: Karl releases 0.28.53.16 first, then this
+    with tools/release.py. Not in it: fb3 (Forge, 13 Nov), rly3 (with the relay's rebuild). CLAUDE.md "Release candidate
+    0.28.53.17"; Project claude/RELEASE_0.28.53.17_2026-11-08.md.

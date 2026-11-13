@@ -716,6 +716,67 @@
      ]
     }
    ]
+  },
+  "bounty_clerk": {
+   "name": "Clerk Ada",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_bounty_clerk"
+     ],
+     "pages": [
+      "The bounty board! Folk pin up the jobs they'd pay to see done.",
+      "I keep the book and pay out. Win the duels a job asks for, and come back to me."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Back for your pay? Let's see the board."
+     ]
+    }
+   ]
+  },
+  "gauntlet_warden": {
+   "name": "Warden Holt",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_gauntlet_warden"
+     ],
+     "pages": [
+      "Fancy the gauntlet? Three duels, one after another, here in the hall.",
+      "Pay the entry and win what you can. A duel lost in here costs you nothing more."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "The gauntlet's open. Step up if you have the nerve."
+     ]
+    }
+   ]
+  },
+  "yard_master": {
+   "name": "Yardmaster Corin",
+   "lines": [
+    {
+     "when": [
+      "!flag:met_yard_master"
+     ],
+     "pages": [
+      "This is the sparring yard. Practice duels here, with nothing riding on them.",
+      "I set your deck against the moor's foes, many times over, and count how often it wins.",
+      "No gold, no cards, no time lost - just the count."
+     ]
+    },
+    {
+     "when": [],
+     "pages": [
+      "Back to test your deck? The posts are ready."
+     ]
+    }
+   ]
   }
  }
 }

@@ -28,8 +28,9 @@ HAS_RUNTIME = os.path.isdir(os.path.join(BASE, "forge_runtime", "res"))
 
 
 class Card:
-    def __init__(self, name, colours="B", land=False, mv=2, basic=False):
+    def __init__(self, name, colours="B", land=False, mv=2, basic=False, type_line=None):
         self.name, self.colours, self.is_land, self.mana_value, self.is_basic = name, colours, land, mv, basic
+        self.type_line = type_line or ("Basic Land - Swamp" if basic else "Land" if land else "Creature - Horror")
 
 
 class Pool:
@@ -76,11 +77,13 @@ def fake_world():
 
 
 class PolicyTests(unittest.TestCase):
-    def rebuild(self, main, owned):
+    # Round PROG-TUNE (expected change): these tests are RPG-SOAK1's rule, now --rebuild tier; ShapeTests below test the new
+    # default (shape: same card type, mana value within 1).
+    def rebuild(self, main, owned, rule="tier"):
         pool, tt = fake_world()
         deck = {"main": [list(x) for x in main]}
         with mock.patch("rpg.collection.problems", return_value=[]):
-            swaps = rpg_soak.rebuild_deck(deck, Coll(owned), pool, tt, Lists())
+            swaps = rpg_soak.rebuild_deck(deck, Coll(owned), pool, tt, Lists(), rule)
         return deck, swaps
 
     def test_the_weakest_card_goes_first_and_the_best_owned_on_colour_card_comes_in(self):
@@ -112,7 +115,7 @@ class PolicyTests(unittest.TestCase):
         pool, tt = fake_world()
         deck = {"main": [["Swamp", 17], ["Weak", 1]]}
         with mock.patch("rpg.collection.problems", return_value=["something"]):
-            swaps = rpg_soak.rebuild_deck(deck, Coll({"Swamp": 17, "Weak": 1, "Great": 1}), pool, tt, Lists())
+            swaps = rpg_soak.rebuild_deck(deck, Coll({"Swamp": 17, "Weak": 1, "Great": 1}), pool, tt, Lists(), "tier")
         self.assertEqual(swaps, [])
         self.assertEqual(deck["main"], [["Swamp", 17], ["Weak", 1]])
 
@@ -120,6 +123,50 @@ class PolicyTests(unittest.TestCase):
         pool, tt = fake_world()
         self.assertEqual(rpg_soak.deck_power([["Swamp", 17], ["Weak", 2], ["Great", 1], ["Good", 1]], pool, tt), 1.75)
         self.assertIsNone(rpg_soak.deck_power([["Swamp", 17]], pool, tt))
+
+
+class ShapeTests(unittest.TestCase):
+    """Round PROG-TUNE (Karl, 3 Nov 06:59): a swap keeps the card type and the mana value within 1."""
+
+    def world(self):
+        pool = Pool([Card("Swamp", "B", land=True, basic=True), Card("Bear", "B", mv=2), Card("Ogre", "B", mv=5),
+                     Card("BigBomb", "B", mv=6), Card("Shock", "B", mv=1, type_line="Instant"),
+                     Card("Bolt", "B", mv=1, type_line="Instant"), Card("Lion", "B", mv=3),
+                     Card("Golem", "C", mv=2, type_line="Artifact Creature - Golem")])
+        tt = Tiers({"Bear": 1, "Ogre": 1, "BigBomb": 5, "Shock": 1, "Bolt": 4, "Lion": 3, "Golem": 2})
+        return pool, tt
+
+    def rebuild(self, main, owned):
+        pool, tt = self.world()
+        deck = {"main": [list(x) for x in main]}
+        with mock.patch("rpg.collection.problems", return_value=[]):
+            swaps = rpg_soak.rebuild_deck(deck, Coll(owned), pool, tt, Lists(), "shape")
+        return deck, swaps
+
+    def test_a_creature_only_for_a_creature_and_a_spell_only_for_its_kind(self):
+        deck, swaps = self.rebuild([["Swamp", 17], ["Bear", 1], ["Shock", 1]],
+                                   {"Swamp": 17, "Bear": 1, "Shock": 1, "Bolt": 1, "Lion": 1})
+        self.assertIn(("Shock", "Bolt"), swaps)
+        self.assertIn(("Bear", "Lion"), swaps)
+        self.assertEqual(len(swaps), 2)
+
+    def test_the_mana_value_moves_one_at_most(self):
+        deck, swaps = self.rebuild([["Swamp", 17], ["Bear", 1]], {"Swamp": 17, "Bear": 1, "BigBomb": 1})
+        self.assertEqual(swaps, [], "a 2-drop was swapped for a 6-drop")
+        deck, swaps = self.rebuild([["Swamp", 17], ["Ogre", 1]], {"Swamp": 17, "Ogre": 1, "BigBomb": 1})
+        self.assertEqual(swaps, [("Ogre", "BigBomb")])
+
+    def test_an_artifact_creature_counts_as_a_creature(self):
+        self.assertEqual(rpg_soak.card_kind(self.world()[0].get("Golem")), "Creature")
+        deck, swaps = self.rebuild([["Swamp", 17], ["Bear", 1]], {"Swamp": 17, "Bear": 1, "Golem": 1})
+        self.assertEqual(swaps, [("Bear", "Golem")])
+
+    def test_improves_follows_the_same_rule(self):
+        pool, tt = self.world()
+        main = [["Swamp", 17], ["Bear", 2]]
+        self.assertFalse(rpg_soak.improves(pool.get("BigBomb"), main, pool, tt, "shape"))
+        self.assertTrue(rpg_soak.improves(pool.get("BigBomb"), main, pool, tt, "tier"))
+        self.assertTrue(rpg_soak.improves(pool.get("Lion"), main, pool, tt, "shape"))
 
 
 def duel(**k):
@@ -210,9 +257,27 @@ class FolderTests(unittest.TestCase):
         with open(os.path.join(BASE, ".gitignore"), encoding="utf-8") as f:
             self.assertIn("rpg_soak_runs/", [ln.strip() for ln in f])
 
-    def test_a_missing_progression_file_is_accepted_and_ignored(self):
-        self.assertIn("missing - ignored", rpg_soak.load_progression(os.path.join(BASE, "no", "progression.json")))
-        self.assertEqual(rpg_soak.load_progression(None), "progression: none")
+    def test_a_missing_progression_file_is_refused(self):
+        # Round PROG-TUNE (expected change): progression.json exists now and the soak reads it, so a missing file is an error
+        with self.assertRaises(SystemExit):
+            rpg_soak.load_progression(os.path.join(BASE, "no", "progression.json"))
+        self.assertEqual(rpg_soak.load_progression(None), "progression: shipped")
+
+    def test_a_settings_folder_names_its_files(self):
+        sets = rpg_soak.settings_dirs([os.path.join(BASE, "tools", "rpg_soak_settings", "xp_x2")])
+        self.assertEqual(sets[0][0], "xp_x2")
+        self.assertTrue(sets[0][1].endswith("numbers.json") and sets[0][2].endswith("progression.json"))
+
+    def test_a_progression_file_reaches_the_levels(self):
+        from rpg import levels
+        # rc16 (expected change): the game's own file is XP x2 now (Karl, 4 Nov), so the file applied here is as_built's (10, the
+        # old game's) and the game's own 20 comes back after (was: xp_x2's 20 applied, the game's 10 after)
+        rpg_soak.apply_progression(os.path.join(BASE, "tools", "rpg_soak_settings", "as_built", "progression.json"))
+        try:
+            self.assertEqual(levels.read().xp["regular"], 10)
+        finally:
+            rpg_soak.apply_progression(None)
+        self.assertEqual(levels.read().xp["regular"], 20)
 
     def test_old_runs_keep_only_their_summaries(self):
         tmp = tempfile.mkdtemp()
@@ -290,7 +355,7 @@ class GameRunTests(unittest.TestCase):
 
     def test_planted_loss_that_takes_no_gold_is_caught(self):
         from rpg import economy
-        with mock.patch.object(economy.Numbers, "loss_share", lambda self, kind="regular": 0):   # GOLD1: the share by kind of fight
+        with mock.patch.object(economy, "cost_of", lambda gold, share: 0):    # PROG-TUNE: GOLD1/PROG3 settle through cost_of
             r, recs = self.go("rusher", decide=lambda m, t, rng: "B", cap=3)
         duels = [d for d in recs if d["t"] == "duel"]
         self.assertTrue(duels)
@@ -301,10 +366,11 @@ class GameRunTests(unittest.TestCase):
         r, recs = self.go("rusher", decide=lambda m, t, rng: "B", cap=3)
         d = [x for x in recs if x["t"] == "duel"][0]
         self.assertEqual(d["result"], "lost")
-        from rpg import economy                          # GOLD1 (rc15b): the share is the kind of fight's, from numbers.json
+        from rpg import economy                          # GOLD1 (rc15b) + PROG-TUNE (rc16 merge): the kind of fight's share
         share = economy.read_numbers().loss_shares[d["enc"] or "regular"]
         self.assertEqual(d["loss_share"], share)
-        self.assertEqual(-d["gold_change"], economy.cost_of(d["gold_before"], share))
+        self.assertGreater(d["loss_share"], 0)
+        self.assertEqual(-d["gold_change"], economy.cost_of(d["gold_before"], d["loss_share"]))
 
     def test_a_numbers_file_reaches_the_games_own_settling(self):
         rpg_soak.importlib_reset_numbers(os.path.join(BASE, "tools", "rpg_soak_settings", "option_a.json"))

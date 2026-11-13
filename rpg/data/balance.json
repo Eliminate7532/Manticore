@@ -1,31 +1,41 @@
 {
  "about": "Round RPG9 (Karl, 14 Oct 2026: the first map was \"way too hard\"; \"About 65%\"): how often a starting deck (three Jumpstart half-decks, at most two colours, picked at random from the new-game offers) beats the first map's regular foes, Forge's AI playing both sides (tools/rpg_balance.py; 60 cards, 20 life, Forge's Constructed rules). share = the starting decks' wins / decided games; low-high = the 95% interval (Wilson). handicap = how many of each foe deck's strongest spells are swapped for basic lands (rpg.enemies.handicap). decks_sha = rpg.enemies.jumpstart_digest of the decks measured; a test checks it against the shipped decks.",
  "target": 0.65,
- "handicap": 9,
- "decks_sha": "9799d15d8dee28bf8370581c7c8c0bf6439518078127096a1fe4a9531ef02ec0",
+ "handicap": 11,
+ "decks_sha": "53752e64395c2b0f10bb27ae1e8303661d48a9afd090b22ccc4c1f9f06163db0",
  "measured": {
   "all": {
    "games": 512,
-   "starter": 313,
-   "enemy": 199,
+   "starter": 328,
+   "enemy": 184,
    "draws": 0,
-   "share": 0.6113,
-   "low": 0.5684,
-   "high": 0.6526,
-   "turns": 20.0
+   "share": 0.6406,
+   "low": 0.5982,
+   "high": 0.681,
+   "turns": 18.7
   },
   "kinds": {
    "ember_bandit": {
     "games": 128,
-    "starter": 73,
-    "enemy": 55,
+    "starter": 92,
+    "enemy": 36,
     "draws": 0,
-    "share": 0.5703,
-    "low": 0.4837,
-    "high": 0.6528,
-    "turns": 18.7
+    "share": 0.7188,
+    "low": 0.6354,
+    "high": 0.7894,
+    "turns": 17.4
    },
    "grave_robber": {
+    "games": 128,
+    "starter": 78,
+    "enemy": 50,
+    "draws": 0,
+    "share": 0.6094,
+    "low": 0.5228,
+    "high": 0.6895,
+    "turns": 19.9
+   },
+   "thornback": {
     "games": 128,
     "starter": 79,
     "enemy": 49,
@@ -33,27 +43,17 @@
     "share": 0.6172,
     "low": 0.5307,
     "high": 0.6968,
-    "turns": 20.5
-   },
-   "thornback": {
-    "games": 128,
-    "starter": 72,
-    "enemy": 56,
-    "draws": 0,
-    "share": 0.5625,
-    "low": 0.476,
-    "high": 0.6454,
-    "turns": 19.5
+    "turns": 18.1
    },
    "zealot": {
     "games": 128,
-    "starter": 89,
-    "enemy": 39,
+    "starter": 79,
+    "enemy": 49,
     "draws": 0,
-    "share": 0.6953,
-    "low": 0.6108,
-    "high": 0.7684,
-    "turns": 21.3
+    "share": 0.6172,
+    "low": 0.5307,
+    "high": 0.6968,
+    "turns": 19.5
    }
   },
   "source": "jumpstart",
@@ -61,10 +61,10 @@
   "starters": 16,
   "games_per_pair": 2,
   "seed": 505,
-  "when": "2026-10-23 09:51",
+  "when": "2026-11-08 00:02",
   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
   "handicap": [
-   9
+   11
   ]
  },
  "before": {
@@ -213,5 +213,365 @@
    }
   }
  },
- "history": "23 Oct 2026: Forge updated fb4d809 -> 9a6f776 (round FB2). The RPG data was rebuilt from 9a6f776 (rpg_build_data.py all), the Jumpstart foes made again at the same handicap (rpg_balance.py make --handicap 9 --keep 4 --seed 303) and measured with RPG9's own check (measure --starters 16 --games 2 --seed 505): that is \"measured\". \"before\", \"tuning\" and \"jumpstart_without_handicap\" are RPG9's measurements on fb4d809 (14 Oct), kept as they were."
+ "history": [
+  "23 Oct 2026: Forge updated fb4d809 -> 9a6f776 (round FB2). The RPG data was rebuilt from 9a6f776 (rpg_build_data.py all), the Jumpstart foes made again at the same handicap (rpg_balance.py make --handicap 9 --keep 4 --seed 303) and measured with RPG9's own check (measure --starters 16 --games 2 --seed 505): that is \"measured\". \"before\", \"tuning\" and \"jumpstart_without_handicap\" are RPG9's measurements on fb4d809 (14 Oct), kept as they were.",
+  "7 Nov 2026: Round STARTER1 - starting decks upgraded (3 spells per half); handicap re-tuned against them and kept at 9 (\"starter1\"); \"measured\" re-done with the upgraded decks.",
+  "8 Nov 2026: Round STARTER1B - starting decks upgrade 4 spells per half, Moat never; 55% at handicap 9 (outside the gates), so the foes were re-made at handicap 11 (64%; 12 measured 70%) (\"starter1b\"); \"measured\" is the handicap-11 run."
+ ],
+ "starter_upgrade": {
+  "per_half": 4,
+  "max_tier": 3,
+  "never": [
+   "Moat"
+  ]
+ },
+ "starter1": {
+  "about": "Round STARTER1 (7 Nov 2026): the player's starting decks now upgrade each picked half's 3 weakest spells (numbers.json starter_upgrade). The first map's foes were re-checked against the upgraded decks: tune (seed 303, 10 starting decks x 16 foe decks x 1 game, at handicaps 0, 3, 6, 9) put 9 nearest the target, so the handicap stays 9 and the shipped foe decks are unchanged; measure (seed 505, 16 x 16 x 2, the same starting-deck picks as the 23 Oct measurement, now upgraded) is \"measured\". before_upgrade = the 23 Oct measurement of the same picks without the upgrade.",
+  "tune": {
+   "0": {
+    "games": 160,
+    "starter": 72,
+    "enemy": 88,
+    "draws": 0,
+    "share": 0.45,
+    "low": 0.375,
+    "high": 0.5274,
+    "turns": 19.5
+   },
+   "3": {
+    "games": 160,
+    "starter": 69,
+    "enemy": 91,
+    "draws": 0,
+    "share": 0.4313,
+    "low": 0.357,
+    "high": 0.5087,
+    "turns": 19.9
+   },
+   "6": {
+    "games": 160,
+    "starter": 94,
+    "enemy": 66,
+    "draws": 0,
+    "share": 0.5875,
+    "low": 0.51,
+    "high": 0.6609,
+    "turns": 18.5
+   },
+   "9": {
+    "games": 160,
+    "starter": 104,
+    "enemy": 56,
+    "draws": 0,
+    "share": 0.65,
+    "low": 0.5734,
+    "high": 0.7196,
+    "turns": 19.5
+   }
+  },
+  "tune_seed": 303,
+  "tune_starters": 10,
+  "tune_games_per_pair": 1,
+  "before_upgrade": {
+   "all": {
+    "games": 512,
+    "starter": 313,
+    "enemy": 199,
+    "draws": 0,
+    "share": 0.6113,
+    "low": 0.5684,
+    "high": 0.6526,
+    "turns": 20.0
+   },
+   "kinds": {
+    "ember_bandit": {
+     "games": 128,
+     "starter": 73,
+     "enemy": 55,
+     "draws": 0,
+     "share": 0.5703,
+     "low": 0.4837,
+     "high": 0.6528,
+     "turns": 18.7
+    },
+    "grave_robber": {
+     "games": 128,
+     "starter": 79,
+     "enemy": 49,
+     "draws": 0,
+     "share": 0.6172,
+     "low": 0.5307,
+     "high": 0.6968,
+     "turns": 20.5
+    },
+    "thornback": {
+     "games": 128,
+     "starter": 72,
+     "enemy": 56,
+     "draws": 0,
+     "share": 0.5625,
+     "low": 0.476,
+     "high": 0.6454,
+     "turns": 19.5
+    },
+    "zealot": {
+     "games": 128,
+     "starter": 89,
+     "enemy": 39,
+     "draws": 0,
+     "share": 0.6953,
+     "low": 0.6108,
+     "high": 0.7684,
+     "turns": 21.3
+    }
+   },
+   "source": "jumpstart",
+   "rule": "two",
+   "starters": 16,
+   "games_per_pair": 2,
+   "seed": 505,
+   "when": "2026-10-23 09:51",
+   "forge": "Forge 2.0.16-SNAPSHOT (built from the master branch) (commit 9a6f776b84809522f81287fe962df0aca64a9c73)",
+   "handicap": [
+    9
+   ]
+  }
+ },
+ "starter1b": {
+  "about": "Round STARTER1B (Karl 7 Nov 2026: \"Stronger: 4 swaps\", never [Moat]): starting decks upgrade 4 spells per picked half, Moat never chosen. Measured against the shipped foes (handicap 9, seed 505, 16 x 16 x 2): 55% - outside RPG9's gates (within 7 points of 65%). tune (seed 303, 10 starting decks x 16 foe decks x 1 game, handicaps 9-14) put 9 nearest on its own sample (64%), but 9 was already measured at 55% on the 512-game sample, so handicaps 12 and 11 were made (make --keep 4 --seed 303) and measured at 512 games each: 12 = 70%, 11 = 64% (nearest 65%). The foe decks are now handicap 11; \"measured\" is the handicap-11 run. claude/STARTER1B_2026-11-07.md.",
+  "starter_upgrade": {
+   "per_half": 4,
+   "max_tier": 3,
+   "never": [
+    "Moat"
+   ]
+  },
+  "tune": {
+   "9": {
+    "games": 160,
+    "starter": 103,
+    "enemy": 57,
+    "draws": 0,
+    "share": 0.6438,
+    "low": 0.567,
+    "high": 0.7138,
+    "turns": 19.1
+   },
+   "10": {
+    "games": 160,
+    "starter": 109,
+    "enemy": 51,
+    "draws": 0,
+    "share": 0.6813,
+    "low": 0.6055,
+    "high": 0.7485,
+    "turns": 18.9
+   },
+   "11": {
+    "games": 160,
+    "starter": 102,
+    "enemy": 58,
+    "draws": 0,
+    "share": 0.6375,
+    "low": 0.5606,
+    "high": 0.708,
+    "turns": 18.5
+   },
+   "12": {
+    "games": 160,
+    "starter": 115,
+    "enemy": 45,
+    "draws": 0,
+    "share": 0.7188,
+    "low": 0.6446,
+    "high": 0.7827,
+    "turns": 18.3
+   },
+   "13": {
+    "games": 160,
+    "starter": 131,
+    "enemy": 29,
+    "draws": 0,
+    "share": 0.8187,
+    "low": 0.7518,
+    "high": 0.8707,
+    "turns": 18.7
+   },
+   "14": {
+    "games": 160,
+    "starter": 127,
+    "enemy": 33,
+    "draws": 0,
+    "share": 0.7937,
+    "low": 0.7245,
+    "high": 0.8492,
+    "turns": 18.3
+   }
+  },
+  "tune_seed": 303,
+  "tune_starters": 10,
+  "tune_games_per_pair": 1,
+  "measured_h9": {
+   "all": {
+    "games": 512,
+    "starter": 282,
+    "enemy": 230,
+    "draws": 0,
+    "share": 0.5508,
+    "low": 0.5075,
+    "high": 0.5933,
+    "turns": 18.8
+   },
+   "kinds": {
+    "ember_bandit": {
+     "games": 128,
+     "starter": 70,
+     "enemy": 58,
+     "draws": 0,
+     "share": 0.5469,
+     "low": 0.4605,
+     "high": 0.6305,
+     "turns": 17.4
+    },
+    "grave_robber": {
+     "games": 128,
+     "starter": 69,
+     "enemy": 59,
+     "draws": 0,
+     "share": 0.5391,
+     "low": 0.4528,
+     "high": 0.623,
+     "turns": 19.4
+    },
+    "thornback": {
+     "games": 128,
+     "starter": 72,
+     "enemy": 56,
+     "draws": 0,
+     "share": 0.5625,
+     "low": 0.476,
+     "high": 0.6454,
+     "turns": 19.5
+    },
+    "zealot": {
+     "games": 128,
+     "starter": 71,
+     "enemy": 57,
+     "draws": 0,
+     "share": 0.5547,
+     "low": 0.4682,
+     "high": 0.6379,
+     "turns": 19.0
+    }
+   }
+  },
+  "measured_h12": {
+   "all": {
+    "games": 512,
+    "starter": 356,
+    "enemy": 156,
+    "draws": 0,
+    "share": 0.6953,
+    "low": 0.6541,
+    "high": 0.7336,
+    "turns": 19.0
+   },
+   "kinds": {
+    "ember_bandit": {
+     "games": 128,
+     "starter": 87,
+     "enemy": 41,
+     "draws": 0,
+     "share": 0.6797,
+     "low": 0.5946,
+     "high": 0.7543,
+     "turns": 17.4
+    },
+    "grave_robber": {
+     "games": 128,
+     "starter": 92,
+     "enemy": 36,
+     "draws": 0,
+     "share": 0.7188,
+     "low": 0.6354,
+     "high": 0.7894,
+     "turns": 19.6
+    },
+    "thornback": {
+     "games": 128,
+     "starter": 88,
+     "enemy": 40,
+     "draws": 0,
+     "share": 0.6875,
+     "low": 0.6027,
+     "high": 0.7613,
+     "turns": 19.4
+    },
+    "zealot": {
+     "games": 128,
+     "starter": 89,
+     "enemy": 39,
+     "draws": 0,
+     "share": 0.6953,
+     "low": 0.6108,
+     "high": 0.7684,
+     "turns": 19.4
+    }
+   }
+  },
+  "starter1_measured_h9_k3": {
+   "all": {
+    "games": 512,
+    "starter": 318,
+    "enemy": 194,
+    "draws": 0,
+    "share": 0.6211,
+    "low": 0.5783,
+    "high": 0.6621,
+    "turns": 19.6
+   },
+   "kinds": {
+    "ember_bandit": {
+     "games": 128,
+     "starter": 75,
+     "enemy": 53,
+     "draws": 0,
+     "share": 0.5859,
+     "low": 0.4993,
+     "high": 0.6675,
+     "turns": 17.5
+    },
+    "grave_robber": {
+     "games": 128,
+     "starter": 82,
+     "enemy": 46,
+     "draws": 0,
+     "share": 0.6406,
+     "low": 0.5545,
+     "high": 0.7185,
+     "turns": 20.2
+    },
+    "thornback": {
+     "games": 128,
+     "starter": 85,
+     "enemy": 43,
+     "draws": 0,
+     "share": 0.6641,
+     "low": 0.5785,
+     "high": 0.74,
+     "turns": 20.0
+    },
+    "zealot": {
+     "games": 128,
+     "starter": 76,
+     "enemy": 52,
+     "draws": 0,
+     "share": 0.5938,
+     "low": 0.5071,
+     "high": 0.6749,
+     "turns": 20.5
+    }
+   }
+  }
+ }
 }

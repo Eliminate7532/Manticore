@@ -36,6 +36,7 @@ import json
 import os
 import random
 import re
+import secrets
 import shutil
 import socket
 import sys
@@ -288,6 +289,7 @@ class OnlineResult:
         self.format = None           # round MP3a: the game's format (formats.py key)
         self.via = "direct"          # round RLY1: "relay" when the guests joined through --relay
         self.started = None          # round RLY1: time.time() when the game started (tools/relay_load.py measures overlap)
+        self.relay = False           # round RELAYPW1: the game was meant to go through a relay (its line then prints no seed)
 
     def fail_rules(self):
         return sorted({f["rule"] for f in self.findings if f["severity"] == "fail"})
@@ -296,8 +298,11 @@ class OnlineResult:
         return sorted({f["rule"] for f in self.findings if f["severity"] == "warn"})
 
     def line(self):
-        return "game %d: %sseed=%s decks=%s%s turns=%d ended=%s%s %.0fs fails=%s warns=%s%s%s%s%s" % (
-            self.index, ("%s " % self.format) if self.format and self.format != "commander" else "", self.seed,
+        # Round RELAYPW1: a relay game's line prints no seed (nothing its secrets could be worked out from); the game's index,
+        # decks, players and result are enough to find it again in the run's folder (game_NNN).
+        return "game %d: %s%sdecks=%s%s turns=%d ended=%s%s %.0fs fails=%s warns=%s%s%s%s%s" % (
+            self.index, ("%s " % self.format) if self.format and self.format != "commander" else "",
+            "" if (self.relay or self.via == "relay") else "seed=%s " % self.seed,
             "+".join(os.path.splitext(d)[0] for d in self.decks),
             (" (%d players, %d online)" % (self.players, self.guests)) if self.players > 2 else "", self.turns, self.ended,
             (" (%s)" % (self.conceded if " " in self.conceded else self.conceded + " conceded")) if self.conceded else "", self.seconds,
@@ -340,8 +345,11 @@ def _guest_target(host, port, relay):
 def run_game(index, rng, out_root, cert, args):
     seed = (args.seed + index) if args.seed is not None else fc.new_seed()
     relay = getattr(args, "relay_addr", None)                     # round RLY1: --relay HOST:PORT
-    # round RLY1: through a relay that may be on the internet, every game gets its own password (PASSWORD is in the source)
-    password = fn.make_password(random.Random(seed)) if relay else PASSWORD
+    # round RLY1: through a relay that may be on the internet, every game gets its own password (PASSWORD is in the source).
+    # Round RELAYPW1: drawn from the system's secure source, never from the seed - the seed is printed (the run's --seed and the
+    # game's index give it), so a seeded password could be worked out by anyone reading the log. Direct 127.0.0.1 games keep
+    # PASSWORD: nothing outside this machine can reach them, and reproducing a game needs only its seed.
+    password = fn.make_password(secrets.SystemRandom()) if relay else PASSWORD
     pool = getattr(args, "pool", None) or soak.deck_pool("sample", getattr(args, "format", "commander"))     # round MP3a
     # --pods (round MP2c): in this share of games the table has 3 or 4 players - 1-3 guests over the network, AI players for
     # the rest. Otherwise 1v1, as before.
@@ -351,6 +359,7 @@ def run_game(index, rng, out_root, cert, args):
     decks = rng.sample(pool, players) if len(pool) >= players else [rng.choice(pool) for _ in range(players)]
     result = OnlineResult(index, seed, [os.path.basename(d) for d in decks])
     result.players, result.guests = players, n_guests
+    result.relay = bool(relay)
     game_dir = os.path.join(out_root, "game_%03d" % index)
     os.makedirs(game_dir, exist_ok=True)
     host_rec = os.path.join(game_dir, "host.jsonl")
@@ -470,7 +479,8 @@ def run_game(index, rng, out_root, cert, args):
                     if got is None:
                         break
                     host, guests, seats = got
-                    guest, guest_seat = guests[0], seats[1]
+                    if guests:                            # round RESUME1: none left if the only guest left a pod
+                        guest, guest_seat = guests[0], seats[1]
                     last_progress = time.monotonic()
                     continue
                 if concede_turn is not None and now_turn >= concede_turn:
@@ -667,11 +677,17 @@ def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir
         h2.close()
         return None
     new_guests = []
+    # round RESUME2: the host doesn't wait for a guest who is out (a stand-in session without waited_for: every saved guest)
+    waited = set(h2.waited_for()) if hasattr(h2, "waited_for") else {g["name"] for g in seat_list}
+    started = []                                                  # (saved seat index, session)
     for k, g in enumerate(seat_list):
+        if g["name"] not in waited:
+            continue
         ng = fc.NetSession(g_addr, g_port, g["name"], password, "guest", "", fingerprint=cert.fingerprint, code="soakguest",
                            record_path=os.path.join(game_dir, "guest%d_resumed.jsonl" % (k + 1)), room=room)
         ng.start()
         new_guests.append(ng)
+        started.append((k, ng))
     end = time.monotonic() + 60
     while time.monotonic() < end and not (h2.everyone_back() and all(g.ready and g.state for g in new_guests) and h2.state):
         for s in [h2] + new_guests:
@@ -680,8 +696,22 @@ def _resume_game(result, seed, tmp, cert, host, guests, seats, journal, game_dir
     # the continued game plays on by itself from the last saved click (the AIs, Forge's auto-pass) until it waits for a
     # person again: compare there, not after a fixed 2 s (round RESUME-DIFF)
     _wait_for_person([(s, None) for s in [h2] + new_guests])
-    new_seats = [Seat("host", h2, seed + 1)] + [Seat(seats[k + 1].label, g, seed + 7919 * (k + 1) + 1)
-                                                 for k, g in enumerate(new_guests)]
+    # round RESUME1: a seat is labelled by the guest's place in the saved game, not by the seats still playing. Round RESUME2:
+    # a guest who left a pod (--leave) and was conceded for is out - the host doesn't wait for it, so it doesn't join again at
+    # all. A guest who left but is NOT out (its concede hadn't happened when the game was saved) is still waited for: it joins
+    # again above, then leaves again now, and has no seat to compare or play (as after the original leave).
+    playing = {st.label for st in seats}
+    labelled = [("guest" if k == 0 else "guest%d" % (k + 1), g) for k, g in started]
+    for label, g in labelled:
+        if label not in playing:
+            try:
+                g.close()
+            except Exception:
+                pass
+    labelled = [(label, g) for label, g in labelled if label in playing]
+    new_guests = [g for _label, g in labelled]
+    new_seats = [Seat("host", h2, seed + 1)] + [Seat(label, g, seed + 7919 * (int(label[5:] or 1)) + 1)
+                                                 for label, g in labelled]
     for st in new_seats:                                          # round MP3a: the start of the game is the old tables' view
         old = next((o for o in seats if o.label == st.label), None)
         if old is not None:

@@ -35,6 +35,7 @@ final class SeatWire extends Wire {
     volatile String code;                   // its copy's version code
     volatile boolean leaving;               // it said "leave": no grace period
     volatile boolean expired;               // its grace period ran out
+    volatile boolean out;                   // round RESUME2: a resumed game's seat whose player had lost: nobody waits for it
     final java.util.concurrent.atomic.AtomicBoolean gone = new java.util.concurrent.atomic.AtomicBoolean(false);
     volatile java.util.concurrent.ScheduledFuture<?> graceTask;
     /** Round MP2e: held while NetHost announces this seat's connection dropped (detach, "peer_dropped", the grace timer) and

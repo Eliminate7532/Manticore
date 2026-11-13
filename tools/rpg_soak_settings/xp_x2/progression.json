@@ -1,0 +1,251 @@
+{
+ "about": "XP x2 (mine): as built, but every XP value doubled (regular 20, dungeon 40, rare 60, boss 120, quest 50, loss 4) - how much faster levels change win rate and pacing (progression.json; PROG-TUNE, 4 Nov 2026 - a soak setting, never the game's file.)",
+ "results": {
+  "banner_seconds": 0.5,
+  "gold_count_seconds": 1.2,
+  "card_flip_seconds": 0.45,
+  "card_gap_seconds": 0.3,
+  "xp_slot_lines": 2
+ },
+ "card_quality": {
+  "change_seconds": 4.0,
+  "decimals": 1,
+  "explain": "The average tier of your cards: how often tournament players use them. Not how strong your deck is - the curve and counts matter as much."
+ },
+ "rewards": {
+  "choices_per_card": 3
+ },
+ "boss": {
+  "signature_card": true
+ },
+ "chests": {
+  "refill_hour": 7,
+  "list": {
+   "yard_crate": {
+    "gold": 15,
+    "daily": true
+   },
+   "moor_hollow": {
+    "gold": 60,
+    "gear": "wildsong_horn"
+   },
+   "moor_cairn": {
+    "card": "band"
+   },
+   "crypt_coffer": {
+    "gold": 40,
+    "card": "band"
+   },
+   "cave_cache": {
+    "pack": "M10"
+   },
+   "priest_hoard": {
+    "gold": 100,
+    "gear": "ossuary_ward",
+    "card": "band"
+   }
+  }
+ },
+ "xp": {
+  "regular": 20,
+  "dungeon": 40,
+  "rare": 60,
+  "boss": 120,
+  "quest": 50,
+  "loss": 4,
+  "draw": 0
+ },
+ "levels": {
+  "first": 30,
+  "step": 15,
+  "cap": 20,
+  "base_life": 20,
+  "life_per_level": 1,
+  "perk_every": 3,
+  "perk_choices": 3
+ },
+ "perks": {
+  "keen_eye": {
+   "name": "Keen Eye",
+   "text": "Each reward card is a pick of 1 from 4.",
+   "effect": {
+    "reward_choices": 1
+   }
+  },
+  "haggler": {
+   "name": "Haggler",
+   "text": "10% off shop prices.",
+   "available": false,
+   "why_not": "the shops' prices don't read perks yet (PROG3 reading)"
+  },
+  "thick_skin": {
+   "name": "Thick Skin",
+   "text": "A loss takes a quarter less gold.",
+   "effect": {
+    "loss_cut": 0.25
+   }
+  },
+  "bounty": {
+   "name": "Bounty Hunter",
+   "text": "10% more gold from wins.",
+   "effect": {
+    "gold_bonus": 0.1
+   }
+  },
+  "fleet_foot": {
+   "name": "Fleet Foot",
+   "text": "Walk 20% faster.",
+   "available": false,
+   "why_not": "the map's walk speed doesn't read perks yet (PROG3 reading)"
+  },
+  "quick_draw": {
+   "name": "Quick Draw",
+   "text": "One more card in your opening hand.",
+   "effect": {
+    "hand": 1
+   }
+  },
+  "hoard": {
+   "name": "Hoarder",
+   "text": "Start each duel with a Treasure.",
+   "effect": {
+    "battlefield": [
+     "token:c_a_treasure_sac"
+    ]
+   }
+  },
+  "pack_mule": {
+   "name": "Pack Mule",
+   "text": "One more gear slot: the Pack, for any piece.",
+   "effect": {
+    "gear_slot": 1
+   }
+  },
+  "stout": {
+   "name": "Stout",
+   "text": "Start each duel with 3 more life.",
+   "stackable": true,
+   "effect": {
+    "life": 3
+   }
+  }
+ },
+ "first_win": {
+  "gold": 50,
+  "xp": 10
+ },
+ "bounties": {
+  "slots": 3,
+  "jobs": {
+   "robbers": {
+    "text": "Beat 2 Grave Robbers",
+    "goal": {
+     "beat": "grave_robber",
+     "count": 2
+    },
+    "reward": {
+     "gold": 40
+    }
+   },
+   "bandits": {
+    "text": "Beat 2 Ember Bandits",
+    "goal": {
+     "beat": "ember_bandit",
+     "count": 2
+    },
+    "reward": {
+     "gold": 40
+    }
+   },
+   "thornback": {
+    "text": "Beat a Thornback",
+    "goal": {
+     "beat": "thornback",
+     "count": 1
+    },
+    "reward": {
+     "xp": 25
+    }
+   },
+   "zealot": {
+    "text": "Beat a Zealot",
+    "goal": {
+     "beat": "zealot",
+     "count": 1
+    },
+    "reward": {
+     "xp": 25
+    }
+   },
+   "rats": {
+    "text": "Beat 2 Plague Rats",
+    "goal": {
+     "beat": "plague_rat",
+     "count": 2
+    },
+    "reward": {
+     "card": "colours"
+    }
+   },
+   "night": {
+    "text": "Win a duel at night",
+    "goal": {
+     "win": 1,
+     "phase": "night"
+    },
+    "reward": {
+     "gold": 50
+    }
+   },
+   "warrens": {
+    "text": "Win a duel in the Warrens",
+    "goal": {
+     "win": 1,
+     "map": "warrens_1|warrens_2"
+    },
+    "reward": {
+     "card": "colours"
+    }
+   },
+   "three": {
+    "text": "Win 3 duels",
+    "goal": {
+     "win": 3
+    },
+    "reward": {
+     "gold": 60,
+     "xp": 15
+    }
+   }
+  }
+ },
+ "trade_up": {
+  "copies": 4,
+  "past_band": false
+ },
+ "gauntlet": {
+  "fee": 50,
+  "duels": 3,
+  "foes": [
+   "ember_bandit",
+   "grave_robber",
+   "thornback",
+   "zealot"
+  ],
+  "prizes": {
+   "0": {},
+   "1": {
+    "gold": 25
+   },
+   "2": {
+    "gold": 50,
+    "pack": true
+   },
+   "3": {
+    "gold": 150,
+    "card": "rare_from_band",
+    "xp": 40
+   }
+  }
+ }
+}

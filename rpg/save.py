@@ -28,6 +28,13 @@ Round PROG3: one more key, the same way (version still 2): "progress" - XP, leve
 id, ...], "offers": [[perk id, ...], ...]}). A save from before has none: level 1, 0 XP, no perks. A damaged value is mended (said
 once): what can be read is kept.
 
+Round PROG4: one more key, the same way (version still 2): "gear" - the gear owned and worn (rpg.gear: {"owned": [piece id, ...],
+"worn": {slot id: piece id}}). A save from before has none: nothing owned, nothing worn. A damaged value is mended (said once): what
+can be read is kept; a worn piece that isn't owned comes off.
+
+Round SPAR1: one more key, the same way (version still 2): "sparring" - the sparring yard's results (rpg.spar: [{"deck", "cards",
+"day", "duels", "wins", ...}], newest last). A save from before has none: never sparred. A record that isn't one is dropped (said once).
+
 Randomness is the save's own: rng(purpose) gives a random.Random seeded from (seed, counter, purpose) by SHA-256 and moves the
 counter on, so the same save makes the same pack, reward and deck choice on any computer and any Python, and loading a save never
 re-rolls what was already rolled. stable_rng(*parts) doesn't move the counter (a shop's stock is drawn again every time it is
@@ -62,7 +69,7 @@ HEROES = ("Warrior", "Paladin", "Rogue", "Mage", "Engineer")   # Round RPG11: wh
                                                                    # five class sheets); an older save has none: the first
 KNOWN = ("format", "version", "slot", "name", "created", "updated", "seed", "rng_counter", "gold", "collection", "decks",
          "active_deck", "start", "world", "shops", "record", "pending_duel", "forge", "basics_free", "found", "bestiary",
-         "pending_pick", "progress")
+         "pending_pick", "progress", "gear", "sparring")
 
 
 class SaveError(Exception):
@@ -150,6 +157,8 @@ class SaveGame:
         self.bestiary = {}                  # Round PROG1: {kind: {"cards": {name: copies}}}
         self.pending_pick = None            # Round PROG2: a won duel's reward cards still to choose (rpg.rewards), else None
         self.progress = {"xp": 0, "perks": [], "offers": []}   # Round PROG3: XP, levels and perks (rpg.levels)
+        self.gear = {"owned": [], "worn": {}}                   # Round PROG4: gear owned and worn (rpg.gear)
+        self.sparring = []                  # Round SPAR1: the sparring yard's results, newest last (rpg.spar)
         self.collection.on_add = self._noted
 
     def _noted(self, name):
@@ -190,7 +199,7 @@ class SaveGame:
                   "start": self.start, "world": self.world, "shops": self.shops, "record": self.record,
                   "pending_duel": self.pending_duel, "forge": self.forge, "basics_free": self.collection.basics_free,
                   "found": self.found, "bestiary": self.bestiary, "pending_pick": self.pending_pick,
-                  "progress": self.progress})
+                  "progress": self.progress, "gear": self.gear, "sparring": self.sparring})
         return d
 
     @classmethod
@@ -301,6 +310,8 @@ class SaveGame:
         s.bestiary = _bestiary(d, d["slot"])
         s.pending_pick = _pending_pick(d, d["slot"])  # Round PROG2: absent in a save from before - None (nothing to choose)
         s.progress = _progress(d, d["slot"])          # Round PROG3: absent in a save from before - level 1, 0 XP, no perks
+        s.gear = _gear(d, d["slot"])                  # Round PROG4: absent in a save from before - nothing owned or worn
+        s.sparring = _sparring(d, d["slot"])          # Round SPAR1: absent in a save from before - never sparred
         s.extra = {k: v for k, v in d.items() if k not in KNOWN}
         return s
 
@@ -330,6 +341,54 @@ def _progress(d, slot):
         bad = True
     if bad:
         _repaired(slot, "progress", "the XP and perks were damaged; what could be read is kept")
+    return out
+
+
+def _sparring(d, slot):
+    """Round SPAR1: the sparring yard's records read leniently - a record that isn't one is dropped (said once), never a refused
+    save. A record: {"deck": name, "cards": fingerprint, "day", "duels", "wins", ...} with 0 <= wins <= duels, duels >= 1."""
+    v = d.get("sparring")
+    if v is None:
+        return []
+    good = []
+    for r in v if isinstance(v, list) else []:
+        if (isinstance(r, dict) and isinstance(r.get("deck"), str) and _is_int(r.get("day"), 1) and _is_int(r.get("duels"), 1)
+                and _is_int(r.get("wins"), 0) and r["wins"] <= r["duels"]):
+            good.append(r)
+    if not isinstance(v, list) or len(good) != len(v):
+        _repaired(slot, "sparring", "sparring records that aren't records were dropped")
+    return good
+
+
+def _gear(d, slot):
+    """Round PROG4: the gear read leniently - a damaged part is mended (said once), never a refused save. An id this copy doesn't
+    know is kept (a newer gear.json may have it; rpg.gear skips it); a worn piece that isn't owned comes off."""
+    v = d.get("gear")
+    out = {"owned": [], "worn": {}}
+    if v is None:
+        return out
+    bad = not isinstance(v, dict)
+    v = v if isinstance(v, dict) else {}
+    owned = v.get("owned", [])
+    if isinstance(owned, list):
+        for x in owned:
+            if isinstance(x, str) and x and x not in out["owned"]:
+                out["owned"].append(x)
+            else:
+                bad = True
+    else:
+        bad = True
+    worn = v.get("worn", {})
+    if isinstance(worn, dict):
+        for k, x in worn.items():
+            if isinstance(k, str) and k and isinstance(x, str) and x in out["owned"] and x not in out["worn"].values():
+                out["worn"][k] = x
+            else:
+                bad = True
+    else:
+        bad = True
+    if bad:
+        _repaired(slot, "gear", "the gear owned and worn was damaged; what could be read is kept")
     return out
 
 

@@ -420,6 +420,10 @@ class PanelTests(TempDecks):
     def test_no_deck_chosen_says_so(self):
         gui = self.idle_gui()
         gui.menu.mine_id = None
+        # rc16 (expected change): with Pauses' default Short (Karl, 4 Nov) every hosted game's table sends one "pauses" command, so
+        # an earlier test's online game (test_cd5's) leaves a save with a command in it, and a saved game opens the Host dialog
+        # whatever deck is chosen (Round MP2b). This test is about no saved game.
+        gui.online_saved = lambda: None
         gui.menu.press(gui, "host_online")
         self.assertIsNone(gui.modal)
         self.assertIn("Choose your deck", gui.menu.message[0])

@@ -478,6 +478,12 @@ def main(argv=None):
         pass
     report = []
     print("PERF1 bench: %s" % results["version"])
+    java = fc.find_java()                            # round ARM1: which Java was timed, and whether it is native (aarch64)
+    results["java"] = {"path": java, "arch": fc.java_arch(java) if java else "", "major": fc.java_major(java) if java else 0,
+                       "override": bool(os.environ.get(fc.JAVA_OVERRIDE_ENV, "").strip())}
+    java_line = "Java: %s (os.arch %s, Java %s%s)" % (java, results["java"]["arch"] or "?", results["java"]["major"],
+                                                      ", from MANTICORE_JAVA" if results["java"]["override"] else "")
+    print("PERF1 bench: " + java_line, flush=True)
     configs = [("", extra)]
     if a.both:                                      # Forge's / the old way first, in the same bridge, then the new way
         configs = [("old", extra + OLD_WAY), ("new", extra)]
@@ -525,7 +531,7 @@ def main(argv=None):
     with open(os.path.join(folder, "bench_board.json"), "w", encoding="utf-8") as f:
         json.dump(results, f, indent=1)
     with open(os.path.join(folder, "bench_board.txt"), "w", encoding="utf-8") as f:
-        f.write("PERF1 bench: %s\n\n" % results["version"] + "\n".join(report) + "\n")
+        f.write("PERF1 bench: %s\n%s\n\n" % (results["version"], java_line) + "\n".join(report) + "\n")
     print("written: %s" % folder)
     return 0
 

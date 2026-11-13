@@ -36,6 +36,9 @@ losses to the same foe add up) until you beat it: then it comes back on top of t
 A fight with no spot (a random foe, a rematch, the tools) holds nothing - the gold is simply lost, as before. out["held_by"] is the
 spot that holds a loss's gold, out["held"] what it holds now.
 
+Round PROG5 (rpg.extras): a duel of the town gauntlet (pending_duel["gauntlet"]) pays no gold or reward cards when won - the
+gauntlet's prizes instead - and a loss there takes no gold and moves you nowhere (rpg.adventure.finish_loaded settles the gauntlet).
+
 settle_pending() is for loading a save that still has a duel going on: it doesn't count (my choice - a crash shouldn't cost gold;
 quitting to dodge a loss is possible, and Karl may want it to count as a loss instead).
 """
@@ -213,8 +216,9 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
             tier_table = tiers.load(pool=pool)
         rec["wins"] += 1
         rec["defeated"][pd["kind"]] = rec["defeated"].get(pd["kind"], 0) + 1
-        gold = numbers.reward_gold(pd["encounter"], save.rng("gold"))
-        gold = _perk(lambda lv: levels.win_gold(save, gold, lv), gold)   # PROG3: Bounty Hunter
+        gauntlet = bool(pd.get("gauntlet"))           # Round PROG5: a gauntlet duel pays only the gauntlet's prizes (rpg.extras)
+        gold = 0 if gauntlet else numbers.reward_gold(pd["encounter"], save.rng("gold"))
+        gold = gold and _perk(lambda lv: levels.win_gold(save, gold, lv), gold)   # PROG3: Bounty Hunter
         back = held_by(save, pd.get("spot"))         # Round GOLD1: the gold this foe took from you, back on top (no perk bonus:
         if back:                                     # ... it is your own gold), given once - the entry goes
             held_gold(save).pop(pd["spot"], None)
@@ -234,7 +238,7 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
         sig = pd.get("signature")                    # Round PROG2: the boss's signature card, on top of his reward cards
         if isinstance(sig, str) and pool.get(sig) is not None:
             cards.append((pool.get(sig).name, "signature"))
-        band, many = world.band(save.world["region"]), numbers.reward_cards(pd["encounter"])
+        band, many = world.band(save.world["region"]), (0 if gauntlet else numbers.reward_cards(pd["encounter"]))
         if offer:                                    # Round PROG2: each reward card a choice of 3 (rpg.rewards)
             from rpg import rewards
             try:
@@ -261,6 +265,9 @@ def finish(save, result, numbers, world, pool=None, tier_table=None, lists=None,
         talk.on_duel_won(save.world, pd["kind"], pd.get("encounter"), spot=pd.get("spot"))   # RPG18b: a goal may name a spot
     elif result in ("lost", "conceded"):
         rec["losses"] += 1
+        if pd.get("gauntlet"):                        # Round PROG5: a gauntlet loss costs no gold and keeps you in the hall
+            out["gauntlet"] = True
+            return out
         cost = loss_cost(save, numbers, pd.get("encounter") or "regular")   # PROG3: Thick Skin; GOLD1: by kind of fight
         save.gold -= cost
         spot = pd.get("spot")                         # Round GOLD1: the foe holds what it took, until you beat it

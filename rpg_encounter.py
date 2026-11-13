@@ -296,7 +296,7 @@ class EncounterScreen:
         t.text(c, name, x, r.y + 10, gfx.DB_GOLD, BIG)
         tag = "BOSS" if self.boss else ("RARE" if self.rare else
                                          (getattr(self.trigger, "tag", None) or ("AMBUSH" if self.random else "")))
-        colour = {"BOSS": gfx.DB_RED, "AMBUSH": gfx.DB_ORANGE, "REMATCH": gfx.DB_GREEN, "RARE": gfx.DB_GOLD}.get(tag, gfx.DB_DIM)
+        colour = {"BOSS": gfx.DB_RED, "AMBUSH": gfx.DB_ORANGE, "REMATCH": gfx.DB_GREEN, "GAUNTLET": gfx.DB_GREEN, "RARE": gfx.DB_GOLD}.get(tag, gfx.DB_DIM)
         y = r.y + 36
         if tag:
             tr = t.text(c, tag, x, y, colour)

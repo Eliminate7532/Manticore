@@ -29,6 +29,11 @@ Who says what (Conversation):
     pages, the clock goes on to 07:00, the game is saved and the inn becomes your return point. Round RPG17 (Karl 24 Oct Q5): by
     day the choice is "Rest until dusk" / "Not now" instead - the clock goes on to 18:00, the rest the same. Round RPG18b (Karl 25
     Oct): by day three answers - "Rest until dusk" / "Sleep until morning" / "Not now" ("Not now" the default).
+  - Round PROG5: the bounty clerk (BOUNTY_CLERK) - her words, then the board (rpg_screens: rpg.extras posts, pays and lists the
+    jobs); the gauntlet's warden (GAUNTLET_WARDEN) - his words, then the gauntlet: "Enter: 50 gold" / "Not now", or, while one is
+    under way, "Next duel" / "Stop here" (Conversation.gauntlet says which was picked).
+  - Round SPAR1: the sparring yard's master (YARD_MASTER) - his words, then "I'll run 40 practice duels: ..." and "Spar: 40
+    duels" / "Not now" (Conversation.spar is True when Spar was picked; rpg_screens plays them, rpg.spar).
   - The duel hall's keeper (HALL_KEEPER), once the boss is beaten: his words, then "A rematch?" - Yes starts a duel against one of
     the kinds you have beaten (the encounter screen; rpg_screens).
 """
@@ -47,6 +52,11 @@ STATES = ("none", "active", "ready", "done")
 GAME_FLAGS = ("warrens_entered", "grave_priest_beaten", "has_orrins_map")
 INNKEEPER = "innkeeper"
 HALL_KEEPER = "hall_keeper"
+BOUNTY_CLERK = "bounty_clerk"          # Round PROG5: the bounty board's clerk (rpg.extras; rpg_screens adds the board's pages)
+GAUNTLET_WARDEN = "gauntlet_warden"    # Round PROG5: the town gauntlet's warden
+YARD_MASTER = "yard_master"            # Round SPAR1: the sparring yard's master (rpg.spar; rpg_screens plays the practice duels)
+SPAR_OFFER = "I'll run {n} practice duels: your deck, your level and gear, against {against}."
+SPAR_YES, SPAR_NO = "Spar: {n} duels", "Not now"
 BOSS_FLAG = "grave_priest_beaten"
 BOSS_KIND = "grave_priest"
 WARRENS_FLAG = "warrens_entered"
@@ -237,6 +247,7 @@ class Conversation:
         refresh(world, all_quests)
         self.name, said = entry_for(npc_id, world, people)
         self.pages, self.choice, self.reward, self.rest, self.rematch = [], None, None, False, False
+        self.reward_quest = None           # Round PROG4: the id of the quest handed in now (its gear, rpg.gear sources.quests)
         self.rest_until = None                     # Round RPG17: "morning" (07:00) or "dusk" (18:00) - what resting does
         self.after = []
         self._quest = None
@@ -259,6 +270,7 @@ class Conversation:
                 self.pages += list(q.get("ready") or ())
                 _quest(world, qid)["state"] = "done"
                 self.reward = dict(q.get("reward") or {})
+                self.reward_quest = qid
                 self.after = list(q.get("done") or ())
                 if self.reward.get("flag"):
                     set_flag(world, self.reward["flag"])
@@ -273,6 +285,27 @@ class Conversation:
             else:                                                # Round RPG17: by day, a way to wait for night; Round RPG18b
                 # (Karl 25 Oct): and "Sleep until morning" by day too - three answers, "Not now" still the default
                 self.choice, self.choice_default, self.rest_until = (REST_DUSK, REST_YES, REST_NO), 2, "dusk"
+        self.gauntlet = None                       # Round PROG5: "enter" / "next" / "stop" - the warden's choice answered
+        self._gauntlet = False
+        if npc_id == GAUNTLET_WARDEN and self.choice is None:    # Round PROG5: the town gauntlet (rpg.extras)
+            from rpg import extras
+            try:
+                more, self.choice = extras.gauntlet_pages(world)
+                self.pages += extras.split_pages(more)
+                self._gauntlet = True
+                self.choice_default = 0
+            except (OSError, ValueError):
+                pass
+        self.spar = False                          # Round SPAR1: the yard master's "Spar" picked
+        self._spar = False
+        if npc_id == YARD_MASTER and self.choice is None:        # Round SPAR1: the sparring yard (rpg.spar)
+            from rpg import spar
+            try:
+                st = spar.settings()
+            except (OSError, ValueError):
+                st = spar.Settings()
+            self.pages.append(SPAR_OFFER.format(n=st.duels, against=st.against_words(world.get("region"))))
+            self.choice, self.choice_default, self._spar = (SPAR_YES.format(n=st.duels), SPAR_NO), 0, True
         if npc_id == HALL_KEEPER and BOSS_FLAG in flags(world):
             self.pages.append(REMATCH_PAGE)
             self.choice = (REMATCH_YES, REMATCH_NO)
@@ -304,6 +337,16 @@ class Conversation:
             elif self.rest and self.choice[picked] == REST_DUSK:
                 self.rest_until = "dusk"
             return pages if self.rest else []
+        if self._gauntlet:                             # Round PROG5: Enter / Next duel, or Not now / Stop here
+            self._gauntlet = False
+            from rpg import extras
+            under_way = self.choice and self.choice[0] == extras.GAUNTLET_GO
+            self.gauntlet = ("next" if under_way else "enter") if yes else ("stop" if under_way else None)
+            return []
+        if self._spar:                                 # Round SPAR1: Spar or Not now
+            self._spar = False
+            self.spar = bool(yes)
+            return []
         if self.choice and self.choice[0] == REMATCH_YES:
             self.rematch = bool(yes)
             return []

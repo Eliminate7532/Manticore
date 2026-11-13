@@ -31,6 +31,10 @@ TIERS = (1, 2, 3, 4, 5)
 MAX_LOSS_SHARE = 0.2
 # Round PACK1: the shelf's other kinds of pack - prices in gold (placeholders) and how many Jumpstart theme packs a shop stocks.
 PACK1_DEFAULTS = {"jumpstart_price": 90, "premium_pack_price": 160, "bundle_price": 210, "jumpstart_stock": 3}
+# Round STARTER1: without "starter_upgrade" in the file, no half-deck is upgraded (today's starting deck).
+STARTER_DEFAULTS = {"per_half": 0, "max_tier": 3}
+# Round STARTER1B (Karl, 7 Nov 2026: "Only Moat"): "never" - card names never chosen as an upgrade. Optional; missing = none.
+STARTER_OPTIONAL = ("never",)
 
 
 def _int(v, name, lo=0, hi=None):
@@ -91,10 +95,30 @@ def _range(v, name):
     return lo, hi
 
 
+def _never(v, pool=None):
+    """Round STARTER1B: starter_upgrade.never - a list of card names (strings), each a real card of the Adventure pool (pool, or
+    rpg.cardpool.load() - read only when the list isn't empty). A typo is refused by name, never passed over. -> tuple of the
+    pool's own spelling of each name."""
+    if not isinstance(v, list) or not all(isinstance(x, str) and x.strip() for x in v):
+        raise ValueError(f"starter_upgrade.never: a list of card names is needed, not {v!r}")
+    if not v:
+        return ()
+    if pool is None:
+        from rpg import cardpool
+        pool = cardpool.load()
+    out = []
+    for name in v:
+        card = pool.get(name)
+        if card is None:
+            raise ValueError(f"starter_upgrade.never: {name!r} is not a card in the Adventure pool")
+        out.append(card.name)
+    return tuple(out)
+
+
 class Numbers:
     """numbers.json, checked. Attributes as in the file; single_price and stock are keyed by tier (int)."""
 
-    def __init__(self, data):
+    def __init__(self, data, pool=None):
         if not isinstance(data, dict):
             raise ValueError("numbers: a JSON object is needed")
         need = ("save_slots", "start_gold", "loss_gold_share", "basic_lands_free", "single_price", "sell_share", "pack_price",
@@ -129,6 +153,17 @@ class Numbers:
         # reads; the defaults are the same placeholders numbers.json carries (Claude's estimate, until prog-tune).
         for key, default in PACK1_DEFAULTS.items():
             setattr(self, key, _int(data.get(key, default), key, 1))
+        # Round STARTER1 (Karl, 4 Nov 2026: "Upgrade picked halves"): {"per_half": K, "max_tier": T} - each picked half-deck of a
+        # new game gives up K of its weakest spells for cards up to tier T (rpg/starter.py). Optional: a numbers file from before
+        # STARTER1 (tools/rpg_soak_settings) makes today's starting deck (K 0).
+        up = data.get("starter_upgrade", STARTER_DEFAULTS)
+        if (not isinstance(up, dict) or not set(STARTER_DEFAULTS) <= set(up)
+                or not set(up) <= set(STARTER_DEFAULTS) | set(STARTER_OPTIONAL)):
+            raise ValueError(f"starter_upgrade: {{\"per_half\": K, \"max_tier\": T}} (and optionally \"never\": [names]) is "
+                             f"needed, not {up!r}")
+        self.starter_per_half = _int(up["per_half"], "starter_upgrade.per_half", 0, 20)
+        self.starter_max_tier = _int(up["max_tier"], "starter_upgrade.max_tier", 1, 5)
+        self.starter_never = _never(up.get("never", []), pool)
         self.restock_after_duels = _int(data["restock_after_duels"], "restock_after_duels", 1)
         stock = data["stock"]
         if not isinstance(stock, dict) or not stock:

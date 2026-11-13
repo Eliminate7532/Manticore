@@ -193,6 +193,13 @@ NARROW_RIGHT = 0.8             # with neither the panel nor the log in the colum
 LOG_MIN_SHARE = 0.28           # with the log in the column and the panel off, the stack leaves the log at least this much of the column
 ROOMY_STACK_SHARE = 0.72       # the stack may take this much of the column when the panel or the log gave up their room
 AUX_MIN = 140                  # the card slot under the stack (AI casts, surveil) needs this many pixels (times the font factor) to show
+# Task bug-1567718618249035777 (Karl, 7 Nov 2026): the right column's three panels - the focus card, the stack and the game log - each
+# fold to a heading strip and back (the arrow at the left of its heading), and the borders between them drag to share the height.
+# Nothing folded and nothing dragged is exactly the layout as before. Kept in settings.json as "right_panels".
+PANEL_NAMES = ("focus", "stack", "log")
+FOCUS_MIN = 80                 # a dragged focus card is never shorter than this (times the font factor)
+PANEL_MIN = 60                 # ... nor a dragged stack, nor what a dragged border leaves the log (times the font factor)
+SEAM_GRAB = 5                  # a border can be grabbed this many pixels (times the font factor, at least the margin's half) either side
 ABILITY_TEXT_LINES = 5         # the card's own wording under a trigger / ability on the stack (only when Forge's text says something else)
 SPELL_TEXT_LINES = 10         # a spell on the stack shows at most this many lines of its rules text
 FONT_BASE = dict(title=19, body=15, small=13, tiny=11, btn=17, big=34, hint=13)
@@ -275,6 +282,11 @@ REPEAT_STOP_OFFER = 2                                  # patch 43: the second st
 SPEEDS = ("fast", "slow")                              # round PRI1, Karl's Speed (cog > GAME): fast = patch 43's stops; slow = the stops from
                                                        # before patch 43, nothing passed for me, auto-pass off (java_bridge Passing.slow)
 SPEED_LABELS = {"fast": "Fast", "slow": "Slow"}
+PAUSES = ("normal", "short", "off")                   # round PERF2, Karl's Pauses (cog > GAME): Forge's own pause when it passes priority
+                                                       # for me by itself - 0.4 s with something on the stack, 0.2 s at a step I stop at;
+                                                       # normal = as Forge has it, short = half, off = none (java_bridge Passing.PAUSE_MODES)
+PAUSE_LABELS = {"normal": "Normal", "short": "Short", "off": "Off"}
+PAUSES_DEFAULT = "short"                               # rc16: Karl, 4 Nov 2026 - a missing or unknown setting is Short (was Normal)
 SPEED_RESEND = 3.0                                     # round PRI1: seconds before the same Speed is sent again if the seat hasn't taken it
 STATS_RESULT_WAIT = 4.0                                # patch 44: seconds to wait for Forge's result after the game-over snapshot
 FEED_MAX, FEED_SECONDS = 4, 7.0                        # how many opponent actions the board shows, and for how long
@@ -308,7 +320,7 @@ HELP_LINES = [
     ("Command zone", "The gold frame beside your hand holds your commander; click the card to cast it (Forge adds the tax). Opponents' command zones are next to their panels."),
     ("Chips on a panel", "A gold crown chip means that player is the monarch; other chips show the initiative, the Ring and emblems. Hover one to read what it does. A life total flashes red or green with -3 / +2 when it changes."),
     ("New game / Ctrl+N", "Opens the deck screen: choose your deck, the deck the AI plays and how many opponents, or import a deck by pasting its text list (Ctrl+V there)."),
-    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Quit... (asks: the main menu or the desktop - with a game going on, keep it for later (Resume last game on the deck screen) or concede it). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
+    ("Cog (top right)", "Four groups. DISPLAY: text size, a Table control (< and > pick the background picture: Rotate changes it every game, or Graveyard, Cathedral, Citadel, Ruins, Plain), switches for full screen and animations, Compact board cards (small battlefield cards use an art-crop picture with a name strip instead of the shrunk full card; off by default) and Sort hand, then Log and Focus (click to go on, right-click to go back): Log is Always (the right column), Corner (it opens over the lower-right corner while the mouse is there) or Hidden; Focus is Always (the big card panel), Over card (the big picture appears over the card the mouse rests on) or Hidden - in Over card and Hidden a right-click pins a card's picture, Esc lets go. SOUND: on/off and a Hover tick switch for the hand-hover sound, and volume. GAME: Speed (Fast: Forge passes the stops that don't matter, as since patch 43; Slow: the stops from before patch 43 - your Main 1, attackers, Main 2 and end step, each opponent's upkeep, attackers and end step, and anything on the stack - with nothing passed for you; a game on the table changes at your next priority), Pauses (Short, the default: Forge waits half its own pause after it passes priority for you - 0.2 s with something on the stack, 0.1 s at a step you stop at; Normal: Forge's whole pause, 0.4 s and 0.2 s; Off: no wait; click to go on, right-click to go back), New game... (asks: the same decks again with a fresh shuffle, or choose decks) and Quit... (asks: the main menu or the desktop - with a game going on, keep it for later (Resume last game on the deck screen) or concede it). HELP: this help, Bug or idea (the report window, with a Suggest a feature tab), Open my data folder (settings, decks and saves - the program folder itself, unless this is an installed copy), Tour of the table (the one-minute look at the table that starts by itself in your first game), and an Updates switch (an installed copy looks for a new version on the title screen; your own git copy never does). Everything that used to be a button up there lives in it."),
     ("F11 / + / -", "Fullscreen / bigger and smaller text; Ctrl+0 puts the text back to 100%. With Ctrl, + / - is the card size "
                     "(UI7, HAND1, HAND2): hand and command-zone cards, and battlefield cards in one row, show bigger. All remembered."),
     ("F3", "Shows how fast the table draws on this computer (frame times) and how quickly Forge answers. Press again to hide."),
@@ -370,6 +382,24 @@ def card_scale_from(value):
     if v != v or not (CARD_STEPS[0] - 0.01 <= v <= CARD_STEPS[-1] + 0.01):
         return 1.0
     return min(CARD_STEPS, key=lambda st: abs(st - v))
+
+
+def right_panels_from(value):
+    """Task bug-1567718618249035777: settings.json's right_panels -> (fold, size). Anything missing or unreadable is as designed:
+    nothing folded, no dragged height. A height is a share of the column between 0.05 and 0.95."""
+    fold = {k: False for k in PANEL_NAMES}
+    size = {"focus": None, "stack": None}
+    if not isinstance(value, dict):
+        return fold, size
+    f = value.get("fold")
+    if isinstance(f, dict):
+        for k in PANEL_NAMES:
+            fold[k] = f.get(k) is True
+    for k in size:
+        v = value.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and 0.05 <= v <= 0.95:
+            size[k] = float(v)
+    return fold, size
 
 
 def round_number(turn, player_count):
@@ -556,7 +586,43 @@ def commander_zone_name(message):
     return m.group("name").strip() if m else None
 
 
-def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", kind=None, resolving=False):
+# bug-1568353208475066370 (Karl Shuh, 6 Nov 2026: The Call of the Ring's "you may pay 2 life" was paid). Forge asks every
+# non-mana cost of a "you may pay ... if you do" (and a cost it confirms) as a yes/no InputConfirm in its own words
+# (HumanCostDecision, res/languages/en-US.properties at 9a6f776). Karl, 7 Nov: such a question names the card it comes from,
+# and Space/Enter don't answer it - Yes or No must be clicked.
+_COST_ASK = [
+    re.compile(r"^Do you want to (?P<c>(?:pay|sacrifice|discard|exile|remove|mill|draw|let that player draw|flip|roll|spend)\b[^?]*)\?",
+               re.I),
+    re.compile(r"^(?P<c>Pay \d+ life|Sacrifice [^?]+|Exile [^?]+|Exert [^?]+|Return [^?]+ to hand|Put [^?]+ to library|"
+               r"Unattach [^?]+|Remove all counters|Draw \d+ Card\(s\))\?", re.I),
+]
+_COST_DAMAGE = re.compile(r"^Do you want (?P<src>.+?) to deal (?P<n>\d+) damage to you\?", re.I)
+
+
+def optional_cost_text(message, kind=None):
+    """'Pay 2 life' when message is Forge's yes/no question about paying a cost (kind "confirm", or unknown for an old bridge),
+    else None. Reads the last paragraph: with Forge's detailed prompts the card and ability come first, then a blank line."""
+    if kind not in (None, "confirm"):
+        return None
+    text = strip_ids(clean_text(message or "")).strip()
+    if not text:
+        return None
+    last = " ".join(re.split(r"\n\s*\n", text)[-1].split())
+    m = _COST_DAMAGE.match(last)
+    if m:
+        return f"Take {m.group('n')} damage from {m.group('src').strip()}"
+    for rx in _COST_ASK:
+        m = rx.match(last)
+        if m:
+            c = " ".join(m.group("c").split())
+            return c[:1].upper() + c[1:]
+    return None
+
+
+COST_HINT = "You may pay this. Click Yes to pay or No not to - Space and Enter don't answer it."
+
+
+def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", kind=None, resolving=False, free_first=True, about=""):
     """What the bar above the hand says. Returns (headline, hint, ok_label or None). Forge's own wording is one long sentence
     per prompt ('Select creatures to block Kinnan, Bonder Prodigy (155) or select another attacker to declare blockers for.');
     this gives a short headline, one line saying what to do, and (at priority) a clearer name for the OK button."""
@@ -567,6 +633,9 @@ def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", ki
     name = commander_zone_name(message)
     if name:
         return "Return your commander to the command zone?", f"{name}  -  No leaves it where it is.", None
+    cost = optional_cost_text(message, kind)
+    if cost:                                                 # bug-1568353208475066370: name the card, say what Yes does
+        return f"{cost}?" + (f"  -  {about}" if about else ""), COST_HINT, None
     if kind:
         by_kind = _view_by_kind(kind, message, text, flat, my_name, mulligans, floating, trouble, resolving)
         if by_kind is not None:
@@ -610,10 +679,11 @@ def prompt_view(message, my_name="", mulligans=0, floating=False, trouble="", ki
     if "Do you want to keep your hand?" in flat:
         m = _GOING.search(flat)
         order = "You go first" if "you are going first" in flat.lower() else (f"You go {m.group('pos')}" if m else "")
-        free = mulligans == 0
+        free = free_first and mulligans == 0           # bug-1567714045170159718: no free first mulligan in a 1v1 Standard game
+        put = mulligans if free_first else mulligans + 1   # rc17: not `cost` - that name is the optional-cost question above
         return ((order + "  -  " if order else "") + "keep this hand?",
                 ("Keep plays this hand. Mulligan draws a new seven (the first is free)." if free else
-                 f"Keep plays this hand. Mulligan draws a new seven and puts {mulligans} on the bottom."),
+                 f"Keep plays this hand. Mulligan draws a new seven and puts {put} on the bottom."),
                 None)
     if "who would you like to start" in flat.lower():         # round 28ba: 3-4 players - pick a portrait, not Play/Draw
         return ("You won the coin toss  -  choose who starts",
@@ -834,6 +904,8 @@ class ForgeTable:
                                             # (patch 43: on by default; a settings file from before patch 43 is switched on once)
         self.always_stop = []               # patch 43: card names whose stack items always stop me (Skip window); remembered
         self.speed = "fast"                 # round PRI1: Karl's Speed - "fast" | "slow" (SPEEDS); cog > GAME; remembered
+        self.pauses = PAUSES_DEFAULT        # round PERF2: Karl's Pauses - "normal" | "short" | "off" (PAUSES); cog > GAME; remembered
+        self._pauses_sent = None            # round PERF2: ((session id, pauses), when) of the last Pauses command not yet seen taken
         self._speed_sent = None             # round PRI1: ((session id, speed), when) of the last Speed command not yet seen taken
         self.passing_intro_due = False      # patch 43: say once, at the first game after the update, what passes for you now
         self._ctrl_tap = False              # patch 43: Ctrl (or Ctrl+Shift) pressed and released with nothing else in between
@@ -849,6 +921,9 @@ class ForgeTable:
         self.table_background_last = None   # the picture the last game started on (None: no game yet, so the first one is BG_ORDER[0])
         self.log_mode = "always"            # patch UI6: "always" | "corner" | "hidden"; cog: Log
         self.preview_mode = "always"        # patch UI6: "always" | "over_card" | "hidden"; cog: Focus
+        self.panel_fold = {k: False for k in PANEL_NAMES}   # task bug-1567718618249035777: which right-column panels are folded
+        self.panel_size = {"focus": None, "stack": None}    # ... and the heights dragged to, as shares of the column (None: as designed)
+        self.seam_drag = None               # (border name, press y, the panel's height at the press) while a border is dragged
         self.ui_clock = time.monotonic      # patch UI6: the clock the corner log and the over-card picture time themselves by (tests replace it)
         self._log_open = False              # the corner log is showing
         self._log_left = None               # when the mouse left the corner log (it closes LOG_CLOSE_SECONDS later)
@@ -1036,6 +1111,8 @@ class ForgeTable:
             self.always_stop = [str(n)[:120] for n in names][:60] if isinstance(names, list) else []
             sp = data.get("speed")                                            # round PRI1: a missing or unknown value is Fast
             self.speed = sp if sp in SPEEDS else "fast"
+            pz = data.get("pauses")                                           # round PERF2; rc16: a missing or unknown value is Short
+            self.pauses = pz if pz in PAUSES else PAUSES_DEFAULT
             bg = data.get("table_background")
             self.table_background = bg if bg in BG_CHOICES else "rotate"         # a missing or unknown value (even "alternate") is Rotate
             last = data.get("table_background_last")
@@ -1044,6 +1121,7 @@ class ForgeTable:
             lm, pm = data.get("log_mode"), data.get("preview_mode")                    # patch UI6: a missing or unknown value is Always
             self.log_mode = lm if lm in LOG_MODES else "always"
             self.preview_mode = pm if pm in PREVIEW_MODES else "always"
+            self.panel_fold, self.panel_size = right_panels_from(data.get("right_panels"))
             w, h = data.get("window_size", DEFAULT_WINDOW)
             self.windowed_size = (max(MIN_WINDOW[0], int(w)), max(MIN_WINDOW[1], int(h)))
             self._apply_screen_entry(data.get("screens"), self.desktop)
@@ -1076,8 +1154,10 @@ class ForgeTable:
                      "frames": self.frames, "hand_sort_by_type": self.hand_sort_by_type,
                      "table_background": self.table_background, "table_background_last": self.table_background_last,
                      "log_mode": self.log_mode, "preview_mode": self.preview_mode,
+                     "right_panels": {"fold": dict(self.panel_fold), "focus": self.panel_size["focus"], "stack": self.panel_size["stack"]},
                      "art_picker_zoom": self.art_picker_zoom, "choose_card_zoom": self.choose_card_zoom, "card_scale": self.card_scale,
-                     "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop), "speed": self.speed})
+                     "passing_version": PASSING_VERSION, "always_stop": list(self.always_stop), "speed": self.speed,
+                     "pauses": self.pauses})
         key = screen_key(self.desktop)
         if key:                             # round 27e: each screen size keeps its own window and text size
             screens = data.get("screens") if isinstance(data.get("screens"), dict) else {}
@@ -1731,6 +1811,22 @@ class ForgeTable:
         """Round FMT1: the format of the game on screen ("commander", "brawl" or - round CON1 - "standard")."""
         return formats.normal(getattr(self.session, "fmt", None))
 
+    def first_mulligan_free(self):
+        """bug-1567714045170159718: is this game's first mulligan free? The same rule as the bridge's MulliganService (round
+        CON1, CR 103.5c): yes in a game with commanders (Commander, Brawl, Commander Draft) or with more than two players; no in
+        a two-player Standard or Draft game (and the Adventure's duels)."""
+        if formats.has_commander(self.game_format()):
+            return True
+        state = getattr(self.session, "state", None) or {}
+        players = state.get("players") or ()
+        # rc16b merge: bug-1567709499526226001's fallback - before the first board, the session's own player count
+        n = len(players) if players else int(getattr(self.session, "players", 2) or 2)
+        return n > 2
+
+    def mulligan_cost(self):
+        """How many cards the next mulligan puts on the bottom of the library."""
+        return self.mulligans if self.first_mulligan_free() else self.mulligans + 1
+
     def has_command_zone(self):
         """Round CON1: does the game on screen have a command zone? Not in Standard: no frame for mine or the opponents', and
         that room goes to the hand, the action bar and the boards."""
@@ -1794,12 +1890,12 @@ class ForgeTable:
     def focus_busy(self):
         """Round AD2c: the focus panel is showing something the player asked for (a hovered or pinned card, the card a question is
         about), so the AI-action spotlight stays out of it."""
-        if self.preview_mode != "always":                       # patch UI6: only a question's card uses the card slot under the stack
+        if not self.focus_shown():                              # patch UI6: only a question's card uses the card slot under the stack
             return self.aux_forced() is not None
         kind, data = self.hit_at(self.mouse) if not self.modal else (None, None)
         if kind in ("card", "stack", "zone") and data.get("card") or kind == "logcard":
             return True
-        if self.pinned is not None or self.prompt_library_card() is not None:
+        if self.pinned is not None or self.prompt_library_card() is not None or self.cost_card() is not None:
             return True
         return bool(commander_zone_name(((self.state or {}).get("prompt") or {}).get("message")))
 
@@ -1977,24 +2073,109 @@ class ForgeTable:
         if panel_on:
             L.zoom = L.preview
         else:
-            # A card that needs a place of its own with no panel (what a question is about, an AI cast): under the stack, when there is room.
-            free_h = max(0, L.right.bottom - top)
-            if log_col:
-                free_h = int(free_h * 0.7)                       # the log's newest lines are at its bottom: leave them showing
-            want = int(L.right_w / CARD_ASPECT)
-            if free_h >= int(AUX_MIN * fs):
-                ph, y0, L.aux_ok = min(want, free_h), top, True
-            else:                                                # no room: a dialog's zoom may still cover the stack's foot, nothing else uses it
-                ph = min(want, int(L.right.h * 0.45))
-                y0 = L.right.bottom - ph
-            pw = int(ph * CARD_ASPECT)
-            L.preview = pygame.Rect(L.right.x + (L.right_w - pw) // 2, y0, pw, ph)
-            L.caption = pygame.Rect(L.preview.x, L.preview.bottom, L.preview.w, 0)
-            if L.aux_ok:
-                L.aux = L.preview
-            zx = L.right.right - zw if zw > L.right_w else L.right.x + (L.right_w - zw) // 2
-            L.zoom = pygame.Rect(zx, L.right.y, zw, zh)         # a dialog's zoom keeps its old place: the top of the column
+            self._place_aux(L, top, L.right.bottom, log_col)
+        self._right_panels_layout(L, stack, panel_on, log_col)
         return L
+
+    def _place_aux(self, L, top, bottom, log_col):
+        """Patch UI6: a card that needs a place of its own with no focus panel (what a question is about, an AI cast): under the
+        stack, when there is room (above `bottom`). Sets L.preview / L.caption / L.aux / L.aux_ok / L.zoom."""
+        fs = L.fs
+        zw, zh = L.over_size
+        L.aux_ok = False
+        free_h = max(0, bottom - top)
+        if log_col:
+            free_h = int(free_h * 0.7)                           # the log's newest lines are at its bottom: leave them showing
+        want = int(L.right_w / CARD_ASPECT)
+        if free_h >= int(AUX_MIN * fs):
+            ph, y0, L.aux_ok = min(want, free_h), top, True
+        else:                                                    # no room: a dialog's zoom may still cover the stack's foot, nothing else uses it
+            ph = min(want, int(L.right.h * 0.45))
+            y0 = bottom - ph
+        pw = int(ph * CARD_ASPECT)
+        L.preview = pygame.Rect(L.right.x + (L.right_w - pw) // 2, y0, pw, ph)
+        L.caption = pygame.Rect(L.preview.x, L.preview.bottom, L.preview.w, 0)
+        L.aux = L.preview if L.aux_ok else None
+        zx = L.right.right - zw if zw > L.right_w else L.right.x + (L.right_w - zw) // 2
+        L.zoom = pygame.Rect(zx, L.right.y, zw, zh)             # a dialog's zoom keeps its old place: the top of the column
+
+    # ---- task bug-1567718618249035777: the right column's panels fold and share their height --------------------------------
+
+    def right_panels_custom(self):
+        """Something folded or dragged: the right column is laid out by _right_panels_layout instead of as designed."""
+        return any(self.panel_fold.values()) or any(v is not None for v in self.panel_size.values())
+
+    def focus_shown(self):
+        """The focus panel is in the column and not folded."""
+        return self.preview_mode == "always" and not self.panel_fold.get("focus")
+
+    def _right_panels_layout(self, L, stack, panel_on, log_col):
+        """Karl, 7 Nov 2026: the focus card, the stack and the game log each fold to a heading strip, and the borders between them
+        drag. With nothing folded or dragged the rects make_layout made are kept as they are; only L.heads / L.seams are added."""
+        R, m, fs = L.right, L.margin, L.fs
+        head = self.stack_geometry(L).head
+        L.panel_head = head
+        fold = {"focus": panel_on and self.panel_fold["focus"], "stack": bool(stack) and self.panel_fold["stack"],
+                "log": log_col and self.panel_fold["log"]}
+        L.fold = fold
+        L.heads = {}
+        if self.right_panels_custom() and (panel_on or stack or log_col):
+            y = R.y
+            below_stack = (head + m) if log_col else 0           # the least the log needs under the stack: its heading
+            below_focus = ((head + m) if stack else 0) + below_stack
+            if panel_on and fold["focus"]:
+                L.heads["focus"] = pygame.Rect(R.x, y, R.w, head)
+                y += head + m
+            elif panel_on:
+                cap_h = L.caption.h
+                share = self.panel_size["focus"]
+                want = (int(R.h * share) - 4 - cap_h) if share is not None else L.preview.h
+                hi = min(int(L.right_w / CARD_ASPECT), R.h - below_focus - 4 - cap_h - m)
+                ph = max(0, min(max(int(FOCUS_MIN * fs), want), hi))
+                pw = int(ph * CARD_ASPECT)
+                L.preview = pygame.Rect(R.x + (R.w - pw) // 2, y, pw, ph)
+                L.caption = pygame.Rect(L.preview.x, L.preview.bottom + 4, pw, cap_h)
+                y = L.caption.bottom + m
+            if stack:
+                if fold["stack"]:
+                    sh = head
+                else:
+                    room = max(head, R.bottom - y - below_stack)
+                    share = self.panel_size["stack"]
+                    if share is not None:
+                        want = int(R.h * share)
+                    elif log_col and not fold["log"]:
+                        want = L.stack.h                         # as designed
+                    else:
+                        want = L.stack_need                      # the log is folded or elsewhere: the stack may take what it needs
+                    sh = max(head, min(want, L.stack_need, room))
+                L.stack = pygame.Rect(R.x, y, R.w, sh)
+                if fold["stack"]:
+                    L.heads["stack"] = L.stack
+                y = L.stack.bottom + m
+            else:
+                L.stack = pygame.Rect(R.x, y, R.w, 0)
+            if log_col and fold["log"]:
+                L.log = pygame.Rect(R.x, R.bottom - head, R.w, head)     # a folded log keeps its place at the column's foot
+                L.heads["log"] = L.log
+            elif log_col:
+                L.log = pygame.Rect(R.x, y, R.w, max(0, R.bottom - y))
+            else:
+                L.log = pygame.Rect(R.x, y, R.w, 0)
+            if panel_on and not fold["focus"]:
+                L.zoom = L.preview
+            elif panel_on:                                       # folded: the card slot under the stack, as with Focus: Hidden
+                L.panel_on = False
+                self._place_aux(L, y, L.log.y - m if fold["log"] else R.bottom, log_col and not fold["log"])
+        # the borders that drag: under the focus card, and between the stack and the log
+        grab = max(int(SEAM_GRAB * fs), m // 2 + 1)
+        L.seams = []
+        if panel_on and not fold["focus"] and (stack or log_col):
+            mid = L.caption.bottom + m // 2
+            L.seams.append(("focus", pygame.Rect(R.x, mid - grab, R.w, 2 * grab)))
+        if stack and not fold["stack"] and log_col and not fold["log"] and L.stack.h:
+            mid = L.stack.bottom + m // 2
+            L.seams.append(("stack", pygame.Rect(R.x, mid - grab, R.w, 2 * grab)))
 
     # ---- hit testing ----------------------------------------------------------------
 
@@ -2068,6 +2249,16 @@ class ForgeTable:
                     d.setdefault(faces[0].strip().lower(), tuple(pr))
             out.append(d)
         self.seat_printings = out if any(out) else []
+
+    def set_online_printings(self, entry):
+        """bug-1567727149127831654: an online table draws MY cards with my deck's printings and pictures (round ALT1), as an
+        offline game does; the other seats get Scryfall's default (their art is on their own PCs). Clears what the last offline
+        game left (reset_game doesn't). entry None (a spectator, a saved game, a draft) = no printings."""
+        mine = dict(getattr(entry, "printings", None) or {}) if entry is not None else {}
+        self.set_seat_printings([mine] if mine else [])
+        self.current_printings = [mine] if mine else []
+        if self.art and self.seat_printings:
+            self.art.add_names(self.printing_keys())
 
     def printing_keys(self):
         """Every chosen printing at the table, as picture keys (to fetch them in the background with the rest)."""
@@ -3470,7 +3661,8 @@ class ForgeTable:
         ok, cancel = p.get("ok", {}), p.get("cancel", {})
         me = self.session.me()
         headline, hint, ok_label = prompt_view(p.get("message", ""), me["name"] if me else "", self.mulligans, bool(self.pool_items(me)), self.pay_trouble(), self.input_kind(),
-                                          resolving_payment(s)) if s.get("prompt") else ("", "", None)
+                                          resolving_payment(s), free_first=self.first_mulligan_free(),
+                                          about=self.cost_card_name()) if s.get("prompt") else ("", "", None)
         headline, hint = self.attack_words(headline, hint)     # round ATK1: who you attack, in a pod
         # buttons, right to left
         specs = []
@@ -3478,7 +3670,7 @@ class ForgeTable:
             specs.append(("ok", ok_label if (ok_label and ok.get("enabled")) else ok["label"], bool(ok.get("enabled")), True, bool(ok.get("focus"))))
         if cancel.get("label"):
             label = BUTTON_NAMES.get(cancel["label"], cancel["label"])     # Forge's own word is kept for the logic; only the button text changes
-            if label == "Mulligan" and self.mulligans == 0:
+            if label == "Mulligan" and self.mulligans == 0 and self.first_mulligan_free():
                 label = "Mulligan (free)"
             specs.append(("cancel", label, bool(cancel.get("enabled")), False, False))
         if self.skip_available():
@@ -3654,11 +3846,15 @@ class ForgeTable:
         if not me or "Do you want to keep your hand?" not in flat:
             return []
         n = self.mulligans
+        cost = self.mulligan_cost()
         first = "you are going first" in flat.lower()
-        if n == 0:
+        if n == 0 and self.first_mulligan_free():
             out = [("Your first mulligan is free: you draw a fresh seven and put nothing back.", GOLD)]
+        elif n == 0:
+            out = [("A mulligan draws a fresh seven and puts 1 card on the bottom of your library (in a two-player game the first "
+                    "mulligan isn't free).", GOLD)]
         else:
-            out = [(f"You have mulliganed {n} time{'s' if n != 1 else ''}. Another mulligan draws seven and puts {n} card{'s' if n != 1 else ''} "
+            out = [(f"You have mulliganed {n} time{'s' if n != 1 else ''}. Another mulligan draws seven and puts {cost} card{'s' if cost != 1 else ''} "
                     "on the bottom of your library.", GOLD)]
         for name, text in self.opening_hand_cards(me).items():
             needs_second = "not the starting player" in text
@@ -3784,12 +3980,36 @@ class ForgeTable:
             card = self.card_by_name(name)
             if card is not None:
                 return card
+        card = self.cost_card()
+        if card is not None:                                    # bug-1568353208475066370: the card an optional cost comes from
+            return card
         name = self.spot_name()
         if name:
             card = self.card_by_name(name)
             if card is not None:
                 return card
         return None
+
+    def optional_cost_asked(self):
+        """bug-1568353208475066370: Forge's question is a yes/no about paying a cost ("Do you want to pay 2 life?")."""
+        p = (self.state or {}).get("prompt") or {}
+        return bool(optional_cost_text(p.get("message", ""), self.input_kind()))
+
+    def cost_card(self):
+        """The card an optional-cost question comes from: the card Forge sent with the question, else the top of the stack (the
+        trigger or spell resolving - The Call of the Ring's trigger). None when it isn't such a question or nothing is known."""
+        if not self.optional_cost_asked():
+            return None
+        src = ((self.state or {}).get("prompt") or {}).get("source")
+        if isinstance(src, dict) and src.get("name") and not src.get("hidden"):
+            return src
+        stack = (self.state or {}).get("stack") or []
+        card = (stack[0].get("card") if stack and isinstance(stack[0], dict) else None) or None
+        return card if isinstance(card, dict) and card.get("name") else None
+
+    def cost_card_name(self):
+        card = self.cost_card()
+        return card.get("name", "") if card else ""
 
     def prompt_library_card(self):
         """The card Forge's current question is about when it is one you can't see anywhere on the table - the top of a
@@ -3812,7 +4032,9 @@ class ForgeTable:
         if src is not None:
             return src
         name = commander_zone_name(((self.state or {}).get("prompt") or {}).get("message"))
-        return self.card_by_name(name) if name else None
+        if name:
+            return self.card_by_name(name)
+        return self.cost_card()
 
     def draw_aux_card(self):
         """Patch UI6 (Focus: Over card or Hidden): the card slot under the stack. It shows what a question is about and, with Animations
@@ -3919,7 +4141,7 @@ class ForgeTable:
         card), kept inside the window. With Over card or Hidden, a right-click pin shows it the same way. It takes no clicks: hits
         stay with the cards underneath."""
         self.over_rect = None
-        if self.preview_mode == "always" or not self.ui_free():
+        if self.focus_shown() or not self.ui_free():           # a folded focus card: a right-click pin shows over the card
             self._over_cand = self._over_key = self._over_miss = self._over_target = None
             return
         self.update_over_card(now)
@@ -4015,7 +4237,14 @@ class ForgeTable:
             self.draw_aux_card()
             return
         L, scr = self.L, self.screen
+        if "focus" in getattr(L, "heads", {}):                  # task bug-1567718618249035777: folded to its heading
+            self.draw_panel_heading("focus", L.heads["focus"], "Focus card")
+            self.draw_aux_card()
+            return
         r = L.preview
+        fr = self.focus_fold_rect()
+        if fr is not None:
+            self.draw_fold_button(fr, "focus", False)
         card = self.preview_card()
         if card is not None:
             self.last_preview = card
@@ -4170,6 +4399,116 @@ class ForgeTable:
             total += h + g.gap
         return rows, total
 
+    def draw_fold_button(self, rect, name, folded):
+        """Task bug-1567718618249035777: the arrow that folds a right-column panel (down: open, right: folded). Returns its rect."""
+        scr = self.screen
+        r = pygame.Rect(rect)
+        over = r.collidepoint(self.mouse)
+        round_rect(scr, r, gfx.BTN_BOTTOM if not over else gfx.BTN_TOP, 4, 1, gfx.BTN_EDGE)
+        cx, cy, k = r.centerx, r.centery, max(3, r.h // 4)
+        if folded:
+            pts = [(cx - k // 2, cy - k), (cx - k // 2, cy + k), (cx + k, cy)]
+        else:
+            pts = [(cx - k, cy - k // 2), (cx + k, cy - k // 2), (cx, cy + k)]
+        pygame.draw.polygon(scr, GOLD if over else TEXT, pts)
+        self.add_hit(r, "button", name="fold_" + name)
+        return r
+
+    def draw_panel_heading(self, name, r, title):
+        """A folded panel: its heading strip only. A click anywhere on it opens the panel again."""
+        scr = self.screen
+        round_rect(scr, r, gfx.PANEL_DEEP, 8, 1, gfx.OVERLAY_EDGE, alpha=235)
+        self.add_hit(r, "button", name="fold_" + name)
+        bs = max(8, r.h - 8)
+        fb_ = self.draw_fold_button(pygame.Rect(r.x + 6, r.y + (r.h - bs) // 2, bs, bs), name, True)
+        f = self.ui_font("small", True)
+        draw_text(scr, clip_text(f"{title}  -  folded", f, r.right - fb_.right - 16), fb_.right + 6, r.y + 6, f, DIM)
+
+    def focus_fold_rect(self):
+        """Where the open focus panel's fold arrow goes: in the column's margin beside the card, when the card leaves room there
+        (it never goes on the picture: Scryfall's rules keep the name, the cost and the bottom line clear). None: no room - the
+        heading under the card gets a "Hide card" button instead."""
+        L = self.L
+        if not self.focus_shown() or "focus" in getattr(L, "heads", {}):
+            return None
+        bs = getattr(L, "panel_head", 24) - 8
+        gutter = L.preview.x - L.right.x
+        if bs <= 0 or gutter < bs + 6:
+            return None
+        return pygame.Rect(L.right.x + (gutter - bs) // 2, L.preview.y + 2, bs, bs)
+
+    def draw_hide_card_button(self, right, y, h, place):
+        """The "Hide card" button in the heading straight under the focus card, when the card leaves no room for its arrow."""
+        L = self.L
+        if not self.focus_shown() or self.focus_fold_rect() is not None or getattr(L, "panel_head", 0) <= 0:
+            return None
+        first = "stack" if (self.state or {}).get("stack") and L.stack.h > 0 else ("log" if getattr(L, "log_col", False) else None)
+        if first != place:
+            return None
+        bw = self.button_width("Hide card", "tiny")
+        rect = pygame.Rect(right - bw, y, bw, h)
+        self.draw_button(rect, "Hide card", "fold_focus", True, False, False, fkey="tiny")
+        return rect
+
+    def toggle_fold(self, name):
+        if name not in PANEL_NAMES:
+            return
+        self.panel_fold[name] = not self.panel_fold[name]
+        self._force_draw = True
+        self.save_settings()
+
+    def seam_at(self, pos):
+        """The right-column border under `pos` (task bug-1567718618249035777), or None. Only on the table itself: never under a
+        dialog, a pop-up, the deck screen or the open corner log."""
+        L = self.L
+        if L is None or not self.state or not self.ui_free() or self.menu or self.boot is not None or self.resuming is not None \
+                or self.hosting_wait is not None or self.vs_holding_now() or self.keyboard.hit(pos) is not None:
+            return None
+        if self._log_open and L.log_overlay.collidepoint(pos):
+            return None
+        for name, r in getattr(L, "seams", ()):
+            if r.collidepoint(pos):
+                return name
+        return None
+
+    def begin_seam_drag(self, name, pos):
+        L = self.L
+        start = (L.caption.bottom - L.right.y) if name == "focus" else L.stack.h
+        self.seam_drag = (name, pos[1], start)
+
+    def seam_motion(self, pos):
+        name, y0, start = self.seam_drag
+        L = self.L
+        if L is None or L.right.h <= 0:
+            return
+        h = start + (pos[1] - y0)
+        lo = int((FOCUS_MIN if name == "focus" else PANEL_MIN) * L.fs)
+        h = max(lo, min(h, L.right.h - int(PANEL_MIN * L.fs)))
+        self.panel_size[name] = max(0.05, min(0.95, h / L.right.h))
+        self._force_draw = True
+
+    def seam_cursor(self, on):
+        """The up-down arrows while the mouse is over a border that drags."""
+        if on == getattr(self, "_seam_cursor", False):
+            return
+        self._seam_cursor = on
+        try:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_SIZENS if on else pygame.SYSTEM_CURSOR_ARROW)
+        except (pygame.error, AttributeError):
+            pass
+
+    def end_seam_drag(self):
+        if self.seam_drag is not None:
+            self.seam_drag = None
+            self.save_settings()
+
+    def reset_seam(self, name):
+        """A right-click on a border: that panel's height as designed again."""
+        if name in self.panel_size and self.panel_size[name] is not None:
+            self.panel_size[name] = None
+            self._force_draw = True
+            self.save_settings()
+
     def draw_stack(self):
         L, scr, s = self.L, self.screen, self.state
         stack = s.get("stack", [])
@@ -4190,8 +4529,21 @@ class ForgeTable:
         self.stack_overflow = bool(max_scroll)                  # round PEN1: a pen can drag it
         head = (f"Stack ({len(stack)})  -  wheel: more" if max_scroll
                 else f"Stack ({len(stack)})" + ("  -  top resolves first" if len(stack) > 1 else ""))
-        jr = self.draw_judge_button(r.right - 8, r.y + 4, g.head - 8) if self.judge_place() == "stack" else None   # round JDG1
-        draw_text(scr, clip_text(head, f, r.w - 20 - (jr.w + 8 if jr else 0)), r.x + 10, r.y + 6, f, GOLD)
+        folded = "stack" in getattr(L, "heads", {})          # task bug-1567718618249035777: only the heading shows
+        if folded:
+            head = f"Stack ({len(stack)})  -  folded"
+        self.add_hit(pygame.Rect(r.x, r.y, r.w, g.head), "button", name="fold_stack")
+        fb_ = self.draw_fold_button(pygame.Rect(r.x + 6, r.y + 4, g.head - 8, g.head - 8), "stack", folded)
+        right = r.right - 8
+        jr = self.draw_judge_button(right, r.y + 4, g.head - 8) if self.judge_place() == "stack" else None   # round JDG1
+        if jr is not None:
+            right = jr.x - 6
+        hr = self.draw_hide_card_button(right, r.y + 4, g.head - 8, "stack")
+        if hr is not None:
+            right = hr.x - 6
+        draw_text(scr, clip_text(head, f, right - fb_.right - 10), fb_.right + 6, r.y + 6, f, GOLD)
+        if folded:
+            return
         saved_clip = scr.get_clip()
         scr.set_clip(content)
         y = content.y - self.stack_scroll
@@ -4306,11 +4658,26 @@ class ForgeTable:
 
     def _draw_log_panel(self, r, alpha, judge=False):
         L, scr = self.L, self.screen
+        f, fb = self.font("small"), self.font("small", True)
+        in_column = r is L.log and getattr(L, "log_col", False)
+        if in_column and "log" in getattr(L, "heads", {}):        # task bug-1567718618249035777: folded to its heading
+            self.log_rect = r
+            self.log_overflow = False
+            self.draw_panel_heading("log", r, "Game log")
+            return
         round_rect(scr, r, gfx.PANEL_DEEP, 12, 1, gfx.OVERLAY_EDGE, alpha=alpha)
         self.log_rect = r
-        f, fb = self.font("small"), self.font("small", True)
-        draw_text(scr, "Game log", r.x + 10, r.y + 6, self.ui_font("small", True), DIM)      # round 32: a heading, in the display face
+        tx = r.x + 10
+        if in_column:
+            hh = getattr(L, "panel_head", fb.get_height() + 12)
+            self.add_hit(pygame.Rect(r.x, r.y, r.w, min(r.h, 8 + fb.get_height())), "button", name="fold_log")
+            tx = self.draw_fold_button(pygame.Rect(r.x + 6, r.y + 4, hh - 8, hh - 8), "log", False).right + 6
+        draw_text(scr, "Game log", tx, r.y + 6, self.ui_font("small", True), DIM)      # round 32: a heading, in the display face
         jr = self.draw_judge_button(r.right - 8, r.y + 4, fb.get_height() + 2) if judge and r.h > 3 * fb.get_height() else None
+        if in_column:
+            hr = self.draw_hide_card_button((jr.x - 6) if jr else (r.right - 8), r.y + 4, fb.get_height() + 2, "log")
+            if hr is not None:
+                jr = hr                                      # "scroll down for newest" goes left of both
         lh = f.get_height() + 2
         top = r.y + 8 + fb.get_height() + 2
         rows = max(1, (r.bottom - top - 6) // lh)
@@ -4948,6 +5315,8 @@ class ForgeTable:
             self.open_skip()
         elif name == "judge":                       # round JDG1
             self.open_judge(from_button=True)
+        elif name.startswith("fold_"):              # task bug-1567718618249035777
+            self.toggle_fold(name[5:])
         elif name == "settings":
             self.overlay = fset.SettingsPopup()
         elif name == "help":
@@ -5114,7 +5483,7 @@ class ForgeTable:
         stack = (self.state or {}).get("stack") or []
         if stack and stack[0].get("card"):
             return stack[0]["card"], (0, len(stack), stack[0])
-        if self.preview_mode == "always" and self.last_preview is not None:
+        if self.focus_shown() and self.last_preview is not None:
             return self.last_preview, None
         return None
 
@@ -5143,7 +5512,7 @@ class ForgeTable:
         L = self.L
         if (self.state or {}).get("stack") and L.stack.h > 0:
             return "stack"
-        if getattr(L, "log_col", True) and L.log.h > 0:
+        if getattr(L, "log_col", True) and L.log.h > 0 and "log" not in getattr(L, "heads", {}):
             return "log"
         return "bar"
 
@@ -5736,6 +6105,7 @@ class ForgeTable:
         self.deck_names = set(entry.commanders) | set(entry.deck)
         if self.art:
             self.art.add_names(self.deck_names)
+        self.set_online_printings(entry)              # bug-1567727149127831654
         session.stats_info = {"id": online_stats_id(folder), "format": fmt, "online": "host",      # patch 44 (MP3a: the format)
                               "deck": deck_meta(entry)}
         self.hosting_wait = onl.HostWait(session, password, port, upnp)
@@ -5785,6 +6155,7 @@ class ForgeTable:
         self.reset_game()
         self.modal = modal                                           # reset_game closes dialogs: the draft window stays
         self.vs = None
+        self.set_online_printings(None)               # bug-1567727149127831654: no printings left from an offline game
         self.current_decks = None
         session.stats_info = {"id": online_stats_id(folder), "format": "commander_draft", "online": "host",
                               "deck": {"id": None, "name": ""}}
@@ -5962,6 +6333,7 @@ class ForgeTable:
         self.current_decks = None
         self.current_deck_labels = ((meta.get("labels") or {}).get("mine") or "", [])
         self.deck_names = set()
+        self.set_online_printings(None)               # bug-1567727149127831654: no deck entry for a saved game
         session.stats_info = {"id": online_stats_id(folder), "format": session.fmt, "online": "host", "resumed": True,
                               "deck": dict(meta.get("stats_deck") or {"id": None, "name": self.current_deck_labels[0]})}
         self.hosting_wait = onl.HostWait(session, password, port, upnp)
@@ -6097,6 +6469,7 @@ class ForgeTable:
         self.deck_names = set(mine[0]) | set(mine[1])
         if self.art:
             self.art.add_names(self.deck_names)
+        self.set_online_printings(None if getattr(session, "spectator", False) else entry)    # bug-1567727149127831654
         self.current_deck_labels = (getattr(entry, "name", ""), [])
         self.vs = flow.VsShow(self.online_vs_seats(mine[0]))
         self._note_known_host(session)
@@ -6205,9 +6578,9 @@ class ForgeTable:
                 except OSError:
                     pass
                 self.vs = flow.VsShow(self.online_vs_seats(cmds))
-                who = list(getattr(s, "guests_joined", []) or []) or [s.peer_name]       # Round MP2c: one or several
-                who = who[0] if len(who) == 1 else ", ".join(who[:-1]) + " and " + who[-1]
-                self.say(f"{who} joined your game." + ("  Someone else can watch with the same invite code "
+                who = [w for w in (list(getattr(s, "guests_joined", []) or []) or [s.peer_name]) if w]   # Round MP2c: one or several
+                who = (who[0] if len(who) == 1 else ", ".join(who[:-1]) + " and " + who[-1]) if who else None
+                self.say((f"{who} joined your game." if who else "The saved game goes on.") + ("  Someone else can watch with the same invite code "
                                                                "(Ctrl+I copies it)." if self.invite_code else ""), GREEN, 7.0)
                 self.check_peer_version()
                 self.set_title()
@@ -6538,6 +6911,13 @@ class ForgeTable:
             self.note_modifier(ev)                     # patch 43: Ctrl / Ctrl+Shift taps
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+            if self.seam_drag is not None:               # task bug-1567718618249035777: a border between right-column panels
+                if getattr(ev, "buttons", (1,))[0] or getattr(ev, "touch", False):
+                    self.seam_motion(ev.pos)
+                else:
+                    self.end_seam_drag()
+                return True
+            self.seam_cursor(self.seam_at(ev.pos) is not None)
             # a touch's motion says nothing reliable about the mouse's buttons (SDL keeps a touch's state apart): while a press is
             # held, a touch motion is a held motion (task bug-sell-scroll-2)
             held = getattr(ev, "buttons", (1,))[0] or getattr(ev, "touch", False)
@@ -6553,6 +6933,10 @@ class ForgeTable:
                 else:
                     self.pan.cancel()                    # released outside the window: neither a click nor more drag
         elif ev.type == pygame.MOUSEBUTTONUP:
+            if ev.button == 1 and self.seam_drag is not None:
+                self.seam_motion(ev.pos)
+                self.end_seam_drag()
+                return True
             if ev.button == 1:
                 owner = self.scroll_drag_owner()
                 if owner is not None:
@@ -6564,6 +6948,13 @@ class ForgeTable:
                         self.on_click(at, 1)
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             self.mouse = ev.pos
+            seam = self.seam_at(ev.pos) if ev.button in (1, 3) else None
+            if seam is not None:                         # task bug-1567718618249035777: drag it; a right-click puts it back
+                if ev.button == 1:
+                    self.begin_seam_drag(seam, ev.pos)
+                else:
+                    self.reset_seam(seam)
+                return True
             if ev.button == 1 and not self.keyboard.hit(ev.pos):
                 view = self.pan_view_at(ev.pos)
                 if view is not None:                     # round PEN1: a press on a list that scrolls waits: click or drag?
@@ -6776,7 +7167,9 @@ class ForgeTable:
             else:                                       # Enter passes until an opponent acts or the turn ends
                 self.pass_until_something()
         elif key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_KP_ENTER):
-            if self.prompt().get("ok", {}).get("enabled"):
+            if self.optional_cost_asked():              # bug-1568353208475066370 (Karl, 7 Nov): Yes or No must be clicked
+                self.say("Click Yes to pay or No not to - Space and Enter don't answer this question.", DIM, 3.0)
+            elif self.prompt().get("ok", {}).get("enabled"):
                 self.flush_attackers()                  # round ATK1
                 self.session.ok()
         elif key == pygame.K_ESCAPE:
@@ -7127,6 +7520,46 @@ class ForgeTable:
         else:
             self.say(f"Fast{now}: Forge passes the stops that don't matter again (patch 43).", CYAN, 5.0)
 
+    # ---- round PERF2: Pauses, Normal / Short / Off (Karl, 4 Nov) ----
+
+    def pauses_label(self):
+        return PAUSE_LABELS.get(self.pauses, PAUSE_LABELS[PAUSES_DEFAULT])
+
+    def pauses_supported(self):
+        """The bridge takes the Pauses command for my seat: its snapshots say "pauses" (round PERF2 on)."""
+        return "pauses" in self.passing_state()
+
+    def sync_pauses(self):
+        """Every sync: make my seat play the Pauses in the settings, as sync_speed does for Speed (sent at the first snapshot that
+        says how the seat plays, and again after SPEED_RESEND if the seat still hasn't taken it). Nothing is sent while the seat
+        already plays the setting (the bridge starts every seat in Normal, so the default Short is sent once a game - rc16)."""
+        st = self.state
+        if not st or self.session.me() is None or getattr(self.session, "spectator", False) or not self.pauses_supported():
+            return False
+        if self.passing_state().get("pauses") == self.pauses:
+            self._pauses_sent = None
+            return False
+        key, now = (id(self.session), self.pauses), time.monotonic()
+        if self._pauses_sent is not None and self._pauses_sent[0] == key and now - self._pauses_sent[1] < SPEED_RESEND:
+            return False
+        self._pauses_sent = (key, now)
+        self.session.set_pauses(self.pauses)
+        return True
+
+    def cycle_pauses(self, step=1):
+        """Cog > GAME > Pauses: Normal -> Short -> Off -> Normal (a right click goes back). Saved at once; a game on the table
+        changes from my next priority."""
+        i = PAUSES.index(self.pauses) if self.pauses in PAUSES else 0
+        self.pauses = PAUSES[(i + step) % len(PAUSES)]
+        self.save_settings()
+        sent = self.game_in_progress() and self.sync_pauses()
+        now = " from your next priority" if sent else (" from the next game" if self.game_in_progress() and not self.pauses_supported()
+                                                        else "")
+        words = {"normal": "Forge waits 0.4 s after it passes for you with something on the stack, 0.2 s at a step you stop at.",
+                 "short": "half of Forge's wait (0.2 s / 0.1 s) after it passes priority for you.",
+                 "off": "no wait after Forge passes priority for you - the game moves on at once."}[self.pauses]
+        self.say(f"Pauses: {self.pauses_label()}{now}: {words}", CYAN, 6.0)
+
     def at_priority(self):
         """Forge is asking me for priority right now (not a payment, a target, an attack...)."""
         st = self.state
@@ -7167,7 +7600,7 @@ class ForgeTable:
         if self._passed_seen > len(passed):
             self._passed_seen = 0
         for m in passed[self._passed_seen:]:
-            what = "trigger" if m.get("kind") == "trigger" else "ability"
+            what = m.get("kind") if m.get("kind") in ("trigger", "spell") else "ability"     # "spell": bug-1567760778684272653
             segs = [("Passed for you: ", flog.DIM), (str(m.get("player", "?")), flog.OPP), ("'s ", flog.TEXT),
                     (str(m.get("card", "?")), flog.CARD), (f" {what}", flog.TEXT)]
             row = flog.Row("line", segs, "dim", flog.OPP, feed=True)
@@ -7872,6 +8305,7 @@ class ForgeTable:
         self.track_undo()
         self.track_yield()
         self.sync_speed()                          # round PRI1: my seat plays the Speed in the settings (Slow from the first snapshot)
+        self.sync_pauses()                         # round PERF2: and the Pauses
         self.track_passing()                       # patch 43
         self.track_stats()                         # patch 44
         if self.art:
@@ -7966,7 +8400,8 @@ class ForgeTable:
         if not m:
             return
         n = int(m.group(1))
-        self.mulligans = max(self.mulligans, n + 1)
+        # Forge asks to put back as many cards as mulligans taken, less one when the first was free (bug-1567714045170159718)
+        self.mulligans = max(self.mulligans, n + (1 if self.first_mulligan_free() else 0))
         if n == 0 and p.get("ok", {}).get("enabled") and self.auto_ok_at is None:
             self.auto_ok_at = time.time()                     # once only: the old prompt lingers a few frames and OK on the next one is 'Keep'
             self.session.ok()
@@ -8124,6 +8559,9 @@ class ForgeTable:
                          + (f" - result saved: {d['outcome'].get('result')}" if d.get("outcome") else ""))
         if self.speed == "slow" or self.slow_now():         # round PRI1 (Fast, the default, adds no line)
             lines.append(f"Speed: {self.speed_label()} in the settings; my seat plays {'Slow' if self.slow_now() else 'Fast'}")
+        seat_pauses = self.passing_state().get("pauses")
+        if self.pauses != PAUSES_DEFAULT or seat_pauses not in (None, PAUSES_DEFAULT):    # round PERF2; rc16: Short, the default, adds no line
+            lines.append(f"Pauses: {self.pauses_label()} in the settings; my seat plays {PAUSE_LABELS.get(seat_pauses, 'Normal')}")
         return lines
 
     def write_perf_log(self):

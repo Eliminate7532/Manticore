@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 import com.google.gson.JsonObject;
 
 import forge.LobbyPlayer;
@@ -14,6 +16,7 @@ import forge.ai.PlayerControllerAi;
 import forge.game.Game;
 import forge.game.ability.AbilityKey;
 import forge.game.card.Card;
+import forge.game.card.CardCollection;
 import forge.game.combat.Combat;
 import forge.game.player.Player;
 import forge.game.player.PlayerController;
@@ -226,6 +229,12 @@ final class LoopGuard {
                 m.addProperty("shrinking", false);
                 Checks.wire.send(m);
             }
+        }
+
+        /** bug-1568367922328510465: surveil keeps on top only what the AI can pay life for (see SurveilGuard). */
+        @Override
+        public ImmutablePair<CardCollection, CardCollection> arrangeForSurveil(CardCollection topN) {
+            return SurveilGuard.limit(getPlayer(), super.arrangeForSurveil(topN));
         }
 
         /** Round AI-ATTACK: the attack declaration with a time budget (see AttackCache.declareWithBudget). */

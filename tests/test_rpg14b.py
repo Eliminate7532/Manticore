@@ -166,8 +166,9 @@ class StyleTests(StyleBase):
                     self.assertTrue(rows)
                     priced = [s for s in shown if re.search(r"\d+ gold", s) and "Your deck" not in s
                               and s != f"{f.game.save.gold} gold"]                   # Round GOLD1: your gold, a line of its own
-                    if tab == "packs":                                  # Round PACK2: one Buy (the picked pack's); every
-                        self.assertEqual(rows, 1, shown)                # wrapper's price and the details' price whole
+                    if tab in ("packs", "singles"):                     # Round PACK2 / the singles gallery (task
+                        self.assertEqual(rows, 1, shown)                # bug-1567699607696441414): one Buy (the picked one's);
+                                                                        # every tile's price and the details' price whole
                         self.assertTrue(len(priced) >= 2 and all(re.fullmatch(r"\d+ gold", p) for p in priced), shown)
                     else:
                         self.assertEqual(len(priced), rows, shown)           # every line's price whole, not cut to "..."
@@ -175,18 +176,20 @@ class StyleTests(StyleBase):
             self.close(g)
 
     def test_a_row_under_the_mouse_says_so_in_gold(self):
+        """(The singles are a gallery since task bug-1567699607696441414: the Basic lands list is the shop list now.)"""
         r8.new_game(None)
         g = self.gui((1920, 1080))
         f = self.open(g, slot=1)
         f.enter_town(g, f.game.world.start_town)
+        f.tab = "lands"
         frame(g)
-        buy = [r for r, n in f.buttons if n.startswith("buy:")]
-        offers = f.shop.singles()
+        buy = [r for r, n in f.buttons if n.startswith("basic:") and n.endswith(":1")]
+        basics = [n for n, _p in f.shop.basics()]
         move(g, (buy[1].x - 300, buy[1].centery))
         calls = self.drawn(g)
         colour = {s: c for s, _f, c, _r in calls}
-        self.assertEqual(colour[offers[1].name], tuple(gfx.DB_GOLD))
-        self.assertEqual(colour[offers[0].name], tuple(gfx.DB_TEXT))
+        self.assertEqual(colour[basics[1]], tuple(gfx.DB_GOLD))
+        self.assertEqual(colour[basics[0]], tuple(gfx.DB_TEXT))
         self.close(g)
 
     def test_the_style_is_off_outside_these_screens_and_after_an_error(self):

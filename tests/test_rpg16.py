@@ -364,6 +364,7 @@ class RareDuelTests(r8.Base):
     def test_a_win_pays_its_reward_and_starts_its_cooldown_and_a_loss_does_neither(self):
         g = r8.new_game(None)
         g.save.world["clock"] = at(1, 22)
+        g.save.world["first_win_day"] = 10 ** 6       # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         g.write()
         gold = g.save.gold
         adv.start_duel(g, RareTrigger("old_gorsehide"))
@@ -484,12 +485,14 @@ if __name__ == "__main__":
 TOWN, OUT = "lantern_hollow", "ashfen_outskirts"
 DAWN_PEOPLE = {"card_seller": (31, 4), "elder": (17, 16), "gate_guard": (35, 15), "hall_keeper": (20, 24), "innkeeper": (10, 4),
                "lamplighter": (23, 12), "pack_seller": (7, 24), "platino": (1, 28)}
+PROG5_PEOPLE = {"bounty_clerk": (15, 17), "gauntlet_warden": (23, 22)}   # Round PROG5 (expected change): out at every hour
+PROG5_PEOPLE = dict(PROG5_PEOPLE, yard_master=(22, 5))      # Round SPAR1 (expected change): the sparring yard's master, always out
 WHO_IS_WHERE = {                                                   # the spec's section 3.1, phase by phase
-    6: DAWN_PEOPLE,
-    12: DAWN_PEOPLE,
-    19: dict(DAWN_PEOPLE, lamplighter=(22, 18)),
-    21: {"card_seller": (31, 4), "elder": (32, 21), "hall_keeper": (20, 24), "innkeeper": (10, 4), "lamplighter": (22, 18),
-         "mourner": (20, 15), "night_watch": (35, 16), "pack_seller": (7, 24), "platino": (1, 28)},
+    6: dict(DAWN_PEOPLE, **PROG5_PEOPLE),
+    12: dict(DAWN_PEOPLE, **PROG5_PEOPLE),
+    19: dict(DAWN_PEOPLE, lamplighter=(22, 18), **PROG5_PEOPLE),
+    21: dict({"card_seller": (31, 4), "elder": (32, 21), "hall_keeper": (20, 24), "innkeeper": (10, 4), "lamplighter": (22, 18),
+              "mourner": (20, 15), "night_watch": (35, 16), "pack_seller": (7, 24), "platino": (1, 28)}, **PROG5_PEOPLE),
 }
 ALWAYS_OUT = {"ashfen_outskirts#3", "ashfen_outskirts#6", "ashfen_outskirts#9", "ashfen_outskirts#10", "ashfen_outskirts#12",
               "ashfen_outskirts#13"}                              # the bandits, thornbacks and the grave robber of RPG13

@@ -381,14 +381,18 @@ def wrap_lines(page):
     return textwrap.wrap(str(page), LINE_CHARS) or []
 
 
+BAR_H = 8                                  # Round SPAR1: a progress bar's height in the UI's pixels
+
+
 class MessageWindow:
     """A title and a few lines in a DawnLike window, with one answer ("> OK"): the Adventure's result window on the map
     (Round RPG14: "the existing result window, restyled"). Enter, Space, Esc or a click on OK close it (key -> "ok")."""
 
     WIDTH = 300                            # the window's width in the UI's pixels (title and lines wrap to it)
 
-    def __init__(self, title, lines, colour, ok="OK"):
+    def __init__(self, title, lines, colour, ok="OK", bar=None):
         self.title, self.lines, self.colour, self.ok = title, [str(x) for x in lines], colour, ok
+        self.bar = bar                     # Round SPAR1: a progress bar (0-1) under the lines, None for none
         self.buttons = []
 
     def key(self, k):
@@ -407,7 +411,8 @@ class MessageWindow:
         most = max(1, (H // s - 16 - 2 * PAD - len(heads) * 18 - 8 - 22) // PITCH_UI)
         if len(body) > most:                                # too many lines for the screen: the last shown ends in "..."
             body = body[:most - 1] + [body[most - 1][:max(0, chars_in(w - 2 * PAD) - 3)] + "..."]
-        h = 2 * PAD + len(heads) * 18 + 6 + len(body) * PITCH_UI + 8 + 14
+        bar_h = 0 if self.bar is None else BAR_H + 6
+        h = 2 * PAD + len(heads) * 18 + 6 + len(body) * PITCH_UI + bar_h + 8 + 14
         win = pygame.Surface((w, h), pygame.SRCALPHA)
         window(win, win.get_rect())
         y = PAD
@@ -418,6 +423,14 @@ class MessageWindow:
         for ln in body:
             text(win, ln, PAD, y, gfx.DB_TEXT)
             y += PITCH_UI
+        if self.bar is not None:                            # Round SPAR1: the sparring yard's progress
+            frac = min(1.0, max(0.0, float(self.bar)))
+            back = pygame.Rect(PAD, y + 3, w - 2 * PAD, BAR_H)
+            pygame.draw.rect(win, gfx.DB_BG, back)
+            if frac > 0:
+                pygame.draw.rect(win, gfx.DB_GOLD, pygame.Rect(back.x, back.y, max(1, int(back.w * frac)), back.h))
+            pygame.draw.rect(win, gfx.DB_TEXT, back, 1)
+            y += bar_h
         y += 8
         text(win, ">", w - PAD - 10 - len(self.ok) * font().size("M")[0] - 2, y, gfx.DB_GOLD)
         okr = text(win, self.ok, w - PAD - len(self.ok) * font().size("M")[0], y, gfx.DB_GOLD)

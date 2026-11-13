@@ -324,8 +324,10 @@ def draw_pregame(gui, me):
     if cancel.get("label"):
         label = CANCEL_WORDS.get(cancel["label"], cancel["label"])
         if kind == "mulligan":
-            notes["cancel"] = ("Free: you draw a new seven." if gui.mulligans == 0 else
-                               f"You draw a new seven, then put {gui.mulligans} on the bottom.")
+            free_first = gui.first_mulligan_free() if hasattr(gui, "first_mulligan_free") else True
+            cost = gui.mulligans if free_first else gui.mulligans + 1      # bug-1567714045170159718
+            notes["cancel"] = ("Free: you draw a new seven." if free_first and gui.mulligans == 0 else
+                               f"You draw a new seven, then put {cost} on the bottom.")
         elif kind == "bottom":
             notes["cancel"] = "Forge chooses them for you."
         specs.append(("cancel", label, bool(cancel.get("enabled")), False))

@@ -177,10 +177,10 @@ class LevelTests(unittest.TestCase):
     def test_xp_by_kind(self):
         lv = levels.read()
         got = {k: levels.xp_for("won", k, lv) for k in ("regular", "dungeon", "rare", "boss")}
-        self.assertEqual(got, {"regular": 10, "dungeon": 20, "rare": 30, "boss": 60})
-        self.assertEqual(levels.xp_for("quest", None, lv), 25)
-        self.assertEqual(levels.xp_for("lost", "boss", lv), 2)        # a loss is a loss's XP, whoever beat you
-        self.assertEqual(levels.xp_for("conceded", "regular", lv), 2)
+        self.assertEqual(got, {"regular": 20, "dungeon": 40, "rare": 60, "boss": 120})   # rc16 (expected change): Karl's XP x2 (was 10/20/30/60)
+        self.assertEqual(levels.xp_for("quest", None, lv), 50)                            # rc16: was 25
+        self.assertEqual(levels.xp_for("lost", "boss", lv), 4)        # a loss is a loss's XP, whoever beat you (rc16: was 2)
+        self.assertEqual(levels.xp_for("conceded", "regular", lv), 4)
         self.assertEqual(levels.xp_for("draw", "regular", lv), 0)
         self.assertEqual(levels.xp_for("unfinished", "regular", lv), 0)
 
@@ -273,7 +273,7 @@ class AdventureTests(PlayedBase):
 
     def test_a_won_duel_gives_its_xp_and_writes_it(self):
         g, _l = self.setup_game()
-        self.on_map(g, "ashfen_outskirts")
+        self.on_map(g, "ashfen_outskirts").game.save.world["first_win_day"] = 10 ** 6     # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         f = self.duel_to_result(g, won=True)
         want = levels.xp_for("won", encounters.RANDOM_ENCOUNTER)          # the window's duel is a random foe's (a dungeon's: 20)
         self.assertEqual(r8.on_disk(self.folder)["progress"]["xp"], want)
@@ -284,15 +284,16 @@ class AdventureTests(PlayedBase):
         g, _l = self.setup_game()
         self.on_map(g, "ashfen_outskirts")
         self.duel_to_result(g, won=False)
-        self.assertEqual(r8.on_disk(self.folder)["progress"]["xp"], 2)
+        self.assertEqual(r8.on_disk(self.folder)["progress"]["xp"], 4)      # rc16 (expected change): XP x2, was 2
 
     def test_dungeon_boss_and_rare_wins(self):
         r8.new_game(None)
-        for enc, kind, extra, want in (("dungeon", "plague_rat", {}, 20), ("boss", "grave_priest", {}, 60),
-                                       ("regular", "ember_bandit", {"rare": "red_sash"}, 30)):
+        for enc, kind, extra, want in (("dungeon", "plague_rat", {}, 40), ("boss", "grave_priest", {}, 120),   # rc16: XP x2 (was 20 / 60 / 30)
+                                       ("regular", "ember_bandit", {"rare": "red_sash"}, 60)):
             with self.subTest(enc=enc, rare=extra):
                 game, _n = adv.Game.load(1, pool=self.pool)
                 game.save.progress = {"xp": 0, "perks": [], "offers": []}
+                game.save.world["first_win_day"] = 10 ** 6          # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
                 game.save.pending_duel = dict({"kind": kind, "encounter": enc, "deck": 0, "source": "archetype", "map": None,
                                                "x": None, "y": None, "started": 0}, **extra)
                 out = adv.finish_loaded(game, "won")
@@ -303,6 +304,7 @@ class AdventureTests(PlayedBase):
     def test_the_results_screen_shows_the_bar_the_level_up_and_plays_the_fanfare(self):
         g, _l = self.setup_game()
         f = self.on_map(g, "ashfen_outskirts")
+        f.game.save.world["first_win_day"] = 10 ** 6            # Round PROG5 (expected change): the day's first win paid already, so the duel's own gold and XP are what is tested
         self.at_xp(g, 70)                                       # +20 -> 90: level 3, a perk
         played = []
         orig = g.play_cue
@@ -387,8 +389,8 @@ class AdventureTests(PlayedBase):
         game, _n = adv.Game.load(1, pool=self.pool)
         game.save.progress = {"xp": 60, "perks": [], "offers": []}
         lines = adv.quest_xp(game)
-        self.assertEqual(game.save.progress["xp"], 85)
-        self.assertEqual(lines[0], "+25 XP.")
+        self.assertEqual(game.save.progress["xp"], 110)                  # rc16 (expected change): XP x2 - a quest is 50 (was 85 / +25)
+        self.assertEqual(lines[0], "+50 XP.")
         self.assertIn("Level up! Level 3", lines[1])
 
     def test_keen_eye_offers_four_and_the_corner_panel_shows_the_level(self):
@@ -434,7 +436,7 @@ class DataTests(unittest.TestCase):
         lv = levels.read()
         self.assertEqual((lv.first, lv.step, lv.cap, lv.life_per_level, lv.perk_every, lv.perk_choices), (30, 15, 20, 1, 3, 3))
         self.assertTrue(levels.read().perks["stout"].stackable)
-        self.assertEqual({p.id for p in lv.perks.values() if not p.available}, {"haggler", "fleet_foot", "pack_mule"})
+        self.assertEqual({p.id for p in lv.perks.values() if not p.available}, {"haggler", "fleet_foot"})   # PROG4: Pack Mule is offered
         progress.read()                                          # PROG1's reader still takes the file
 
     def test_a_bad_key_is_named(self):

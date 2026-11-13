@@ -44,6 +44,7 @@ a = Analysis(
         _data("stock_cubes"),                       # Round CD3: the stock cubes' bundled lists
         _data(os.path.join("rpg", "data")),         # Round RPG8: the Adventure's data (card pool, tiers, packs, enemies, numbers)
         _data(os.path.join("rpg", "maps")),         # Round RPG8: its Tiled maps and their tiles
+        _data(os.path.join("java_rpg", "rpg_tools.jar"), "java_rpg"),   # Round SPAR1: the sparring yard's duel tool (rpg.spar)
     ],
     # Modules only imported lazily or by name: --soak imports tools.soak, which imports the rest inside _load_modules().
     # Opus's Linux probe needed exactly these (SONNET_SPEC_R29 section 1.3); add whatever the first Windows build's warnings
